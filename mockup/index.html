@@ -24,9 +24,19 @@ canvas { display: block; }
 .title h1 span { color: #ff5257; }
 .title p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
 .keys { left: 16px; bottom: 16px; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; }
-.hands { display: grid; grid-template-columns: repeat(2, 150px); gap: 10px; }
-.hand { border: 1px solid var(--rule); border-radius: 6px; padding: 8px; display: grid; gap: 4px; }
-.hand b { font: 700 15px/1 var(--display); text-transform: uppercase; letter-spacing: .04em; }
+.caps { display: grid; grid-template-columns: repeat(3, 76px); gap: 8px; }
+.cap { height: 64px; border-radius: 9px; background: #262c38; border: 1px solid #4a5263; border-bottom: 4px solid #3a4150; display: grid; place-content: center; text-align: center; gap: 2px; transition: transform .06s, background .06s, box-shadow .06s, border-color .06s; }
+.cap .l { font: 700 26px/1 var(--display); }
+.cap .a { font: 500 10px/1.1 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.cap.on { transform: translateY(3px); border-bottom-width: 1px; color: #12151b; }
+.cap.on .a { color: #12151b; }
+.cap.push.on { background: var(--push); border-color: var(--push); box-shadow: 0 0 18px var(--push); }
+.cap.pull.on { background: var(--pull); border-color: var(--pull); box-shadow: 0 0 18px var(--pull); }
+.cap.lift.on { background: var(--lift); border-color: var(--lift); box-shadow: 0 0 18px var(--lift); }
+@media (prefers-reduced-motion: reduce) { .cap { transition: none; } .cap.on { transform: none; } }
+.hands { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.hand { border: 1px solid var(--rule); border-radius: 6px; padding: 6px 8px; display: grid; gap: 2px; }
+.hand b { font: 700 13px/1 var(--display); text-transform: uppercase; letter-spacing: .04em; }
 .hand .st { font: 500 12px var(--mono); color: var(--muted); min-height: 1.4em; }
 .hand.push { border-color: var(--push); } .hand.pull { border-color: var(--pull); }
 .hand.lift .st, .hand.press .st { color: var(--lift); }
@@ -53,11 +63,19 @@ kbd.on { background: var(--tag); color: #1b1f27; border-color: var(--tag); }
 <div id="loading">Loading cart&hellip;</div>
 <div class="hud title"><h1>Shopping <span>Cart</span> physics mock-up</h1><p>Two hands on the handlebar. The physics does the steering.</p></div>
 <div class="hud keys">
-  <div class="hands">
-    <div class="hand" id="handL"><b>Left hand</b><div class="row"><kbd data-k="KeyQ">Q</kbd>push&nbsp;<kbd data-k="KeyA">A</kbd>pull</div><div class="st" id="stL">&nbsp;</div></div>
-    <div class="hand" id="handR"><b>Right hand</b><div class="row"><kbd data-k="KeyE">E</kbd>push&nbsp;<kbd data-k="KeyD">D</kbd>pull</div><div class="st" id="stR">&nbsp;</div></div>
+  <div class="caps" aria-label="Controls">
+    <div class="cap push" data-k="KeyQ"><span class="l">Q</span><span class="a">left push</span></div>
+    <div class="cap lift" data-k="KeyW"><span class="l">W</span><span class="a">lift</span></div>
+    <div class="cap push" data-k="KeyE"><span class="l">E</span><span class="a">right push</span></div>
+    <div class="cap pull" data-k="KeyA"><span class="l">A</span><span class="a">left pull</span></div>
+    <div class="cap lift" data-k="KeyS"><span class="l">S</span><span class="a">press</span></div>
+    <div class="cap pull" data-k="KeyD"><span class="l">D</span><span class="a">right pull</span></div>
   </div>
-  <div class="row"><kbd data-k="KeyW">W</kbd>lift handle <kbd data-k="KeyS">S</kbd>press down <kbd data-k="KeyR">R</kbd>reset</div>
+  <div class="hands">
+    <div class="hand" id="handL"><b>Left hand</b><div class="st" id="stL">&nbsp;</div></div>
+    <div class="hand" id="handR"><b>Right hand</b><div class="st" id="stR">&nbsp;</div></div>
+  </div>
+  <div class="row"><kbd data-k="KeyR">R</kbd>reset the cart</div>
 </div>
 <div class="hud stats">
   <div><span>Speed</span><b id="sSpeed">0.0 km/h</b></div>
@@ -361,7 +379,7 @@ function syncCart() {
 // ---------------------------------------------------------------- HUD
 const $ = id => document.getElementById(id);
 function hud() {
-  document.querySelectorAll('kbd[data-k]').forEach(k => k.classList.toggle('on', keys.has(k.dataset.k)));
+  document.querySelectorAll('[data-k]').forEach(k => k.classList.toggle('on', keys.has(k.dataset.k)));
   for (const h of ['L', 'R']) {
     const el = $('hand' + h), st = handState[h];
     el.className = 'hand' + (st.startsWith('push') ? ' push' : st.startsWith('pull') ? ' pull' : '') + (st.includes('lift') ? ' lift' : '') + (st.includes('press') ? ' press' : '');
