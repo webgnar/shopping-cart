@@ -32,6 +32,10 @@ func _ready() -> void:
 	_setup_input()
 	tile_mat.friction = 0.18
 	asphalt_mat.friction = 0.9
+	var t: Variant = ShoppingCart.load_tuning_file()
+	if t != null and t.has("floor_friction"):
+		tile_mat.friction = float(t.floor_friction.get("tile", tile_mat.friction))
+		asphalt_mat.friction = float(t.floor_friction.get("asphalt", asphalt_mat.friction))
 	solid_mat.friction = 0.5
 	_build_environment()
 	_build_level()

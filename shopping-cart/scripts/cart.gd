@@ -10,6 +10,7 @@ extends Node3D
 ## Cart local axes: nose = +X, up = +Y, left = -Z. Units: metres, kg, newtons.
 
 const MODEL := preload("res://assets/models/shopping_cart.glb")
+const TUNING_PATH := "res://tuning/cart_tuning.json"   ## shared with the mobile web game
 
 @export_group("Masses")
 @export var frame_mass := 18.0
@@ -72,8 +73,37 @@ var _links := []           ## [visual node, body, offset] kept in step every fra
 
 
 func _ready() -> void:
+	load_tuning()
 	set_gear(gear)
 	_build()
+
+
+## Reads the shared tuning file (also used by the mobile web game) over the defaults above.
+func load_tuning() -> void:
+	var t: Variant = load_tuning_file()
+	if t == null:
+		return
+	for key in ["frame_mass", "wheel_mass", "fork_mass", "gate_mass", "rolling_resistance", "grip_yaw_damping",
+			"lift_pitch", "press_pitch", "side_roll", "tilt_kp", "tilt_kd", "tilt_max",
+			"settle_speed", "settle_spin", "stop_speed", "stop_spin"]:
+		if t.has(key):
+			set(key, float(t[key]))
+	if t.has("gears"):
+		var g: Array[Vector2] = []
+		for pair in t.gears:
+			g.append(Vector2(pair[0], pair[1]))
+		gears = g
+
+
+static func load_tuning_file() -> Variant:
+	if not FileAccess.file_exists(TUNING_PATH):
+		push_warning("No tuning file at %s; using built-in defaults" % TUNING_PATH)
+		return null
+	var t: Variant = JSON.parse_string(FileAccess.get_file_as_string(TUNING_PATH))
+	if typeof(t) != TYPE_DICTIONARY:
+		push_warning("Could not read %s; using built-in defaults" % TUNING_PATH)
+		return null
+	return t
 
 
 ## Picks a push gear (1 = stroll ... 5 = run) and returns the gear actually set.
