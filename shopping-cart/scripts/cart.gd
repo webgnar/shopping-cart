@@ -25,6 +25,9 @@ var walk_max := 2.2                 ## m/s at which a walking hand stops adding 
 @export var rolling_resistance := 0.015  ## fraction of each wheel's load that resists rolling (real casters: 0.01 to 0.02)
 @export var settle_speed := 0.15    ## m/s: below this, with no hands on, the cart brakes to a stop
 @export var settle_spin := 0.25     ## rad/s: same, for turning
+@export var stop_speed := 0.05      ## m/s: below this for 0.25 s with nothing pressed, the cart stops dead
+@export var stop_spin := 0.05       ## rad/s: same, for turning
+var _rest_time := 0.0
 @export var grip_yaw_damping := 30.0  ## N*m per rad/s: two hands on the bar resist the cart twisting
 @export_group("Lift and press")
 @export var lift_pitch := -0.2      ## rad, W: rear wheels up
@@ -92,6 +95,19 @@ func _build() -> void:
 	frame.physics_material_override = cart_mat
 	frame.center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
 	frame.center_of_mass = COM
+	frame.freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC   # when the cart is at rest it is pinned, see _stop()
+	# A zone a little larger than the cart: a loose object entering it releases the pin before it hits.
+	var guard := Area3D.new()
+	guard.collision_layer = 0
+	guard.collision_mask = LAYER_WORLD
+	var gcs := CollisionShape3D.new()
+	var gshape := BoxShape3D.new()
+	gshape.size = Vector3(1.4, 1.4, 1.0)
+	gcs.shape = gshape
+	gcs.position = Vector3(0.47, 0.6, 0)
+	guard.add_child(gcs)
+	frame.add_child(guard)
+	guard.body_entered.connect(_on_frame_hit)
 	_box(frame, Vector3(0.72, 0.024, 0.58), Vector3(0.57, 0.46, 0))     # basket floor
 	_box(frame, Vector3(0.03, 0.50, 0.60), Vector3(0.95, 0.71, 0))      # front wall
 	_box(frame, Vector3(0.84, 0.50, 0.03), Vector3(0.53, 0.71, -0.30))  # left wall
@@ -161,26 +177,54 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_pressed(a):
 			any_input = true
 			break
-	if any_input and frame.sleeping:
+	if any_input and frame.freeze:
 		_wake()
 	_apply_hands()
 	_apply_rolling_resistance(delta)
 	if not any_input:
-		_settle()
+		_settle(delta)
+	else:
+		_rest_time = 0.0
 
 
 ## Real carts have static friction: once nearly stopped with no hands pushing, they stay put. Jolt's contact
 ## friction lets the wheels creep (about 1 degree a second of slow spin), so near rest we brake the frame
 ## gently and let the bodies fall asleep. Any key wakes them.
-func _settle() -> void:
+func _settle(delta: float) -> void:
+	if frame.freeze:
+		return
 	var v := frame.linear_velocity
 	var w := frame.angular_velocity
 	if v.length() < settle_speed and w.length() < settle_spin:
 		frame.apply_central_force(-v * frame_mass * 40.0)
 		frame.apply_torque(-w * 40.0)
+	# Creeping this slowly for a moment with nothing pressed: stop dead and sleep, so it can't drift at all.
+	if v.length() < stop_speed and w.length() < stop_spin and gate.angular_velocity.length() < 0.1:
+		_rest_time += delta
+		if _rest_time >= 0.25:
+			_stop()
+	else:
+		_rest_time = 0.0
+
+
+## Pins the frame exactly where it is (the wheels, casters and gate stay live). Any key, or a loose object
+## knocking into the cart, releases it.
+func _stop() -> void:
+	for b in [frame] + wheels.values() + forks.values():
+		b.linear_velocity = Vector3.ZERO
+		b.angular_velocity = Vector3.ZERO
+	frame.freeze = true
+
+
+## A loose object (not the cart's own groceries) is about to hit the pinned cart: let physics take it again.
+func _on_frame_hit(body: Node) -> void:
+	if frame.freeze and body is RigidBody3D and not groceries.has(body):
+		_wake()
 
 
 func _wake() -> void:
+	frame.freeze = false
+	_rest_time = 0.0
 	for b in [frame, gate] + wheels.values() + forks.values():
 		b.sleeping = false
 
@@ -291,7 +335,7 @@ func _body(n: String, mass: float, pos: Vector3, layer: int, mask: int) -> Rigid
 	b.collision_layer = layer
 	b.collision_mask = mask
 	b.position = pos
-	b.can_sleep = true
+	b.can_sleep = false
 	add_child(b)
 	return b
 
