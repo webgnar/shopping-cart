@@ -29,7 +29,6 @@ canvas { display: block; }
 .hand b { font: 700 15px/1 var(--display); text-transform: uppercase; letter-spacing: .04em; }
 .hand .st { font: 500 12px var(--mono); color: var(--muted); min-height: 1.4em; }
 .hand.push { border-color: var(--push); } .hand.pull { border-color: var(--pull); }
-.facing b { color: var(--tag); font-weight: 600; }
 .hand.lift .st, .hand.press .st { color: var(--lift); }
 .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
 kbd { font: 500 12px var(--mono); color: var(--ink); border: 1px solid #4a5263; border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px; min-width: 12px; text-align: center; }
@@ -55,10 +54,9 @@ kbd.on { background: var(--tag); color: #1b1f27; border-color: var(--tag); }
 <div class="hud title"><h1>Shopping <span>Cart</span> physics mock-up</h1><p>Two hands on the handlebar. The physics does the steering.</p></div>
 <div class="hud keys">
   <div class="hands">
-    <div class="hand" id="handL"><b>Left hand</b><div class="row"><kbd data-k="KeyA">A</kbd>push / pull</div><div class="st" id="stL">&nbsp;</div></div>
-    <div class="hand" id="handR"><b>Right hand</b><div class="row"><kbd data-k="KeyD">D</kbd>push / pull</div><div class="st" id="stR">&nbsp;</div></div>
+    <div class="hand" id="handL"><b>Left hand</b><div class="row"><kbd data-k="KeyQ">Q</kbd>push&nbsp;<kbd data-k="KeyA">A</kbd>pull</div><div class="st" id="stL">&nbsp;</div></div>
+    <div class="hand" id="handR"><b>Right hand</b><div class="row"><kbd data-k="KeyE">E</kbd>push&nbsp;<kbd data-k="KeyD">D</kbd>pull</div><div class="st" id="stR">&nbsp;</div></div>
   </div>
-  <div class="row facing">Camera: <b id="facing">behind the cart, A/D push</b></div>
   <div class="row"><kbd data-k="KeyW">W</kbd>lift handle <kbd data-k="KeyS">S</kbd>press down <kbd data-k="KeyR">R</kbd>reset</div>
 </div>
 <div class="hud stats">
@@ -67,7 +65,7 @@ kbd.on { background: var(--tag); color: #1b1f27; border-color: var(--tag); }
   <div><span>Wheels down</span><b id="sWheels">4 / 4</b></div>
   <div><span>Groceries</span><b id="sCargo">5 / 5</b></div>
 </div>
-<div class="hud help">Click the scene, then move the mouse to look around (Esc frees the mouse). Scroll to zoom. The shiny tile floor is slippery; the asphalt grips. A and D move the hands the way the camera faces: look from behind to push, swing round to the front to pull the cart back. Try one hand only, or <kbd>S</kbd> for a wheelie.</div>
+<div class="hud help">Click the scene, then move the mouse to look around (Esc frees the mouse). Scroll to zoom. The shiny tile floor is slippery; the asphalt grips. Try one hand only, push with one and pull with the other to spin, both pull to back up, or <kbd>S</kbd> for a wheelie.</div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -236,7 +234,7 @@ resetCart();
 
 // ---------------------------------------------------------------- input: two hands
 const keys = new Set();
-addEventListener('keydown', e => { if (['KeyA', 'KeyD', 'KeyW', 'KeyS', 'KeyR'].includes(e.code)) { keys.add(e.code); e.preventDefault(); if (e.code === 'KeyR') resetCart(frame.position.vsub(frame.quaternion.vmult(T.com)).vadd(V(0, 0.05, 0)), heading()); } });
+addEventListener('keydown', e => { if (['KeyQ', 'KeyA', 'KeyE', 'KeyD', 'KeyW', 'KeyS', 'KeyR'].includes(e.code)) { keys.add(e.code); e.preventDefault(); if (e.code === 'KeyR') resetCart(frame.position.vsub(frame.quaternion.vmult(T.com)).vadd(V(0, 0.05, 0)), heading()); } });
 addEventListener('keyup', e => keys.delete(e.code));
 addEventListener('blur', () => keys.clear());
 
@@ -249,15 +247,15 @@ function applyHands() {
   const fwdRaw = q.vmult(V(1, 0, 0));
   const fwd = V(fwdRaw.x, 0, fwdRaw.z); fwd.normalize();
   const lift = keys.has('KeyW'), press = keys.has('KeyS');
-  const held = { L: keys.has('KeyA'), R: keys.has('KeyD') };
+  const held = { L: keys.has('KeyQ') || keys.has('KeyA'), R: keys.has('KeyE') || keys.has('KeyD') };
   const noneHeld = !held.L && !held.R;
-  for (const [h, s, key] of [['L', -1, 'KeyA'], ['R', 1, 'KeyD']]) {
+  for (const [h, s, fwdKey, backKey] of [['L', -1, 'KeyQ', 'KeyA'], ['R', 1, 'KeyE', 'KeyD']]) {
     const rLocal = local(T.hand.x, T.hand.y, s * T.hand.z);
     const r = q.vmult(rLocal);                                   // hand offset from the frame's centre of mass, world axes
     const vHand = frame.velocity.vadd(frame.angularVelocity.cross(r));
     const along = vHand.dot(fwd);
-    // The hands move the way the camera faces: +1 pushes the cart forward, -1 pulls it back.
-    let dir = keys.has(key) ? camSign : 0;
+    // +1 pushes this side of the cart forward, -1 pulls it back.
+    let dir = (keys.has(fwdKey) ? 1 : 0) - (keys.has(backKey) ? 1 : 0);
     let st = '';
     if (dir) {
       // A walking person can only add force up to their walking speed.
@@ -304,7 +302,6 @@ addEventListener('mousemove', e => {
 canvas.addEventListener('wheel', e => { camDist = Math.max(1.4, Math.min(9, camDist * (1 + Math.sign(e.deltaY) * 0.1))); e.preventDefault(); }, { passive: false });
 const camTarget = new THREE.Vector3();
 let camHeading = 0;
-let camSign = 1;   // +1 = camera looks along the cart's nose (push), -1 = looks back at the handle (pull)
 
 // ---------------------------------------------------------------- cart visuals
 const cartRoot = new THREE.Group(); scene.add(cartRoot);
@@ -393,12 +390,6 @@ function frameLoop(now) {
   const yaw = camHeading + Math.PI + camYaw;
   camera.position.set(camTarget.x + Math.cos(yaw) * Math.cos(camPitch) * camDist, camTarget.y + Math.sin(camPitch) * camDist, camTarget.z - Math.sin(yaw) * Math.cos(camPitch) * camDist);
   camera.lookAt(camTarget);
-  {
-    const look = camera.getWorldDirection(new THREE.Vector3()), nose = frame.quaternion.vmult(V(1, 0, 0));
-    const d = (look.x * nose.x + look.z * nose.z) / (Math.hypot(look.x, look.z) * Math.hypot(nose.x, nose.z) || 1);
-    if (d > 0.2) camSign = 1; else if (d < -0.2) camSign = -1;   // dead zone when side-on, so it doesn't flicker
-    $('facing').textContent = camSign > 0 ? 'behind the cart, A/D push' : 'in front of the cart, A/D pull';
-  }
   sun.position.set(frame.position.x + 6, 12, frame.position.z + 4); sun.target.position.copy(frame.position);
   hud();
   renderer.render(scene, camera);
@@ -408,7 +399,7 @@ requestAnimationFrame(frameLoop);
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
 // Test hook: lets scripted checks drive the hands and read the state.
-window.__cart = { get camSign() { return camSign; }, setCamYaw: v => { camYaw = v; }, keys, frame, wheels, forks, goods, heading, resetCart, T, world };
+window.__cart = { setCamYaw: v => { camYaw = v; }, keys, frame, wheels, forks, goods, heading, resetCart, T, world };
 </script>
 </body>
 </html>
