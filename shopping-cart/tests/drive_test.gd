@@ -75,7 +75,7 @@ func _run() -> void:
 		var turn := rad_to_deg(wrapf(cart.heading() - h0, -PI, PI))
 		var ok := false
 		match sc[3]:
-			"still": ok = d.length() < 0.03 and absf(turn) < 0.5
+			"still": ok = d.length() < 0.005 and absf(turn) < 0.1 and cart.frame.freeze
 			"forward_straight": ok = along > 1.0 and absf(turn) < 12
 			"backward": ok = along < -0.7 and absf(turn) < 25
 			"turns_left": ok = turn > 30
@@ -87,7 +87,7 @@ func _run() -> void:
 			"wakes_and_moves": ok = along > 1.0
 			"gear1": ok = along > 0.8 and along < 1.4 and cart.wheels_down() == 4
 			"gear5": ok = along > 3.0 and cart.wheels_down() == 4 and max_rear < 0.09
-			"comes_to_rest": ok = cart.frame.linear_velocity.length() < 0.01 and absf(cart.frame.angular_velocity.y) < 0.005
+			"comes_to_rest": ok = cart.frame.freeze
 		if not ok:
 			failures += 1
 		print("%-5s %-18s moved %.2f m  speed along nose %+.2f m/s  turned %+4d deg  max pitch %4.1f  front wheels up to %.2f m  rear up to %.2f m  groceries %d/5  wheels down %d" % [
@@ -113,5 +113,28 @@ func _run() -> void:
 	if not gate_ok:
 		failures += 1
 	print("%-5s %-18s swung %.0f deg when shoved, back to %.0f deg after" % ["PASS" if gate_ok else "FAIL", "gate", swing, settle])
+	# A pinned cart still gets knocked when something hits it.
+	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
+	await _wait(2.0)
+	cart = main.cart
+	var pinned := cart.frame.freeze
+	var p_before := cart.cart_origin()
+	var box := RigidBody3D.new()
+	box.mass = 8.0
+	box.collision_layer = ShoppingCart.LAYER_WORLD
+	box.collision_mask = ShoppingCart.LAYER_WORLD | ShoppingCart.LAYER_CART
+	var cs := CollisionShape3D.new()
+	cs.shape = BoxShape3D.new()
+	cs.shape.size = Vector3(0.3, 0.3, 0.3)
+	box.add_child(cs)
+	box.position = cart.frame.global_transform * Vector3(0.55, 0.7, -1.2)
+	main.add_child(box)
+	box.linear_velocity = cart.frame.global_transform.basis.z * 4.0   # thrown at the cart's left side
+	await _wait(1.5)
+	var knocked := (cart.cart_origin() - p_before).length()
+	var hit_ok := pinned and knocked > 0.03
+	if not hit_ok:
+		failures += 1
+	print("%-5s %-18s pinned at rest: %s, moved %.2f m when a box hit it" % ["PASS" if hit_ok else "FAIL", "knocked when pinned", pinned, knocked])
 	print("RESULT: %s (%d failing)" % ["ALL PASS" if failures == 0 else "FAILURES", failures])
 	quit(1 if failures else 0)

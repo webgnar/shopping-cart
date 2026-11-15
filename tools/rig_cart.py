@@ -83,6 +83,28 @@ def joint(e, kind, axis, lo=None, hi=None):
 
 
 ref = set(o.name for o in bpy.data.collections["Reference"].objects)
+
+# ---- Fix inside-out parts. The right-hand casters were made by mirroring the left ones with a -1 scale,
+# which renders inside out once exported; and the rear-right wheel's faces point inward. Bake each mirror
+# into its mesh with faces turned the right way, and flip the rear-right wheel's faces.
+from mathutils import Matrix
+REAR_RIGHT_INWARD = ["Cube.002", "Boss-Extrude6.002", "Indent1.002"]
+fixed = []
+for o in bpy.data.objects:
+    if o.type != "MESH" or o.name in ref or not len(o.data.vertices):
+        continue
+    if o.matrix_world.determinant() < 0:
+        me = o.data.copy()
+        me.transform(Matrix.Diagonal((o.scale.x, o.scale.y, o.scale.z, 1.0)))
+        me.flip_normals()          # the mirror reversed the winding; restore outward faces
+        o.data = me
+        o.scale = (1, 1, 1)
+        fixed.append(o.name)
+    elif o.name in REAR_RIGHT_INWARD:
+        o.data = o.data.copy()
+        o.data.flip_normals()
+        fixed.append(o.name)
+print("FIXED INSIDE-OUT", len(fixed), fixed)
 for o in bpy.data.objects:
     if o.name in ref:
         o.hide_render = True
