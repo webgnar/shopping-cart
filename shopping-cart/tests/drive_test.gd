@@ -5,7 +5,7 @@ extends SceneTree
 
 const SCENARIOS := [
 	# name, actions held, seconds, check
-	["idle", [], 1.5, "still"],
+	["idle", [], 5.0, "still"],
 	["Q+E both push", ["push_left", "push_right"], 3.0, "forward_straight"],
 	["A+D both pull", ["pull_left", "pull_right"], 3.0, "backward"],
 	["E right push", ["push_right"], 3.0, "turns_left"],
@@ -15,6 +15,10 @@ const SCENARIOS := [
 	["W lift", ["lift"], 1.5, "rear_up"],
 	["W+E lift right", ["lift", "push_right"], 1.5, "right_up"],
 	["tile Q+E push", ["push_left", "push_right"], 3.0, "forward_straight"],
+	["coast then rest", ["coast"], 12.0, "comes_to_rest"],
+	["rested 4 s, then Q+E", ["push_left", "push_right"], 2.5, "wakes_and_moves"],
+	["gear 1 Q+E", ["push_left", "push_right"], 3.0, "gear1"],
+	["gear 5 Q+E", ["push_left", "push_right"], 4.0, "gear5"],
 ]
 
 var main: Node3D
@@ -41,7 +45,13 @@ func _run() -> void:
 		var cart: ShoppingCart = main.cart
 		var p0 := cart.cart_origin()
 		var h0 := cart.heading()
-		for a in sc[1]:
+		cart.set_gear(1 if sc[3] == "gear1" else (5 if sc[3] == "gear5" else 3))
+		var was_asleep := false
+		if sc[3] == "wakes_and_moves":
+			await _wait(4.0)
+			was_asleep = cart.frame.sleeping
+		var coast: bool = sc[1] == ["coast"]
+		for a in (["push_right"] if coast else sc[1]):
 			Input.action_press(a)
 		var max_pitch := 0.0
 		var max_rear := 0.0
@@ -49,13 +59,15 @@ func _run() -> void:
 		var max_right_up := 0.0
 		var ticks := int(sc[2] * Engine.physics_ticks_per_second)
 		for i in ticks:
+			if coast and i == int(Engine.physics_ticks_per_second):
+				Input.action_release("push_right")
 			await physics_frame
 			var b := cart.frame.global_transform.basis
 			max_pitch = maxf(max_pitch, absf(rad_to_deg(asin(b.x.y))))
 			max_rear = maxf(max_rear, minf(cart.wheels.RL.global_position.y, cart.wheels.RR.global_position.y))
 			max_front = maxf(max_front, minf(cart.wheels.FL.global_position.y, cart.wheels.FR.global_position.y))
 			max_right_up = maxf(max_right_up, rad_to_deg(asin(b.z.y)))
-		for a in sc[1]:
+		for a in (["push_right"] if coast else sc[1]):
 			Input.action_release(a)
 		var d := cart.cart_origin() - p0
 		var nose := cart.frame.global_transform.basis.x
@@ -63,7 +75,7 @@ func _run() -> void:
 		var turn := rad_to_deg(wrapf(cart.heading() - h0, -PI, PI))
 		var ok := false
 		match sc[3]:
-			"still": ok = d.length() < 0.05 and absf(turn) < 3
+			"still": ok = d.length() < 0.03 and absf(turn) < 0.5
 			"forward_straight": ok = along > 1.0 and absf(turn) < 12
 			"backward": ok = along < -0.7 and absf(turn) < 25
 			"turns_left": ok = turn > 30
@@ -72,6 +84,10 @@ func _run() -> void:
 			"wheelie": ok = max_front > 0.12 and max_rear < 0.09
 			"rear_up": ok = max_rear > 0.10 and max_front < 0.09
 			"right_up": ok = max_right_up > 5
+			"wakes_and_moves": ok = along > 1.0
+			"gear1": ok = along > 0.8 and along < 1.4 and cart.wheels_down() == 4
+			"gear5": ok = along > 3.0 and cart.wheels_down() == 4 and max_rear < 0.09
+			"comes_to_rest": ok = cart.frame.linear_velocity.length() < 0.01 and absf(cart.frame.angular_velocity.y) < 0.005
 		if not ok:
 			failures += 1
 		print("%-5s %-18s moved %.2f m  speed along nose %+.2f m/s  turned %+4d deg  max pitch %4.1f  front wheels up to %.2f m  rear up to %.2f m  groceries %d/5  wheels down %d" % [

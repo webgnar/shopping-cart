@@ -17,9 +17,14 @@ const MODEL := preload("res://assets/models/shopping_cart.glb")
 @export var fork_mass := 0.6
 @export var gate_mass := 1.5
 @export_group("Hands")
-@export var push_force := 45.0      ## N per hand
-@export var walk_max := 2.2         ## m/s at which a walking hand stops adding force
+## Push gears: [N per hand, top walking speed m/s]. Scroll wheel or 1-5 picks one.
+@export var gears: Array[Vector2] = [Vector2(25, 1.2), Vector2(35, 1.8), Vector2(45, 2.2), Vector2(65, 3.0), Vector2(90, 4.0)]
+@export var gear := 3               ## 1-based, into `gears`
+var push_force := 45.0              ## N per hand (from the current gear)
+var walk_max := 2.2                 ## m/s at which a walking hand stops adding force (from the current gear)
 @export var rolling_resistance := 0.015  ## fraction of each wheel's load that resists rolling (real casters: 0.01 to 0.02)
+@export var settle_speed := 0.15    ## m/s: below this, with no hands on, the cart brakes to a stop
+@export var settle_spin := 0.25     ## rad/s: same, for turning
 @export var grip_yaw_damping := 30.0  ## N*m per rad/s: two hands on the bar resist the cart twisting
 @export_group("Lift and press")
 @export var lift_pitch := -0.2      ## rad, W: rear wheels up
@@ -64,7 +69,16 @@ var _links := []           ## [visual node, body, offset] kept in step every fra
 
 
 func _ready() -> void:
+	set_gear(gear)
 	_build()
+
+
+## Picks a push gear (1 = stroll ... 5 = run) and returns the gear actually set.
+func set_gear(g: int) -> int:
+	gear = clampi(g, 1, gears.size())
+	push_force = gears[gear - 1].x
+	walk_max = gears[gear - 1].y
+	return gear
 
 
 func _build() -> void:
@@ -138,9 +152,37 @@ func _process(_delta: float) -> void:
 		l[0].global_transform = l[1].global_transform * l[2]
 
 
+const ACTIONS := ["push_left", "pull_left", "push_right", "pull_right", "lift", "press"]
+
+
 func _physics_process(delta: float) -> void:
+	var any_input := false
+	for a in ACTIONS:
+		if Input.is_action_pressed(a):
+			any_input = true
+			break
+	if any_input and frame.sleeping:
+		_wake()
 	_apply_hands()
 	_apply_rolling_resistance(delta)
+	if not any_input:
+		_settle()
+
+
+## Real carts have static friction: once nearly stopped with no hands pushing, they stay put. Jolt's contact
+## friction lets the wheels creep (about 1 degree a second of slow spin), so near rest we brake the frame
+## gently and let the bodies fall asleep. Any key wakes them.
+func _settle() -> void:
+	var v := frame.linear_velocity
+	var w := frame.angular_velocity
+	if v.length() < settle_speed and w.length() < settle_spin:
+		frame.apply_central_force(-v * frame_mass * 40.0)
+		frame.apply_torque(-w * 40.0)
+
+
+func _wake() -> void:
+	for b in [frame, gate] + wheels.values() + forks.values():
+		b.sleeping = false
 
 
 ## Each wheel resists rolling with a small torque, as real casters do. Also keeps the cart still on flat ground.
@@ -249,7 +291,7 @@ func _body(n: String, mass: float, pos: Vector3, layer: int, mask: int) -> Rigid
 	b.collision_layer = layer
 	b.collision_mask = mask
 	b.position = pos
-	b.can_sleep = false
+	b.can_sleep = true
 	add_child(b)
 	return b
 

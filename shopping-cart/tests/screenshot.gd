@@ -13,6 +13,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	main.spawn_cart(Vector3(2, 0, -1), 0.5)
+	main.gear = main.cart.set_gear(4)
 	for i in 90:
 		await process_frame
 	for a in ["push_left", "push_right", "press"]:

@@ -8,9 +8,12 @@ const KEYS := {
 	"push_left": KEY_Q, "pull_left": KEY_A,
 	"push_right": KEY_E, "pull_right": KEY_D,
 	"lift": KEY_W, "press": KEY_S, "reset": KEY_R,
+	"gear_1": KEY_1, "gear_2": KEY_2, "gear_3": KEY_3, "gear_4": KEY_4, "gear_5": KEY_5,
+	"fullscreen": KEY_F11,
 }
 
 var cart: ShoppingCart
+var gear := 3   ## push gear, kept across resets
 var camera: Camera3D
 var cam_yaw := 0.0
 var cam_pitch := 0.38
@@ -57,6 +60,7 @@ func spawn_cart(at: Vector3, yaw: float) -> void:
 		cart.free()
 	cart = ShoppingCart.new()
 	cart.name = "Cart"
+	cart.gear = gear
 	cart.transform = Transform3D(Basis(Vector3.UP, yaw), at + Vector3(0, 0.005, 0))
 	add_child(cart)
 	cam_heading = yaw
@@ -67,15 +71,22 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			cam_dist = maxf(1.4, cam_dist * 0.9)
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			cam_dist = minf(9.0, cam_dist * 1.1)
+		elif event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+			var up: bool = event.button_index == MOUSE_BUTTON_WHEEL_UP
+			if event.ctrl_pressed:   # Ctrl + scroll zooms the camera
+				cam_dist = maxf(1.4, cam_dist * 0.9) if up else minf(9.0, cam_dist * 1.1)
+			else:                    # scroll shifts the push gear
+				gear = cart.set_gear(gear + (1 if up else -1))
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		cam_yaw -= event.relative.x * 0.004
 		cam_pitch = clampf(cam_pitch + event.relative.y * 0.003, 0.05, 1.3)
 	elif event.is_action_pressed("ui_cancel"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	elif event.is_action_pressed("fullscreen"):
+		var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED if fs else DisplayServer.WINDOW_MODE_FULLSCREEN)
+	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode >= KEY_1 and event.physical_keycode <= KEY_5:
+		gear = cart.set_gear(event.physical_keycode - KEY_0)
 	elif event.is_action_pressed("reset"):
 		var p := cart.cart_origin()
 		spawn_cart(Vector3(p.x, 0.05, p.z), cart.heading())
@@ -221,17 +232,21 @@ func _build_hud() -> void:
 	layer.add_child(title)
 
 	var stats := Label.new()
-	stats.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	stats.position = Vector2(-230, 12)
-	stats.size = Vector2(214, 90)
+	stats.set_anchors_preset(Control.PRESET_TOP_RIGHT)   # stays pinned to the top-right corner at any window size
+	stats.offset_left = -260
+	stats.offset_right = -16
+	stats.offset_top = 12
+	stats.offset_bottom = 112
 	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	layer.add_child(stats)
 	_hud.stats = stats
 
 	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	panel.position = Vector2(16, -16)
+	panel.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)  # stays pinned to the bottom-left corner
+	panel.offset_left = 16
+	panel.offset_bottom = -16
 	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	panel.grow_horizontal = Control.GROW_DIRECTION_END
 	var psb := _cap_style(Color(0.07, 0.08, 0.11, 0.85), Color("2e3542"), 1)
 	psb.set_content_margin_all(12)
 	panel.add_theme_stylebox_override("panel", psb)
@@ -239,6 +254,35 @@ func _build_hud() -> void:
 	var vb := VBoxContainer.new()
 	vb.add_theme_constant_override("separation", 8)
 	panel.add_child(vb)
+
+	# Push meter: five segments, the current gear and its force.
+	var meter_box := VBoxContainer.new()
+	meter_box.add_theme_constant_override("separation", 4)
+	vb.add_child(meter_box)
+	var meter_label := Label.new()
+	meter_label.add_theme_font_size_override("font_size", 13)
+	meter_box.add_child(meter_label)
+	var segs := HBoxContainer.new()
+	segs.add_theme_constant_override("separation", 4)
+	meter_box.add_child(segs)
+	_hud.meter_label = meter_label
+	_hud.segs = []
+	for i in 5:
+		var seg := Panel.new()
+		seg.custom_minimum_size = Vector2(48, 10 + i * 3)
+		seg.size_flags_vertical = Control.SIZE_SHRINK_END
+		segs.add_child(seg)
+		_hud.segs.append(seg)
+	_hud.seg_off = _cap_style(Color("262c38"), Color("4a5263"), 1)
+	_hud.seg_on = []
+	for i in 5:
+		var c := Color("3ddc84").lerp(Color("ffb02e"), i / 4.0)
+		_hud.seg_on.append(_cap_style(c, c, 1))
+	var meter_hint := Label.new()
+	meter_hint.text = "scroll or 1-5 to change push strength"
+	meter_hint.add_theme_font_size_override("font_size", 11)
+	meter_hint.modulate = Color(1, 1, 1, 0.6)
+	meter_box.add_child(meter_hint)
 
 	var grid := GridContainer.new()
 	grid.columns = 3
@@ -275,7 +319,7 @@ func _build_hud() -> void:
 	vb.add_child(hands)
 	_hud.hands = hands
 	var hint := Label.new()
-	hint.text = "R reset  ·  click to look with the mouse, Esc to release"
+	hint.text = "R reset  ·  F11 full screen  ·  click to look, Esc to release, Ctrl+scroll zoom"
 	hint.add_theme_font_size_override("font_size", 11)
 	hint.modulate = Color(1, 1, 1, 0.6)
 	vb.add_child(hint)
@@ -291,5 +335,9 @@ func _update_hud() -> void:
 	_hud.stats.text = "Speed  %.1f km/h\nTurn rate  %d°/s\nWheels down  %d / 4\nGroceries  %d / %d" % [
 		Vector2(v.x, v.z).length() * 3.6, roundi(rad_to_deg(cart.frame.angular_velocity.y)),
 		cart.wheels_down(), cart.groceries_in_basket(), cart.groceries.size()]
+	_hud.meter_label.text = "PUSH  gear %d / %d   ·   %d N per hand   ·   up to %.0f km/h" % [
+		cart.gear, cart.gears.size(), roundi(cart.push_force), cart.walk_max * 3.6]
+	for i in _hud.segs.size():
+		_hud.segs[i].add_theme_stylebox_override("panel", _hud.seg_on[i] if i < cart.gear else _hud.seg_off)
 	var hs := cart.hand_state
 	_hud.hands.text = "Left hand: %s\nRight hand: %s" % [hs.L if hs.L else "—", hs.R if hs.R else "—"]
