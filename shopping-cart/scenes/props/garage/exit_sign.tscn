@@ -1,35 +1,21 @@
-[gd_scene format=3]
+[gd_scene format=4]
 
-[ext_resource type="Material" path="res://assets/materials/garage/sign_navy.tres" id="1_o1ugt"]
-[ext_resource type="Material" path="res://assets/materials/garage/dark_metal.tres" id="2_gutag"]
+[ext_resource type="PackedScene" path="res://assets/models/garage/exit_sign/exit_sign.glb" id="1_7o2c1"]
+[ext_resource type="Material" path="res://assets/materials/garage/sign_navy.tres" id="2_p16q3"]
+[ext_resource type="Material" path="res://assets/materials/garage/dark_metal.tres" id="3_nxivm"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_rnyi1"]
-material = ExtResource("1_o1ugt")
-size = Vector3(1.8, 0.42, 0.06)
+[node name="ExitSign" type="Node3D" unique_id=151390304]
 
-[sub_resource type="BoxMesh" id="BoxMesh_x3y4g"]
-material = ExtResource("2_gutag")
-size = Vector3(0.03, 0.4, 0.03)
+[node name="Model" parent="." unique_id=1498033132 instance=ExtResource("1_7o2c1")]
 
-[sub_resource type="BoxMesh" id="BoxMesh_xp3v1"]
-material = ExtResource("2_gutag")
-size = Vector3(0.03, 0.4, 0.03)
+[node name="Board" parent="Model" index="0" unique_id=224455836]
+surface_material_override/0 = ExtResource("2_p16q3")
 
-[node name="ExitSign" type="Node3D" unique_id=521815513]
+[node name="Rods" parent="Model" index="1" unique_id=1300291159]
+surface_material_override/0 = ExtResource("3_nxivm")
 
-[node name="Board" type="MeshInstance3D" parent="." unique_id=164828544]
-mesh = SubResource("BoxMesh_rnyi1")
-
-[node name="RodL" type="MeshInstance3D" parent="." unique_id=594607155]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.7, 0.41, 0)
-mesh = SubResource("BoxMesh_x3y4g")
-
-[node name="RodR" type="MeshInstance3D" parent="." unique_id=783408316]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, 0.41, 0)
-mesh = SubResource("BoxMesh_xp3v1")
-
-[node name="Front" type="Label3D" parent="." unique_id=1360302987]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.035)
+[node name="Front" type="Label3D" parent="." unique_id=2035347587]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, -0.61, -0.032)
 pixel_size = 0.004
 double_sided = false
 modulate = Color(0.95686275, 0.95686275, 0.9411765, 1)
@@ -37,11 +23,13 @@ text = "Exit  →"
 font_size = 72
 outline_size = 0
 
-[node name="Back" type="Label3D" parent="." unique_id=84652465]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0, -0.035)
+[node name="Back" type="Label3D" parent="." unique_id=965428574]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.61, 0.032)
 pixel_size = 0.004
 double_sided = false
 modulate = Color(0.95686275, 0.95686275, 0.9411765, 1)
 text = "←  Exit"
 font_size = 72
 outline_size = 0
+
+[editable path="Model"]

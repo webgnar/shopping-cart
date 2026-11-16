@@ -1,43 +1,25 @@
-[gd_scene format=3]
+[gd_scene format=4]
 
-[ext_resource type="Material" path="res://assets/materials/garage/concrete_pillar.tres" id="1_h38od"]
-[ext_resource type="Material" path="res://assets/materials/garage/paint_yellow.tres" id="2_bwh6q"]
+[ext_resource type="PackedScene" path="res://assets/models/garage/pillar/pillar.glb" id="1_5q2e2"]
+[ext_resource type="Material" path="res://assets/materials/garage/concrete_pillar.tres" id="2_gcrmk"]
+[ext_resource type="Material" path="res://assets/materials/garage/paint_yellow.tres" id="3_7r0p0"]
 
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_1eht5"]
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_ga2it"]
 height = 2.9
-radius = 0.25
+radius = 0.26
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_15mtb"]
-material = ExtResource("1_h38od")
-top_radius = 0.25
-bottom_radius = 0.25
-height = 2.9
+[node name="Pillar" type="StaticBody3D" unique_id=473902361]
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_kjahb"]
-material = ExtResource("1_h38od")
-bottom_radius = 0.25
-height = 0.35
+[node name="Model" parent="." unique_id=2120998514 instance=ExtResource("1_5q2e2")]
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_7j7w8"]
-material = ExtResource("2_bwh6q")
-top_radius = 0.26
-bottom_radius = 0.26
-height = 0.7
+[node name="Pillar" parent="Model" index="0" unique_id=525937595]
+surface_material_override/0 = ExtResource("2_gcrmk")
 
-[node name="Pillar" type="StaticBody3D" unique_id=1199606576]
+[node name="Foot" parent="Model" index="1" unique_id=1848744933]
+surface_material_override/0 = ExtResource("3_7r0p0")
 
-[node name="Collision" type="CollisionShape3D" parent="." unique_id=1245411927]
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=1631847779]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.45, 0)
-shape = SubResource("CylinderShape3D_1eht5")
+shape = SubResource("CylinderShape3D_ga2it")
 
-[node name="Shaft" type="MeshInstance3D" parent="." unique_id=712647582]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.45, 0)
-mesh = SubResource("CylinderMesh_15mtb")
-
-[node name="Capital" type="MeshInstance3D" parent="." unique_id=880632565]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.725, 0)
-mesh = SubResource("CylinderMesh_kjahb")
-
-[node name="Foot" type="MeshInstance3D" parent="." unique_id=191177155]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, 0)
-mesh = SubResource("CylinderMesh_7j7w8")
+[editable path="Model"]

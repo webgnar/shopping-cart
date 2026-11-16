@@ -1,6 +1,7 @@
 @tool
 extends StaticBody3D
-## A parked car to bump into. Everything is in scenes/props/garage/parked_car.tscn; this only paints it, so each
+## A parked car to bump into (model: assets/models/garage/parked_car, built by tools/blender/garage_models.py).
+## Everything is in scenes/props/garage/parked_car.tscn; this only paints the body, so each
 ## car in a level can have its own colour: pick Paint Color in the inspector.
 
 @export var paint_color := Color("a8322d"):
@@ -15,7 +16,9 @@ func _ready() -> void:
 
 
 func _apply_paint() -> void:
-	var mat := ($Body as MeshInstance3D).mesh.surface_get_material(0).duplicate() as StandardMaterial3D
+	var body := get_node_or_null("Model/Body") as MeshInstance3D   # car_paint object of parked_car.glb
+	if body == null:
+		return
+	var mat := body.get_active_material(0).duplicate() as StandardMaterial3D
 	mat.albedo_color = paint_color
-	for n in [$Body, $Roof]:
-		(n as MeshInstance3D).material_override = mat
+	body.material_override = mat

@@ -1,18 +1,23 @@
-[gd_scene format=3]
+[gd_scene format=4]
 
-[ext_resource type="Material" path="res://assets/materials/garage/light_fixture.tres" id="1_umep6"]
+[ext_resource type="PackedScene" path="res://assets/models/garage/garage_light/garage_light.glb" id="1_ldlc5"]
+[ext_resource type="Material" path="res://assets/materials/garage/dark_metal.tres" id="2_hrbmu"]
+[ext_resource type="Material" path="res://assets/materials/garage/light_fixture.tres" id="3_vdoi3"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_uk1ug"]
-material = ExtResource("1_umep6")
-size = Vector3(1.4, 0.06, 0.22)
+[node name="GarageLight" type="Node3D" unique_id=2073932636]
 
-[node name="GarageLight" type="Node3D" unique_id=44194509]
+[node name="Model" parent="." unique_id=131211269 instance=ExtResource("1_ldlc5")]
 
-[node name="Fixture" type="MeshInstance3D" parent="." unique_id=1588989280]
-mesh = SubResource("BoxMesh_uk1ug")
+[node name="Housing" parent="Model" index="0" unique_id=1880381686]
+surface_material_override/0 = ExtResource("2_hrbmu")
 
-[node name="Light" type="OmniLight3D" parent="." unique_id=2096274842]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
+[node name="Tubes" parent="Model" index="1" unique_id=2027941025]
+surface_material_override/0 = ExtResource("3_vdoi3")
+
+[node name="Light" type="OmniLight3D" parent="." unique_id=2095202454]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0)
 light_color = Color(0.93333334, 0.9529412, 1, 1)
 light_energy = 1.4
 omni_range = 9.0
+
+[editable path="Model"]
