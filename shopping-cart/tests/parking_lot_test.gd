@@ -61,10 +61,10 @@ func _run() -> void:
 	await _push(4.0)
 	await _wait(1.0)
 	var front := maxf(cart.wheels.FL.global_position.z, cart.wheels.FR.global_position.z)
-	_check("parking block stops cart", front < -1.15 - 0.11 + 0.03 and front > -2.0,
-		"front wheels stopped at z = %.2f (block face at -1.26)" % front)
+	_check("parking block stops cart", front < -1.15 - 0.089 + 0.03 and front > -2.0,
+		"front wheels stopped at z = %.2f (block face at -1.24)" % front)
 
-	# A cart pushed into a corral's open end ends up inside it (corral 1A opens at z = -5.5, x = -1.3).
+	# A cart pushed into a corral's open end ends up inside it (corral 1A opens at z = -5.44, x = -1.3).
 	main.spawn_cart(Vector3(-1.3, 0, -9.5), -PI / 2)
 	await _wait(1.0)
 	cart = main.cart
@@ -72,6 +72,6 @@ func _run() -> void:
 	await _wait(1.0)
 	var c := cart.cart_origin()
 	_check("cart rolls into corral", c.z > -5.0 and absf(c.x + 1.3) < 0.5,
-		"cart origin at (%.2f, %.2f); corral runs z -5.5 to -1.0" % [c.x, c.z])
+		"cart origin at (%.2f, %.2f); corral runs z -5.44 to -1.27" % [c.x, c.z])
 	print("RESULT: %s (%d failing)" % ["ALL PASS" if failures == 0 else "FAILURES", failures])
 	quit(1 if failures else 0)
