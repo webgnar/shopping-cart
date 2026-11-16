@@ -1,10 +1,31 @@
 {
-  "_about": "Cart feel, shared by the Godot game (scripts/cart.gd, scripts/main.gd) and the mobile web game (mobile/). Units: kg, N, m/s, rad, N*m. Edit here and both versions change.",
+  "_about": "Cart feel for the mobile web game (mobile/), copied from the Godot cart scene (scenes/cart/cart.tscn) and floor materials (assets/physics/*.tres) by tools/export_cart_tuning.gd. Do not edit by hand: change the cart in the Godot editor and export again. Units: kg, N, m/s, rad, N*m.",
   "frame_mass": 18.0,
   "wheel_mass": 0.5,
   "fork_mass": 0.6,
   "gate_mass": 1.5,
-  "gears": [[25, 1.2], [35, 1.8], [45, 2.2], [65, 3.0], [90, 4.0]],
+  "gears": [
+    [
+      25.0,
+      1.2
+    ],
+    [
+      35.0,
+      1.8
+    ],
+    [
+      45.0,
+      2.2
+    ],
+    [
+      65.0,
+      3.0
+    ],
+    [
+      90.0,
+      4.0
+    ]
+  ],
   "_gears": "[N per hand, top walking speed m/s]. Desktop picks one with the scroll wheel; mobile thumbs sweep from the first to the last.",
   "rolling_resistance": 0.015,
   "grip_yaw_damping": 30.0,
@@ -29,5 +50,8 @@
   "settle_spin": 0.25,
   "stop_speed": 0.05,
   "stop_spin": 0.05,
-  "floor_friction": {"tile": 0.18, "asphalt": 0.9}
+  "floor_friction": {
+    "tile": 0.18,
+    "asphalt": 0.9
+  }
 }

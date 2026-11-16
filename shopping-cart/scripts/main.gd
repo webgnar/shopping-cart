@@ -29,7 +29,7 @@ var cam_dist := 3.2
 var cam_heading := 0.0
 var cam_target := Vector3.ZERO
 
-## Shared floor materials; the tuning file can override their friction.
+## Shared floor materials (their friction is set in the .tres files).
 var tile_mat: PhysicsMaterial = preload("res://assets/physics/tile.tres")
 var asphalt_mat: PhysicsMaterial = preload("res://assets/physics/asphalt.tres")
 var solid_mat: PhysicsMaterial = preload("res://assets/physics/solid.tres")
@@ -39,10 +39,6 @@ var hud: CartHUD
 
 func _ready() -> void:
 	_setup_input()
-	var t: Variant = ShoppingCart.load_tuning_file()
-	if t != null and t.has("floor_friction"):
-		tile_mat.friction = float(t.floor_friction.get("tile", tile_mat.friction))
-		asphalt_mat.friction = float(t.floor_friction.get("asphalt", asphalt_mat.friction))
 	_build_environment()
 	_build_level()
 	var spawn := get_node_or_null("CartSpawn") as Node3D
@@ -110,7 +106,7 @@ func _process(delta: float) -> void:
 	# Camera trails behind the handle; the mouse orbits on top of that.
 	var dh := wrapf(cart.heading() - cam_heading, -PI, PI)
 	cam_heading += dh * minf(1.0, 3.0 * delta)
-	var com := cart.frame.global_transform * ShoppingCart.COM
+	var com := cart.frame.global_transform * cart.frame.center_of_mass
 	cam_target = cam_target.lerp(com + Vector3(0, 0.25, 0), minf(1.0, 9.0 * delta))
 	var yaw := cam_heading + PI + cam_yaw
 	camera.global_position = cam_target + Vector3(cos(yaw) * cos(cam_pitch), sin(cam_pitch), -sin(yaw) * cos(cam_pitch)) * cam_dist

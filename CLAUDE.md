@@ -1,7 +1,9 @@
 # Shopping Cart
 
 The game lives in `shopping-cart/` (Godot 4.7, Jolt physics). `mobile/` is a three.js web version,
-`tools/` holds Blender and sync scripts, and `tuning/cart_tuning.json` is shared by both games.
+`tools/` holds Blender scripts. The Godot cart scene is the source of truth for how the cart drives;
+`shopping-cart/tools/export_cart_tuning.gd` copies its settings to the mobile game (`tuning/cart_tuning.json`,
+`mobile/cart_tuning.js`). Never read the JSON from the Godot game.
 
 ## How we build: scenes first
 
@@ -22,8 +24,8 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
 - **Spawn points and other positions are `Marker3D` nodes**, not coordinates in a script.
 - Instancing a prebuilt scene from code (`preload(...).instantiate()`) is fine for things that appear
   at runtime, such as respawning the cart.
-- Values that the tuning file overrides at start (cart masses, floor friction) still have
-  their defaults set on the nodes, so the scene shows sensible values in the editor.
+- **What the inspector shows is what runs.** No file or script overrides node settings at start. Values
+  that are fixed in code are `const`s; anything someone might tune is an `@export` or a node property.
 
 ## How we make models
 
@@ -74,5 +76,7 @@ From `shopping-cart/`:
 - Drive test (headless): `godot --headless --fixed-fps 120 -s res://tests/drive_test.gd`
 - Screenshot: `xvfb-run godot -s res://tests/screenshot.gd -- out.png`
 - Console test: `godot --headless --fixed-fps 120 -s res://tests/console_test.gd`
+- Tuning in sync with the mobile game: `godot --headless -s res://tests/tuning_sync_test.gd`
+  (fix with `godot --headless -s res://tools/export_cart_tuning_cli.gd`)
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`

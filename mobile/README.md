@@ -14,11 +14,13 @@ Open `index.html` (or the published link) on a phone, turn it sideways and tap *
 | File | What it is | How it's made |
 | --- | --- | --- |
 | `index.html` | The game | Hand-written |
-| `cart_tuning.js` | Cart feel (masses, forces, gears, friction...) | `python3 tools/sync_tuning.py` from `shopping-cart/tuning/cart_tuning.json`, which the Godot game also reads |
+| `cart_tuning.js` | Cart feel (masses, forces, gears, friction...) | Exported from the Godot cart scene by `shopping-cart/tools/export_cart_tuning.gd` (also writes `shopping-cart/tuning/cart_tuning.json`) |
 | `cart_model_mobile.js` | Phone-weight cart model (about 89k faces, 11 meshes) | `blender -b ShoppingCart_Rigged.blend --python tools/export_mobile_model.py` |
 
-To change how the cart feels in both games, edit `shopping-cart/tuning/cart_tuning.json`, then run
-`python3 tools/sync_tuning.py`.
+To change how the cart feels in both games, change it in the Godot editor (the Cart node's settings and
+body masses in `scenes/cart/cart.tscn`, floor friction in `assets/physics/*.tres`), then open
+`tools/export_cart_tuning.gd` and use File > Run, or from `shopping-cart/` run
+`godot --headless -s res://tools/export_cart_tuning_cli.gd`.
 
 ## Test
 
