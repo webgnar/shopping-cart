@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" path="res://assets/models/parking_lot/parking_block/parking_block.glb" id="2_ng614"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_oci41"]
-size = Vector3(1.83, 0.13, 0.23)
+size = Vector3(1.83, 0.127, 0.178)
 
 [node name="ParkingBlock" type="StaticBody3D" unique_id=1662605783 groups=["parking_block"]]
 physics_material_override = ExtResource("1_iox83")
@@ -12,5 +12,5 @@ physics_material_override = ExtResource("1_iox83")
 [node name="Model" type="Node3D" parent="." unique_id=941559021 instance=ExtResource("2_ng614")]
 
 [node name="Shape" type="CollisionShape3D" parent="." unique_id=606542628]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.065, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0635, 0)
 shape = SubResource("BoxShape3D_oci41")
