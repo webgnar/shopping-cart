@@ -3,13 +3,25 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: W/S tip the cart over again, and haul it back up
+
+- zack asked for the old long-hold flip back: holding W or S leans the cart, and after `tip_delay` (0.6 s) the
+  lean keeps growing at `tip_rate` (0.7 rad/s) until the hands slip off past `let_go_pitch` (0.95 rad) and it
+  falls over on its own, onto its nose for W, back onto the handle for S. A short hold (0.8 s) only leans it.
+  This replaces the cap from the previous entry.
+- On a fallen cart, W or S now hauls it back up too (after letting go once), with the wrists' full
+  `tilt_max` (200 N*m), damped by `tilt_kd`. Either key works whichever way it fell, so the key that tipped it
+  over gets it back up: about 0.8 s, faster than one hand key (about 3.5 s).
+- Drive test: W held 4 s falls onto its nose, S held 4 s onto the handle, and the same key again rights each
+  in under a second.
+
 ## 2026-11-16: W/S lean keys are back, and a fallen cart can be hauled up
 
 - **W/S lean keys** (zack picked this over hand keys alone). W tips the back up (`lift_pitch` -0.2 rad,
   rear wheels about 0.19 m up), S tips the front up (`press_pitch` 0.3 rad, front wheels about 0.28 m up), at
   any speed, using the earlier wrist controller (`tilt_kp` 1400, `tilt_kd` 80, capped at `tilt_max` 200 N*m).
   With one hand key held as well, only that side leans (`side_roll` 0.22 rad). Unlike the first W/S there's no
-  hold-to-tip: holding W or S for 4 s keeps the lean and never throws the cart over. The point is lifting the
+  hold-to-tip: holding W or S for 4 s keeps the lean and never throws the cart over (reverted in the next entry). The point is lifting the
   back for a drift at walking pace. The HUD keycaps are back (W "BACK UP", S "FRONT UP").
 - **Getting back up.** Tests first (both floors, cart metal friction 0.5 and 1.0): raising friction made no
   real difference, because grip is the lower of metal and floor (tile stays 0.5) and what rights the cart is a

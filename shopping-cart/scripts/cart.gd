@@ -38,18 +38,23 @@ extends Node3D
 @export var empty_basket := false
 var hand_power := {"L": 0.0, "R": 0.0}   ## N each hand is putting into the bar: + push, - pull
 @export_group("Lean keys")
-## W tips the back up, S tips the front up, at any speed, toward a fixed lean with capped wrist torque: holding
-## them never throws the cart over. With one hand key held as well, only that side leans (W lifts it, S drops it).
+## W tips the back up, S tips the front up, at any speed, toward a lean held by the wrists (capped torque). Keep
+## holding past tip_delay and the lean keeps growing until the cart passes its balance point; then the hands slip
+## off (let_go_pitch) and it falls over on its own, onto its nose for W, back onto the handle for S. With one hand
+## key held as well, only that side leans (W lifts it, S drops it). A fallen cart: W or S hauls it back up.
 @export var lift_pitch := -0.2      ## rad, W: nose down, rear wheels up
 @export var press_pitch := 0.3      ## rad, S: nose up, front wheels up
 @export var side_roll := 0.22       ## rad, W/S with one hand held
 @export var tilt_kp := 1400.0       ## N*m per rad toward the lean
 @export var tilt_kd := 80.0         ## N*m per rad/s
 @export var tilt_max := 200.0       ## N*m the wrists can apply for a lean
+@export var tip_delay := 0.6        ## s W/S is held at the normal lean before the lean starts growing
+@export var tip_rate := 0.7         ## rad/s the lean grows by after that, for as long as W/S stays held
+@export var let_go_pitch := 0.95    ## rad: past this the hands slip off the bar and the cart falls on its own
 @export_group("Getting back up")
 ## The cart counts as fallen over once it lies past this tilt (cosine of the angle from upright) and has nearly
-## stopped moving. Then, after every key has been let go once, a held hand key hauls it upright: a twist toward
-## upright of the hand's power times wrist_lever. The hands' push and pull fade out as the cart tips, so a fallen
+## stopped moving. Then, after every key has been let go once, a held hand key hauls it upright (a twist toward
+## upright of the hand's power times wrist_lever), and so does W or S (tilt_max). The hands' push and pull fade out as the cart tips, so a fallen
 ## cart is levered up rather than shoved along the floor.
 @export var fallen_upright := 0.3   ## cos of tilt: 0.3 is about 73 degrees over
 @export var fallen_still := 1.0     ## rad/s: slower than this it has come to rest
@@ -95,6 +100,9 @@ var groceries: Array[RigidBody3D] = []
 var hand_state := {"L": "", "R": ""}
 var fallen := false                 ## lying over; the hands haul it back up
 var _wait_release := false          ## fell over or got back up with keys held: the hands rest until they are let go
+var _tilt_time := 0.0               ## s the current W/S has been held
+var _tilt_dir := 0                  ## +1 S, -1 W, 0 neither
+var _let_go := false                ## the hands slipped off on this W/S hold; it does nothing more until let go
 
 var _links := []           ## [visual node, body, offset] kept in step every frame
 
@@ -125,7 +133,7 @@ func _ready() -> void:
 ## Cart feel as the shared tuning dictionary (same keys as tuning/cart_tuning.json). The values come from this
 ## scene: the exports above and the bodies' masses. tools/export_cart_tuning.gd writes them out for the mobile game.
 const TUNING_KEYS := ["power_base", "power_ramp", "power_relax", "sprint_speed", "wrist_lever",
-	"lift_pitch", "press_pitch", "side_roll", "tilt_kp", "tilt_kd", "tilt_max",
+	"lift_pitch", "press_pitch", "side_roll", "tilt_kp", "tilt_kd", "tilt_max", "tip_delay", "tip_rate", "let_go_pitch",
 	"fallen_upright", "fallen_still", "stood_upright",
 	"rolling_resistance", "grip_yaw_damping", "spin_grip", "spin_grip_min",
 	"settle_speed", "settle_spin", "stop_speed", "stop_spin",
@@ -339,11 +347,29 @@ func _apply_hands(delta: float) -> void:
 	if dirs.L != 0 and dirs.L == dirs.R:
 		frame.apply_torque(Vector3.UP * -grip_yaw_damping * yaw_rate)
 
-	# Lean keys: W tips the back up, S the front, toward a fixed lean with capped torque, so holding them never
-	# throws the cart over. One hand key held as well: only that side (W lifts it, S drops it).
+	# Lean keys: W tips the back up, S the front, toward a lean with capped torque. Held on, the lean grows
+	# (tip_rate) until the cart passes its balance point and the hands slip off (let_go_pitch). One hand key held
+	# as well: only that side (W lifts it, S drops it). On a fallen cart, W or S hauls it back up instead.
 	var lift := Input.is_action_pressed("lift")
 	var press := Input.is_action_pressed("press")
-	if lift != press and not fallen:
+	var tilt_dir := 0 if lift == press else (1 if press else -1)
+	if tilt_dir != _tilt_dir:
+		_tilt_dir = tilt_dir
+		_tilt_time = 0.0
+		_let_go = false
+	if tilt_dir != 0:
+		_tilt_time += delta
+		if absf(asin(clampf(nose.y, -1, 1))) > let_go_pitch or upright < 0.0:
+			_let_go = true
+	if tilt_dir != 0 and fallen and not _wait_release:
+		var axis := xf.basis.y.normalized().cross(Vector3.UP)
+		if axis.length() < 0.05:
+			axis = xf.basis.z
+		axis = axis.normalized()
+		frame.apply_torque(axis * (tilt_max - tilt_kd * frame.angular_velocity.dot(axis)))
+		for side in ["L", "R"]:
+			hand_state[side] = "hauling it upright"
+	elif tilt_dir != 0 and not fallen and not _wait_release and not _let_go:
 		var side_axis := xf.basis.z.normalized()
 		var pitch := asin(clampf(nose.y, -1, 1))        # + = nose up
 		var roll := asin(clampf(side_axis.y, -1, 1))    # + = right side up
@@ -351,6 +377,7 @@ func _apply_hands(delta: float) -> void:
 		if (dirs.L != 0) != (dirs.R != 0):
 			sides = 1.0 if dirs.R != 0 else -1.0
 		var pitch_t := (lift_pitch if lift else press_pitch) * (0.6 if sides != 0.0 else 1.0)
+		pitch_t += tilt_dir * tip_rate * maxf(0.0, _tilt_time - tip_delay)
 		var roll_t := sides * (1.0 if lift else -1.0) * side_roll
 		var w := frame.angular_velocity
 		var tp := clampf(tilt_kp * (pitch_t - pitch) - tilt_kd * w.dot(side_axis), -tilt_max, tilt_max)
