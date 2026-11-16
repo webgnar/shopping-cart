@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_60mu1"]
+size = Vector3(0.35, 0.35, 0.35)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hq3kx"]
+albedo_color = Color(0.72156864, 0.5294118, 0.3529412, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_lwgo1"]
+material = SubResource("StandardMaterial3D_hq3kx")
+size = Vector3(0.35, 0.35, 0.35)
+
+[node name="CardboardBox" type="RigidBody3D" unique_id=1044625966]
+collision_mask = 7
+mass = 2.0
+
+[node name="Shape" type="CollisionShape3D" parent="." unique_id=589248498]
+shape = SubResource("BoxShape3D_60mu1")
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1535016315]
+mesh = SubResource("BoxMesh_lwgo1")

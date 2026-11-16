@@ -93,6 +93,65 @@ func _run() -> void:
 		print("%-5s %-18s moved %.2f m  speed along nose %+.2f m/s  turned %+4d deg  max pitch %4.1f  front wheels up to %.2f m  rear up to %.2f m  groceries %d/5  wheels down %d" % [
 			"PASS" if ok else "FAIL", sc[0], Vector2(d.x, d.z).length(), along, roundi(turn), max_pitch, max_front, max_rear,
 			cart.groceries_in_basket(), cart.wheels_down()])
+	# Braking: walk or run the cart up to speed, then pull back with both hands (body plants, arms extend).
+	for gear_n in [3, 5]:
+		for mode in ["coast", "brake"]:
+			main.spawn_cart(Vector3(-14, 0, -3), 0.0)
+			await _wait(0.5)
+			var cart: ShoppingCart = main.cart
+			cart.set_gear(gear_n)
+			Input.action_press("push_left")
+			Input.action_press("push_right")
+			await _wait(3.0)
+			Input.action_release("push_left")
+			Input.action_release("push_right")
+			var nose0 := cart.frame.global_transform.basis.x
+			var v0 := cart.frame.linear_velocity.dot(Vector3(nose0.x, 0, nose0.z).normalized())
+			var p0 := cart.cart_origin()
+			if mode == "brake":
+				Input.action_press("pull_left")
+				Input.action_press("pull_right")
+			var t := 0.0
+			var max_pitch := 0.0
+			var max_front := 0.0
+			while t < 8.0:
+				await physics_frame
+				t += 1.0 / Engine.physics_ticks_per_second
+				var b := cart.frame.global_transform.basis
+				max_pitch = maxf(max_pitch, rad_to_deg(asin(b.x.y)))
+				max_front = maxf(max_front, minf(cart.wheels.FL.global_position.y, cart.wheels.FR.global_position.y))
+				var along := cart.frame.linear_velocity.dot(Vector3(b.x.x, 0, b.x.z).normalized())
+				if along < 0.05:
+					break
+			Input.action_release("pull_left")
+			Input.action_release("pull_right")
+			var dist := Vector2(cart.cart_origin().x - p0.x, cart.cart_origin().z - p0.z).length()
+			var ok := true
+			if mode == "brake":
+				ok = dist < 1.0 and t < 1.5 and max_pitch < 25.0 and cart.groceries_in_basket() >= 4
+			print("%-5s %-18s from %.1f km/h: stopped in %.2f m and %.2f s  max nose-up %.1f deg  front wheels up to %.2f m  groceries %d/5" % [
+				("PASS" if ok else "FAIL") if mode == "brake" else "info", "gear %d %s" % [gear_n, "pull back" if mode == "brake" else "let go"],
+				v0 * 3.6, dist, t, max_pitch, max_front, cart.groceries_in_basket()])
+			if not ok:
+				failures += 1
+	# Pulling is stronger than pushing: compare the first half second from rest.
+	var accel := {}
+	for pair in [["push", ["push_left", "push_right"]], ["pull", ["pull_left", "pull_right"]]]:
+		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
+		await _wait(0.5)
+		var cart: ShoppingCart = main.cart
+		cart.set_gear(3)
+		for a in pair[1]:
+			Input.action_press(a)
+		await _wait(0.5)
+		for a in pair[1]:
+			Input.action_release(a)
+		accel[pair[0]] = absf(cart.frame.linear_velocity.length())
+	var pull_ok: bool = accel.pull > accel.push * 1.2
+	if not pull_ok:
+		failures += 1
+	print("%-5s %-18s after 0.5 s from rest: pushing %.2f m/s, pulling %.2f m/s" % ["PASS" if pull_ok else "FAIL", "pull > push", accel.push, accel.pull])
+
 	# Gate swings into the basket when shoved, and stops at its limit.
 	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 	await _wait(0.5)
