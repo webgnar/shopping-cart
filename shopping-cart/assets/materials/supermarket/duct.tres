@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "duct"
+albedo_color = Color(0.8627, 0.8745, 0.8902, 1)
+metallic = 0.50
+roughness = 0.45

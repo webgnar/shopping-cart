@@ -1,0 +1,9 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "lane_light"
+albedo_color = Color(0.2392, 0.8627, 0.5176, 1)
+roughness = 0.50
+emission_enabled = true
+emission = Color(0.2392, 0.8627, 0.5176, 1)
+emission_energy_multiplier = 2.00

@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "sign_dark"
+albedo_color = Color(0.1137, 0.1294, 0.1529, 1)
+roughness = 0.60
