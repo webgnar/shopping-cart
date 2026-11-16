@@ -12,9 +12,9 @@ extends Node3D
 ##  - Groceries: loose bodies in the basket; add or move them under the Groceries node.
 ##  - Model: the rigged model (assets/models/shopping_cart.glb); its pivots follow the physics bodies.
 ## Cart local axes: nose = +X, up = +Y, left = -Z. Units: metres, kg, newtons.
-## Masses live on the bodies in the scene; tuning/cart_tuning.json overrides them at start.
+## Every setting lives in the scene: the exports on this node and the masses on the bodies. The mobile web game
+## gets a copy of them through tools/export_cart_tuning.gd.
 
-const TUNING_PATH := "res://tuning/cart_tuning.json"   ## shared with the mobile web game
 
 @export_group("Hands")
 ## Push gears: [N per hand, top walking speed m/s]. Scroll wheel or 1-5 picks one.
@@ -29,7 +29,7 @@ var walk_max := 2.2                 ## m/s at which a walking hand stops adding 
 @export var rolling_resistance := 0.015  ## fraction of each wheel's load that resists rolling (real casters: 0.01 to 0.02)
 @export var settle_speed := 0.15    ## m/s: below this, with no hands on, the cart brakes to a stop
 @export var settle_spin := 0.25     ## rad/s: same, for turning
-@export var stop_speed := 0.05      ## m/s: below this for 0.25 s with nothing pressed, the cart stops dead
+@export var stop_speed := 0.05      ## m/s: below this for stop_delay s with nothing pressed, the cart stops dead
 @export var stop_spin := 0.05       ## rad/s: same, for turning
 var _rest_time := 0.0
 @export var grip_yaw_damping := 30.0  ## N*m per rad/s: two hands on the bar resist the cart twisting
@@ -56,9 +56,13 @@ var _tilt_time := 0.0               ## s the current W/S has been held
 var _tilt_dir := 0                  ## +1 S (press), -1 W (lift), 0 none
 var _let_go := false                ## the hands slipped off this hold; W/S does nothing until released
 
-const COM := Vector3(0.45, 0.42, 0.0)    ## matches Frame's center_of_mass in the scene
-const WHEEL_R := 0.0635                    ## matches the wheels' sphere radius in the scene
-const HAND := Vector3(0.0, 1.0, 0.2)
+@export_group("Hands")
+@export var hand_position := Vector3(0.0, 1.0, 0.2)   ## where the right hand grips the bar (cart local); the left is mirrored
+@export var arm_relax_rate := 1.0   ## m/s an arm bends back in once the player stops braking
+@export_group("Coming to rest")
+@export var settle_brake := 40.0    ## how hard the cart brakes itself below settle_speed (per kg, and N*m per rad/s)
+@export var stop_delay := 0.25      ## s of creeping below stop_speed before the cart stops dead
+@export_group("")
 
 const LAYER_WORLD := 1
 const LAYER_CART := 2
@@ -71,6 +75,8 @@ const LAYER_CARGO := 4
 @onready var forks := {"FL": $Fork_FL, "FR": $Fork_FR}   ## RigidBody3D each
 @onready var wheels := {"FL": $Wheel_FL, "FR": $Wheel_FR, "RL": $Wheel_RL, "RR": $Wheel_RR}   ## RigidBody3D each
 @onready var _model: Node3D = $Model
+## Read from the scene: the radius of the wheels' collision spheres.
+@onready var wheel_radius: float = (($Wheel_FL/Shape as CollisionShape3D).shape as SphereShape3D).radius
 var groceries: Array[RigidBody3D] = []
 var hand_state := {"L": "", "R": ""}
 
@@ -78,7 +84,6 @@ var _links := []           ## [visual node, body, offset] kept in step every fra
 
 
 func _ready() -> void:
-	load_tuning()
 	set_gear(gear)
 	for g in $Groceries.get_children():
 		if empty_basket:
@@ -102,41 +107,25 @@ func _ready() -> void:
 		_link(_model.find_child("Wheel_R%s_Axle" % side), wheels["R" + side])
 
 
-## Reads the shared tuning file (also used by the mobile web game) over the values set in the scene.
-func load_tuning() -> void:
-	var t: Variant = load_tuning_file()
-	if t == null:
-		return
-	for key in ["rolling_resistance", "grip_yaw_damping", "spin_grip", "spin_grip_min",
-			"lift_pitch", "press_pitch", "side_roll", "tilt_kp", "tilt_kd", "tilt_max",
-			"tip_delay", "tip_rate", "let_go_pitch",
-			"settle_speed", "settle_spin", "stop_speed", "stop_spin",
-			"pull_ratio", "arm_reach", "brake_spring", "brake_damping", "brake_max"]:
-		if t.has(key):
-			set(key, float(t[key]))
-	if t.has("frame_mass"):
-		frame.mass = float(t.frame_mass)
-	if t.has("gate_mass"):
-		gate.mass = float(t.gate_mass)
-	for b in wheels.values():
-		b.mass = float(t.get("wheel_mass", b.mass))
-	for b in forks.values():
-		b.mass = float(t.get("fork_mass", b.mass))
-	if t.has("gears"):
-		var g: Array[Vector2] = []
-		for pair in t.gears:
-			g.append(Vector2(pair[0], pair[1]))
-		gears = g
+## Cart feel as the shared tuning dictionary (same keys as tuning/cart_tuning.json). The values come from this
+## scene: the exports above and the bodies' masses. tools/export_cart_tuning.gd writes them out for the mobile game.
+const TUNING_KEYS := ["rolling_resistance", "grip_yaw_damping", "spin_grip", "spin_grip_min",
+	"lift_pitch", "press_pitch", "side_roll", "tilt_kp", "tilt_kd", "tilt_max",
+	"tip_delay", "tip_rate", "let_go_pitch",
+	"settle_speed", "settle_spin", "stop_speed", "stop_spin",
+	"pull_ratio", "arm_reach", "brake_spring", "brake_damping", "brake_max"]
 
 
-static func load_tuning_file() -> Variant:
-	if not FileAccess.file_exists(TUNING_PATH):
-		push_warning("No tuning file at %s; using built-in defaults" % TUNING_PATH)
-		return null
-	var t: Variant = JSON.parse_string(FileAccess.get_file_as_string(TUNING_PATH))
-	if typeof(t) != TYPE_DICTIONARY:
-		push_warning("Could not read %s; using built-in defaults" % TUNING_PATH)
-		return null
+func tuning() -> Dictionary:
+	var t := {
+		"frame_mass": ($Frame as RigidBody3D).mass,
+		"wheel_mass": ($Wheel_FL as RigidBody3D).mass,
+		"fork_mass": ($Fork_FL as RigidBody3D).mass,
+		"gate_mass": ($Gate as RigidBody3D).mass,
+		"gears": gears.map(func(g: Vector2) -> Array: return [g.x, g.y]),
+	}
+	for key in TUNING_KEYS:
+		t[key] = get(key)
 	return t
 
 
@@ -183,12 +172,12 @@ func _settle(delta: float) -> void:
 	var v := frame.linear_velocity
 	var w := frame.angular_velocity
 	if v.length() < settle_speed and w.length() < settle_spin:
-		frame.apply_central_force(-v * frame.mass * 40.0)
-		frame.apply_torque(-w * 40.0)
+		frame.apply_central_force(-v * frame.mass * settle_brake)
+		frame.apply_torque(-w * settle_brake)
 	# Creeping this slowly for a moment with nothing pressed: stop dead and sleep, so it can't drift at all.
 	if v.length() < stop_speed and w.length() < stop_spin and gate.angular_velocity.length() < 0.1:
 		_rest_time += delta
-		if _rest_time >= 0.25:
+		if _rest_time >= stop_delay:
 			_stop()
 	else:
 		_rest_time = 0.0
@@ -222,14 +211,14 @@ func _apply_rolling_resistance(delta: float) -> void:
 	var total_mass := frame.mass + gate.mass + child_seat.mass + seat_flap.mass
 	for b in wheels.values() + forks.values():
 		total_mass += b.mass
-	var max_torque := rolling_resistance * total_mass * 9.81 / 4.0 * WHEEL_R
+	var max_torque := rolling_resistance * total_mass * 9.81 / 4.0 * wheel_radius
 	for k in wheels:
 		var w: RigidBody3D = wheels[k]
-		if w.global_position.y > WHEEL_R + 0.02:
+		if w.global_position.y > wheel_radius + 0.02:
 			continue   # off the ground
 		var axle := w.global_transform.basis.z.normalized()
 		var spin := w.angular_velocity.dot(axle)
-		var inertia := 0.5 * w.mass * WHEEL_R * WHEEL_R
+		var inertia := 0.5 * w.mass * wheel_radius * wheel_radius
 		var t := minf(max_torque, absf(spin) * inertia / delta)   # never reverse the spin within one step
 		w.apply_torque(-axle * signf(spin) * t)
 
@@ -239,7 +228,7 @@ func _apply_hands(delta: float) -> void:
 	var nose := xf.basis.x.normalized()
 	var side_axis := xf.basis.z.normalized()
 	var fwd := Vector3(nose.x, 0, nose.z).normalized()
-	var com_g := xf * COM
+	var com_g := xf * frame.center_of_mass
 	var lift := Input.is_action_pressed("lift")
 	var press := Input.is_action_pressed("press")
 	var held := {
@@ -264,7 +253,7 @@ func _apply_hands(delta: float) -> void:
 	for side in ["L", "R"]:
 		var s := -1.0 if side == "L" else 1.0
 		var suffix := "left" if side == "L" else "right"
-		var hand_g := xf * Vector3(HAND.x, HAND.y, s * HAND.z)
+		var hand_g := xf * Vector3(hand_position.x, hand_position.y, s * hand_position.z)
 		var r := hand_g - com_g
 		var v_hand := frame.linear_velocity + frame.angular_velocity.cross(r)
 		var dir := int(Input.is_action_pressed("push_" + suffix)) - int(Input.is_action_pressed("pull_" + suffix))
@@ -282,7 +271,7 @@ func _apply_hands(delta: float) -> void:
 			st = "braking (arm %d%%)" % roundi(100.0 * arm_extension[side] / arm_reach)
 		else:
 			# Not braking: the body steps back in to its relaxed distance from the handle.
-			arm_extension[side] = maxf(0.0, arm_extension[side] - 1.0 * delta)
+			arm_extension[side] = maxf(0.0, arm_extension[side] - arm_relax_rate * delta)
 			if dir != 0:
 				# A walking person can only add force up to their walking speed. Pulling back with both hands (leaning
 				# back on your heels) is stronger; with one hand pushing, your weight is forward, so the pull matches the push.
@@ -352,7 +341,7 @@ func heading() -> float:
 func wheels_down() -> int:
 	var n := 0
 	for k in wheels:
-		if wheels[k].global_position.y < WHEEL_R + 0.02:
+		if wheels[k].global_position.y < wheel_radius + 0.02:
 			n += 1
 	return n
 

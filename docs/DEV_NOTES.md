@@ -3,6 +3,21 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: the inspector is the source of truth for cart physics
+
+- The Godot game no longer reads `tuning/cart_tuning.json`. Every cart setting is an export on the Cart
+  node or a property on its bodies in `scenes/cart/cart.tscn`, and floor friction is in
+  `assets/physics/*.tres`. What the inspector shows is what runs. The values were already equal to the
+  JSON's, so the cart drives exactly as before.
+- Values that were hidden in code are now exports too: `hand_position`, `arm_relax_rate`, `settle_brake`
+  (was 40) and `stop_delay` (was 0.25 s). The centre of mass and wheel radius are read from the Frame
+  body and the wheel shapes instead of constants that had to match them.
+- The mobile web game still reads the JSON (as `mobile/cart_tuning.js`). `tools/export_cart_tuning.gd`
+  (File > Run in the editor, or `tools/export_cart_tuning_cli.gd` headless) writes both files from the
+  scene; `tests/tuning_sync_test.gd` fails if they drift. `tools/sync_tuning.py` is retired.
+- The mobile drive test could not run in the cloud (the three.js CDN is blocked); the exported values
+  are unchanged.
+
 ## 2026-11-16: the other hand stops a spin
 
 `scripts/cart.gd`: spin the cart with one hand (say A, left pull), then pull with the other (D) and it
