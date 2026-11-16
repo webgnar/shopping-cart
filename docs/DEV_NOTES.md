@@ -3,6 +3,19 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: child seat and seat flap on physics
+
+- `cart.tscn` now has `ChildSeat` (backrest, 0.8 kg) and `SeatFlap` (0.4 kg) rigid bodies, each on a
+  HingeJoint3D to the gate at the model's pivots (`ChildSeat_Hinge`, `SeatFlap_Hinge`), with the rig's
+  limits: backrest folds back 0 to 30 degrees, flap folds up 0 to 105 degrees. The model pivots follow
+  the bodies, like the gate.
+- Collision: a 0.02 x 0.49 x 0.47 m panel along the backrest and a 0.13 x 0.012 x 0.48 m plate for
+  the flap. They hit groceries and the world but not other cart parts.
+- Behaviour: the flap lifts and drops back onto its stop. Folded back, the backrest leans past
+  upright and stays flat against the gate until pushed forward again, like a real one.
+- The gate assembly is now 2.7 kg instead of 1.5 kg, so the same shove swings it 27 degrees instead
+  of 52. The drive test now checks the seat and the flap as well.
+
 ## 2026-11-16: parking lot props at real-world scale
 
 zack asked for the lot props to match real dimensions, checked against our cart. Sources:
