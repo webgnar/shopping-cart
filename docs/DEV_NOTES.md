@@ -3,6 +3,18 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: spare carts to crash into
+
+- `scenes/cart/spare_cart.tscn` inherits the cart scene with `player_controlled = false` (ignores the keys,
+  no hand forces, only moves when hit) and `empty_basket = true` (groceries removed at start). Five are
+  placed in the supermarket under `SpareCarts`: three by the doors, one in aisle 4, one in the front aisle.
+- Carts now collide with other carts: the cart bodies' collision masks include `LAYER_CART`, the Guard
+  area that wakes a resting cart also watches carts, and each cart adds collision exceptions between its
+  own frame, gate, forks and wheels so it still ignores its own parts (as before, when masks left them out).
+- Checked: drive test, parking lot, garage and console tests all pass; the supermarket check now also
+  verifies a spare cart stays put while the keys are held and rolls away (3.3 m) when rammed.
+- No new models; no z-fighting check needed.
+
 ## 2026-11-16: parking lot store front from zack's photo, lot sweep
 
 Store front rebuilt after zack's night photo of a supermarket front (`tools/parking_lot_models.py`):

@@ -59,6 +59,7 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   `CartSpawn` marker; if it has no `WorldEnvironment`, `Camera` or `HUD` node, `main.gd` adds the
   shared default scene for each.
 - `scenes/cart/cart.tscn` — the cart rig (frame, gate, casters, wheels, hinge joints, groceries, model).
+  `scenes/cart/spare_cart.tscn` — the same cart, empty and not player controlled, to place in levels.
 - `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun.
   `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
   (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera.
@@ -74,3 +75,4 @@ From `shopping-cart/`:
 - Screenshot: `xvfb-run godot -s res://tests/screenshot.gd -- out.png`
 - Console test: `godot --headless --fixed-fps 120 -s res://tests/console_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
+- Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`

@@ -18,6 +18,10 @@ const TUNING_PATH := "res://tuning/cart_tuning.json"   ## shared with the mobile
 ## Push gears: [N per hand, top walking speed m/s]. Scroll wheel or 1-5 picks one.
 @export var gears: Array[Vector2] = [Vector2(25, 1.2), Vector2(35, 1.8), Vector2(45, 2.2), Vector2(65, 3.0), Vector2(90, 4.0)]
 @export var gear := 3               ## 1-based, into `gears`
+## false: a spare cart nobody is holding. It ignores the keys and only moves when something hits it.
+@export var player_controlled := true
+## true: the groceries are taken out (spare carts in a level start empty).
+@export var empty_basket := false
 var push_force := 45.0              ## N per hand (from the current gear)
 var walk_max := 2.2                 ## m/s at which a walking hand stops adding force (from the current gear)
 @export var rolling_resistance := 0.015  ## fraction of each wheel's load that resists rolling (real casters: 0.01 to 0.02)
@@ -71,8 +75,16 @@ func _ready() -> void:
 	load_tuning()
 	set_gear(gear)
 	for g in $Groceries.get_children():
-		if g is RigidBody3D:
+		if empty_basket:
+			g.queue_free()
+		elif g is RigidBody3D:
 			groceries.append(g)
+	# Carts collide with other carts (their bodies' masks include LAYER_CART), but not with their own parts.
+	var parts: Array = [frame, gate] + wheels.values() + forks.values()
+	for a in parts:
+		for b in parts:
+			if a != b:
+				a.add_collision_exception_with(b)
 	# Each rig pivot of the visual model follows its physics body.
 	_link(_model, frame)
 	_link(_model.find_child("Gate_Hinge"), gate)
@@ -138,13 +150,15 @@ const ACTIONS := ["push_left", "pull_left", "push_right", "pull_right", "lift", 
 
 func _physics_process(delta: float) -> void:
 	var any_input := false
-	for a in ACTIONS:
-		if Input.is_action_pressed(a):
-			any_input = true
-			break
+	if player_controlled:
+		for a in ACTIONS:
+			if Input.is_action_pressed(a):
+				any_input = true
+				break
 	if any_input and frame.freeze:
 		_wake()
-	_apply_hands(delta)
+	if player_controlled:
+		_apply_hands(delta)
 	_apply_rolling_resistance(delta)
 	if not any_input:
 		_settle(delta)
@@ -181,9 +195,10 @@ func _stop() -> void:
 	frame.freeze = true
 
 
-## A loose object (not the cart's own groceries) is about to hit the pinned cart: let physics take it again.
+## A loose object or another cart (not this cart's own parts or groceries) is about to hit the pinned cart:
+## let physics take it again.
 func _on_frame_hit(body: Node) -> void:
-	if frame.freeze and body is RigidBody3D and not groceries.has(body):
+	if frame.freeze and body is RigidBody3D and not groceries.has(body) and body.get_parent() != self:
 		_wake()
 
 
