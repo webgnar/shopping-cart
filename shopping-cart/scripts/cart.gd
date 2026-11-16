@@ -6,7 +6,9 @@ extends Node3D
 ##  - Frame: 18 kg body with a hollow basket (floor, walls, lower tray, handlebar) and a Guard zone.
 ##  - Front casters: a fork that swivels 360 degrees on a vertical hinge, wheel trailing 3.8 cm behind.
 ##  - Rear wheels: fixed, spin on their axles.
-##  - Gate: hinged at the top rail, swings into the basket 0 to 70 degrees (child seat and flap ride on it).
+##  - Gate: hinged at the top rail, swings into the basket 0 to 70 degrees.
+##  - ChildSeat (backrest) and SeatFlap: hinged on the gate; the backrest folds back 0 to 30 degrees and
+##    the flap folds up 0 to 105 degrees, both resting on their stops under gravity.
 ##  - Groceries: loose bodies in the basket; add or move them under the Groceries node.
 ##  - Model: the rigged model (assets/models/shopping_cart.glb); its pivots follow the physics bodies.
 ## Cart local axes: nose = +X, up = +Y, left = -Z. Units: metres, kg, newtons.
@@ -58,6 +60,8 @@ const LAYER_CARGO := 4
 
 @onready var frame: RigidBody3D = $Frame
 @onready var gate: RigidBody3D = $Gate
+@onready var child_seat: RigidBody3D = $ChildSeat
+@onready var seat_flap: RigidBody3D = $SeatFlap
 @onready var forks := {"FL": $Fork_FL, "FR": $Fork_FR}   ## RigidBody3D each
 @onready var wheels := {"FL": $Wheel_FL, "FR": $Wheel_FR, "RL": $Wheel_RL, "RR": $Wheel_RR}   ## RigidBody3D each
 @onready var _model: Node3D = $Model
@@ -76,6 +80,8 @@ func _ready() -> void:
 	# Each rig pivot of the visual model follows its physics body.
 	_link(_model, frame)
 	_link(_model.find_child("Gate_Hinge"), gate)
+	_link(_model.find_child("ChildSeat_Hinge"), child_seat)
+	_link(_model.find_child("SeatFlap_Hinge"), seat_flap)
 	for side in ["L", "R"]:
 		_link(_model.find_child("Caster_F%s_Swivel" % side), forks["F" + side])
 		_link(_model.find_child("Wheel_F%s_Axle" % side), wheels["F" + side])
@@ -172,7 +178,7 @@ func _settle(delta: float) -> void:
 		_rest_time = 0.0
 
 
-## Pins the frame exactly where it is (the wheels, casters and gate stay live). Any key, or a loose object
+## Pins the frame exactly where it is (the wheels, casters, gate and seat stay live). Any key, or a loose object
 ## knocking into the cart, releases it.
 func _stop() -> void:
 	for b in [frame] + wheels.values() + forks.values():
@@ -190,13 +196,13 @@ func _on_frame_hit(body: Node) -> void:
 func _wake() -> void:
 	frame.freeze = false
 	_rest_time = 0.0
-	for b in [frame, gate] + wheels.values() + forks.values():
+	for b in [frame, gate, child_seat, seat_flap] + wheels.values() + forks.values():
 		b.sleeping = false
 
 
 ## Each wheel resists rolling with a small torque, as real casters do. Also keeps the cart still on flat ground.
 func _apply_rolling_resistance(delta: float) -> void:
-	var total_mass := frame.mass + gate.mass
+	var total_mass := frame.mass + gate.mass + child_seat.mass + seat_flap.mass
 	for b in wheels.values() + forks.values():
 		total_mass += b.mass
 	var max_torque := rolling_resistance * total_mass * 9.81 / 4.0 * WHEEL_R

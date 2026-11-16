@@ -39,7 +39,9 @@ COLORS = {
     "car_glass": (0.08, 0.09, 0.11), "tire": (0.1, 0.1, 0.1), "headlight": (0.87, 0.87, 0.87),
     "taillight": (0.35, 0.05, 0.05), "facade": (0.85, 0.77, 0.6), "facade_trim": (0.92, 0.86, 0.71),
     "store_glass": (1, 0.94, 0.78), "sign_panel": (0.16, 0.16, 0.16), "bollard_yellow": (0.89, 0.73, 0.15),
-    "rubber_black": (0.07, 0.07, 0.08),
+    "rubber_black": (0.07, 0.07, 0.08), "soffit": (0.81, 0.77, 0.67), "sign_green": (0.37, 0.42, 0.27),
+    "roof_tile": (0.49, 0.2, 0.15), "lightbox_face": (0.95, 0.96, 1.0), "water_blue": (0.12, 0.43, 0.77),
+    "water_panel": (0.24, 0.56, 0.88), "curb_red": (0.55, 0.16, 0.13),
 }
 
 
@@ -287,43 +289,47 @@ def stadium(length, width, segs=12):
 # ------------------------------------------------------------------ models
 
 def parking_block():
-    """Precast concrete wheel stop, 1.83 m long, 0.13 m tall. Long along X."""
+    """Precast concrete wheel stop, 6' x 7" x 5" (1.83 x 0.178 x 0.127 m, Kuhlman 8085508). Long along X."""
     m = Model("parking_block")
     b = m.obj("Block", "concrete")
     # Trapezoid section with chamfered top corners (front is +Y).
-    prof = [(-0.115, 0.0), (0.115, 0.0), (0.115, 0.07), (0.075, 0.13), (-0.075, 0.13), (-0.115, 0.07)]
+    prof = [(-0.089, 0.0), (0.089, 0.0), (0.089, 0.07), (0.06, 0.127), (-0.06, 0.127), (-0.089, 0.07)]
     m.prism(b, prof, -0.915, 0.915)
     p = m.obj("Pins", "dark_metal")
     for x in (-0.6, 0.6):   # rebar pins, domed tops proud of the block
-        m.cyl(p, 0.016, 0.006, (x, 0, 0.128), segs=10)
+        m.cyl(p, 0.016, 0.006, (x, 0, 0.125), segs=10)
     s = m.obj("Reflectors", "bollard_yellow")
     for x in (-0.75, 0.75):   # yellow reflective tape on the face toward the car
-        q = Matrix.Rotation(math.atan2(0.04, 0.06), 3, "X")
-        m.box(s, (0.14, 0.004, 0.035), (x, -0.097, 0.1), rot=q)
-        m.box(s, (0.14, 0.004, 0.035), (x, 0.097, 0.1), rot=Matrix.Rotation(-math.atan2(0.04, 0.06), 3, "X"))
+        a = math.atan2(0.029, 0.057)   # chamfer slope
+        m.box(s, (0.14, 0.004, 0.035), (x, -0.0765, 0.0995), rot=Matrix.Rotation(-a, 3, "X"))
+        m.box(s, (0.14, 0.004, 0.035), (x, 0.0765, 0.0995), rot=Matrix.Rotation(a, 3, "X"))
     return m.build()
 
 
 def cart_corral():
-    """Cart return corral, 4.5 m long, 1.3 m wide, 1.05 m tall. Open end at the front (+Y)."""
+    """Single-wide cart return corral, sized from the R.W. Rogers CC8030370 spec (Zoro / Webstaurant):
+    side rails 13'8" (4.17 m) long and 36" (0.91 m) tall, 32" (0.81 m) clear between rails, sign
+    poles 8' (2.44 m). Open end at the front (+Y) with a short flared mouth."""
     m = Model("cart_corral")
-    L, w, r = 4.5, 0.65, 0.024
+    w, r = 0.43, 0.024           # rail centre lines; 0.406 m clear each side of centre + tube radius
+    yf, yb = 2.085, -2.085       # mouth and back posts (4.17 m side rails)
+    top, fl = 0.914, 0.25        # top rail height, flare reach
     f = m.obj("Frame", "rail_metal")
-    ys = (L / 2 - 0.1, 0.0, -L / 2 + 0.05)
+    ys = (yf, 0.0, yb)
     for y in ys:
         for x in (-w, w):
-            m.cyl(f, 0.03, 1.05, (x, y, 0.012), segs=12)
-            m.ball(f, 0.032, (x, y, 1.062), segs=10, rings=6)   # post caps
-    for z in (0.25, 0.6, 1.0):
+            m.cyl(f, 0.03, top + 0.03, (x, y, 0.012), segs=12)
+            m.ball(f, 0.032, (x, y, top + 0.042), segs=10, rings=6)   # post caps
+    for z in (0.25, 0.58, top):
         for x in (-w, w):
-            m.tube(f, (x, L / 2 - 0.1, z), (x, -L / 2 + 0.05, z), r)
-        m.tube(f, (-w, -L / 2 + 0.05, z), (w, -L / 2 + 0.05, z), r * 0.92)
+            m.tube(f, (x, yf, z), (x, yb, z), r)
+        m.tube(f, (-w, yb, z), (w, yb, z), r * 0.92)
     for x in (-1, 1):   # flared mouth so carts funnel in
-        for z in (0.6, 1.0):
-            m.tube(f, (x * w, L / 2 - 0.1, z), (x * (w + 0.35), L / 2 + 0.35, z), r * 0.9)
-        m.cyl(f, 0.026, 1.0, (x * (w + 0.35), L / 2 + 0.35, 0.012), segs=10)
-    m.tube(f, (-w, -L / 2 + 0.05, 1.0), (-w, -L / 2 + 0.05, 1.6), r)
-    m.tube(f, (w, -L / 2 + 0.05, 1.0), (w, -L / 2 + 0.05, 1.6), r)
+        for z in (0.58, top):
+            m.tube(f, (x * w, yf, z), (x * (w + fl), yf + fl, z), r * 0.9)
+        m.cyl(f, 0.026, top - 0.03, (x * (w + fl), yf + fl, 0.012), segs=10)
+    for x in (-w, w):   # 8 ft sign poles on the back posts
+        m.tube(f, (x, yb, top), (x, yb, 2.44), r)
     pl = m.obj("BasePlates", "dark_metal")
     for y in ys:
         for x in (-w, w):
@@ -332,12 +338,12 @@ def cart_corral():
                 m.cyl(pl, 0.009, 0.012, (x + dx, y + 0.045, 0.012), segs=6)
                 m.cyl(pl, 0.009, 0.012, (x + dx, y - 0.045, 0.012), segs=6)
     for x in (-1, 1):
-        m.box(pl, (0.12, 0.12, 0.012), (x * (w + 0.35), L / 2 + 0.35, 0.006))
+        m.box(pl, (0.12, 0.12, 0.012), (x * (w + fl), yf + fl, 0.006))
     s = m.obj("SignPanel", "sign_panel")
-    m.box(s, (1.24, 0.03, 0.42), (0, -L / 2 + 0.05, 1.38))
+    m.box(s, (0.8, 0.03, 0.5), (0, yb, 2.15))
     bump = m.obj("Bumpers", "rubber_black")   # rubber guards on the low rail where carts hit
     for x in (-w, w):
-        m.cyl(bump, 0.034, 1.6, (x, L / 2 - 0.4, 0.25), axis="Y", segs=10, rot=Matrix.Rotation(math.pi, 3, "X"))
+        m.cyl(bump, 0.034, 1.6, (x, yf - 0.3, 0.25), axis="Y", segs=10, rot=Matrix.Rotation(math.pi, 3, "X"))
     return m.build()
 
 
@@ -499,45 +505,167 @@ def stall_markings():
     return m.build()
 
 
+COLUMNS = (-26.25, -18.75, -11.25, -3.75, 3.75, 11.25, 18.75, 26.25)   # store front column centres
+PERGOLA_BAYS = ((-18.75, -11.25), (-11.25, -3.75))                    # stepped pergola over these bays
+
+
 def store_front():
-    """Supermarket front, 60 m wide. Origin: bottom center of the facade, which faces -Y (Godot +Z,
-    the lot); the building runs 12 m back. Signs and lights are added in Godot."""
+    """Supermarket front, 60 m wide, after zack's photo: a 4 m deep covered walkway behind square
+    stucco columns, a sign band with green panels and two lightbox signs, a stepped, uplit pergola
+    over those two bays and red tile mansard roof over the rest, entry doors and shop windows on the
+    back wall. Origin: bottom centre of the column face line, which faces -Y (Godot +Z, the lot);
+    the building runs 16 m back. Sign text, lights, water machines and cart rows are added in Godot."""
     m = Model("store_front")
-    fa = m.obj("Walls", "facade")
-    m.box(fa, (60, 12, 7.0), (0, 6, 3.5))
+    D = 4.0          # walkway depth (column face to shop wall)
+    BAND = (3.6, 5.6)
+    st = m.obj("Stucco", "facade")
+    m.box(st, (60, 12, 7.0), (0, D + 6, 3.5))                       # the store behind the walkway
+    for x in (-29.5, 29.5):
+        m.box(st, (1.0, D, BAND[0]), (x, D / 2, BAND[0] / 2))        # walkway end walls
+    for x in COLUMNS:
+        m.box(st, (0.9, 0.9, BAND[0] - 0.01), (x, 0.45, BAND[0] / 2 - 0.005))   # column shafts
+    m.box(st, (60, 1.2, BAND[1] - BAND[0]), (0, 0.55, (BAND[0] + BAND[1]) / 2))   # sign band (front y -0.05)
+    for x in COLUMNS:
+        m.box(st, (0.9, 0.3, BAND[1] - BAND[0] - 0.01), (x, 0.0, (BAND[0] + BAND[1]) / 2))  # pilasters, front y -0.15
+    # stepped pergola: a pier over each bay's left column, a sloping fin down to the next column,
+    # and horizontal slats stepping down under the fin
+    top = 8.6
+    ang = math.atan2(top - BAND[1], 7.5)
+    for xa, xb in PERGOLA_BAYS:
+        m.box(st, (0.9, 1.3, top - BAND[1] - 0.02), (xa, 0.5, (top + BAND[1]) / 2 + 0.01))   # pier
+        mid = Vector(((xa + xb) / 2, 0.5, (top + BAND[1]) / 2 + 0.05))
+        m.box(st, (math.hypot(7.5, top - BAND[1]) + 0.2, 1.24, 0.5), mid, rot=Matrix.Rotation(ang, 3, "Y"))
+        m.box(st, (7.5, 0.25, 2.4), ((xa + xb) / 2, 3.2, BAND[1] + 1.2))           # back panel the slats light up
+        for k in range(4):
+            z = BAND[1] + 0.45 + 0.62 * k
+            x_end = xa + (top - z - 0.3) / (top - BAND[1]) * 7.5
+            m.box(st, (x_end - xa - 0.5, 0.45, 0.3), ((xa + 0.45 + x_end) / 2 - 0.05, 1.4 + 0.3 * k, z))
     tr = m.obj("Trim", "facade_trim")
-    m.box(tr, (60.4, 0.5, 0.3), (0, 0.05, 7.15))           # cornice
-    m.box(tr, (60.0, 0.12, 0.7), (-0.0, -0.06, 4.6))        # fascia band
-    m.box(tr, (13, 1.6, 9.5), (0, 0.3, 4.75))               # entrance tower (front at y = -0.5)
-    m.box(tr, (13.4, 1.9, 0.35), (0, 0.3, 9.675))           # tower cap
-    m.box(tr, (11, 2.4, 0.35), (0, -1.7, 3.925))            # entrance canopy
-    for x in (-5.2, 5.2):
-        m.box(tr, (0.35, 0.35, 3.75), (x, -2.6, 1.875))     # canopy columns
-    base = m.obj("Plinth", "concrete")
-    m.box(base, (60.0, 0.05, 0.45), (0, -0.025, 0.225))     # concrete base strip, west to east
+    for x in COLUMNS:
+        m.box(tr, (1.15, 1.15, 0.45), (x, 0.45, 0.225))             # column bases
+        m.box(tr, (1.04, 1.04, 0.18), (x, 0.45, BAND[0] - 0.09))    # capitals
+    m.box(tr, (60.2, 1.44, 0.16), (0, 0.55, BAND[1] + 0.08))        # band cap
+    so = m.obj("Soffit", "soffit")
+    m.box(so, (58.0, D - 0.06, 0.15), (0, D / 2 + 0.03, BAND[0] - 0.08))
+    fl = m.obj("WalkwayFloor", "sidewalk")
+    m.box(fl, (58.0, D - 0.02, 0.15), (0, D / 2 + 0.01, 0.075))
+    co = m.obj("Coping", "concrete")
+    for xa, xb in PERGOLA_BAYS:   # tile-edged coping on the fins and piers
+        mid = Vector(((xa + xb) / 2, 0.5, (top + BAND[1]) / 2 + 0.05))
+        n = Vector((math.sin(ang), 0, math.cos(ang)))
+        m.box(co, (math.hypot(7.5, top - BAND[1]) + 0.2, 1.36, 0.1), mid + n * 0.3, rot=Matrix.Rotation(ang, 3, "Y"))
+        m.box(co, (1.0, 1.4, 0.12), (xa, 0.5, top + 0.06))
+    rf = m.obj("RoofTiles", "roof_tile")
+    slope = math.atan2(8.2 - BAND[1] - 0.16, 3.2)
+    for x0, x1 in ((-30.0, PERGOLA_BAYS[0][0] - 0.45), (PERGOLA_BAYS[-1][1] + 0.45, 30.0)):
+        z0 = BAND[1] + 0.16
+        m.prism(rf, [(-0.1, z0), (3.1, z0), (3.1, 8.2)], x0, x1)       # mansard, sloping up toward the back
+        for k in range(1, 10):   # tile courses
+            t = k / 10
+            y, z = -0.1 + 3.2 * t, z0 + (8.2 - z0) * t
+            m.box(rf, (x1 - x0, 0.06, 0.05), ((x0 + x1) / 2, y - 0.03 * math.sin(slope) - 0.02, z + 0.03),
+                  rot=Matrix.Rotation(slope, 3, "X"))
+    m.box(rf, (60.0, 1.0, 0.15), (0, 3.6, 8.275))                      # ridge cap along the back
     gl = m.obj("Glass", "store_glass")
-    m.box(gl, (8, 0.03, 3.3), (0, -0.515, 1.65))            # entrance
-    for x in (-17, 17):
-        m.box(gl, (15.98, 0.03, 2.5), (x, -0.065, 1.75))    # shop windows
+    door = (-0.8, 2.4)
+    m.box(gl, (door[1] - door[0], 0.03, 2.4), ((door[0] + door[1]) / 2, D - 0.015, 0.15 + 1.2))   # sliding doors
+    m.box(gl, (door[1] - door[0], 0.03, 0.75), ((door[0] + door[1]) / 2, D - 0.015, 2.65 + 0.375))  # transom
+    windows = ((5.0, 10.0), (12.5, 17.5), (20.0, 25.0))
+    for x0, x1 in windows:
+        m.box(gl, (x1 - x0, 0.03, 1.3), ((x0 + x1) / 2, D - 0.015, 2.35))
     fr = m.obj("Frames", "dark_metal")
-    for x in (-4, -2, 0, 2, 4):
-        m.box(fr, (0.14, 0.06, 3.3), (x, -0.56, 1.65))      # entrance mullions
-    m.box(fr, (8.1, 0.08, 0.14), (0, -0.56, 3.3))
-    for x in (-17, 17):
-        for i in range(9):
-            m.box(fr, (0.1, 0.06, 2.5), (x - 8 + 2 * i, -0.11, 1.75))
-        m.box(fr, (16.0, 0.08, 0.1), (x, -0.11, 3.0))
-        m.box(fr, (16.0, 0.08, 0.1), (x, -0.11, 0.5))
-    for x in (-29.5, -10.0, 10.0, 29.5):
-        m.cyl(fr, 0.06, 6.9, (x, -0.07, 0.0), segs=8)       # downspouts
-    for x in (-24, -10, 10, 24):
-        m.box(fr, (0.3, 0.18, 0.2), (x, -0.09, 5.6))        # wall-pack lights
-    sp = m.obj("SignPanels", "sign_panel")
-    for x in (-17, 17):
-        m.box(sp, (5.0, 0.04, 0.9), (x, -0.14, 4.6))        # backers for BAKERY / DELI letters
-    lens = m.obj("WallLenses", "led_lens")
-    for x in (-24, -10, 10, 24):
-        m.box(lens, (0.24, 0.12, 0.012), (x, -0.09, 5.494))
+    fy = D - 0.065
+    for x in (door[0], (door[0] + door[1]) / 2, door[1]):
+        m.box(fr, (0.1, 0.07, 3.25), (x, fy, 0.15 + 1.625))
+    for z in (0.18, 2.6, 3.4):
+        m.box(fr, (door[1] - door[0] + 0.08, 0.05, 0.08), ((door[0] + door[1]) / 2, fy, z))
+    for x0, x1 in windows:
+        for x in (x0, (2 * x0 + x1) / 3, (x0 + 2 * x1) / 3, x1):
+            m.box(fr, (0.08, 0.07, 1.4), (x, fy, 2.35))
+        for z in (1.68, 3.02):
+            m.box(fr, (x1 - x0 + 0.06, 0.05, 0.07), ((x0 + x1) / 2, fy, z))
+    for x in (-29.0 + 0.1, 29.0 - 0.1):
+        m.cyl(fr, 0.06, BAND[0] - 0.15, (x, D - 0.08, 0.15), segs=8)    # downspouts in the walkway corners
+    po = m.obj("Notices", "paint_white")
+    for x, z, w, h in ((-5.2, 1.6, 0.35, 0.5), (-5.2, 1.0, 0.35, 0.3), (4.4, 1.5, 0.25, 0.3)):
+        m.box(po, (w, 0.01, h), (x, D - 0.005, z))
+    gr = m.obj("SignBands", "sign_green")
+    for xa, xb in PERGOLA_BAYS:
+        m.box(gr, (xb - xa - 0.9 - 0.1, 0.04, 1.6), ((xa + xb) / 2, -0.07, (BAND[0] + BAND[1]) / 2))
+    bx = m.obj("SignBoxes", "dark_metal")
+    lf = m.obj("SignFaces", "lightbox_face")
+    for xa, xb in PERGOLA_BAYS:
+        cx = (xa + xb) / 2
+        m.box(bx, (4.2, 0.22, 0.95), (cx, -0.2, 4.6))
+        m.box(lf, (4.0, 0.02, 0.8), (cx, -0.32, 4.6))
+    dl = m.obj("Downlights", "led_lens")
+    for c in range(len(COLUMNS) - 1):
+        for f in (0.3, 0.7):
+            x = COLUMNS[c] + (COLUMNS[c + 1] - COLUMNS[c]) * f
+            m.cyl(dl, 0.09, 0.012, (x, D / 2, BAND[0] - 0.155 - 0.012), segs=12)
+    return m.build()
+
+
+def cart_row(count=12, pitch=0.32):
+    """A row of nested shopping carts as left along the store wall: 12 carts, 4.5 m long, 1.0 m tall,
+    0.62 m wide. Noses toward -X; each cart sits 0.32 m further along +X and 6 mm higher (nested
+    carts ride up on the one in front). Origin: bottom centre under the first cart's nose."""
+    m = Model("cart_row")
+    wire = m.obj("Wire", "rail_metal")
+    grip = m.obj("Handles", "rubber_black")
+    wheels = m.obj("Casters", "tire")
+    for i in range(count):
+        ox, oz = i * pitch, i * 0.006
+        def P(x, y, z):
+            return (ox + x, y, oz + z)
+        top = [(0.05, 0.25), (0.88, 0.31)]
+        bot = [(0.12, 0.22), (0.85, 0.28)]
+        for sy in (-1, 1):
+            m.tube(wire, P(top[0][0], sy * top[0][1], 0.92), P(top[1][0], sy * top[1][1], 0.92), 0.008, segs=6)
+            m.tube(wire, P(bot[0][0], sy * bot[0][1], 0.45), P(bot[1][0], sy * bot[1][1], 0.45), 0.006, segs=6)
+            for k in range(6):   # side wires
+                t = k / 5
+                xt = top[0][0] + (top[1][0] - top[0][0]) * t
+                yt = top[0][1] + (top[1][1] - top[0][1]) * t
+                xb = bot[0][0] + (bot[1][0] - bot[0][0]) * t
+                yb = bot[0][1] + (bot[1][1] - bot[0][1]) * t
+                m.tube(wire, P(xb, sy * yb, 0.45), P(xt, sy * yt, 0.92), 0.004, segs=5)
+            m.tube(wire, P(0.05, sy * 0.2, 0.14), P(0.9, sy * 0.28, 0.14), 0.011, segs=6)      # chassis rails
+            m.tube(wire, P(0.12, sy * 0.22, 0.45), P(0.07, sy * 0.2, 0.14), 0.01, segs=6)      # front legs
+            m.tube(wire, P(0.85, sy * 0.28, 0.45), P(0.9, sy * 0.28, 0.14), 0.011, segs=6)     # back legs
+            m.tube(wire, P(0.88, sy * 0.31, 0.92), P(0.97, sy * 0.3, 1.0), 0.011, segs=6)      # handle arms
+            for x, y in ((0.07, 0.2), (0.9, 0.28)):
+                m.cyl(wheels, 0.055, 0.03, P(x, sy * y - 0.015, 0.06), axis="Y", segs=10)
+                m.box(wire, (0.03, 0.04, 0.05), P(x, sy * y, 0.1))
+        for z, y0, y1, x in ((0.92, 0.25, 0.25, 0.05), (0.45, 0.22, 0.22, 0.12)):
+            m.tube(wire, P(x, -y0, z), P(x, y1, z), 0.007, segs=6)                              # nose rims
+        for k in range(5):   # floor wires and bottom tray
+            y = -0.2 + 0.1 * k
+            m.tube(wire, P(0.13, y, 0.452), P(0.84, y * 1.25, 0.452), 0.004, segs=5)
+            m.tube(wire, P(0.1, y, 0.2), P(0.86, y * 1.25, 0.2), 0.004, segs=5)
+        for k in range(5):   # back gate
+            y = -0.24 + 0.12 * k
+            m.tube(wire, P(0.86, y, 0.47), P(0.875, y * 1.1, 0.9), 0.004, segs=5)
+        m.tube(grip, P(0.97, -0.31, 1.0), P(0.97, 0.31, 1.0), 0.017, segs=8)
+    return m.build()
+
+
+def water_machine():
+    """Self-serve water refill machine, 0.8 x 0.75 x 2.05 m, front (+Y, Godot -Z) with window and nook."""
+    m = Model("water_machine")
+    b = m.obj("Cabinet", "water_blue")
+    m.box(b, (0.8, 0.75, 1.95), (0, 0, 0.05 + 0.975))
+    m.box(b, (0.74, 0.69, 0.05), (0, 0, 2.025))
+    p = m.obj("FrontPanel", "water_panel")
+    m.box(p, (0.68, 0.02, 1.7), (0, 0.385, 1.05))
+    d = m.obj("Dark", "dark_metal")
+    m.box(d, (0.8, 0.75, 0.05), (0, 0, 0.025))                    # plinth
+    m.box(d, (0.42, 0.02, 0.4), (0, 0.405, 0.85))                 # bottle nook
+    m.box(d, (0.08, 0.03, 0.06), (0.12, 0.42, 1.0))               # tap
+    g = m.obj("Window", "car_glass")
+    m.box(g, (0.5, 0.02, 0.42), (0, 0.405, 1.45))
+    k = m.obj("Keypad", "rail_metal")
+    m.box(k, (0.12, 0.02, 0.16), (0.24, 0.405, 1.15))
     return m.build()
 
 
@@ -554,6 +682,10 @@ def lot_surface():
     ang = math.atan(0.15 / 1.0)
     m.box(w, (2.98, 1.15, 0.1), (0, 13.5 + 0.05 * math.sin(ang), 0.075 - 0.05 * math.cos(ang)),
           rot=Matrix.Rotation(-ang, 3, "X"))
+    rp = m.obj("CurbPaint", "curb_red")   # red-painted curb edge along the fire lane, as in the photo
+    for x0, x1 in ((-30.0, -1.5), (1.5, 30.0)):
+        m.box(rp, (x1 - x0, 0.2, 0.002), ((x0 + x1) / 2, 13.1, 0.151))
+        m.box(rp, (x1 - x0, 0.002, 0.152), ((x0 + x1) / 2, 12.999, 0.076))
     c = m.obj("Curbs", "curb_concrete")
     m.box(c, (0.3, 43, 0.15), (-30.15, -8.5, 0.075))
     m.box(c, (0.3, 43, 0.15), (30.15, -8.5, 0.075))
@@ -591,7 +723,7 @@ def link_materials():
 
 
 MODELS = {f.__name__: f for f in (parking_block, cart_corral, streetlight, palm_tree, planter_island,
-                                   parked_car, stall_markings, store_front, lot_surface)}
+                                   parked_car, stall_markings, store_front, water_machine, cart_row, lot_surface)}
 
 if __name__ == "__main__":
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]

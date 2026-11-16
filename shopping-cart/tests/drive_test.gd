@@ -190,6 +190,38 @@ func _run() -> void:
 	if not gate_ok:
 		failures += 1
 	print("%-5s %-18s swung %.0f deg when shoved, back to %.0f deg after" % ["PASS" if gate_ok else "FAIL", "gate", swing, settle])
+	# Child seat: the flap lifts when pushed and drops back onto its stop. The backrest folds back flat against the
+	# gate and stays there (it leans back once folded), until it is pushed forward again.
+	for part in [["seat flap", "seat_flap", Vector3(0.13, 0, 0), Vector3.UP, 6.0, 20.0, 110.0],
+			["seat backrest", "child_seat", Vector3(0.13, 0.47, 0), Vector3.LEFT, 10.0, 5.0, 33.0]]:
+		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
+		await _wait(0.5)
+		cart = main.cart
+		var body: RigidBody3D = cart.get(part[1])
+		var rest: Basis = cart.gate.global_transform.basis.inverse() * body.global_transform.basis
+		var start: float = rad_to_deg(Basis.IDENTITY.get_rotation_quaternion().angle_to(rest.get_rotation_quaternion()))
+		var b0: Vector3 = body.global_transform.basis.y
+		var max_swing := 0.0
+		for i in 30:
+			var dir: Vector3 = cart.frame.global_transform.basis * part[3]
+			body.apply_force(dir * part[4], body.global_transform.basis * part[2])
+			await physics_frame
+			max_swing = maxf(max_swing, rad_to_deg(b0.angle_to(body.global_transform.basis.y)))
+		await _wait(2.0)
+		var stays: float = rad_to_deg(b0.angle_to(body.global_transform.basis.y))
+		if part[1] == "child_seat":
+			for i in 30:
+				body.apply_force(cart.frame.global_transform.basis.x * part[4], body.global_transform.basis * part[2])
+				await physics_frame
+			await _wait(2.0)
+		var back: float = rad_to_deg(b0.angle_to(body.global_transform.basis.y))
+		var ok: bool = start < 2.0 and max_swing > part[5] and max_swing < part[6] and back < 3.0
+		if part[1] == "child_seat":
+			ok = ok and stays > 25.0
+		if not ok:
+			failures += 1
+		print("%-5s %-18s at rest %.1f deg off its stop, swung %.0f deg when pushed, settled at %.0f deg, back to %.1f deg after" % [
+			"PASS" if ok else "FAIL", part[0], start, max_swing, stays, back])
 	# A pinned cart still gets knocked when something hits it.
 	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 	await _wait(2.0)
