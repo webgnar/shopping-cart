@@ -60,7 +60,8 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   shared default scene for each.
 - `scenes/cart/cart.tscn` — the cart rig (frame, gate, casters, wheels, hinge joints, groceries, model).
 - `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun.
-  `scenes/ui/hud.tscn` — the driving HUD. `scenes/cart_camera.tscn` — the follow camera.
+  `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
+  (` key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera.
 - `assets/physics/*.tres` — shared physics materials (tile, asphalt, solid).
 - `scripts/` — behaviour scripts for the scenes above.
 - `tools/` (repo root) — Blender builder and export scripts. `docs/DEV_NOTES.md` — dev notes.
@@ -71,4 +72,5 @@ From `shopping-cart/`:
 
 - Drive test (headless): `godot --headless --fixed-fps 120 -s res://tests/drive_test.gd`
 - Screenshot: `xvfb-run godot -s res://tests/screenshot.gd -- out.png`
+- Console test: `godot --headless --fixed-fps 120 -s res://tests/console_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
