@@ -18,18 +18,19 @@ extends Node3D
 
 @export_group("Hands")
 ## Hand power: holding a hand's key (Q/A left, E/D right) ramps that hand's push or pull from power_base, with no
-## cap. The HUD shows it as that hand's bar. Pushing and pulling share the same base and ramp. The force acts at
-## drive_height. At the grip height (1.0 m, above the centre of mass) a hard enough push tips the nose down and
-## lifts the rear wheels, and a hard enough pull lifts the front wheels. Nothing else tilts the cart.
+## cap. The HUD shows it as that hand's bar. Pushing and pulling share the same base and ramp. As the arms strain,
+## the wrists lever the bar (wrist_lever): pushing hard presses it down and the front wheels come up (a wheelie);
+## pulling hard lifts it and the rear wheels come up onto the front casters, which breaks the back loose for a
+## drift. Nothing else tilts the cart.
 @export var power_base := 25.0      ## N per hand the moment a key goes down
-@export var power_ramp := 60.0      ## N per second the hand's power grows while its key stays held
+@export var power_ramp := 120.0     ## N per second the hand's power grows while its key stays held
 @export var power_relax := 400.0    ## N per second the bar falls back to zero once the key is let go
 @export var sprint_speed := 8.0     ## m/s: a running player can't push (or pull) the cart faster than this
-## m above the ground (cart local) at which the hands' push and pull act on the cart. The grip is at 1.0 m, but the
-## wrists lever the bar as the arms drive: pushing hard presses the bar down, pulling hard lifts it. Below the
-## centre of mass (0.42 m) a push lifts the front and a pull lifts the rear; the further below, the sooner.
-## (Set it to the grip height, 1.0, for the bare physics of a force at the handle: the other way round.)
-@export var drive_height := 1.0
+## m: the wrists' lever on the bar. Each hand twists the cart about its axle line by its power times this, whether
+## or not the cart can speed up (a strained arm levers just as hard at a run). Push: nose up. Pull: nose down.
+## The bigger it is, the less power it takes to lift an end. The push and pull themselves act at the height of
+## the centre of mass, so they don't tilt the cart on their own.
+@export var wrist_lever := 0.4
 ## false: a spare cart nobody is holding. It ignores the keys and only moves when something hits it.
 @export var player_controlled := true
 ## true: the groceries are taken out (spare carts in a level start empty).
@@ -102,7 +103,7 @@ func _ready() -> void:
 
 ## Cart feel as the shared tuning dictionary (same keys as tuning/cart_tuning.json). The values come from this
 ## scene: the exports above and the bodies' masses. tools/export_cart_tuning.gd writes them out for the mobile game.
-const TUNING_KEYS := ["power_base", "power_ramp", "power_relax", "sprint_speed", "drive_height",
+const TUNING_KEYS := ["power_base", "power_ramp", "power_relax", "sprint_speed", "wrist_lever",
 	"rolling_resistance", "grip_yaw_damping", "spin_grip", "spin_grip_min",
 	"settle_speed", "settle_spin", "stop_speed", "stop_spin",
 	"arm_reach", "brake_spring", "brake_damping", "brake_max"]
@@ -239,7 +240,7 @@ func _apply_hands(delta: float) -> void:
 		hand_power[side] = p
 		var strength := absf(p)
 		var hand_g := xf * Vector3(hand_position.x, hand_position.y, s * hand_position.z)
-		var drive_g := xf * Vector3(hand_position.x, drive_height, s * hand_position.z)   # where the push acts
+		var drive_g := xf * Vector3(hand_position.x, frame.center_of_mass.y, s * hand_position.z)   # where the push acts
 		var r := hand_g - com_g
 		var v_hand := frame.linear_velocity + frame.angular_velocity.cross(r)
 		var along := v_hand.dot(fwd)
@@ -272,6 +273,9 @@ func _apply_hands(delta: float) -> void:
 			var t := minf(brake_max * lever, spin_grip * lever * lever * absf(yaw_rate))
 			frame.apply_torque(Vector3.UP * -signf(yaw_rate) * t)
 			st = (st + " + " if st else "") + "holding the spin"
+		# The wrists lever the bar by the hand's full power: a push raises the nose, a pull drops it.
+		if dir != 0:
+			frame.apply_torque(xf.basis.z.normalized() * dir * strength * wrist_lever)
 		hand_state[side] = st
 
 	# Grip: with both hands moving the same way the player resists the cart twisting (keeps it tracking when

@@ -30,6 +30,42 @@ GPU is software, so the draw and triangle counts are the trustworthy part).
   garage, SSAO off or lower, and the cart model (about 500k triangles at full detail; LODs keep it
   lower in practice). The five spare carts in the supermarket never sleep (`can_sleep = false` on the
   cart rig), but that costs well under 1 ms.
+## 2026-11-16: follow camera rises over walls instead of clipping
+
+- **What.** `scenes/cart_camera.tscn` now has a script (`scripts/cart_camera.gd`, class `CartCamera`) and a
+  `Probe` ShapeCast3D child (0.25 m sphere, mask 1 = level geometry; the cart is on layers 2 and 4 so it is
+  never hit). `main.gd` still owns the orbit (`cam_yaw`, `cam_pitch`, `cam_dist`, wheel zoom) and hands
+  the wanted camera position to `camera.follow()`.
+- **How it avoids things.** One sphere cast from the look target (above the cart) to the wanted spot. If
+  something is in the way it tries spots raised by `lift_step` (0.5 m) up to `max_lift` (2.0 m) and rises
+  to the lowest one with a clear view, so it goes up and over shelves, cars and walls. Under the garage's
+  low ceilings none of those clear, so it takes the lift that gets furthest out and pulls in along that
+  line until the probe fits. Pulling in is instant (no clipping, ever); rising (`rise_speed`), settling
+  (`settle_speed`) and moving back out (`out_speed`) are eased. All are exports on the Camera node;
+  `avoid_collisions` off gives the old camera.
+- **Cost.** 1 cast per frame in the open, at most 6 when blocked (lift search plus the final fit).
+  Measured by `tests/camera_test.gd` (headless, 4.7 stable): average 19 to 58 us per frame per level,
+  99th percentile under 0.32 ms; open-space frames are about 5 to 20 us.
+- **Test.** `tests/camera_test.gd` orbits the camera through 16 headings x 5 zoom/pitch views at 2 to 5
+  spots per level (next to shelves, cars, pillars, under garage decks). Clipping frames with avoidance
+  off / on: sandbox 71 / 0, parking lot 8 / 0, supermarket 192 / 0, garage 168 / 0.
+- **Left out.** Loose props on layer 1 (boxes, product cases, oil drums) also push the camera; spare carts
+  (layers 2/4) do not, so the camera can still pass through a parked spare cart.
+
+## 2026-11-16: push lifts the front, pull lifts the back; faster power bars
+
+- zack chose the lift direction: a very hard **push lifts the front wheels** (wheelie) and a very hard
+  **pull lifts the back wheels** onto the front casters, to break the back loose for a drift. The bare
+  physics of a force at the handle (above the centre of mass) is the reverse, so `drive_height` is replaced
+  by `wrist_lever` (0.4 m): each hand twists the cart about its axle line by its full power times that
+  lever (push: nose up, pull: nose down), as if the wrists press or lift the bar while the arms strain.
+  The push and pull themselves now act at the centre of mass height, so they don't tilt the cart on their own.
+- The bars ramp twice as fast (`power_ramp` 60 to 120 N/s, at zack's request). With that, holding both
+  hands lifts the front after about 1.8 s (about 240 N per hand, about 22 km/h) and the back after about
+  2.1 s. Let go right away and it lands on four wheels; keep holding and it goes over. The HUD bars now
+  show up to 400 N.
+- Drifting itself isn't tuned yet: the back wheels lose grip when they lift, and floor friction is at the
+  real-world values from the floor friction change. zack wants to drive it before deciding more.
 
 ## 2026-11-16: hand power bars replace the scroll-wheel gears and W/S
 

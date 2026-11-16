@@ -20,7 +20,7 @@ const KEYS := {
 }
 
 var cart: ShoppingCart
-var camera: Camera3D
+var camera: CartCamera
 var cam_yaw := 0.0
 var cam_pitch := 0.38
 var cam_dist := 3.2
@@ -44,7 +44,7 @@ func _ready() -> void:
 		spawn_cart(spawn.global_position, spawn.global_rotation.y)
 	else:
 		spawn_cart(Vector3(2, 0, 0), 0.0)
-	camera = get_node_or_null("Camera") as Camera3D
+	camera = get_node_or_null("Camera") as CartCamera
 	if camera == null:
 		camera = CAMERA_SCENE.instantiate()
 		add_child(camera)
@@ -72,6 +72,8 @@ func spawn_cart(at: Vector3, yaw: float) -> void:
 	add_child(cart)
 	cam_heading = yaw
 	cam_target = at + Vector3(0, 0.67, 0)
+	if camera:
+		camera.reset()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -101,8 +103,9 @@ func _process(delta: float) -> void:
 	var com := cart.frame.global_transform * cart.frame.center_of_mass
 	cam_target = cam_target.lerp(com + Vector3(0, 0.25, 0), minf(1.0, 9.0 * delta))
 	var yaw := cam_heading + PI + cam_yaw
-	camera.global_position = cam_target + Vector3(cos(yaw) * cos(cam_pitch), sin(cam_pitch), -sin(yaw) * cos(cam_pitch)) * cam_dist
-	camera.look_at(cam_target)
+	var wanted := cam_target + Vector3(cos(yaw) * cos(cam_pitch), sin(cam_pitch), -sin(yaw) * cos(cam_pitch)) * cam_dist
+	# The camera rises over (or pulls in from) walls, shelves and ceilings in the way; see cart_camera.gd.
+	camera.follow(cam_target, wanted, delta)
 	hud.show_cart(cart)
 
 
