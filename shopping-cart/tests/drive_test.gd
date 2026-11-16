@@ -152,6 +152,24 @@ func _run() -> void:
 		failures += 1
 	print("%-5s %-18s after 0.5 s from rest: pushing %.2f m/s, pulling %.2f m/s" % ["PASS" if pull_ok else "FAIL", "pull > push", accel.push, accel.pull])
 
+	# Holding W or S keeps tipping the cart until it falls over (W onto its nose, S back onto the handle);
+	# a short tap only leans it and it drops back onto four wheels.
+	for tip in [["press", 4.0, true], ["lift", 4.0, true], ["press", 0.8, false], ["lift", 0.8, false]]:
+		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
+		await _wait(1.0)
+		var tc: ShoppingCart = main.cart
+		Input.action_press(tip[0])
+		await _wait(tip[1])
+		Input.action_release(tip[0])
+		await _wait(3.0)
+		var tb := tc.frame.global_transform.basis
+		var fell := tb.y.y < 0.4
+		var tip_ok: bool = fell == tip[2] and (fell or tc.wheels_down() == 4)
+		if not tip_ok:
+			failures += 1
+		print("%-5s %-18s held %.1f s: %s (up %.2f, nose pitch %+d deg, wheels down %d)" % [
+			"PASS" if tip_ok else "FAIL", ("S" if tip[0] == "press" else "W") + " held", tip[1],
+			"fell over" if fell else "back on its wheels", tb.y.y, roundi(rad_to_deg(asin(clampf(tb.x.y, -1, 1)))), tc.wheels_down()])
 	# Gate swings into the basket when shoved, and stops at its limit.
 	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 	await _wait(0.5)

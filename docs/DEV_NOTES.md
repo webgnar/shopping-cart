@@ -3,6 +3,16 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: holding W or S tips the cart over
+
+`scripts/cart.gd`: W (lift) and S (press) still lean the cart to `lift_pitch` / `press_pitch` at first.
+Held past `tip_delay` (0.6 s), the target lean keeps growing at `tip_rate` (0.7 rad/s). Once the nose
+passes `let_go_pitch` (0.95 rad, about 54 degrees, past the balance point over either axle, about 45
+degrees) or the cart goes upside down, the hands slip off (HUD shows "lost grip") and gravity
+finishes it: W puts it on its nose, S lays it on its back on the handle. Releasing the key gives
+the hands back. A tap shorter than about a second still drops back onto four wheels. The three values are
+in `tuning/cart_tuning.json`; the mobile game does not read them yet (its thumb tilt is unchanged).
+Tested in `tests/drive_test.gd` (W/S held 4 s fall over, 0.8 s taps don't). No models or materials changed.
 ## 2026-11-16: parking garage second pass (props and textures)
 
 Every garage prop rebuilt at full detail, three new props, and every garage material textured.
