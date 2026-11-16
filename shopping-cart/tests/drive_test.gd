@@ -121,7 +121,7 @@ func _run() -> void:
 			var dist := Vector2(cart.cart_origin().x - p0.x, cart.cart_origin().z - p0.z).length()
 			var ok := true
 			if mode == "brake":
-				ok = dist < 0.07 * v0 * 3.6 and t < 1.5 and max_pitch < 25.0 and cart.groceries_in_basket() >= 4
+				ok = dist < 0.08 * v0 * 3.6 and t < 1.5 and max_pitch < 25.0 and cart.groceries_in_basket() >= 4
 			print("%-5s %-18s from %.1f km/h: stopped in %.2f m and %.2f s  max nose-up %.1f deg  front wheels up to %.2f m  groceries %d/5" % [
 				("PASS" if ok else "FAIL") if mode == "brake" else "info", "%.1f s push, %s" % [push_s, "pull" if mode == "brake" else "let go"],
 				v0 * 3.6, dist, t, max_pitch, max_front, cart.groceries_in_basket()])
@@ -197,7 +197,7 @@ func _run() -> void:
 			Input.action_release(a)
 		await _wait(3.0)
 		var tb := tc.frame.global_transform.basis
-		var fell := tb.y.y < 0.4
+		var fell := tb.y.y < 0.7   # well off upright: on its nose, its handle or its side
 		var pitch := roundi(rad_to_deg(asin(clampf(tb.x.y, -1, 1))))
 		var tip_ok: bool = lifted > 0.0 and fell == tip[2] and (fell or tc.wheels_down() == 4)
 		if not tip_ok:

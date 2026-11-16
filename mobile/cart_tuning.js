@@ -55,8 +55,8 @@ window.CART_TUNING = {
   "stop_speed": 0.05,
   "stop_spin": 0.05,
   "floor_friction": {
-    "tile": 0.18,
-    "asphalt": 0.9
+    "tile": 0.5,
+    "asphalt": 0.7
   },
   "power_base": 25.0,
   "power_ramp": 60.0,
