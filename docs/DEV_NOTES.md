@@ -3,6 +3,33 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: performance pass (why the laptop fans spin up)
+
+Profiled every level (`tests/perf_probe.gd` for CPU, `tests/perf_render.gd` for rendering; in the cloud the
+GPU is software, so the draw and triangle counts are the trustworthy part).
+
+- **CPU is not the problem.** One 120 Hz physics step plus all scripts takes 0.6 ms (sandbox, garage, lot)
+  to 1.0 ms (supermarket, 170 rigid bodies) on the cloud CPU, so about 7 to 12 % of one core. Jolt with
+  30 velocity steps is fine; nothing was changed in physics.
+- **The GPU is.** Vsync was the only limit, so on a 120 Hz Retina MacBook the game rendered 120 frames a
+  second at full Retina resolution with SSAO, glow and real-time shadows. Per frame at 1080p:
+  sandbox 287 draws / 158k triangles; lot 2150 / 952k; garage 1782 / 1.55M; supermarket 1051 / 497k.
+  Shadow passes are most of that: the lot's 20 shadowed streetlight spots were 1923 of its 2150 draws, the
+  garage sun shadow 1178 of 1782, the supermarket skylight shadow 749 of 1051. On the software GPU SSAO was
+  roughly a third of the frame and glow about a tenth; rendering 3D at half scale roughly halved it.
+- **Changes (look and feel the same in play):**
+  - `application/run/max_fps = 60` (vsync stays on). Halves GPU work on 120 Hz screens. Physics still
+    runs at 120 Hz, so the cart drives exactly the same. Set it to 0 to go back to uncapped.
+  - Streetlight spots fade their shadows out beyond 30 m from the camera (`distance_fade_shadow`, light
+    itself never fades). The play camera is 3 m from the cart, so the view is pixel-identical near the cart;
+    only the high overview shot loses a few far pole and car shadows. Lot: 2150 -> 1504 draws,
+    952k -> 684k triangles.
+  - Garage sprinkler pipes, light fixtures and floor arrows no longer cast shadows (they sit under a deck
+    or flat on the floor, so their sun shadows were never visible). Garage: 1782 -> 1695 draws.
+- **Left for a decision:** rendering 3D below full Retina resolution, shorter sun shadow distance in the
+  garage, SSAO off or lower, and the cart model (about 500k triangles at full detail; LODs keep it
+  lower in practice). The five spare carts in the supermarket never sleep (`can_sleep = false` on the
+  cart rig), but that costs well under 1 ms.
 ## 2026-11-16: follow camera rises over walls instead of clipping
 
 - **What.** `scenes/cart_camera.tscn` now has a script (`scripts/cart_camera.gd`, class `CartCamera`) and a

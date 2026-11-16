@@ -10,12 +10,15 @@
 [node name="Model" parent="." unique_id=603449689 instance=ExtResource("1_hrbmu")]
 
 [node name="Housing" parent="Model" index="0" unique_id=1067561648]
+cast_shadow = 0
 surface_material_override/0 = ExtResource("2_vdoi3")
 
 [node name="Tubes" parent="Model" index="1" unique_id=397603593]
+cast_shadow = 0
 surface_material_override/0 = ExtResource("3_76rmf")
 
 [node name="Guard" parent="Model" index="2" unique_id=1338714952]
+cast_shadow = 0
 surface_material_override/0 = ExtResource("4_asyxb")
 
 [node name="Light" type="OmniLight3D" parent="." unique_id=1384325892]

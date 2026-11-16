@@ -8,6 +8,7 @@
 [node name="Model" parent="." unique_id=1186300520 instance=ExtResource("1_ho6up")]
 
 [node name="Arrow" parent="Model" index="0" unique_id=577813673]
+cast_shadow = 0
 surface_material_override/0 = ExtResource("2_xcaxl")
 
 [editable path="Model"]
