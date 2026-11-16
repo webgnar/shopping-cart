@@ -15,6 +15,7 @@
 [ext_resource type="Material" path="res://assets/materials/supermarket/case_label_blue.tres" id="13"]
 [ext_resource type="Material" path="res://assets/materials/supermarket/case_label_red.tres" id="14"]
 [ext_resource type="Material" path="res://assets/materials/supermarket/case_label_green.tres" id="15"]
+[ext_resource type="PackedScene" path="res://scenes/cart/spare_cart.tscn" id="16"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -346,3 +347,20 @@ transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -3.4, 3.5, -1.8)
 
 [node name="Banner3" parent="Banners" instance=ExtResource("9")]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -3.4, 3.5, 5.4)
+
+[node name="SpareCarts" type="Node3D" parent="."]
+
+[node name="Entrance1" parent="SpareCarts" instance=ExtResource("16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.6, 0, -3)
+
+[node name="Entrance2" parent="SpareCarts" instance=ExtResource("16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.6, 0, -3.8)
+
+[node name="Entrance3" parent="SpareCarts" instance=ExtResource("16")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.6, 0, -4.6)
+
+[node name="Aisle4" parent="SpareCarts" instance=ExtResource("16")]
+transform = Transform3D(0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, 0.9397, 3, 0, 0.3)
+
+[node name="FrontAisle" parent="SpareCarts" instance=ExtResource("16")]
+transform = Transform3D(-0.5, 0, -0.866, 0, 1, 0, 0.866, 0, -0.5, -6.2, 0, 1.2)

@@ -115,7 +115,7 @@ script = ExtResource("1_ytnl2")
 
 [node name="Frame" type="RigidBody3D" parent="." unique_id=1338543223]
 collision_layer = 2
-collision_mask = 5
+collision_mask = 7
 mass = 18.0
 physics_material_override = SubResource("PhysicsMaterial_i6241")
 center_of_mass_mode = 1
@@ -149,6 +149,7 @@ shape = SubResource("BoxShape3D_pxplm")
 
 [node name="Guard" type="Area3D" parent="Frame" unique_id=1691249572]
 collision_layer = 0
+collision_mask = 3
 
 [node name="Zone" type="CollisionShape3D" parent="Frame/Guard" unique_id=57741320]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.47, 0.6, 0)
@@ -157,7 +158,7 @@ shape = SubResource("BoxShape3D_nyi84")
 [node name="Gate" type="RigidBody3D" parent="." unique_id=354311188]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.068, 0.985, 0)
 collision_layer = 2
-collision_mask = 5
+collision_mask = 7
 mass = 1.5
 physics_material_override = SubResource("PhysicsMaterial_i6241")
 can_sleep = false
@@ -169,7 +170,7 @@ shape = SubResource("BoxShape3D_ld83i")
 [node name="ChildSeat" type="RigidBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.207, 0.569, 0)
 collision_layer = 2
-collision_mask = 5
+collision_mask = 7
 mass = 0.8
 physics_material_override = SubResource("PhysicsMaterial_i6241")
 can_sleep = false
@@ -181,7 +182,7 @@ shape = SubResource("BoxShape3D_seatback")
 [node name="SeatFlap" type="RigidBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.138, 0.775, 0)
 collision_layer = 2
-collision_mask = 5
+collision_mask = 7
 mass = 0.4
 physics_material_override = SubResource("PhysicsMaterial_i6241")
 can_sleep = false
@@ -193,7 +194,7 @@ shape = SubResource("BoxShape3D_seatflap")
 [node name="Wheel_RL" type="RigidBody3D" parent="." unique_id=1742865923]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0685, 0.062, -0.3045)
 collision_layer = 2
-collision_mask = 5
+collision_mask = 7
 mass = 0.5
 physics_material_override = SubResource("PhysicsMaterial_qxkkq")
 can_sleep = false
@@ -217,7 +218,7 @@ shape = SubResource("BoxShape3D_t7hac")
 [node name="Wheel_FL" type="RigidBody3D" parent="." unique_id=717199492]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.849, 0.063, -0.1545)
 collision_layer = 2
-collision_mask = 5
+collision_mask = 7
 mass = 0.5
 physics_material_override = SubResource("PhysicsMaterial_qxkkq")
 can_sleep = false
@@ -229,7 +230,7 @@ shape = SubResource("SphereShape3D_7vkct")
 [node name="Wheel_RR" type="RigidBody3D" parent="." unique_id=1217511901]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0685, 0.062, 0.3045)
 collision_layer = 2
-collision_mask = 5
+collision_mask = 7
 mass = 0.5
 physics_material_override = SubResource("PhysicsMaterial_qxkkq")
 can_sleep = false
@@ -253,7 +254,7 @@ shape = SubResource("BoxShape3D_it83f")
 [node name="Wheel_FR" type="RigidBody3D" parent="." unique_id=722139240]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.849, 0.063, 0.1545)
 collision_layer = 2
-collision_mask = 5
+collision_mask = 7
 mass = 0.5
 physics_material_override = SubResource("PhysicsMaterial_qxkkq")
 can_sleep = false

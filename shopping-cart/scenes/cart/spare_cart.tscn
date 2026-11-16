@@ -1,0 +1,7 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/cart/cart.tscn" id="1_cart"]
+
+[node name="SpareCart" instance=ExtResource("1_cart")]
+player_controlled = false
+empty_basket = true

@@ -1,6 +1,6 @@
 extends SceneTree
 ## Loads the supermarket level, checks the cart spawns on all four wheels, can be pushed through the store
-## and knocks cases off a pallet display, and saves screenshots from a few spots. Exits 1 on a failure.
+## and knocks cases off a pallet display, that spare carts ignore the keys but get shoved when rammed, and saves screenshots from a few spots. Exits 1 on a failure.
 ## Needs a display (e.g. xvfb-run):
 ##   xvfb-run godot -s res://tests/supermarket_check.gd -- <output folder>
 
@@ -40,6 +40,8 @@ func _run() -> void:
 	var args := OS.get_cmdline_user_args()
 	var dir: String = args[0] if args.size() > 0 else "user://"
 	await _frames(60)
+	var spare: ShoppingCart = main.get_node("SpareCarts/Entrance1")
+	var spare_start: Vector3 = spare.frame.global_position
 	var start: Vector3 = main.cart.cart_origin()
 	_check(main.cart.wheels_down() == 4, "spawned at %s on %d / 4 wheels" % [start, main.cart.wheels_down()])
 	await _shot(dir, "1_entrance")
@@ -51,6 +53,8 @@ func _run() -> void:
 	var p: Vector3 = main.cart.cart_origin()
 	_check((p - start).length() > 5.0 and main.cart.wheels_down() == 4,
 		"pushed %.1f m from the entrance, %d / 4 wheels down" % [(p - start).length(), main.cart.wheels_down()])
+	var drift: float = spare.frame.global_position.distance_to(spare_start)
+	_check(drift < 0.05, "spare cart by the door stayed put while the keys were held (moved %.3f m)" % drift)
 	await _shot(dir, "2_pushing")
 	# Into an aisle, looking down it
 	main.spawn_cart(Vector3(-1.5, 0, 0), 0.0)
@@ -84,6 +88,21 @@ func _run() -> void:
 			knocked += 1
 	_check(knocked > 0, "rammed a pallet display: %d of %d cases knocked" % [knocked, cases.size()])
 	await _shot(dir, "6_crash")
+	# Ram a spare cart: it should roll away, gate and all, and nothing should fall through the floor.
+	var other: ShoppingCart = main.get_node("SpareCarts/FrontAisle")
+	var other_start: Vector3 = other.frame.global_position
+	main.spawn_cart(Vector3(-9.2, 0, 1.4), 0.0)
+	await _frames(30)
+	for a in ["push_left", "push_right"]:
+		Input.action_press(a)
+	await _ticks(240)
+	for a in ["push_left", "push_right"]:
+		Input.action_release(a)
+	await _ticks(120)
+	var shoved: Vector3 = other.frame.global_position - other_start
+	_check(Vector2(shoved.x, shoved.z).length() > 0.2 and other.frame.global_position.y > -0.1,
+		"rammed a spare cart: it moved %.2f m, %d / 4 wheels down" % [Vector2(shoved.x, shoved.z).length(), other.wheels_down()])
+	await _shot(dir, "6b_cart_crash")
 	main.spawn_cart(Vector3(-5, 0, 0), 0.0)
 	main.cam_dist = 3.0
 	main.cam_pitch = 0.05
