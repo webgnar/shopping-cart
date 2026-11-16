@@ -1,0 +1,25 @@
+[gd_scene format=4]
+
+[ext_resource type="PackedScene" path="res://assets/models/garage/pillar/pillar.glb" id="1_5q2e2"]
+[ext_resource type="Material" path="res://assets/materials/garage/concrete_pillar.tres" id="2_gcrmk"]
+[ext_resource type="Material" path="res://assets/materials/garage/paint_yellow.tres" id="3_7r0p0"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_ga2it"]
+height = 2.9
+radius = 0.26
+
+[node name="Pillar" type="StaticBody3D" unique_id=473902361]
+
+[node name="Model" parent="." unique_id=2120998514 instance=ExtResource("1_5q2e2")]
+
+[node name="Pillar" parent="Model" index="0" unique_id=525937595]
+surface_material_override/0 = ExtResource("2_gcrmk")
+
+[node name="Foot" parent="Model" index="1" unique_id=1848744933]
+surface_material_override/0 = ExtResource("3_7r0p0")
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=1631847779]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.45, 0)
+shape = SubResource("CylinderShape3D_ga2it")
+
+[editable path="Model"]
