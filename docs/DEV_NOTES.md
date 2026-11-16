@@ -3,6 +3,20 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: cart materials
+
+- The cart model never had materials: none of the 109 meshes in ShoppingCart_Rigged.blend had
+  one (the only images in the file are reference photos), so it rendered plain white in Godot.
+- `tools/rig_cart.py` now gives every part one material by name: `cart_chrome` (basket wire,
+  frame, gate, seat), `cart_steel` (caster forks, brackets, bolts, bearings), `cart_handle` (blue
+  grip, matching the old ShoppingCart_Physics.blend), `cart_plastic` (corner bumpers, seat flap),
+  `wheel_rubber` (tyres), `wheel_hub`. The shared Godot materials are in
+  `assets/materials/cart/*.tres`, linked by name in `shopping_cart.glb.import`.
+- The .glb was re-exported from the base model; node names and pivots are unchanged and the
+  drive tests pass. ShoppingCart_Rigged.blend was not re-saved (the cloud Blender is 5.3 and would
+  write a file Blender 4.5 can't open); re-run `tools/rig_cart.py` locally to update it.
+- No geometry changed, so no z-fighting check was needed.
+
 ## 2026-11-16: in-game debug console
 
 `scenes/ui/console.tscn` (script `scripts/ui/console.gd`), registered as the `Console` autoload in
