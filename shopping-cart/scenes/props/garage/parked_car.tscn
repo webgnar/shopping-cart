@@ -1,0 +1,162 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/props/parked_car.gd" id="1_pc7hr"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kjqxc"]
+albedo_color = Color(0.65882355, 0.19607843, 0.1764706, 1)
+metallic = 0.3
+roughness = 0.35
+
+[sub_resource type="BoxMesh" id="BoxMesh_s8lxl"]
+material = SubResource("StandardMaterial3D_kjqxc")
+size = Vector3(4.4, 0.62, 1.78)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_v086c"]
+albedo_color = Color(0.105882354, 0.13725491, 0.16862746, 1)
+metallic = 0.4
+roughness = 0.08
+
+[sub_resource type="BoxMesh" id="BoxMesh_j7pqa"]
+material = SubResource("StandardMaterial3D_v086c")
+size = Vector3(2.3, 0.5, 1.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ofgv1"]
+material = SubResource("StandardMaterial3D_kjqxc")
+size = Vector3(2.05, 0.06, 1.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q20wt"]
+albedo_color = Color(0.15294118, 0.16078432, 0.17254902, 1)
+roughness = 0.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_kx0m7"]
+material = SubResource("StandardMaterial3D_q20wt")
+size = Vector3(0.14, 0.22, 1.82)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0qhmo"]
+albedo_color = Color(0.93333334, 0.9411765, 0.9490196, 1)
+roughness = 0.1
+
+[sub_resource type="BoxMesh" id="BoxMesh_67mic"]
+material = SubResource("StandardMaterial3D_0qhmo")
+size = Vector3(0.04, 0.13, 0.36)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8vcvd"]
+albedo_color = Color(0.61960787, 0.078431375, 0.078431375, 1)
+roughness = 0.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_nnju6"]
+material = SubResource("StandardMaterial3D_8vcvd")
+size = Vector3(0.04, 0.13, 0.36)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sxjs5"]
+albedo_color = Color(0.9490196, 0.9411765, 0.9019608, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_te5q1"]
+material = SubResource("StandardMaterial3D_sxjs5")
+size = Vector3(0.02, 0.12, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ocefy"]
+albedo_color = Color(0.101960786, 0.101960786, 0.101960786, 1)
+roughness = 0.95
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_kblud"]
+material = SubResource("StandardMaterial3D_ocefy")
+top_radius = 0.33
+bottom_radius = 0.33
+height = 0.22
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_s6b26"]
+albedo_color = Color(0.7882353, 0.79607844, 0.8039216, 1)
+metallic = 0.9
+roughness = 0.25
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_fy5um"]
+material = SubResource("StandardMaterial3D_s6b26")
+top_radius = 0.19
+bottom_radius = 0.19
+height = 0.23
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7gmqn"]
+size = Vector3(4.5, 0.85, 1.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ot7ab"]
+size = Vector3(2.3, 0.5, 1.6)
+
+[node name="ParkedCar" type="StaticBody3D" unique_id=384320310]
+script = ExtResource("1_pc7hr")
+
+[node name="Body" type="MeshInstance3D" parent="." unique_id=304376682]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.62, 0)
+mesh = SubResource("BoxMesh_s8lxl")
+
+[node name="Cabin" type="MeshInstance3D" parent="." unique_id=1593561695]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 1.18, 0)
+mesh = SubResource("BoxMesh_j7pqa")
+
+[node name="Roof" type="MeshInstance3D" parent="." unique_id=476015065]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 1.46, 0)
+mesh = SubResource("BoxMesh_ofgv1")
+
+[node name="FrontBumper" type="MeshInstance3D" parent="." unique_id=1533465122]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.24, 0.42, 0)
+mesh = SubResource("BoxMesh_kx0m7")
+
+[node name="RearBumper" type="MeshInstance3D" parent="." unique_id=168955092]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.24, 0.42, 0)
+mesh = SubResource("BoxMesh_kx0m7")
+
+[node name="HeadlightL" type="MeshInstance3D" parent="." unique_id=604965942]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.21, 0.78, -0.6)
+mesh = SubResource("BoxMesh_67mic")
+
+[node name="HeadlightR" type="MeshInstance3D" parent="." unique_id=644252843]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.21, 0.78, 0.6)
+mesh = SubResource("BoxMesh_67mic")
+
+[node name="TaillightL" type="MeshInstance3D" parent="." unique_id=857022840]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.21, 0.78, -0.6)
+mesh = SubResource("BoxMesh_nnju6")
+
+[node name="TaillightR" type="MeshInstance3D" parent="." unique_id=721425782]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.21, 0.78, 0.6)
+mesh = SubResource("BoxMesh_nnju6")
+
+[node name="Plate" type="MeshInstance3D" parent="." unique_id=114617088]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.32, 0.5, 0)
+mesh = SubResource("BoxMesh_te5q1")
+
+[node name="WheelFL" type="MeshInstance3D" parent="." unique_id=572430317]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 1.4, 0.33, 0.8)
+mesh = SubResource("CylinderMesh_kblud")
+
+[node name="Hub" type="MeshInstance3D" parent="WheelFL" unique_id=1204084685]
+mesh = SubResource("CylinderMesh_fy5um")
+
+[node name="WheelFR" type="MeshInstance3D" parent="." unique_id=723969279]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 1.4, 0.33, -0.8)
+mesh = SubResource("CylinderMesh_kblud")
+
+[node name="Hub" type="MeshInstance3D" parent="WheelFR" unique_id=289639338]
+mesh = SubResource("CylinderMesh_fy5um")
+
+[node name="WheelRL" type="MeshInstance3D" parent="." unique_id=1597791786]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -1.4, 0.33, 0.8)
+mesh = SubResource("CylinderMesh_kblud")
+
+[node name="Hub" type="MeshInstance3D" parent="WheelRL" unique_id=552129377]
+mesh = SubResource("CylinderMesh_fy5um")
+
+[node name="WheelRR" type="MeshInstance3D" parent="." unique_id=1081290267]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -1.4, 0.33, -0.8)
+mesh = SubResource("CylinderMesh_kblud")
+
+[node name="Hub" type="MeshInstance3D" parent="WheelRR" unique_id=1997879751]
+mesh = SubResource("CylinderMesh_fy5um")
+
+[node name="BodyCollision" type="CollisionShape3D" parent="." unique_id=671239132]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("BoxShape3D_7gmqn")
+
+[node name="CabinCollision" type="CollisionShape3D" parent="." unique_id=768439878]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 1.18, 0)
+shape = SubResource("BoxShape3D_ot7ab")
