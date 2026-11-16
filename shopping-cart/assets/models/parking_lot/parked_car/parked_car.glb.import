@@ -1,0 +1,88 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://2l0apegcc3ye"
+path="res://.godot/imported/parked_car.glb-ec22018a37581b0eeb5697fc83ac43d3.scn"
+
+[deps]
+
+source_file="res://assets/models/parking_lot/parked_car/parked_car.glb"
+dest_files=["res://.godot/imported/parked_car.glb-ec22018a37581b0eeb5697fc83ac43d3.scn"]
+
+[params]
+
+nodes/root_type=""
+nodes/root_name=""
+nodes/root_script=null
+mesh_library/use_node_names_as_mesh_names=false
+array_mesh/deduplicate_surfaces=true
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_name_suffixes=true
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+materials/extract=0
+materials/extract_format=0
+materials/extract_path=""
+_subresources={
+"materials": {
+"car_glass": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/parking_lot/materials/car_glass.tres",
+"use_external/path": "res://assets/parking_lot/materials/car_glass.tres"
+},
+"car_paint": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/parking_lot/materials/car_paint.tres",
+"use_external/path": "res://assets/parking_lot/materials/car_paint.tres"
+},
+"headlight": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/parking_lot/materials/headlight.tres",
+"use_external/path": "res://assets/parking_lot/materials/headlight.tres"
+},
+"paint_white": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/parking_lot/materials/paint_white.tres",
+"use_external/path": "res://assets/parking_lot/materials/paint_white.tres"
+},
+"rail_metal": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/parking_lot/materials/rail_metal.tres",
+"use_external/path": "res://assets/parking_lot/materials/rail_metal.tres"
+},
+"rubber_black": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/parking_lot/materials/rubber_black.tres",
+"use_external/path": "res://assets/parking_lot/materials/rubber_black.tres"
+},
+"taillight": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/parking_lot/materials/taillight.tres",
+"use_external/path": "res://assets/parking_lot/materials/taillight.tres"
+},
+"tire": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/parking_lot/materials/tire.tres",
+"use_external/path": "res://assets/parking_lot/materials/tire.tres"
+}
+}
+}
+gltf/naming_version=2
+gltf/embedded_image_handling=1
+gltf/texture_map_mode=1

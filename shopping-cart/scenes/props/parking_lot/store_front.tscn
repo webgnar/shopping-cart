@@ -1,0 +1,96 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="1_erd6d"]
+[ext_resource type="PackedScene" path="res://assets/models/parking_lot/store_front/store_front.glb" id="2_ycax4"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_exavl"]
+size = Vector3(60, 7, 12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3uvww"]
+size = Vector3(13, 9.5, 1.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_omkne"]
+size = Vector3(0.35, 3.75, 0.35)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1pcmu"]
+size = Vector3(0.35, 3.75, 0.35)
+
+[node name="StoreFront" type="StaticBody3D" unique_id=1461209329]
+physics_material_override = ExtResource("1_erd6d")
+
+[node name="Model" type="Node3D" parent="." unique_id=1510658959 instance=ExtResource("2_ycax4")]
+
+[node name="BuildingShape" type="CollisionShape3D" parent="." unique_id=1958773586]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -6)
+shape = SubResource("BoxShape3D_exavl")
+
+[node name="TowerShape" type="CollisionShape3D" parent="." unique_id=2030599358]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.75, -0.3)
+shape = SubResource("BoxShape3D_3uvww")
+
+[node name="ColumnWShape" type="CollisionShape3D" parent="." unique_id=651113514]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.2, 1.875, 2.6)
+shape = SubResource("BoxShape3D_omkne")
+
+[node name="ColumnEShape" type="CollisionShape3D" parent="." unique_id=1350019551]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2, 1.875, 2.6)
+shape = SubResource("BoxShape3D_1pcmu")
+
+[node name="Sign" type="Label3D" parent="." unique_id=413814848]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.2, 0.52)
+pixel_size = 0.02
+double_sided = false
+modulate = Color(1, 0.5411765, 0.11764706, 1)
+outline_modulate = Color(0.3529412, 0.11372549, 0, 1)
+text = "SUPERMARKET"
+font_size = 160
+outline_size = 10
+
+[node name="SignBakery" type="Label3D" parent="." unique_id=1244279487]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 4.6, 0.175)
+pixel_size = 0.012
+double_sided = false
+modulate = Color(1, 0.8235294, 0.34117648, 1)
+outline_modulate = Color(0.2901961, 0.19607843, 0, 1)
+text = "BAKERY"
+font_size = 90
+outline_size = 10
+
+[node name="SignDeli" type="Label3D" parent="." unique_id=1567720656]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 4.6, 0.175)
+pixel_size = 0.012
+double_sided = false
+modulate = Color(1, 0.8235294, 0.34117648, 1)
+outline_modulate = Color(0.2901961, 0.19607843, 0, 1)
+text = "DELI"
+font_size = 90
+outline_size = 10
+
+[node name="FacadeLights" type="Node3D" parent="." unique_id=2011737773]
+
+[node name="Wash1" type="OmniLight3D" parent="FacadeLights" unique_id=385817045]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 5.3, 1)
+light_color = Color(1, 0.8352941, 0.6039216, 1)
+omni_range = 8.0
+
+[node name="Wash2" type="OmniLight3D" parent="FacadeLights" unique_id=904280365]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 5.3, 1)
+light_color = Color(1, 0.8352941, 0.6039216, 1)
+omni_range = 8.0
+
+[node name="Wash3" type="OmniLight3D" parent="FacadeLights" unique_id=657906389]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 5.3, 1)
+light_color = Color(1, 0.8352941, 0.6039216, 1)
+omni_range = 8.0
+
+[node name="Wash4" type="OmniLight3D" parent="FacadeLights" unique_id=1216461191]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 5.3, 1)
+light_color = Color(1, 0.8352941, 0.6039216, 1)
+omni_range = 8.0
+
+[node name="EntranceLight" type="SpotLight3D" parent="FacadeLights" unique_id=1878056433]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.7, 2)
+light_color = Color(1, 0.8862745, 0.6901961, 1)
+light_energy = 4.0
+spot_range = 8.0
+spot_angle = 60.0

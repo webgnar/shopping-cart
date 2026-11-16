@@ -1,0 +1,45 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="1_f6ym8"]
+[ext_resource type="PackedScene" path="res://assets/models/parking_lot/streetlight/streetlight.glb" id="2_ew07v"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_s1bre"]
+height = 1.0
+radius = 0.36
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_m00te"]
+height = 8.4
+radius = 0.11
+
+[node name="Streetlight" type="StaticBody3D" unique_id=948453127 groups=["streetlight"]]
+physics_material_override = ExtResource("1_f6ym8")
+
+[node name="Model" type="Node3D" parent="." unique_id=355711545 instance=ExtResource("2_ew07v")]
+
+[node name="BaseShape" type="CollisionShape3D" parent="." unique_id=933366756]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("CylinderShape3D_s1bre")
+
+[node name="PoleShape" type="CollisionShape3D" parent="." unique_id=1344765303]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.2, 0)
+shape = SubResource("CylinderShape3D_m00te")
+
+[node name="LightL" type="SpotLight3D" parent="." unique_id=131901441]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -1, 9.32, 0)
+light_color = Color(0.93333334, 0.94509804, 1, 1)
+light_energy = 6.0
+shadow_enabled = true
+spot_range = 22.0
+spot_attenuation = 0.9
+spot_angle = 70.0
+spot_angle_attenuation = 0.6
+
+[node name="LightR" type="SpotLight3D" parent="." unique_id=1248950575]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 1, 9.32, 0)
+light_color = Color(0.93333334, 0.94509804, 1, 1)
+light_energy = 6.0
+shadow_enabled = true
+spot_range = 22.0
+spot_attenuation = 0.9
+spot_angle = 70.0
+spot_angle_attenuation = 0.6

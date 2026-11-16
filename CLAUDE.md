@@ -71,3 +71,4 @@ From `shopping-cart/`:
 
 - Drive test (headless): `godot --headless --fixed-fps 120 -s res://tests/drive_test.gd`
 - Screenshot: `xvfb-run godot -s res://tests/screenshot.gd -- out.png`
+- Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
