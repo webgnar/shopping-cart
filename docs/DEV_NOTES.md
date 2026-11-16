@@ -3,6 +3,49 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: parking garage second pass (props and textures)
+
+Every garage prop rebuilt at full detail, three new props, and every garage material textured.
+
+**Textures** (`tools/textures/make_garage_textures.py`, run with `python3`, writes
+`shopping-cart/assets/textures/garage/<name>_{color,normal,rough}.jpg`, 1024 px, tileable). The
+usual CC0 sites (TextureCan, ambientCG, Poly Haven) are blocked from the cloud, so the maps are
+painted from layered noise in numpy. Materials use world triplanar mapping (no UVs needed) with
+`uv1_scale = 1 / tile`. Tile sizes: concrete_deck 4 m (soft oil stains, trowel marks),
+concrete_wall 2.4 m (formwork lines, tie holes), concrete_pillar 1.6 m, asphalt 3 m, paint_yellow /
+paint_white 2 m (worn chips), rubber 0.5 m, dark_metal 1 m, brushed_metal 0.6 m, galvanized 1 m,
+sign_paint 0.8 m, seat_fabric 0.3 m, car_paint 2 m (near white so each car's tint shows),
+red_paint 0.8 m, drum_paint 1.2 m (object-space, not world). Texture `.import` files have
+mipmaps on and VRAM compression; normals are flagged as normal maps. New shared materials:
+car_interior, rim_metal, indicator, white_enamel, galvanized, brushed_metal, red_paint, drum_paint.
+
+**Models** (`tools/blender/garage_models.py`):
+
+| Model | Tris | KB | What changed |
+| --- | --- | --- | --- |
+| parked_car | 7544 | 399 | A/B/C pillars, roof, mirrors, glass incl. mirror glass, seats and dash, bumpers, grille slats, skirts, arch flares, shut lines, wipers, antenna, handles, exhaust, indicators, plates; each wheel is a Tyre + Rim pivoting on its axle |
+| pillar | 562 | 27 | Foot, white band, galvanized conduit (0.75-2.66 m) with straps and junction box |
+| garage_light | 332 | 19 | Enamel housing, end caps, lampholders, tubes, wire guard |
+| lamp_post | 800 | 42 | Concrete pier, base plate, collar, pole, handhole, arm, brace, shoebox head, photocell, bolts |
+| exit_sign | 436 | 24 | Brushed metal frame, hanging rods with ceiling plates and clamps |
+| floor_arrow | 20 | 2 | Unchanged |
+| sprinkler_pipe (new) | 368 | 19 | 2.6 m red pipe 0.52 m below the ceiling, coupling, drop and head, hanger rod |
+| oil_drum (new) | 616 | 27 | 55 gal drum, 0.57 m dia x 0.88 m, rolling hoops, chime, rubber liner |
+| fire_cabinet (new) | 342 | 20 | 0.6 x 0.9 x 0.2 m red cabinet, glass door, extinguisher, valve and hose |
+
+**Placement:** sprinkler runs under every covered floor (10 segments per floor, 2.9 m up); an oil
+drum by about 40% of pillars on the aisle side (`oil_drum.tscn` is a 15 kg RigidBody3D the cart
+can knock over); fire cabinets on the centre walls of wing A (two floors' worth of bands) and wing
+B. Cars show "GRG 4K2" plates as Label3D.
+
+**Z-fighting:** every model reports none in the builder (fixed: seats/dash vs body, wipers vs
+glass, pole vs collar, hanger rod vs anchor). `tests/garage_zfight_test.gd` reports 0 flush faces;
+`garage_test.gd` and `drive_test.gd` pass.
+
+**Left out:** no grime gradient at the bottom of walls (triplanar tiles can't know the wall
+height; would need a second UV or a decal pass), glass and light lenses stay flat colour, every
+car has the same plate text.
+
 ## 2026-11-16: cart materials
 
 - The cart model never had materials: none of the 109 meshes in ShoppingCart_Rigged.blend had

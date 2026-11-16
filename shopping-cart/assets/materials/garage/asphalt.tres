@@ -1,5 +1,16 @@
 [gd_resource type="StandardMaterial3D" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/textures/garage/asphalt_color.jpg" id="1_r7ba2"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/asphalt_normal.jpg" id="2_54bil"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/asphalt_rough.jpg" id="3_fum25"]
+
 [resource]
-albedo_color = Color(0.20392157, 0.21568628, 0.23529412, 1)
-roughness = 0.95
+resource_name = "asphalt"
+albedo_texture = ExtResource("1_r7ba2")
+roughness_texture = ExtResource("3_fum25")
+normal_enabled = true
+normal_texture = ExtResource("2_54bil")
+uv1_scale = Vector3(0.33333334, 0.33333334, 0.33333334)
+uv1_triplanar = true
+uv1_triplanar_sharpness = 4.0
+uv1_world_triplanar = true

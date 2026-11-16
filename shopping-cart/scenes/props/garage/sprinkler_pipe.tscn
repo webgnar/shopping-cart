@@ -1,0 +1,25 @@
+[gd_scene format=4]
+
+[ext_resource type="PackedScene" path="res://assets/models/garage/sprinkler_pipe/sprinkler_pipe.glb" id="1_bnhev"]
+[ext_resource type="Material" path="res://assets/materials/garage/red_paint.tres" id="2_sl8wx"]
+[ext_resource type="Material" path="res://assets/materials/garage/dark_metal.tres" id="3_110eu"]
+[ext_resource type="Material" path="res://assets/materials/garage/galvanized.tres" id="4_pasm2"]
+[ext_resource type="Material" path="res://assets/materials/garage/brushed_metal.tres" id="5_518g2"]
+
+[node name="SprinklerPipe" type="Node3D" unique_id=702114302]
+
+[node name="Model" parent="." unique_id=347437388 instance=ExtResource("1_bnhev")]
+
+[node name="Pipe" parent="Model" index="0" unique_id=667313263]
+surface_material_override/0 = ExtResource("2_sl8wx")
+
+[node name="Fittings" parent="Model" index="1" unique_id=412450998]
+surface_material_override/0 = ExtResource("3_110eu")
+
+[node name="Hanger" parent="Model" index="2" unique_id=1068035629]
+surface_material_override/0 = ExtResource("4_pasm2")
+
+[node name="Head" parent="Model" index="3" unique_id=1827839298]
+surface_material_override/0 = ExtResource("5_518g2")
+
+[editable path="Model"]

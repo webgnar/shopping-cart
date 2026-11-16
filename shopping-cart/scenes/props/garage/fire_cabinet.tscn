@@ -1,0 +1,49 @@
+[gd_scene format=4]
+
+[ext_resource type="PackedScene" path="res://assets/models/garage/fire_cabinet/fire_cabinet.glb" id="1_rf1pk"]
+[ext_resource type="Material" path="res://assets/materials/garage/red_paint.tres" id="2_ibo64"]
+[ext_resource type="Material" path="res://assets/materials/garage/brushed_metal.tres" id="3_aw3ve"]
+[ext_resource type="Material" path="res://assets/materials/garage/car_glass.tres" id="4_jne5w"]
+[ext_resource type="Material" path="res://assets/materials/garage/dark_metal.tres" id="5_50iy2"]
+[ext_resource type="Material" path="res://assets/materials/garage/rubber.tres" id="6_whfy5"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_78m0k"]
+size = Vector3(0.32, 0.62, 0.22)
+
+[node name="FireCabinet" type="StaticBody3D" unique_id=1705853067]
+
+[node name="Model" parent="." unique_id=349262019 instance=ExtResource("1_rf1pk")]
+
+[node name="Cabinet" parent="Model" index="0" unique_id=1672079049]
+surface_material_override/0 = ExtResource("2_ibo64")
+
+[node name="DoorFrame" parent="Model" index="1" unique_id=839007288]
+surface_material_override/0 = ExtResource("3_aw3ve")
+
+[node name="Glass" parent="Model" index="2" unique_id=1149769657]
+surface_material_override/0 = ExtResource("4_jne5w")
+
+[node name="Extinguisher" parent="Model" index="3" unique_id=813571074]
+surface_material_override/0 = ExtResource("2_ibo64")
+
+[node name="Valve" parent="Model" index="4" unique_id=1555145949]
+surface_material_override/0 = ExtResource("5_50iy2")
+
+[node name="Hose" parent="Model" index="5" unique_id=616755133]
+surface_material_override/0 = ExtResource("6_whfy5")
+
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=475924815]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.31, -0.11)
+shape = SubResource("BoxShape3D_78m0k")
+
+[node name="Label" type="Label3D" parent="." unique_id=1444314852]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0.74, -0.002)
+pixel_size = 0.0025
+double_sided = false
+modulate = Color(0.7019608, 0.1254902, 0.105882354, 1)
+text = "FIRE
+EXTINGUISHER"
+font_size = 40
+outline_size = 0
+
+[editable path="Model"]

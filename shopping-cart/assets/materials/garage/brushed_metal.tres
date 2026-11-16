@@ -1,0 +1,17 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/garage/brushed_metal_color.jpg" id="1_73bnq"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/brushed_metal_normal.jpg" id="2_f4w7o"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/brushed_metal_rough.jpg" id="3_oh223"]
+
+[resource]
+resource_name = "brushed_metal"
+albedo_texture = ExtResource("1_73bnq")
+metallic = 0.85
+roughness_texture = ExtResource("3_oh223")
+normal_enabled = true
+normal_texture = ExtResource("2_f4w7o")
+uv1_scale = Vector3(1.6666666, 1.6666666, 1.6666666)
+uv1_triplanar = true
+uv1_triplanar_sharpness = 4.0
+uv1_world_triplanar = true
