@@ -3,6 +3,34 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: parking lot store front from zack's photo, lot sweep
+
+Store front rebuilt after zack's night photo of a supermarket front (`tools/parking_lot_models.py`):
+
+| Model | Tris | KB | Size chosen | Notes |
+| --- | --- | --- | --- | --- |
+| store_front | 2054 | 104 | 60 m wide; 4 m deep covered walkway; 0.9 m square columns 7.5 m apart; sign band 3.6-5.6 m; pergola piers to 8.6 m; tile mansard to 8.2 m | Column bases and capitals, pilasters through the band, green sign panels with two lightboxes ("service deli", "liquor", Label3D text), stepped pergola with sloping fins and coping over those two bays, red tile mansard with tile courses over the rest, soffit with 14 downlights, sliding entry doors with transom, three mullioned shop windows, downspouts, posted notices |
+| water_machine | 96 | 9 | 0.8 x 0.75 x 2.05 m | Generic "WATER / REFILL STATION" (no brand), window, bottle nook, tap, keypad |
+| cart_row | 11184 | 546 | 12 nested carts, 4.5 m; each cart 0.97 m long, 0.62 m wide, 1.0 m handle | Wire baskets, chassis, tray, casters, handle grips; each cart 0.32 m along and 6 mm up from the one in front |
+| lot_surface | 528 | 21 | + red curb paint 0.2 m on top, full face | Red fire-lane curb as in the photo; stops at the curb cut |
+
+Scene: `scenes/props/parking_lot/store_front.tscn` instances two water machines and two cart rows
+(their own scenes), 14 walkway downlights tipped toward the shop wall, 4 warm pergola uplights,
+7 warm washes on the tile roof and an entrance glow. The walkway floor is level with the sidewalk
+(0.15 m), so the cart rolls up the curb cut and under the walkway.
+
+Sweep of the whole lot:
+- Asphalt, concrete, curb, sidewalk, stucco (facade, trim, soffit), mulch and roof tile materials got
+  world-space triplanar noise: albedo grain plus a normal map (asphalt and sidewalk also roughness).
+  The models have no UVs, so triplanar is what makes this work. Sidewalk darkened a little (it glared).
+- Streetlight shadows: `shadow_normal_bias` 2.5 to stop the acne seen on walls.
+- The west fire-lane pole moved from x = -15 to -19 so it no longer sits in front of the deli sign.
+- Left out: the scooters and the neighbouring vape shop in the photo; script lettering (Godot's default
+  font stands in).
+
+Z-fighting: all new and changed models scan at 0. Real hits found and fixed on the way: column tops vs
+capitals and soffit, pilasters vs sign band, pier vs band cap, door and window frame bars vs mullions.
+
 ## 2026-11-16: holding W or S tips the cart over
 
 `scripts/cart.gd`: W (lift) and S (press) still lean the cart to `lift_pitch` / `press_pitch` at first.

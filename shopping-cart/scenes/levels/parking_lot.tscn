@@ -183,7 +183,7 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, 17.5)
 
 [node name="FireLaneWest" type="StaticBody3D" parent="Streetlights" unique_id=1644467971 instance=ExtResource("8_tyw8w")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -12.4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19, 0, -12.4)
 
 [node name="FireLaneEast" type="StaticBody3D" parent="Streetlights" unique_id=832208627 instance=ExtResource("8_tyw8w")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, -12.4)

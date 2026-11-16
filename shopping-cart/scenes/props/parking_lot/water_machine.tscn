@@ -1,0 +1,33 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="1_kim5v"]
+[ext_resource type="PackedScene" path="res://assets/models/parking_lot/water_machine/water_machine.glb" id="2_1ssxc"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3txrk"]
+size = Vector3(0.8, 2.05, 0.75)
+
+[node name="WaterMachine" type="StaticBody3D" unique_id=870218913]
+physics_material_override = ExtResource("1_kim5v")
+
+[node name="Model" type="Node3D" parent="." unique_id=257107444 instance=ExtResource("2_1ssxc")]
+
+[node name="Shape" type="CollisionShape3D" parent="." unique_id=98367692]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.025, 0)
+shape = SubResource("BoxShape3D_3txrk")
+
+[node name="Logo" type="Label3D" parent="." unique_id=1884714131]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 1.82, -0.4)
+pixel_size = 0.003
+double_sided = false
+text = "WATER"
+font_size = 48
+outline_size = 0
+
+[node name="Caption" type="Label3D" parent="." unique_id=1230184761]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0.55, -0.4)
+pixel_size = 0.0016
+double_sided = false
+modulate = Color(0.9098039, 0.9490196, 1, 1)
+text = "REFILL STATION"
+font_size = 40
+outline_size = 0
