@@ -1,0 +1,9 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "scanner_glass"
+albedo_color = Color(0.1765, 0.4275, 0.5412, 1)
+roughness = 0.10
+emission_enabled = true
+emission = Color(0.1098, 0.4353, 0.6039, 1)
+emission_energy_multiplier = 0.60

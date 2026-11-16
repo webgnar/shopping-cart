@@ -1,0 +1,113 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://cs3y0j7a27y2r"
+path="res://.godot/imported/fridge_case.glb-2b287f8078a83fcba20c45d5361245ef.scn"
+
+[deps]
+
+source_file="res://assets/models/supermarket/fridge_case/fridge_case.glb"
+dest_files=["res://.godot/imported/fridge_case.glb-2b287f8078a83fcba20c45d5361245ef.scn"]
+
+[params]
+
+nodes/root_type=""
+nodes/root_name=""
+nodes/root_script=null
+mesh_library/use_node_names_as_mesh_names=false
+array_mesh/deduplicate_surfaces=true
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_name_suffixes=true
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+materials/extract=0
+materials/extract_format=0
+materials/extract_path=""
+_subresources={
+"materials": {
+"chrome": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/chrome.tres",
+"use_external/path": "res://assets/materials/supermarket/chrome.tres"
+},
+"fridge_body": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/fridge_body.tres",
+"use_external/path": "res://assets/materials/supermarket/fridge_body.tres"
+},
+"fridge_glow": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/fridge_glow.tres",
+"use_external/path": "res://assets/materials/supermarket/fridge_glow.tres"
+},
+"fridge_trim": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/fridge_trim.tres",
+"use_external/path": "res://assets/materials/supermarket/fridge_trim.tres"
+},
+"grille": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/grille.tres",
+"use_external/path": "res://assets/materials/supermarket/grille.tres"
+},
+"light_white": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/light_white.tres",
+"use_external/path": "res://assets/materials/supermarket/light_white.tres"
+},
+"stock_blue": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/stock_blue.tres",
+"use_external/path": "res://assets/materials/supermarket/stock_blue.tres"
+},
+"stock_cream": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/stock_cream.tres",
+"use_external/path": "res://assets/materials/supermarket/stock_cream.tres"
+},
+"stock_green": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/stock_green.tres",
+"use_external/path": "res://assets/materials/supermarket/stock_green.tres"
+},
+"stock_pink": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/stock_pink.tres",
+"use_external/path": "res://assets/materials/supermarket/stock_pink.tres"
+},
+"stock_sky": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/stock_sky.tres",
+"use_external/path": "res://assets/materials/supermarket/stock_sky.tres"
+},
+"stock_white": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/stock_white.tres",
+"use_external/path": "res://assets/materials/supermarket/stock_white.tres"
+},
+"stock_yellow": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/stock_yellow.tres",
+"use_external/path": "res://assets/materials/supermarket/stock_yellow.tres"
+}
+}
+}
+gltf/naming_version=2
+gltf/embedded_image_handling=1
+gltf/texture_map_mode=1

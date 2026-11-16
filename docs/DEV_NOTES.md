@@ -13,6 +13,62 @@ finishes it: W puts it on its nose, S lays it on its back on the handle. Releasi
 the hands back. A tap shorter than about a second still drops back onto four wheels. The three values are
 in `tuning/cart_tuning.json`; the mobile game does not read them yet (its thumb tilt is unchanged).
 Tested in `tests/drive_test.gd` (W/S held 4 s fall over, 0.8 s taps don't). No models or materials changed.
+## 2026-11-16: parking garage second pass (props and textures)
+
+Every garage prop rebuilt at full detail, three new props, and every garage material textured.
+
+**Textures** (`tools/textures/make_garage_textures.py`, run with `python3`, writes
+`shopping-cart/assets/textures/garage/<name>_{color,normal,rough}.jpg`, 1024 px, tileable). The
+usual CC0 sites (TextureCan, ambientCG, Poly Haven) are blocked from the cloud, so the maps are
+painted from layered noise in numpy. Materials use world triplanar mapping (no UVs needed) with
+`uv1_scale = 1 / tile`. Tile sizes: concrete_deck 4 m (soft oil stains, trowel marks),
+concrete_wall 2.4 m (formwork lines, tie holes), concrete_pillar 1.6 m, asphalt 3 m, paint_yellow /
+paint_white 2 m (worn chips), rubber 0.5 m, dark_metal 1 m, brushed_metal 0.6 m, galvanized 1 m,
+sign_paint 0.8 m, seat_fabric 0.3 m, car_paint 2 m (near white so each car's tint shows),
+red_paint 0.8 m, drum_paint 1.2 m (object-space, not world). Texture `.import` files have
+mipmaps on and VRAM compression; normals are flagged as normal maps. New shared materials:
+car_interior, rim_metal, indicator, white_enamel, galvanized, brushed_metal, red_paint, drum_paint.
+
+**Models** (`tools/blender/garage_models.py`):
+
+| Model | Tris | KB | What changed |
+| --- | --- | --- | --- |
+| parked_car | 7544 | 399 | A/B/C pillars, roof, mirrors, glass incl. mirror glass, seats and dash, bumpers, grille slats, skirts, arch flares, shut lines, wipers, antenna, handles, exhaust, indicators, plates; each wheel is a Tyre + Rim pivoting on its axle |
+| pillar | 562 | 27 | Foot, white band, galvanized conduit (0.75-2.66 m) with straps and junction box |
+| garage_light | 332 | 19 | Enamel housing, end caps, lampholders, tubes, wire guard |
+| lamp_post | 800 | 42 | Concrete pier, base plate, collar, pole, handhole, arm, brace, shoebox head, photocell, bolts |
+| exit_sign | 436 | 24 | Brushed metal frame, hanging rods with ceiling plates and clamps |
+| floor_arrow | 20 | 2 | Unchanged |
+| sprinkler_pipe (new) | 368 | 19 | 2.6 m red pipe 0.52 m below the ceiling, coupling, drop and head, hanger rod |
+| oil_drum (new) | 616 | 27 | 55 gal drum, 0.57 m dia x 0.88 m, rolling hoops, chime, rubber liner |
+| fire_cabinet (new) | 342 | 20 | 0.6 x 0.9 x 0.2 m red cabinet, glass door, extinguisher, valve and hose |
+
+**Placement:** sprinkler runs under every covered floor (10 segments per floor, 2.9 m up); an oil
+drum by about 40% of pillars on the aisle side (`oil_drum.tscn` is a 15 kg RigidBody3D the cart
+can knock over); fire cabinets on the centre walls of wing A (two floors' worth of bands) and wing
+B. Cars show "GRG 4K2" plates as Label3D.
+
+**Z-fighting:** every model reports none in the builder (fixed: seats/dash vs body, wipers vs
+glass, pole vs collar, hanger rod vs anchor). `tests/garage_zfight_test.gd` reports 0 flush faces;
+`garage_test.gd` and `drive_test.gd` pass.
+
+**Left out:** no grime gradient at the bottom of walls (triplanar tiles can't know the wall
+height; would need a second UV or a decal pass), glass and light lenses stay flat colour, every
+car has the same plate text.
+
+## 2026-11-16: cart materials
+
+- The cart model never had materials: none of the 109 meshes in ShoppingCart_Rigged.blend had
+  one (the only images in the file are reference photos), so it rendered plain white in Godot.
+- `tools/rig_cart.py` now gives every part one material by name: `cart_chrome` (basket wire,
+  frame, gate, seat), `cart_steel` (caster forks, brackets, bolts, bearings), `cart_handle` (blue
+  grip, matching the old ShoppingCart_Physics.blend), `cart_plastic` (corner bumpers, seat flap),
+  `wheel_rubber` (tyres), `wheel_hub`. The shared Godot materials are in
+  `assets/materials/cart/*.tres`, linked by name in `shopping_cart.glb.import`.
+- The .glb was re-exported from the base model; node names and pivots are unchanged and the
+  drive tests pass. ShoppingCart_Rigged.blend was not re-saved (the cloud Blender is 5.3 and would
+  write a file Blender 4.5 can't open); re-run `tools/rig_cart.py` locally to update it.
+- No geometry changed, so no z-fighting check was needed.
 
 ## 2026-11-16: in-game debug console
 
@@ -25,6 +81,52 @@ in the `destinations` export on the Console node: `plot` (parking lot), `garage`
 `sandbox` (`main.tscn`). Travel uses `change_scene_to_file`, so the level spawns the cart at its own
 `CartSpawn`. Add a destination in the inspector; add other commands with `_add_command` in
 `_ready`. Test: `godot --headless --fixed-fps 120 -s res://tests/console_test.gd`.
+
+## 2026-11-16: supermarket level
+
+`scenes/levels/supermarket.tscn` (root script `main.gd`): the inside of the store, from zack's reference
+photos (long stocked aisles with hanging aisle signs, polished concrete, a high warehouse ceiling with
+trusses and ducts) and matched to the store-front photo the parking lot uses (cream stucco walls, the
+green sign band carried inside, shop-front windows either side of the doors, warm light). 36 x 28 m,
+8 m to the roof deck. Entrance on -X, `CartSpawn` just inside it facing +X. Six 12 m gondolas make seven
+aisles (signs 1-7), checkouts and produce up front, dairy cases on three walls, five pallet displays of
+loose cases to crash into. Check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
+(spawn on 4 wheels, push 5+ m through the store, ram a display and knock cases; saves 7 screenshots).
+
+**Models** (`tools/supermarket_models.py`, Blender primitives, `assets/models/supermarket/<name>/<name>.glb`).
+One material per object, all parts sharing a material merged into one object; materials are
+`assets/materials/supermarket/<name>.tres`, written by the builder and linked by name in each `.glb.import`
+(`python3 tools/supermarket_models.py --link-materials` after a first import). Shelf stock uses one
+triplanar texture (`assets/textures/supermarket/product_facings.png`) so each block reads as a row of products.
+
+| Model | Tris | KB | Size chosen | Notes |
+| --- | --- | --- | --- | --- |
+| gondola | 3192 | 179 | 12 m run, 1.0 m deep, 1.8 m tall (+ 0.6 m endcap each end) | Plinth, back panel, 11 uprights, 3 shelves a side on brackets, price-tag channels, stock, taped overstock on top, endcaps with red SALE header (text is a Label3D) |
+| fridge_case | 492 | 35 | 4 m long, 1.0 m deep, 2.3 m tall | Open multi-deck: grille, lit back, chrome shelves with lips, canopy with blue stripe and light strip, bumper rail |
+| produce_table | 4596 | 264 | 2.6 x 1.6 m, 0.78 m to the rim | Slatted crate sides, corner posts, dividers, six heaped bins of fruit, clipped price cards |
+| checkout_counter | 388 | 29 | 3.2 m long, 0.93 m high | Belt with rollers and rail, scanner, register with screen, card reader, lane pole and light, impulse rack |
+| product_case | 36 | 4 | 36 x 26 x 28 cm, 2 kg | Carton, printed band (material set per display), tape |
+| pallet | 156 | 10 | 1.2 x 1.0 x 0.14 m | Deck boards, blocks, bottom boards |
+| aisle_sign | 104 | 8 | 1.8 x 0.9 m, hung 3.2 m up on 3 m rods | Double-sided; number and aisle contents are Label3Ds set from the sign's inspector |
+| strip_light | 88 | 8 | 2.4 m linear LED, hung at 5 m | Warm diffuser, housing, end caps, cables; an OmniLight3D sits under each one in the scene |
+| banner | 204 | 14 | 0.7 x 1.8 m | Fabric with stripe, rod and finials, hangers; "LOW PRICES" is a Label3D |
+| store_shell | 4256 | 212 | 36 x 28 m floor, 8 m walls, 0.4 m thick | Floor, cream lower walls / grey upper, green band at 2.95-3.25 m, base trim, clerestory and shop-front windows, sliding doors, roof deck, trusses, joists, two ducts with bands and hangers, five columns with guards. Building convention: origin at the floor centre, entrance on -X |
+
+Judgment calls:
+- Gondolas are 1.8 m (the low end of real ones) so the follow camera sees over them.
+- Aisles are 2.6 m clear: room to turn the cart around, tight enough to clip shelves at speed.
+- Pallet displays put the bottom layer 4 cases wide, overhanging the pallet a little; with cases
+  flush the cart's casters stop on the 14 cm pallet before the basket reaches the cases.
+- Collision is plain boxes next to each model (gondola + endcaps, case bodies, the building's floor,
+  walls and columns); fruit, signs, lights and banners have none. Shelves use `solid.tres`, the floor `tile.tres`.
+- Products on shelves are static; only the display cases are loose.
+
+Left out: shoppers, baskets, a deli/bakery counter, freezer doors, the tile roof and pergola (outside).
+
+Z-fighting: the builder checks every pair of boxes in a model for coplanar, overlapping faces pointing
+the same way and refuses to export if it finds any. All ten models pass. Fixed on the way: produce
+table core vs posts and crossing dividers, banner stripe edges, windows vs trusses and joists in the
+shell, column feet vs their guards.
 
 ## 2026-11-16: parking lot level
 

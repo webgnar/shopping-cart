@@ -1,0 +1,9 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "fridge_glow"
+albedo_color = Color(0.9098, 0.9569, 1.0000, 1)
+roughness = 0.30
+emission_enabled = true
+emission = Color(0.8118, 0.9098, 1.0000, 1)
+emission_energy_multiplier = 0.80

@@ -1,6 +1,8 @@
 [gd_resource type="StandardMaterial3D" format=3]
 
 [resource]
-albedo_color = Color(0.105882354, 0.13725491, 0.16862746, 1)
-metallic = 0.4
-roughness = 0.08
+resource_name = "car_glass"
+transparency = 1
+albedo_color = Color(0.105882354, 0.13725491, 0.16862746, 0.62)
+metallic = 0.3
+roughness = 0.05

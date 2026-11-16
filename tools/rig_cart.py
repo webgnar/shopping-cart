@@ -7,6 +7,11 @@ Run headless from the repo root:
 Writes ShoppingCart_Rigged.blend (the base model file is not modified) and
 exports shopping-cart/assets/models/shopping_cart.glb for Godot.
 
+Materials: every part gets ONE material, named after a shared Godot material in
+shopping-cart/assets/materials/cart/<name>.tres (see PART_MATERIALS below). The colours set
+here are previews only; shopping_cart.glb.import maps each name to its .tres (Advanced Import
+Settings > Materials > Use External), so tune the look in Godot, not here.
+
 Each pivot is an Empty placed on the hinge line. Hinges and axles rotate about
 the pivot's local Y axis (the cart's width); caster swivels rotate about local Z.
 Rotation limits are stored as custom properties (exported to glTF extras, which
@@ -83,6 +88,37 @@ def joint(e, kind, axis, lo=None, hi=None):
 
 
 ref = set(o.name for o in bpy.data.collections["Reference"].objects)
+
+# ---- Materials: one per part, named after the shared Godot material. Preview colours (linear) only.
+CART_MATERIALS = {
+    "cart_chrome": ((0.6, 0.62, 0.64), 1.0, 0.2),      # basket wire, frame tubes, gate, seat
+    "cart_steel": ((0.4, 0.41, 0.43), 1.0, 0.45),      # caster forks, brackets, bolts, bearings
+    "cart_handle": ((0.05, 0.07, 0.8), 0.0, 0.45),     # handlebar grip
+    "cart_plastic": ((0.06, 0.065, 0.075), 0.0, 0.6),  # corner bumpers, child seat flap
+    "wheel_rubber": ((0.012, 0.012, 0.014), 0.0, 0.85),  # tyres
+    "wheel_hub": ((0.3, 0.31, 0.33), 0.0, 0.55),       # wheel hubs and caps
+}
+PART_MATERIALS = [   # (name prefix, material); first match wins, anything else is chrome
+    ("Handbar.Grip", "cart_handle"),
+    ("Bumpers", "cart_plastic"), ("Plane.005", "cart_plastic"),
+    ("Cube", "wheel_rubber"),
+    ("Boss-Extrude6", "wheel_hub"), ("Indent1", "wheel_hub"),
+    ("Cut-Extrude3", "cart_steel"), ("Fillet", "cart_steel"), ("Revolve", "cart_steel"),
+    ("CirPattern", "cart_steel"), ("Cut-Sweep2", "cart_steel"), ("Indent2", "cart_steel"),
+    ("Cylinder", "cart_steel"), ("Bolts", "cart_steel"), ("Plane.001", "cart_steel"),
+    ("Plane.004", "cart_steel"), ("Plane.006", "cart_steel"),
+]
+for name, (col, metal, rough) in CART_MATERIALS.items():
+    m = bpy.data.materials.get(name) or bpy.data.materials.new(name)
+    m.diffuse_color = (*col, 1)
+    m.metallic = metal
+    m.roughness = rough
+for o in bpy.data.objects:
+    if o.type != "MESH" or o.name in ref or not len(o.data.vertices):
+        continue
+    mat = next((m for prefix, m in PART_MATERIALS if o.name.startswith(prefix)), "cart_chrome")
+    o.data.materials.clear()
+    o.data.materials.append(bpy.data.materials[mat])
 
 # ---- Fix inside-out parts. The right-hand casters were made by mirroring the left ones with a -1 scale,
 # which renders inside out once exported; and the rear-right wheel's faces point inward. Bake each mirror

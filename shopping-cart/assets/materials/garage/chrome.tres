@@ -1,6 +1,18 @@
 [gd_resource type="StandardMaterial3D" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/textures/garage/brushed_metal_color.jpg" id="1_ctugy"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/brushed_metal_normal.jpg" id="2_5eps4"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/brushed_metal_rough.jpg" id="3_oha20"]
+
 [resource]
-albedo_color = Color(0.7882353, 0.79607844, 0.8039216, 1)
-metallic = 0.9
-roughness = 0.25
+resource_name = "chrome"
+albedo_texture = ExtResource("1_ctugy")
+metallic = 0.95
+roughness_texture = ExtResource("3_oha20")
+normal_enabled = true
+normal_scale = 0.3
+normal_texture = ExtResource("2_5eps4")
+uv1_scale = Vector3(1.6666666, 1.6666666, 1.6666666)
+uv1_triplanar = true
+uv1_triplanar_sharpness = 4.0
+uv1_world_triplanar = true

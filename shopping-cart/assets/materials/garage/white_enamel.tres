@@ -1,0 +1,18 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/garage/sign_paint_color.jpg" id="1_saxm1"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/sign_paint_normal.jpg" id="2_ah024"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/sign_paint_rough.jpg" id="3_5am0r"]
+
+[resource]
+resource_name = "white_enamel"
+albedo_color = Color(0.94509804, 0.94509804, 0.9254902, 1)
+albedo_texture = ExtResource("1_saxm1")
+roughness_texture = ExtResource("3_5am0r")
+normal_enabled = true
+normal_scale = 0.3
+normal_texture = ExtResource("2_ah024")
+uv1_scale = Vector3(1.25, 1.25, 1.25)
+uv1_triplanar = true
+uv1_triplanar_sharpness = 4.0
+uv1_world_triplanar = true

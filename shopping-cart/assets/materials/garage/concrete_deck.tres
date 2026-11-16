@@ -1,5 +1,16 @@
 [gd_resource type="StandardMaterial3D" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/textures/garage/concrete_deck_color.jpg" id="1_uuueu"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/concrete_deck_normal.jpg" id="2_a2i4b"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/concrete_deck_rough.jpg" id="3_uof5a"]
+
 [resource]
-albedo_color = Color(0.56078434, 0.56078434, 0.5411765, 1)
-roughness = 0.92
+resource_name = "concrete_deck"
+albedo_texture = ExtResource("1_uuueu")
+roughness_texture = ExtResource("3_uof5a")
+normal_enabled = true
+normal_texture = ExtResource("2_a2i4b")
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+uv1_triplanar_sharpness = 4.0
+uv1_world_triplanar = true

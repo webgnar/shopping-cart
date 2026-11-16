@@ -1,0 +1,11 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/supermarket/product_facings.png" id="1"]
+
+[resource]
+resource_name = "stock_green"
+albedo_color = Color(0.2275, 0.4902, 0.2667, 1)
+albedo_texture = ExtResource("1")
+uv1_scale = Vector3(4, 4, 4)
+uv1_triplanar = true
+roughness = 0.60

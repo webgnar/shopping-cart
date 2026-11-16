@@ -1,5 +1,16 @@
 [gd_resource type="StandardMaterial3D" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/textures/garage/concrete_wall_color.jpg" id="1_18kdo"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/concrete_wall_normal.jpg" id="2_p7la1"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/concrete_wall_rough.jpg" id="3_c3a33"]
+
 [resource]
-albedo_color = Color(0.654902, 0.654902, 0.6313726, 1)
-roughness = 0.95
+resource_name = "concrete_wall"
+albedo_texture = ExtResource("1_18kdo")
+roughness_texture = ExtResource("3_c3a33")
+normal_enabled = true
+normal_texture = ExtResource("2_p7la1")
+uv1_scale = Vector3(0.41666666, 0.41666666, 0.41666666)
+uv1_triplanar = true
+uv1_triplanar_sharpness = 4.0
+uv1_world_triplanar = true
