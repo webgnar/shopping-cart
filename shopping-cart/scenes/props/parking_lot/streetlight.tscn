@@ -1,90 +1,31 @@
 [gd_scene format=3]
 
-[ext_resource type="PhysicsMaterial" path="res://assets/parking_lot/physics/concrete.tres" id="1_m00te"]
-[ext_resource type="Material" path="res://assets/parking_lot/materials/concrete.tres" id="2_884su"]
-[ext_resource type="Material" path="res://assets/parking_lot/materials/pole_metal.tres" id="3_42lnm"]
-[ext_resource type="Material" path="res://assets/parking_lot/materials/dark_metal.tres" id="4_0kb0r"]
-[ext_resource type="Material" path="res://assets/parking_lot/materials/led_lens.tres" id="5_elm5w"]
+[ext_resource type="PhysicsMaterial" path="res://assets/parking_lot/physics/concrete.tres" id="1_f6ym8"]
+[ext_resource type="PackedScene" path="res://assets/models/parking_lot/streetlight/streetlight.glb" id="2_ew07v"]
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_0jurm"]
-material = ExtResource("2_884su")
-top_radius = 0.32
-bottom_radius = 0.36
-height = 1.0
-radial_segments = 20
-rings = 1
-
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_5jpxx"]
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_s1bre"]
 height = 1.0
 radius = 0.36
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_6af20"]
-material = ExtResource("3_42lnm")
-top_radius = 0.07
-bottom_radius = 0.11
-height = 8.5
-radial_segments = 12
-rings = 1
-
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_dlnd3"]
-height = 8.5
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_m00te"]
+height = 8.4
 radius = 0.11
 
-[sub_resource type="BoxMesh" id="BoxMesh_u2u3x"]
-material = ExtResource("3_42lnm")
-size = Vector3(2, 0.08, 0.08)
+[node name="Streetlight" type="StaticBody3D" unique_id=834373790 groups=["streetlight"]]
+physics_material_override = ExtResource("1_f6ym8")
 
-[sub_resource type="BoxMesh" id="BoxMesh_sg38l"]
-material = ExtResource("4_0kb0r")
-size = Vector3(0.7, 0.12, 0.42)
+[node name="Model" type="Node3D" parent="." unique_id=355711545 instance=ExtResource("2_ew07v")]
 
-[sub_resource type="BoxMesh" id="BoxMesh_23ily"]
-material = ExtResource("5_elm5w")
-size = Vector3(0.6, 0.02, 0.34)
-
-[sub_resource type="BoxMesh" id="BoxMesh_m46fs"]
-material = ExtResource("4_0kb0r")
-size = Vector3(0.7, 0.12, 0.42)
-
-[sub_resource type="BoxMesh" id="BoxMesh_7b43x"]
-material = ExtResource("5_elm5w")
-size = Vector3(0.6, 0.02, 0.34)
-
-[node name="Streetlight" type="StaticBody3D" unique_id=1996735745 groups=["streetlight"]]
-physics_material_override = ExtResource("1_m00te")
-
-[node name="Base" type="MeshInstance3D" parent="." unique_id=1127795295]
+[node name="BaseShape" type="CollisionShape3D" parent="." unique_id=757196713]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-mesh = SubResource("CylinderMesh_0jurm")
+shape = SubResource("CylinderShape3D_s1bre")
 
-[node name="BaseShape" type="CollisionShape3D" parent="." unique_id=435321494]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-shape = SubResource("CylinderShape3D_5jpxx")
+[node name="PoleShape" type="CollisionShape3D" parent="." unique_id=1040165364]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.2, 0)
+shape = SubResource("CylinderShape3D_m00te")
 
-[node name="Pole" type="MeshInstance3D" parent="." unique_id=142805909]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.25, 0)
-mesh = SubResource("CylinderMesh_6af20")
-
-[node name="PoleShape" type="CollisionShape3D" parent="." unique_id=1584700153]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.25, 0)
-shape = SubResource("CylinderShape3D_dlnd3")
-
-[node name="Arm" type="MeshInstance3D" parent="." unique_id=150727473]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.4, 0)
-mesh = SubResource("BoxMesh_u2u3x")
-
-[node name="HeadL" type="Node3D" parent="." unique_id=628079128]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 9.4, 0)
-
-[node name="Housing" type="MeshInstance3D" parent="HeadL" unique_id=1109938875]
-mesh = SubResource("BoxMesh_sg38l")
-
-[node name="Lens" type="MeshInstance3D" parent="HeadL" unique_id=467680668]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.07, 0)
-mesh = SubResource("BoxMesh_23ily")
-
-[node name="Light" type="SpotLight3D" parent="HeadL" unique_id=63758364]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, -0.1, 0)
+[node name="LightL" type="SpotLight3D" parent="." unique_id=2133101113]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, -1, 9.32, 0)
 light_color = Color(0.93333334, 0.94509804, 1, 1)
 light_energy = 6.0
 shadow_enabled = true
@@ -93,18 +34,8 @@ spot_attenuation = 0.9
 spot_angle = 70.0
 spot_angle_attenuation = 0.6
 
-[node name="HeadR" type="Node3D" parent="." unique_id=1320037816]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 9.4, 0)
-
-[node name="Housing" type="MeshInstance3D" parent="HeadR" unique_id=893920354]
-mesh = SubResource("BoxMesh_m46fs")
-
-[node name="Lens" type="MeshInstance3D" parent="HeadR" unique_id=615817250]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.07, 0)
-mesh = SubResource("BoxMesh_7b43x")
-
-[node name="Light" type="SpotLight3D" parent="HeadR" unique_id=1957987117]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, -0.1, 0)
+[node name="LightR" type="SpotLight3D" parent="." unique_id=615498482]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 1, 9.32, 0)
 light_color = Color(0.93333334, 0.94509804, 1, 1)
 light_energy = 6.0
 shadow_enabled = true

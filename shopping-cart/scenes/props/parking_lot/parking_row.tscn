@@ -1,37 +1,34 @@
 [gd_scene format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/parking_stall.tscn" id="1_oceev"]
-[ext_resource type="Material" path="res://assets/parking_lot/materials/paint_white.tres" id="2_soedx"]
+[ext_resource type="PackedScene" path="res://assets/models/parking_lot/stall_markings/stall_markings.glb" id="1_soedx"]
+[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/parking_block.tscn" id="2_mnfw3"]
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_mnfw3"]
-material = ExtResource("2_soedx")
-size = Vector2(0.12, 5.5)
+[node name="ParkingRow" type="Node3D" unique_id=762916451]
 
-[node name="ParkingRow" type="Node3D" unique_id=1309127165]
+[node name="Markings" type="Node3D" parent="." unique_id=823040309 instance=ExtResource("1_soedx")]
 
-[node name="Stall1" type="Node3D" parent="." unique_id=1081091471 instance=ExtResource("1_oceev")]
+[node name="ParkingBlocks" type="Node3D" parent="." unique_id=1768271125]
 
-[node name="Stall2" type="Node3D" parent="." unique_id=1410925306 instance=ExtResource("1_oceev")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.7, 0, 0)
+[node name="ParkingBlock1" type="StaticBody3D" parent="ParkingBlocks" unique_id=1999669707 instance=ExtResource("2_mnfw3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.45, 0, 4.85)
 
-[node name="Stall3" type="Node3D" parent="." unique_id=1653576121 instance=ExtResource("1_oceev")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.4, 0, 0)
+[node name="ParkingBlock2" type="StaticBody3D" parent="ParkingBlocks" unique_id=1230407076 instance=ExtResource("2_mnfw3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.75, 0, 4.85)
 
-[node name="Stall4" type="Node3D" parent="." unique_id=706381274 instance=ExtResource("1_oceev")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.1, 0, 0)
+[node name="ParkingBlock3" type="StaticBody3D" parent="ParkingBlocks" unique_id=530648549 instance=ExtResource("2_mnfw3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.05, 0, 4.85)
 
-[node name="Stall5" type="Node3D" parent="." unique_id=472168101 instance=ExtResource("1_oceev")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.8, 0, 0)
+[node name="ParkingBlock4" type="StaticBody3D" parent="ParkingBlocks" unique_id=637111786 instance=ExtResource("2_mnfw3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.35, 0, 4.85)
 
-[node name="Stall6" type="Node3D" parent="." unique_id=852716411 instance=ExtResource("1_oceev")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, 0)
+[node name="ParkingBlock5" type="StaticBody3D" parent="ParkingBlocks" unique_id=62847866 instance=ExtResource("2_mnfw3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35, 0, 4.85)
 
-[node name="Stall7" type="Node3D" parent="." unique_id=953333842 instance=ExtResource("1_oceev")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.2, 0, 0)
+[node name="ParkingBlock6" type="StaticBody3D" parent="ParkingBlocks" unique_id=1718428030 instance=ExtResource("2_mnfw3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.05, 0, 4.85)
 
-[node name="Stall8" type="Node3D" parent="." unique_id=1444735800 instance=ExtResource("1_oceev")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.9, 0, 0)
+[node name="ParkingBlock7" type="StaticBody3D" parent="ParkingBlocks" unique_id=78109103 instance=ExtResource("2_mnfw3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.75, 0, 4.85)
 
-[node name="EndLine" type="MeshInstance3D" parent="." unique_id=117696089]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.6, 0.003, 2.75)
-mesh = SubResource("PlaneMesh_mnfw3")
+[node name="ParkingBlock8" type="StaticBody3D" parent="ParkingBlocks" unique_id=607796807 instance=ExtResource("2_mnfw3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.45, 0, 4.85)

@@ -1,149 +1,25 @@
 [gd_scene format=3]
 
-[ext_resource type="PhysicsMaterial" path="res://assets/parking_lot/physics/concrete.tres" id="1_3mi21"]
-[ext_resource type="Script" path="res://scripts/levels/parked_car.gd" id="2_oba1y"]
-[ext_resource type="Material" path="res://assets/parking_lot/materials/car_paint.tres" id="3_xgtll"]
-[ext_resource type="Material" path="res://assets/parking_lot/materials/car_glass.tres" id="4_58jca"]
-[ext_resource type="Material" path="res://assets/parking_lot/materials/tire.tres" id="5_mix00"]
-[ext_resource type="Material" path="res://assets/parking_lot/materials/headlight.tres" id="6_hdjgb"]
-[ext_resource type="Material" path="res://assets/parking_lot/materials/taillight.tres" id="7_t2xrl"]
+[ext_resource type="PhysicsMaterial" path="res://assets/parking_lot/physics/concrete.tres" id="1_u31ah"]
+[ext_resource type="Script" path="res://scripts/levels/parked_car.gd" id="2_6u5d3"]
+[ext_resource type="PackedScene" path="res://assets/models/parking_lot/parked_car/parked_car.glb" id="3_aejuf"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_jhbm3"]
-size = Vector3(4.5, 0.75, 1.8)
+[sub_resource type="BoxShape3D" id="BoxShape3D_owrxv"]
+size = Vector3(1.76, 0.6, 4.68)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_dtf3e"]
-size = Vector3(2.4, 0.6, 1.6)
+[sub_resource type="BoxShape3D" id="BoxShape3D_3mi21"]
+size = Vector3(1.52, 0.52, 2.8)
 
-[sub_resource type="BoxMesh" id="BoxMesh_46q81"]
-material = ExtResource("3_xgtll")
-size = Vector3(4.5, 0.75, 1.8)
+[node name="ParkedCar" type="StaticBody3D" unique_id=574939480]
+physics_material_override = ExtResource("1_u31ah")
+script = ExtResource("2_6u5d3")
 
-[sub_resource type="BoxMesh" id="BoxMesh_7p07r"]
-material = ExtResource("3_xgtll")
-size = Vector3(2.4, 0.6, 1.6)
+[node name="Model" type="Node3D" parent="." unique_id=80877511 instance=ExtResource("3_aejuf")]
 
-[sub_resource type="BoxMesh" id="BoxMesh_tssr6"]
-material = ExtResource("4_58jca")
-size = Vector3(2.2, 0.48, 1.64)
+[node name="BodyShape" type="CollisionShape3D" parent="." unique_id=1919378952]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.63, 0)
+shape = SubResource("BoxShape3D_owrxv")
 
-[sub_resource type="BoxMesh" id="BoxMesh_bnq0v"]
-material = ExtResource("4_58jca")
-size = Vector3(0.04, 0.5, 1.5)
-
-[sub_resource type="BoxMesh" id="BoxMesh_7fkdv"]
-material = ExtResource("4_58jca")
-size = Vector3(0.04, 0.5, 1.5)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_g0pcu"]
-material = ExtResource("5_mix00")
-top_radius = 0.33
-bottom_radius = 0.33
-height = 0.24
-radial_segments = 16
-rings = 1
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_74mi5"]
-material = ExtResource("5_mix00")
-top_radius = 0.33
-bottom_radius = 0.33
-height = 0.24
-radial_segments = 16
-rings = 1
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_cjslg"]
-material = ExtResource("5_mix00")
-top_radius = 0.33
-bottom_radius = 0.33
-height = 0.24
-radial_segments = 16
-rings = 1
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_7ree5"]
-material = ExtResource("5_mix00")
-top_radius = 0.33
-bottom_radius = 0.33
-height = 0.24
-radial_segments = 16
-rings = 1
-
-[sub_resource type="BoxMesh" id="BoxMesh_saun1"]
-material = ExtResource("6_hdjgb")
-size = Vector3(0.04, 0.14, 0.34)
-
-[sub_resource type="BoxMesh" id="BoxMesh_uihcx"]
-material = ExtResource("7_t2xrl")
-size = Vector3(0.04, 0.14, 0.34)
-
-[sub_resource type="BoxMesh" id="BoxMesh_igaot"]
-material = ExtResource("6_hdjgb")
-size = Vector3(0.04, 0.14, 0.34)
-
-[sub_resource type="BoxMesh" id="BoxMesh_h2pi5"]
-material = ExtResource("7_t2xrl")
-size = Vector3(0.04, 0.14, 0.34)
-
-[node name="ParkedCar" type="StaticBody3D" unique_id=1138299238]
-physics_material_override = ExtResource("1_3mi21")
-script = ExtResource("2_oba1y")
-
-[node name="BodyShape" type="CollisionShape3D" parent="." unique_id=1443794663]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
-shape = SubResource("BoxShape3D_jhbm3")
-
-[node name="CabinShape" type="CollisionShape3D" parent="." unique_id=997465975]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 1.25, 0)
-shape = SubResource("BoxShape3D_dtf3e")
-
-[node name="Body" type="MeshInstance3D" parent="." unique_id=1415624283]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
-mesh = SubResource("BoxMesh_46q81")
-
-[node name="Cabin" type="MeshInstance3D" parent="." unique_id=1240972403]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 1.25, 0)
-mesh = SubResource("BoxMesh_7p07r")
-
-[node name="Windows" type="MeshInstance3D" parent="." unique_id=1262578278]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 1.25, 0)
-mesh = SubResource("BoxMesh_tssr6")
-
-[node name="Windshield" type="MeshInstance3D" parent="." unique_id=76753973]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.01, 1.24, 0)
-mesh = SubResource("BoxMesh_bnq0v")
-
-[node name="RearWindow" type="MeshInstance3D" parent="." unique_id=1099056152]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.41, 1.24, 0)
-mesh = SubResource("BoxMesh_7fkdv")
-
-[node name="Wheels" type="Node3D" parent="." unique_id=1414644012]
-
-[node name="WheelRL" type="MeshInstance3D" parent="Wheels" unique_id=1732913653]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -1.4, 0.33, -0.82)
-mesh = SubResource("CylinderMesh_g0pcu")
-
-[node name="WheelRR" type="MeshInstance3D" parent="Wheels" unique_id=777638436]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -1.4, 0.33, 0.82)
-mesh = SubResource("CylinderMesh_74mi5")
-
-[node name="WheelFL" type="MeshInstance3D" parent="Wheels" unique_id=268171692]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 1.4, 0.33, -0.82)
-mesh = SubResource("CylinderMesh_cjslg")
-
-[node name="WheelFR" type="MeshInstance3D" parent="Wheels" unique_id=1364372453]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 1.4, 0.33, 0.82)
-mesh = SubResource("CylinderMesh_7ree5")
-
-[node name="HeadlightL" type="MeshInstance3D" parent="." unique_id=1026911409]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.25, 0.75, -0.65)
-mesh = SubResource("BoxMesh_saun1")
-
-[node name="TaillightL" type="MeshInstance3D" parent="." unique_id=365622649]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.25, 0.8, -0.65)
-mesh = SubResource("BoxMesh_uihcx")
-
-[node name="HeadlightR" type="MeshInstance3D" parent="." unique_id=1360567805]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.25, 0.75, 0.65)
-mesh = SubResource("BoxMesh_igaot")
-
-[node name="TaillightR" type="MeshInstance3D" parent="." unique_id=1087759249]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.25, 0.8, 0.65)
-mesh = SubResource("BoxMesh_h2pi5")
+[node name="CabinShape" type="CollisionShape3D" parent="." unique_id=411243059]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.18, 0.265)
+shape = SubResource("BoxShape3D_3mi21")
