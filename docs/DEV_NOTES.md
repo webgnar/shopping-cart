@@ -45,6 +45,17 @@ glass, pole vs collar, hanger rod vs anchor). `tests/garage_zfight_test.gd` repo
 **Left out:** no grime gradient at the bottom of walls (triplanar tiles can't know the wall
 height; would need a second UV or a decal pass), glass and light lenses stay flat colour, every
 car has the same plate text.
+## 2026-11-16: in-game debug console
+
+`scenes/ui/console.tscn` (script `scripts/ui/console.gd`), registered as the `Console` autoload in
+`project.godot`, so it is there in every level. The tilde key (` / ~, matched by physical key, so it works on any
+layout) opens it; while open the game is paused and the mouse is free. Esc closes it, Up / Down
+recall earlier commands. Commands: `help`, `clear`, `where`, and one fast-travel command per entry
+in the `destinations` export on the Console node: `plot` (parking lot), `garage`, `market`
+(`res://scenes/levels/supermarket.tscn`, which says it isn't built yet until that level lands) and
+`sandbox` (`main.tscn`). Travel uses `change_scene_to_file`, so the level spawns the cart at its own
+`CartSpawn`. Add a destination in the inspector; add other commands with `_add_command` in
+`_ready`. Test: `godot --headless --fixed-fps 120 -s res://tests/console_test.gd`.
 
 ## 2026-11-16: parking lot level
 

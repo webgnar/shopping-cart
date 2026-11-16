@@ -1,0 +1,87 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/console.gd" id="1_cons"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 12.0
+bg_color = Color(0.05882353, 0.07058824, 0.09411765, 0.92)
+border_width_bottom = 2
+border_color = Color(0.43529412, 0.8156863, 0.54901963, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_input"]
+content_margin_left = 8.0
+content_margin_top = 5.0
+content_margin_right = 8.0
+content_margin_bottom = 5.0
+bg_color = Color(0.11764706, 0.13725491, 0.1764706, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2901961, 0.32156864, 0.3882353, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="SystemFont" id="SystemFont_mono"]
+font_names = PackedStringArray("Consolas", "Menlo", "DejaVu Sans Mono", "Monospace")
+
+[sub_resource type="SystemFont" id="SystemFont_mono_bold"]
+font_names = PackedStringArray("Consolas", "Menlo", "DejaVu Sans Mono", "Monospace")
+font_weight = 700
+
+[node name="Console" type="CanvasLayer"]
+process_mode = 3
+layer = 100
+visible = false
+script = ExtResource("1_cons")
+destinations = Dictionary[String, String]({
+"plot": "res://scenes/levels/parking_lot.tscn",
+"garage": "res://scenes/levels/parking_garage.tscn",
+"market": "res://scenes/levels/supermarket.tscn",
+"sandbox": "res://scenes/main.tscn"
+})
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
+anchor_bottom = 0.4
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Output" type="RichTextLabel" parent="Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+focus_mode = 0
+theme_override_colors/default_color = Color(0.85490197, 0.8784314, 0.92156863, 1)
+theme_override_fonts/normal_font = SubResource("SystemFont_mono")
+theme_override_fonts/bold_font = SubResource("SystemFont_mono_bold")
+theme_override_font_sizes/normal_font_size = 15
+theme_override_font_sizes/bold_font_size = 15
+bbcode_enabled = true
+scroll_following = true
+selection_enabled = true
+
+[node name="Input" type="LineEdit" parent="Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9411765, 0.9529412, 0.972549, 1)
+theme_override_colors/caret_color = Color(0.43529412, 0.8156863, 0.54901963, 1)
+theme_override_fonts/font = SubResource("SystemFont_mono")
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("StyleBoxFlat_input")
+theme_override_styles/focus = SubResource("StyleBoxFlat_input")
+placeholder_text = "type help for commands"
+keep_editing_on_text_submit = true
+caret_blink = true
+
+[connection signal="text_submitted" from="Panel/VBox/Input" to="." method="_on_input_submitted"]
