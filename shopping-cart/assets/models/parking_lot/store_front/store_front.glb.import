@@ -66,10 +66,35 @@ _subresources={
 "use_external/fallback_path": "res://assets/parking_lot/materials/led_lens.tres",
 "use_external/path": "res://assets/parking_lot/materials/led_lens.tres"
 },
-"sign_panel": {
+"lightbox_face": {
 "use_external/enabled": true,
-"use_external/fallback_path": "res://assets/parking_lot/materials/sign_panel.tres",
-"use_external/path": "res://assets/parking_lot/materials/sign_panel.tres"
+"use_external/fallback_path": "res://assets/parking_lot/materials/lightbox_face.tres",
+"use_external/path": "res://assets/parking_lot/materials/lightbox_face.tres"
+},
+"paint_white": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/parking_lot/materials/paint_white.tres",
+"use_external/path": "res://assets/parking_lot/materials/paint_white.tres"
+},
+"roof_tile": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/parking_lot/materials/roof_tile.tres",
+"use_external/path": "res://assets/parking_lot/materials/roof_tile.tres"
+},
+"sidewalk": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/parking_lot/materials/sidewalk.tres",
+"use_external/path": "res://assets/parking_lot/materials/sidewalk.tres"
+},
+"sign_green": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/parking_lot/materials/sign_green.tres",
+"use_external/path": "res://assets/parking_lot/materials/sign_green.tres"
+},
+"soffit": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/parking_lot/materials/soffit.tres",
+"use_external/path": "res://assets/parking_lot/materials/soffit.tres"
 },
 "store_glass": {
 "use_external/enabled": true,

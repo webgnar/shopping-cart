@@ -1,0 +1,16 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="1_sf7c4"]
+[ext_resource type="PackedScene" path="res://assets/models/parking_lot/cart_row/cart_row.glb" id="2_v6pkg"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_htmwx"]
+size = Vector3(4.55, 1.05, 0.64)
+
+[node name="CartRow" type="StaticBody3D" unique_id=1500555731]
+physics_material_override = ExtResource("1_sf7c4")
+
+[node name="Model" type="Node3D" parent="." unique_id=2016048512 instance=ExtResource("2_v6pkg")]
+
+[node name="Shape" type="CollisionShape3D" parent="." unique_id=342550621]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.275, 0.525, 0)
+shape = SubResource("BoxShape3D_htmwx")
