@@ -64,7 +64,7 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   `scenes/cart/spare_cart.tscn` — the same cart, empty and not player controlled, to place in levels.
 - `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun.
   `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
-  (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera.
+  (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera (`scripts/cart_camera.gd` lifts it over walls, see its exports).
 - `assets/physics/*.tres` — shared physics materials (tile, asphalt, solid).
 - `scripts/` — behaviour scripts for the scenes above.
 - `tools/` (repo root) — Blender builder and export scripts. `docs/DEV_NOTES.md` — dev notes.
@@ -78,5 +78,6 @@ From `shopping-cart/`:
 - Console test: `godot --headless --fixed-fps 120 -s res://tests/console_test.gd`
 - Tuning in sync with the mobile game: `godot --headless -s res://tests/tuning_sync_test.gd`
   (fix with `godot --headless -s res://tools/export_cart_tuning_cli.gd`)
+- Camera never clips into levels (all levels): `godot --headless --fixed-fps 120 -s res://tests/camera_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`

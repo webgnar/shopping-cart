@@ -3,6 +3,28 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: follow camera rises over walls instead of clipping
+
+- **What.** `scenes/cart_camera.tscn` now has a script (`scripts/cart_camera.gd`, class `CartCamera`) and a
+  `Probe` ShapeCast3D child (0.25 m sphere, mask 1 = level geometry; the cart is on layers 2 and 4 so it is
+  never hit). `main.gd` still owns the orbit (`cam_yaw`, `cam_pitch`, `cam_dist`, wheel zoom) and hands
+  the wanted camera position to `camera.follow()`.
+- **How it avoids things.** One sphere cast from the look target (above the cart) to the wanted spot. If
+  something is in the way it tries spots raised by `lift_step` (0.5 m) up to `max_lift` (2.0 m) and rises
+  to the lowest one with a clear view, so it goes up and over shelves, cars and walls. Under the garage's
+  low ceilings none of those clear, so it takes the lift that gets furthest out and pulls in along that
+  line until the probe fits. Pulling in is instant (no clipping, ever); rising (`rise_speed`), settling
+  (`settle_speed`) and moving back out (`out_speed`) are eased. All are exports on the Camera node;
+  `avoid_collisions` off gives the old camera.
+- **Cost.** 1 cast per frame in the open, at most 6 when blocked (lift search plus the final fit).
+  Measured by `tests/camera_test.gd` (headless, 4.7 stable): average 19 to 58 us per frame per level,
+  99th percentile under 0.32 ms; open-space frames are about 5 to 20 us.
+- **Test.** `tests/camera_test.gd` orbits the camera through 16 headings x 5 zoom/pitch views at 2 to 5
+  spots per level (next to shelves, cars, pillars, under garage decks). Clipping frames with avoidance
+  off / on: sandbox 71 / 0, parking lot 8 / 0, supermarket 192 / 0, garage 168 / 0.
+- **Left out.** Loose props on layer 1 (boxes, product cases, oil drums) also push the camera; spare carts
+  (layers 2/4) do not, so the camera can still pass through a parked spare cart.
+
 ## 2026-11-16: push lifts the front, pull lifts the back; faster power bars
 
 - zack chose the lift direction: a very hard **push lifts the front wheels** (wheelie) and a very hard
