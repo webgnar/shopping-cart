@@ -30,6 +30,13 @@ var walk_max := 2.2                 ## m/s at which a walking hand stops adding 
 @export var stop_spin := 0.05       ## rad/s: same, for turning
 var _rest_time := 0.0
 @export var grip_yaw_damping := 30.0  ## N*m per rad/s: two hands on the bar resist the cart twisting
+@export_group("Pulling and braking")
+@export var pull_ratio := 1.5       ## pulling (leaning back on your heels) is this much stronger than pushing
+@export var arm_reach := 0.3        ## m each arm can straighten while the body is planted
+@export var brake_spring := 350.0   ## N per m of arm extension, per hand: arms stiffen as they straighten
+@export var brake_damping := 25.0   ## N per m/s, per hand
+@export var brake_max := 110.0      ## N per hand: leaning back with full body weight
+var arm_extension := {"L": 0.0, "R": 0.0}   ## m each arm is currently stretched past its relaxed bend
 @export_group("Lift and press")
 @export var lift_pitch := -0.2      ## rad, W: rear wheels up
 @export var press_pitch := 0.3      ## rad, S: wheelie
@@ -85,7 +92,8 @@ func load_tuning() -> void:
 		return
 	for key in ["frame_mass", "wheel_mass", "fork_mass", "gate_mass", "rolling_resistance", "grip_yaw_damping",
 			"lift_pitch", "press_pitch", "side_roll", "tilt_kp", "tilt_kd", "tilt_max",
-			"settle_speed", "settle_spin", "stop_speed", "stop_spin"]:
+			"settle_speed", "settle_spin", "stop_speed", "stop_spin",
+			"pull_ratio", "arm_reach", "brake_spring", "brake_damping", "brake_max"]:
 		if t.has(key):
 			set(key, float(t[key]))
 	if t.has("gears"):
@@ -209,7 +217,7 @@ func _physics_process(delta: float) -> void:
 			break
 	if any_input and frame.freeze:
 		_wake()
-	_apply_hands()
+	_apply_hands(delta)
 	_apply_rolling_resistance(delta)
 	if not any_input:
 		_settle(delta)
@@ -274,7 +282,7 @@ func _apply_rolling_resistance(delta: float) -> void:
 		w.apply_torque(-axle * signf(spin) * t)
 
 
-func _apply_hands() -> void:
+func _apply_hands(delta: float) -> void:
 	var xf := frame.global_transform
 	var nose := xf.basis.x.normalized()
 	var side_axis := xf.basis.z.normalized()
@@ -287,6 +295,10 @@ func _apply_hands() -> void:
 		"R": Input.is_action_pressed("push_right") or Input.is_action_pressed("pull_right"),
 	}
 	var none_held: bool = not held.L and not held.R
+	# Stopping is when you pull back with no hand pushing while the cart is still rolling forward.
+	# Push one hand and pull the other and it's a spin, not a stop.
+	var pushing_any := Input.is_action_pressed("push_left") or Input.is_action_pressed("push_right")
+	var cart_along := frame.linear_velocity.dot(fwd)
 
 	for side in ["L", "R"]:
 		var s := -1.0 if side == "L" else 1.0
@@ -295,12 +307,28 @@ func _apply_hands() -> void:
 		var r := hand_g - com_g
 		var v_hand := frame.linear_velocity + frame.angular_velocity.cross(r)
 		var dir := int(Input.is_action_pressed("push_" + suffix)) - int(Input.is_action_pressed("pull_" + suffix))
+		var along := v_hand.dot(fwd)
 		var st := ""
-		if dir != 0:
-			# A walking person can only add force up to their walking speed.
-			var k := clampf(1.0 - dir * v_hand.dot(fwd) / walk_max, 0.0, 1.0)
-			frame.apply_force(fwd * dir * push_force * k, hand_g - frame.global_position)
-			st = "pushing" if dir > 0 else "pulling"
+		if dir < 0 and not pushing_any and cart_along > 0.05 and along > 0.0:
+			# Stopping a rolling cart: the body plants its feet and the arms straighten as the cart carries on.
+			# Bent arms give a little; the further they straighten the harder they hold, up to leaning back
+			# with full body weight. Out of reach, the player is dragged at that full force.
+			arm_extension[side] = minf(arm_reach, arm_extension[side] + along * delta)
+			var f := minf(brake_max, brake_spring * arm_extension[side] + brake_damping * along)
+			if arm_extension[side] >= arm_reach:
+				f = brake_max
+			frame.apply_force(-fwd * f, hand_g - frame.global_position)
+			st = "braking (arm %d%%)" % roundi(100.0 * arm_extension[side] / arm_reach)
+		else:
+			# Not braking: the body steps back in to its relaxed distance from the handle.
+			arm_extension[side] = maxf(0.0, arm_extension[side] - 1.0 * delta)
+			if dir != 0:
+				# A walking person can only add force up to their walking speed. Pulling back with both hands (leaning
+				# back on your heels) is stronger; with one hand pushing, your weight is forward, so the pull matches the push.
+				var k := clampf(1.0 - dir * along / walk_max, 0.0, 1.0)
+				var strength := push_force * (pull_ratio if dir < 0 and not pushing_any else 1.0)
+				frame.apply_force(fwd * dir * strength * k, hand_g - frame.global_position)
+				st = "pushing" if dir > 0 else "pulling"
 		if (lift or press) and (held[side] or none_held):
 			st = (st + " + " if st else "") + ("lifting" if lift else "pressing")
 		hand_state[side] = st

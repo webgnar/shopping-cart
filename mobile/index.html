@@ -119,6 +119,7 @@ const TUNE = Object.assign({
   frame_mass: 18, wheel_mass: 0.5, fork_mass: 0.6, gate_mass: 1.5,
   gears: [[25, 1.2], [35, 1.8], [45, 2.2], [65, 3.0], [90, 4.0]],
   rolling_resistance: 0.015, grip_yaw_damping: 30,
+  pull_ratio: 1.5, arm_reach: 0.3, brake_spring: 350, brake_damping: 25, brake_max: 110,
   lift_pitch: -0.2, press_pitch: 0.3, side_roll: 0.22, tilt_kp: 1400, tilt_kd: 80, tilt_max: 200,
   settle_speed: 0.15, settle_spin: 0.25, stop_speed: 0.05, stop_spin: 0.05,
   floor_friction: { tile: 0.18, asphalt: 0.9 },
@@ -248,7 +249,7 @@ function buildCart(origin, yaw) {
     return j;
   };
 
-  const c = { wheels: {}, forks: {}, groceries: [], links: [], restTime: 0, pinned: false };
+  const c = { wheels: {}, forks: {}, groceries: [], links: [], restTime: 0, pinned: false, armExt: { L: 0, R: 0 }, handState: {} };
   // Frame: body origin = cart origin (on the ground under the handle); mass centred at COM.
   c.frame = body([0, 0.005, 0], TUNE.frame_mass, v3(...G.com), boxInertia(TUNE.frame_mass, 0.95, 0.9, 0.6));
   cuboid(c.frame, [0.72, 0.024, 0.58], [0.57, 0.46, 0]);
@@ -389,15 +390,34 @@ function applyHands(inp) {
   const fwd = (() => { const h = Math.hypot(nose.x, nose.z) || 1; return v3(nose.x / h, 0, nose.z / h); })();
   const com = add(p, rot(q, v3(...G.com)));
   const lin = f.linvel(), ang = f.angvel();
+  // Stopping is when you pull back with no hand pushing while the cart is still rolling forward.
+  // Push one thumb and pull the other and it's a spin, not a stop.
+  const pushingAny = inp.L > 0.08 || inp.R > 0.08;
+  const cartAlong = dot(lin, fwd);
+  cart.handState = {};
   for (const [h, s] of [['L', -1], ['R', 1]]) {
     const v = inp[h];
-    if (Math.abs(v) < 0.08) continue;
     const handP = add(p, rot(q, v3(G.hand[0], G.hand[1], s * G.hand[2])));
     const vHand = add(lin, cross(ang, sub(handP, com)));
-    const mag = Math.abs(v), dir = Math.sign(v);
+    const along = dot(vHand, fwd);
+    const mag = Math.abs(v), dir = Math.abs(v) < 0.08 ? 0 : Math.sign(v);
+    if (dir < 0 && !pushingAny && cartAlong > 0.05 && along > 0) {
+      // The body plants its feet and the arms straighten as the cart carries on: bent arms give a little, the
+      // further they straighten the harder they hold, up to leaning back with full weight (scaled by the thumb).
+      cart.armExt[h] = Math.min(TUNE.arm_reach, cart.armExt[h] + along * STEP);
+      let force = Math.min(TUNE.brake_max, TUNE.brake_spring * cart.armExt[h] + TUNE.brake_damping * along);
+      if (cart.armExt[h] >= TUNE.arm_reach) force = TUNE.brake_max;
+      f.addForceAtPoint(scale(fwd, -force * mag), handP, true);
+      cart.handState[h] = 'brake';
+      continue;
+    }
+    cart.armExt[h] = Math.max(0, cart.armExt[h] - 1.0 * STEP);   // the body steps back in
+    if (!dir) continue;
     const walk = WALK_MIN + (WALK_MAX - WALK_MIN) * mag;        // light drag = stroll, full drag = run
-    const k = clamp(1 - dir * dot(vHand, fwd) / walk, 0, 1);
-    f.addForceAtPoint(scale(fwd, dir * mag * PUSH_MAX * k), handP, true);
+    const k = clamp(1 - dir * along / walk, 0, 1);
+    // Pulling back with both hands (leaning back on your heels) is stronger than pushing.
+    const strength = PUSH_MAX * (dir < 0 && !pushingAny ? TUNE.pull_ratio : 1);
+    f.addForceAtPoint(scale(fwd, dir * mag * strength * k), handP, true);
   }
   // Two hands going the same way resist the cart twisting (keeps it tracking when pulled back).
   if (Math.abs(inp.L) > 0.08 && Math.abs(inp.R) > 0.08 && Math.sign(inp.L) === Math.sign(inp.R))
@@ -528,7 +548,7 @@ function hud(inp) {
     const v = inp[s], fill = $('fill' + s);
     const hpx = Math.abs(v) * 50;
     Object.assign(fill.style, { height: hpx + '%', top: v >= 0 ? (50 - hpx) + '%' : '50%', background: v >= 0 ? 'var(--push)' : 'var(--pull)' });
-    $('val' + s).textContent = Math.round(Math.abs(v) < 0.08 ? 0 : Math.abs(v) * PUSH_MAX) + ' N';
+    $('val' + s).textContent = cart.handState && cart.handState[s] === 'brake' ? 'brake ' + Math.round(100 * cart.armExt[s] / TUNE.arm_reach) + '%' : Math.round(Math.abs(v) < 0.08 ? 0 : Math.abs(v) * PUSH_MAX) + ' N';
   }
   const lv = cart.frame.linvel();
   $('sSpeed').textContent = (Math.hypot(lv.x, lv.z) * 3.6).toFixed(1);
