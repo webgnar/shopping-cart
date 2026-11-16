@@ -16,6 +16,30 @@ triangle count and file size for new models, judgment calls, what was left out, 
 - The gate assembly is now 2.7 kg instead of 1.5 kg, so the same shove swings it 27 degrees instead
   of 52. The drive test now checks the seat and the flap as well.
 
+## 2026-11-16: parking lot props at real-world scale
+
+zack asked for the lot props to match real dimensions, checked against our cart. Sources:
+cart corral, R.W. Rogers CC8030370 single-wide ([Zoro](https://www.zoro.com/zoro-select-cart-corral-single-wide-168-x-32-rwr-nat-cc8030370/i/G9867627),
+[WebstaurantStore](https://argo.webstaurantstore.com/r-w-rogers-company-360-series-14-x-30-galvanized-steel-single-wide-outdoor-cart-corral-with-liability-sign/36BCC8030370.html));
+parking block, [Kuhlman 8085508](https://shop.kuhlman-corp.com/concrete-parking-stop-6-l-x-5-h-7-w/p2564/);
+shopping cart, [Regency 460SHPCRT64](https://www.webstaurantstore.com/regency-supermarket-grocery-cart-6-3-cu-ft/460SHPCRT64.html)
+and handle heights from [FinanceBuzz](https://financebuzz.com/shopping-cart-sizes); stall, the common 9 x 18 ft code minimum.
+
+| Thing | Real | Ours before | Ours now |
+| --- | --- | --- | --- |
+| Shopping cart (L x W x handle) | 1.01 x 0.60 x 1.01 m, 5" wheels; handles 0.97-1.14 m | 0.98 x 0.67 x 1.04 m, 5" wheels | unchanged |
+| Cart corral | rails 4.17 m (13'8"), 14' overall, 0.81 m (32") clear, rails 0.91 m (36"), sign poles 2.44 m (8') | 4.5 m, 1.27 m clear, rails 1.0 m, sign 1.6 m | 4.17 m rails + 0.25 m flare, 0.81 m clear, rails 0.25 / 0.58 / 0.914 m, 0.8 x 0.5 m sign on 2.44 m poles |
+| Parking block | 1.83 x 0.178 x 0.127 m (6' x 7" x 5") | 1.83 x 0.23 x 0.13 m | 1.83 x 0.178 x 0.127 m |
+| Parking stall | 2.74 x 5.49 m (9 x 18 ft) | 2.7 x 5.5 m | unchanged (within 4 cm) |
+
+- cart_corral 2136 tris / 82 KB, parking_block 140 tris / 9 KB. Z-fighting scan: 0 hits; the block's
+  reflector strips sit 0.2 mm off the new chamfer.
+- Collision shapes in `cart_corral.tscn` and `parking_block.tscn` follow the new sizes; corral
+  placements kept their centres. The corral leaves about 7 cm each side of our cart.
+- Left as is: the player cart is 7 cm wider than the Regency cart (other full-size carts run
+  0.6-0.66 m); narrowing it changes the physics rig and the mobile version, so it is a separate
+  call. Stall size and `cart_row` were already within a few centimetres.
+
 ## 2026-11-16: parking lot store front from zack's photo, lot sweep
 
 Store front rebuilt after zack's night photo of a supermarket front (`tools/parking_lot_models.py`):

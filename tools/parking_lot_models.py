@@ -289,43 +289,47 @@ def stadium(length, width, segs=12):
 # ------------------------------------------------------------------ models
 
 def parking_block():
-    """Precast concrete wheel stop, 1.83 m long, 0.13 m tall. Long along X."""
+    """Precast concrete wheel stop, 6' x 7" x 5" (1.83 x 0.178 x 0.127 m, Kuhlman 8085508). Long along X."""
     m = Model("parking_block")
     b = m.obj("Block", "concrete")
     # Trapezoid section with chamfered top corners (front is +Y).
-    prof = [(-0.115, 0.0), (0.115, 0.0), (0.115, 0.07), (0.075, 0.13), (-0.075, 0.13), (-0.115, 0.07)]
+    prof = [(-0.089, 0.0), (0.089, 0.0), (0.089, 0.07), (0.06, 0.127), (-0.06, 0.127), (-0.089, 0.07)]
     m.prism(b, prof, -0.915, 0.915)
     p = m.obj("Pins", "dark_metal")
     for x in (-0.6, 0.6):   # rebar pins, domed tops proud of the block
-        m.cyl(p, 0.016, 0.006, (x, 0, 0.128), segs=10)
+        m.cyl(p, 0.016, 0.006, (x, 0, 0.125), segs=10)
     s = m.obj("Reflectors", "bollard_yellow")
     for x in (-0.75, 0.75):   # yellow reflective tape on the face toward the car
-        q = Matrix.Rotation(math.atan2(0.04, 0.06), 3, "X")
-        m.box(s, (0.14, 0.004, 0.035), (x, -0.097, 0.1), rot=q)
-        m.box(s, (0.14, 0.004, 0.035), (x, 0.097, 0.1), rot=Matrix.Rotation(-math.atan2(0.04, 0.06), 3, "X"))
+        a = math.atan2(0.029, 0.057)   # chamfer slope
+        m.box(s, (0.14, 0.004, 0.035), (x, -0.0765, 0.0995), rot=Matrix.Rotation(-a, 3, "X"))
+        m.box(s, (0.14, 0.004, 0.035), (x, 0.0765, 0.0995), rot=Matrix.Rotation(a, 3, "X"))
     return m.build()
 
 
 def cart_corral():
-    """Cart return corral, 4.5 m long, 1.3 m wide, 1.05 m tall. Open end at the front (+Y)."""
+    """Single-wide cart return corral, sized from the R.W. Rogers CC8030370 spec (Zoro / Webstaurant):
+    side rails 13'8" (4.17 m) long and 36" (0.91 m) tall, 32" (0.81 m) clear between rails, sign
+    poles 8' (2.44 m). Open end at the front (+Y) with a short flared mouth."""
     m = Model("cart_corral")
-    L, w, r = 4.5, 0.65, 0.024
+    w, r = 0.43, 0.024           # rail centre lines; 0.406 m clear each side of centre + tube radius
+    yf, yb = 2.085, -2.085       # mouth and back posts (4.17 m side rails)
+    top, fl = 0.914, 0.25        # top rail height, flare reach
     f = m.obj("Frame", "rail_metal")
-    ys = (L / 2 - 0.1, 0.0, -L / 2 + 0.05)
+    ys = (yf, 0.0, yb)
     for y in ys:
         for x in (-w, w):
-            m.cyl(f, 0.03, 1.05, (x, y, 0.012), segs=12)
-            m.ball(f, 0.032, (x, y, 1.062), segs=10, rings=6)   # post caps
-    for z in (0.25, 0.6, 1.0):
+            m.cyl(f, 0.03, top + 0.03, (x, y, 0.012), segs=12)
+            m.ball(f, 0.032, (x, y, top + 0.042), segs=10, rings=6)   # post caps
+    for z in (0.25, 0.58, top):
         for x in (-w, w):
-            m.tube(f, (x, L / 2 - 0.1, z), (x, -L / 2 + 0.05, z), r)
-        m.tube(f, (-w, -L / 2 + 0.05, z), (w, -L / 2 + 0.05, z), r * 0.92)
+            m.tube(f, (x, yf, z), (x, yb, z), r)
+        m.tube(f, (-w, yb, z), (w, yb, z), r * 0.92)
     for x in (-1, 1):   # flared mouth so carts funnel in
-        for z in (0.6, 1.0):
-            m.tube(f, (x * w, L / 2 - 0.1, z), (x * (w + 0.35), L / 2 + 0.35, z), r * 0.9)
-        m.cyl(f, 0.026, 1.0, (x * (w + 0.35), L / 2 + 0.35, 0.012), segs=10)
-    m.tube(f, (-w, -L / 2 + 0.05, 1.0), (-w, -L / 2 + 0.05, 1.6), r)
-    m.tube(f, (w, -L / 2 + 0.05, 1.0), (w, -L / 2 + 0.05, 1.6), r)
+        for z in (0.58, top):
+            m.tube(f, (x * w, yf, z), (x * (w + fl), yf + fl, z), r * 0.9)
+        m.cyl(f, 0.026, top - 0.03, (x * (w + fl), yf + fl, 0.012), segs=10)
+    for x in (-w, w):   # 8 ft sign poles on the back posts
+        m.tube(f, (x, yb, top), (x, yb, 2.44), r)
     pl = m.obj("BasePlates", "dark_metal")
     for y in ys:
         for x in (-w, w):
@@ -334,12 +338,12 @@ def cart_corral():
                 m.cyl(pl, 0.009, 0.012, (x + dx, y + 0.045, 0.012), segs=6)
                 m.cyl(pl, 0.009, 0.012, (x + dx, y - 0.045, 0.012), segs=6)
     for x in (-1, 1):
-        m.box(pl, (0.12, 0.12, 0.012), (x * (w + 0.35), L / 2 + 0.35, 0.006))
+        m.box(pl, (0.12, 0.12, 0.012), (x * (w + fl), yf + fl, 0.006))
     s = m.obj("SignPanel", "sign_panel")
-    m.box(s, (1.24, 0.03, 0.42), (0, -L / 2 + 0.05, 1.38))
+    m.box(s, (0.8, 0.03, 0.5), (0, yb, 2.15))
     bump = m.obj("Bumpers", "rubber_black")   # rubber guards on the low rail where carts hit
     for x in (-w, w):
-        m.cyl(bump, 0.034, 1.6, (x, L / 2 - 0.4, 0.25), axis="Y", segs=10, rot=Matrix.Rotation(math.pi, 3, "X"))
+        m.cyl(bump, 0.034, 1.6, (x, yf - 0.3, 0.25), axis="Y", segs=10, rot=Matrix.Rotation(math.pi, 3, "X"))
     return m.build()
 
 
