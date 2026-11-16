@@ -1,5 +1,5 @@
 extends SceneTree
-## Renders the prototype mid-wheelie and saves a screenshot. Needs a display (e.g. xvfb-run):
+## Renders the prototype mid-wheelie (a hard push, rear wheels up) and saves a screenshot. Needs a display (e.g. xvfb-run):
 ##   xvfb-run godot -s res://tests/screenshot.gd -- <output.png>
 
 var main: Node3D
@@ -13,13 +13,16 @@ func _initialize() -> void:
 
 func _run() -> void:
 	main.spawn_cart(Vector3(2, 0, -1), 0.5)
-	main.gear = main.cart.set_gear(4)
 	for i in 90:
 		await process_frame
-	for a in ["push_left", "push_right", "press"]:
+	# Push hard until the rear wheels come up off the floor.
+	for a in ["push_left", "push_right"]:
 		Input.action_press(a)
-	for i in 100:
-		await process_frame
+	for i in 600:
+		await physics_frame
+		if minf(main.cart.wheels.RL.global_position.y, main.cart.wheels.RR.global_position.y) > 0.2:
+			break
+	await process_frame
 	var args := OS.get_cmdline_user_args()
 	var out: String = args[0] if args.size() > 0 else "user://screenshot.png"
 	root.get_texture().get_image().save_png(out)

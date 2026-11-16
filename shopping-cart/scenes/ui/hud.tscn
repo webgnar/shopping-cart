@@ -3,89 +3,45 @@
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hqnrr"]
 [ext_resource type="Script" path="res://scripts/ui/key_cap.gd" id="2_bo48s"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8qguk"]
-content_margin_top = 6.0
-content_margin_bottom = 6.0
-bg_color = Color(0.14901961, 0.17254902, 0.21960784, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.2901961, 0.32156864, 0.3882353, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+[sub_resource type="Gradient" id="Gradient_push"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.23921569, 0.8627451, 0.5176471, 1, 0.8098039, 0.73333335, 0.2647059, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_136eg"]
-content_margin_top = 6.0
-content_margin_bottom = 6.0
-bg_color = Color(0.23921569, 0.8627451, 0.5176471, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.23921569, 0.8627451, 0.5176471, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_push"]
+gradient = SubResource("Gradient_push")
+width = 24
+height = 64
+fill_to = Vector2(0, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oj5la"]
-content_margin_top = 6.0
-content_margin_bottom = 6.0
-bg_color = Color(0.42941177, 0.81960785, 0.43333334, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.42941177, 0.81960785, 0.43333334, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+[sub_resource type="Gradient" id="Gradient_pushdim"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.23921569, 0.8627451, 0.5176471, 0.22, 0.8098039, 0.73333335, 0.2647059, 0.22)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gss2c"]
-content_margin_top = 6.0
-content_margin_bottom = 6.0
-bg_color = Color(0.61960787, 0.7764706, 0.34901962, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.61960787, 0.7764706, 0.34901962, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_pushdim"]
+gradient = SubResource("Gradient_pushdim")
+width = 24
+height = 64
+fill_to = Vector2(0, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_h022r"]
-content_margin_top = 6.0
-content_margin_bottom = 6.0
-bg_color = Color(0.8098039, 0.73333335, 0.2647059, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.8098039, 0.73333335, 0.2647059, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+[sub_resource type="Gradient" id="Gradient_pull"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(1, 0.6901961, 0.18039215, 1, 1, 0.3, 0.3, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4jqwt"]
-content_margin_top = 6.0
-content_margin_bottom = 6.0
-bg_color = Color(1, 0.6901961, 0.18039215, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(1, 0.6901961, 0.18039215, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_pull"]
+gradient = SubResource("Gradient_pull")
+width = 24
+height = 64
+fill_to = Vector2(0, 1)
+
+[sub_resource type="Gradient" id="Gradient_pulldim"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(1, 0.6901961, 0.18039215, 0.22, 1, 0.3, 0.3, 0.22)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_pulldim"]
+gradient = SubResource("Gradient_pulldim")
+width = 24
+height = 64
+fill_to = Vector2(0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kicr4"]
 content_margin_left = 12.0
@@ -131,20 +87,6 @@ corner_radius_top_right = 9
 corner_radius_bottom_right = 9
 corner_radius_bottom_left = 9
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4d46k"]
-content_margin_top = 6.0
-content_margin_bottom = 6.0
-bg_color = Color(0.3529412, 0.6627451, 1, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.3529412, 0.6627451, 1, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_erw67"]
 content_margin_top = 6.0
 content_margin_bottom = 6.0
@@ -161,8 +103,6 @@ corner_radius_bottom_left = 9
 
 [node name="HUD" type="CanvasLayer" unique_id=1978713172]
 script = ExtResource("1_hqnrr")
-segment_off = SubResource("StyleBoxFlat_8qguk")
-segment_on = Array[StyleBox]([SubResource("StyleBoxFlat_136eg"), SubResource("StyleBoxFlat_oj5la"), SubResource("StyleBoxFlat_gss2c"), SubResource("StyleBoxFlat_h022r"), SubResource("StyleBoxFlat_4jqwt")])
 
 [node name="Title" type="Label" parent="." unique_id=1153877582]
 offset_left = 16.0
@@ -203,64 +143,63 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_kicr4")
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="PushMeter" type="VBoxContainer" parent="ControlsPanel/Rows" unique_id=954680250]
+[node name="Drive" type="HBoxContainer" parent="ControlsPanel/Rows" unique_id=610000001]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 10
 
-[node name="MeterLabel" type="Label" parent="ControlsPanel/Rows/PushMeter" unique_id=1060874841]
+[node name="LeftBar" type="VBoxContainer" parent="ControlsPanel/Rows/Drive" unique_id=610000100]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Caption" type="Label" parent="ControlsPanel/Rows/Drive/LeftBar" unique_id=610000101]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "LEFT"
+horizontal_alignment = 1
+
+[node name="LeftPush" type="TextureProgressBar" parent="ControlsPanel/Rows/Drive/LeftBar" unique_id=610000102]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 64)
 layout_mode = 2
-theme_override_font_sizes/font_size = 13
-text = "PUSH  gear 3 / 5"
+size_flags_horizontal = 4
+max_value = 250.0
+step = 0.0
+fill_mode = 3
+texture_under = SubResource("GradientTexture2D_pushdim")
+texture_progress = SubResource("GradientTexture2D_push")
 
-[node name="Segments" type="HBoxContainer" parent="ControlsPanel/Rows/PushMeter" unique_id=2057075210]
+[node name="Zero" type="ColorRect" parent="ControlsPanel/Rows/Drive/LeftBar" unique_id=610000103]
+custom_minimum_size = Vector2(32, 2)
+layout_mode = 2
+size_flags_horizontal = 4
+color = Color(0.92549, 0.93333, 0.94902, 1)
+
+[node name="LeftPull" type="TextureProgressBar" parent="ControlsPanel/Rows/Drive/LeftBar" unique_id=610000104]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 64)
 layout_mode = 2
-theme_override_constants/separation = 4
+size_flags_horizontal = 4
+max_value = 250.0
+step = 0.0
+fill_mode = 2
+texture_under = SubResource("GradientTexture2D_pulldim")
+texture_progress = SubResource("GradientTexture2D_pull")
 
-[node name="Gear1" type="Panel" parent="ControlsPanel/Rows/PushMeter/Segments" unique_id=2010609960]
-custom_minimum_size = Vector2(48, 10)
-layout_mode = 2
-size_flags_vertical = 8
-theme_override_styles/panel = SubResource("StyleBoxFlat_136eg")
-
-[node name="Gear2" type="Panel" parent="ControlsPanel/Rows/PushMeter/Segments" unique_id=939145396]
-custom_minimum_size = Vector2(48, 13)
-layout_mode = 2
-size_flags_vertical = 8
-theme_override_styles/panel = SubResource("StyleBoxFlat_oj5la")
-
-[node name="Gear3" type="Panel" parent="ControlsPanel/Rows/PushMeter/Segments" unique_id=483188379]
-custom_minimum_size = Vector2(48, 16)
-layout_mode = 2
-size_flags_vertical = 8
-theme_override_styles/panel = SubResource("StyleBoxFlat_gss2c")
-
-[node name="Gear4" type="Panel" parent="ControlsPanel/Rows/PushMeter/Segments" unique_id=1406659361]
-custom_minimum_size = Vector2(48, 19)
-layout_mode = 2
-size_flags_vertical = 8
-theme_override_styles/panel = SubResource("StyleBoxFlat_8qguk")
-
-[node name="Gear5" type="Panel" parent="ControlsPanel/Rows/PushMeter/Segments" unique_id=427426197]
-custom_minimum_size = Vector2(48, 22)
-layout_mode = 2
-size_flags_vertical = 8
-theme_override_styles/panel = SubResource("StyleBoxFlat_8qguk")
-
-[node name="MeterHint" type="Label" parent="ControlsPanel/Rows/PushMeter" unique_id=1904036686]
-modulate = Color(1, 1, 1, 0.6)
+[node name="LeftNewtons" type="Label" parent="ControlsPanel/Rows/Drive/LeftBar" unique_id=610000105]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 11
-text = "scroll or 1-5 to change push strength"
+text = "0 N"
+horizontal_alignment = 1
 
-[node name="KeyCaps" type="GridContainer" parent="ControlsPanel/Rows" unique_id=903950795]
+[node name="KeyCaps" type="GridContainer" parent="ControlsPanel/Rows/Drive" unique_id=903950795]
 layout_mode = 2
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
-columns = 3
+columns = 2
 
-[node name="KeyQ" type="PanelContainer" parent="ControlsPanel/Rows/KeyCaps" unique_id=1580317203]
+[node name="KeyQ" type="PanelContainer" parent="ControlsPanel/Rows/Drive/KeyCaps" unique_id=1580317203]
 custom_minimum_size = Vector2(80, 64)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_mj13f")
@@ -269,50 +208,24 @@ action = &"push_left"
 idle_style = SubResource("StyleBoxFlat_mj13f")
 pressed_style = SubResource("StyleBoxFlat_0h1do")
 
-[node name="Text" type="VBoxContainer" parent="ControlsPanel/Rows/KeyCaps/KeyQ" unique_id=390241236]
+[node name="Text" type="VBoxContainer" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyQ" unique_id=390241236]
 layout_mode = 2
 theme_override_constants/separation = 0
 alignment = 1
 
-[node name="Letter" type="Label" parent="ControlsPanel/Rows/KeyCaps/KeyQ/Text" unique_id=1296134677]
+[node name="Letter" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyQ/Text" unique_id=1296134677]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Q"
 horizontal_alignment = 1
 
-[node name="Caption" type="Label" parent="ControlsPanel/Rows/KeyCaps/KeyQ/Text" unique_id=150140445]
+[node name="Caption" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyQ/Text" unique_id=150140445]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "LEFT PUSH"
 horizontal_alignment = 1
 
-[node name="KeyW" type="PanelContainer" parent="ControlsPanel/Rows/KeyCaps" unique_id=1337089900]
-custom_minimum_size = Vector2(80, 64)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_mj13f")
-script = ExtResource("2_bo48s")
-action = &"lift"
-idle_style = SubResource("StyleBoxFlat_mj13f")
-pressed_style = SubResource("StyleBoxFlat_4d46k")
-
-[node name="Text" type="VBoxContainer" parent="ControlsPanel/Rows/KeyCaps/KeyW" unique_id=484706470]
-layout_mode = 2
-theme_override_constants/separation = 0
-alignment = 1
-
-[node name="Letter" type="Label" parent="ControlsPanel/Rows/KeyCaps/KeyW/Text" unique_id=49616695]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "W"
-horizontal_alignment = 1
-
-[node name="Caption" type="Label" parent="ControlsPanel/Rows/KeyCaps/KeyW/Text" unique_id=1360810997]
-layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "LIFT"
-horizontal_alignment = 1
-
-[node name="KeyE" type="PanelContainer" parent="ControlsPanel/Rows/KeyCaps" unique_id=963085705]
+[node name="KeyE" type="PanelContainer" parent="ControlsPanel/Rows/Drive/KeyCaps" unique_id=963085705]
 custom_minimum_size = Vector2(80, 64)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_mj13f")
@@ -321,24 +234,24 @@ action = &"push_right"
 idle_style = SubResource("StyleBoxFlat_mj13f")
 pressed_style = SubResource("StyleBoxFlat_0h1do")
 
-[node name="Text" type="VBoxContainer" parent="ControlsPanel/Rows/KeyCaps/KeyE" unique_id=608459431]
+[node name="Text" type="VBoxContainer" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyE" unique_id=608459431]
 layout_mode = 2
 theme_override_constants/separation = 0
 alignment = 1
 
-[node name="Letter" type="Label" parent="ControlsPanel/Rows/KeyCaps/KeyE/Text" unique_id=953719186]
+[node name="Letter" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyE/Text" unique_id=953719186]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "E"
 horizontal_alignment = 1
 
-[node name="Caption" type="Label" parent="ControlsPanel/Rows/KeyCaps/KeyE/Text" unique_id=1708842315]
+[node name="Caption" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyE/Text" unique_id=1708842315]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "RIGHT PUSH"
 horizontal_alignment = 1
 
-[node name="KeyA" type="PanelContainer" parent="ControlsPanel/Rows/KeyCaps" unique_id=1216935309]
+[node name="KeyA" type="PanelContainer" parent="ControlsPanel/Rows/Drive/KeyCaps" unique_id=1216935309]
 custom_minimum_size = Vector2(80, 64)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_mj13f")
@@ -347,50 +260,24 @@ action = &"pull_left"
 idle_style = SubResource("StyleBoxFlat_mj13f")
 pressed_style = SubResource("StyleBoxFlat_erw67")
 
-[node name="Text" type="VBoxContainer" parent="ControlsPanel/Rows/KeyCaps/KeyA" unique_id=1722556338]
+[node name="Text" type="VBoxContainer" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyA" unique_id=1722556338]
 layout_mode = 2
 theme_override_constants/separation = 0
 alignment = 1
 
-[node name="Letter" type="Label" parent="ControlsPanel/Rows/KeyCaps/KeyA/Text" unique_id=419243844]
+[node name="Letter" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyA/Text" unique_id=419243844]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "A"
 horizontal_alignment = 1
 
-[node name="Caption" type="Label" parent="ControlsPanel/Rows/KeyCaps/KeyA/Text" unique_id=242598767]
+[node name="Caption" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyA/Text" unique_id=242598767]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "LEFT PULL"
 horizontal_alignment = 1
 
-[node name="KeyS" type="PanelContainer" parent="ControlsPanel/Rows/KeyCaps" unique_id=790888032]
-custom_minimum_size = Vector2(80, 64)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_mj13f")
-script = ExtResource("2_bo48s")
-action = &"press"
-idle_style = SubResource("StyleBoxFlat_mj13f")
-pressed_style = SubResource("StyleBoxFlat_4d46k")
-
-[node name="Text" type="VBoxContainer" parent="ControlsPanel/Rows/KeyCaps/KeyS" unique_id=483489790]
-layout_mode = 2
-theme_override_constants/separation = 0
-alignment = 1
-
-[node name="Letter" type="Label" parent="ControlsPanel/Rows/KeyCaps/KeyS/Text" unique_id=460629738]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "S"
-horizontal_alignment = 1
-
-[node name="Caption" type="Label" parent="ControlsPanel/Rows/KeyCaps/KeyS/Text" unique_id=329010553]
-layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "PRESS"
-horizontal_alignment = 1
-
-[node name="KeyD" type="PanelContainer" parent="ControlsPanel/Rows/KeyCaps" unique_id=1157445738]
+[node name="KeyD" type="PanelContainer" parent="ControlsPanel/Rows/Drive/KeyCaps" unique_id=1157445738]
 custom_minimum_size = Vector2(80, 64)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_mj13f")
@@ -399,21 +286,67 @@ action = &"pull_right"
 idle_style = SubResource("StyleBoxFlat_mj13f")
 pressed_style = SubResource("StyleBoxFlat_erw67")
 
-[node name="Text" type="VBoxContainer" parent="ControlsPanel/Rows/KeyCaps/KeyD" unique_id=1055907627]
+[node name="Text" type="VBoxContainer" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyD" unique_id=1055907627]
 layout_mode = 2
 theme_override_constants/separation = 0
 alignment = 1
 
-[node name="Letter" type="Label" parent="ControlsPanel/Rows/KeyCaps/KeyD/Text" unique_id=766173269]
+[node name="Letter" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyD/Text" unique_id=766173269]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "D"
 horizontal_alignment = 1
 
-[node name="Caption" type="Label" parent="ControlsPanel/Rows/KeyCaps/KeyD/Text" unique_id=358748981]
+[node name="Caption" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyD/Text" unique_id=358748981]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "RIGHT PULL"
+horizontal_alignment = 1
+
+[node name="RightBar" type="VBoxContainer" parent="ControlsPanel/Rows/Drive" unique_id=610000200]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Caption" type="Label" parent="ControlsPanel/Rows/Drive/RightBar" unique_id=610000201]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "RIGHT"
+horizontal_alignment = 1
+
+[node name="RightPush" type="TextureProgressBar" parent="ControlsPanel/Rows/Drive/RightBar" unique_id=610000202]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+max_value = 250.0
+step = 0.0
+fill_mode = 3
+texture_under = SubResource("GradientTexture2D_pushdim")
+texture_progress = SubResource("GradientTexture2D_push")
+
+[node name="Zero" type="ColorRect" parent="ControlsPanel/Rows/Drive/RightBar" unique_id=610000203]
+custom_minimum_size = Vector2(32, 2)
+layout_mode = 2
+size_flags_horizontal = 4
+color = Color(0.92549, 0.93333, 0.94902, 1)
+
+[node name="RightPull" type="TextureProgressBar" parent="ControlsPanel/Rows/Drive/RightBar" unique_id=610000204]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+max_value = 250.0
+step = 0.0
+fill_mode = 2
+texture_under = SubResource("GradientTexture2D_pulldim")
+texture_progress = SubResource("GradientTexture2D_pull")
+
+[node name="RightNewtons" type="Label" parent="ControlsPanel/Rows/Drive/RightBar" unique_id=610000205]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "0 N"
 horizontal_alignment = 1
 
 [node name="Hands" type="Label" parent="ControlsPanel/Rows" unique_id=124370521]
@@ -427,4 +360,4 @@ Right hand: —"
 modulate = Color(1, 1, 1, 0.6)
 layout_mode = 2
 theme_override_font_sizes/font_size = 11
-text = "R reset  ·  F11 full screen  ·  click to look, Esc to release, Ctrl+scroll zoom"
+text = "R reset  ·  F11 full screen  ·  click to look, Esc to release, scroll to zoom"

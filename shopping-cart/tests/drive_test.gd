@@ -6,19 +6,17 @@ extends SceneTree
 const SCENARIOS := [
 	# name, actions held, seconds, check
 	["idle", [], 5.0, "still"],
-	["Q+E both push", ["push_left", "push_right"], 3.0, "forward_straight"],
-	["A+D both pull", ["pull_left", "pull_right"], 3.0, "backward"],
-	["E right push", ["push_right"], 3.0, "turns_left"],
-	["Q left push", ["push_left"], 3.0, "turns_right"],
-	["Q+D spin", ["push_left", "pull_right"], 2.0, "spins_right"],
-	["S press (wheelie)", ["press"], 1.5, "wheelie"],
-	["W lift", ["lift"], 1.5, "rear_up"],
-	["W+E lift right", ["lift", "push_right"], 1.5, "right_up"],
-	["tile Q+E push", ["push_left", "push_right"], 3.0, "forward_straight"],
+	["Q+E both push", ["push_left", "push_right"], 1.5, "forward_straight"],
+	["A+D both pull", ["pull_left", "pull_right"], 1.5, "backward"],
+	["E right push", ["push_right"], 1.5, "turns_left"],
+	["Q left push", ["push_left"], 1.5, "turns_right"],
+	["Q+D spin", ["push_left", "pull_right"], 1.2, "spins_right"],
+	["Q+E short push", ["push_left", "push_right"], 1.2, "flat"],
+	["Q+E hard push", ["push_left", "push_right"], 2.4, "rear_up"],
+	["A+D hard pull", ["pull_left", "pull_right"], 3.2, "wheelie"],
+	["tile Q+E push", ["push_left", "push_right"], 1.5, "forward_straight"],
 	["coast then rest", ["coast"], 12.0, "comes_to_rest"],
-	["rested 4 s, then Q+E", ["push_left", "push_right"], 2.5, "wakes_and_moves"],
-	["gear 1 Q+E", ["push_left", "push_right"], 3.0, "gear1"],
-	["gear 5 Q+E", ["push_left", "push_right"], 4.0, "gear5"],
+	["rested 4 s, then Q+E", ["push_left", "push_right"], 1.5, "wakes_and_moves"],
 ]
 
 var main: Node3D
@@ -45,7 +43,6 @@ func _run() -> void:
 		var cart: ShoppingCart = main.cart
 		var p0 := cart.cart_origin()
 		var h0 := cart.heading()
-		cart.set_gear(1 if sc[3] == "gear1" else (5 if sc[3] == "gear5" else 3))
 		var was_asleep := false
 		if sc[3] == "wakes_and_moves":
 			await _wait(4.0)
@@ -56,7 +53,6 @@ func _run() -> void:
 		var max_pitch := 0.0
 		var max_rear := 0.0
 		var max_front := 0.0
-		var max_right_up := 0.0
 		var ticks := int(sc[2] * Engine.physics_ticks_per_second)
 		for i in ticks:
 			if coast and i == int(Engine.physics_ticks_per_second):
@@ -66,7 +62,6 @@ func _run() -> void:
 			max_pitch = maxf(max_pitch, absf(rad_to_deg(asin(b.x.y))))
 			max_rear = maxf(max_rear, minf(cart.wheels.RL.global_position.y, cart.wheels.RR.global_position.y))
 			max_front = maxf(max_front, minf(cart.wheels.FL.global_position.y, cart.wheels.FR.global_position.y))
-			max_right_up = maxf(max_right_up, rad_to_deg(asin(b.z.y)))
 		for a in (["push_right"] if coast else sc[1]):
 			Input.action_release(a)
 		var d := cart.cart_origin() - p0
@@ -83,26 +78,24 @@ func _run() -> void:
 			"spins_right": ok = turn < -60 and d.length() < 1.0
 			"wheelie": ok = max_front > 0.12 and max_rear < 0.09
 			"rear_up": ok = max_rear > 0.10 and max_front < 0.09
-			"right_up": ok = max_right_up > 5
+			"flat": ok = along > 2.0 and max_rear < 0.09 and max_front < 0.09 and cart.wheels_down() == 4
 			"wakes_and_moves": ok = along > 1.0
-			"gear1": ok = along > 0.8 and along < 1.4 and cart.wheels_down() == 4
-			"gear5": ok = along > 3.0 and cart.wheels_down() == 4 and max_rear < 0.09
 			"comes_to_rest": ok = cart.frame.freeze
 		if not ok:
 			failures += 1
 		print("%-5s %-18s moved %.2f m  speed along nose %+.2f m/s  turned %+4d deg  max pitch %4.1f  front wheels up to %.2f m  rear up to %.2f m  groceries %d/5  wheels down %d" % [
 			"PASS" if ok else "FAIL", sc[0], Vector2(d.x, d.z).length(), along, roundi(turn), max_pitch, max_front, max_rear,
 			cart.groceries_in_basket(), cart.wheels_down()])
-	# Braking: walk or run the cart up to speed, then pull back with both hands (body plants, arms extend).
-	for gear_n in [3, 5]:
+	# Braking: walk or run the cart up to speed (push for 1 or 1.8 s), then pull back with both hands (body plants,
+	# arms extend).
+	for push_s in [1.0, 1.8]:
 		for mode in ["coast", "brake"]:
 			main.spawn_cart(Vector3(-14, 0, -3), 0.0)
 			await _wait(0.5)
 			var cart: ShoppingCart = main.cart
-			cart.set_gear(gear_n)
 			Input.action_press("push_left")
 			Input.action_press("push_right")
-			await _wait(3.0)
+			await _wait(push_s)
 			Input.action_release("push_left")
 			Input.action_release("push_right")
 			var nose0 := cart.frame.global_transform.basis.x
@@ -128,29 +121,28 @@ func _run() -> void:
 			var dist := Vector2(cart.cart_origin().x - p0.x, cart.cart_origin().z - p0.z).length()
 			var ok := true
 			if mode == "brake":
-				ok = dist < 1.0 and t < 1.5 and max_pitch < 25.0 and cart.groceries_in_basket() >= 4
+				ok = dist < 0.08 * v0 * 3.6 and t < 1.5 and max_pitch < 25.0 and cart.groceries_in_basket() >= 4
 			print("%-5s %-18s from %.1f km/h: stopped in %.2f m and %.2f s  max nose-up %.1f deg  front wheels up to %.2f m  groceries %d/5" % [
-				("PASS" if ok else "FAIL") if mode == "brake" else "info", "gear %d %s" % [gear_n, "pull back" if mode == "brake" else "let go"],
+				("PASS" if ok else "FAIL") if mode == "brake" else "info", "%.1f s push, %s" % [push_s, "pull" if mode == "brake" else "let go"],
 				v0 * 3.6, dist, t, max_pitch, max_front, cart.groceries_in_basket()])
 			if not ok:
 				failures += 1
-	# Pulling is stronger than pushing: compare the first half second from rest.
+	# Pushing and pulling share one base and ramp: compare the first half second from rest.
 	var accel := {}
 	for pair in [["push", ["push_left", "push_right"]], ["pull", ["pull_left", "pull_right"]]]:
 		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 		await _wait(0.5)
 		var cart: ShoppingCart = main.cart
-		cart.set_gear(3)
 		for a in pair[1]:
 			Input.action_press(a)
 		await _wait(0.5)
 		for a in pair[1]:
 			Input.action_release(a)
 		accel[pair[0]] = absf(cart.frame.linear_velocity.length())
-	var pull_ok: bool = accel.pull > accel.push * 1.2
+	var pull_ok: bool = absf(accel.pull - accel.push) < 0.1 * accel.push
 	if not pull_ok:
 		failures += 1
-	print("%-5s %-18s after 0.5 s from rest: pushing %.2f m/s, pulling %.2f m/s" % ["PASS" if pull_ok else "FAIL", "pull > push", accel.push, accel.pull])
+	print("%-5s %-18s after 0.5 s from rest: pushing %.2f m/s, pulling %.2f m/s" % ["PASS" if pull_ok else "FAIL", "pull = push", accel.push, accel.pull])
 
 	# Countering a spin: pull one hand to spin, then pull with the other hand instead. The second hand works
 	# against the spin, so it grabs the bar and stops it within a second (then turns the cart the other way).
@@ -180,24 +172,39 @@ func _run() -> void:
 			failures += 1
 		print("%-5s %-18s spinning %+d deg/s, stopped in %.2f s (wheels down at least %d)" % [
 			"PASS" if stop_ok else "FAIL", counter[2], roundi(w0), t_stop, min_wheels])
-	# Holding W or S keeps tipping the cart until it falls over (W onto its nose, S back onto the handle);
-	# a short tap only leans it and it drops back onto four wheels.
-	for tip in [["press", 4.0, true], ["lift", 4.0, true], ["press", 0.8, false], ["lift", 0.8, false]]:
+	# Hand power tips the cart: keep pushing hard and the rear wheels lift until it goes over onto its nose; keep
+	# pulling hard and the front wheels lift until it goes over onto the handle. Let go as soon as an end lifts
+	# and it drops back onto four wheels.
+	for tip in [["push", 4.0, true], ["pull", 4.0, true], ["push", 0.0, false], ["pull", 0.0, false]]:
 		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 		await _wait(1.0)
 		var tc: ShoppingCart = main.cart
-		Input.action_press(tip[0])
-		await _wait(tip[1])
-		Input.action_release(tip[0])
+		var keys: Array = [tip[0] + "_left", tip[0] + "_right"]
+		for a in keys:
+			Input.action_press(a)
+		var held := 0.0
+		var lifted := 0.0
+		while held < 6.0:
+			await physics_frame
+			held += 1.0 / Engine.physics_ticks_per_second
+			var end_up := minf(tc.wheels.RL.global_position.y, tc.wheels.RR.global_position.y) if tip[0] == "push" \
+				else minf(tc.wheels.FL.global_position.y, tc.wheels.FR.global_position.y)
+			if end_up > 0.15 and lifted == 0.0:
+				lifted = held
+			if lifted > 0.0 and held >= lifted + tip[1]:
+				break
+		for a in keys:
+			Input.action_release(a)
 		await _wait(3.0)
 		var tb := tc.frame.global_transform.basis
-		var fell := tb.y.y < 0.4
-		var tip_ok: bool = fell == tip[2] and (fell or tc.wheels_down() == 4)
+		var fell := tb.y.y < 0.7   # well off upright: on its nose, its handle or its side
+		var pitch := roundi(rad_to_deg(asin(clampf(tb.x.y, -1, 1))))
+		var tip_ok: bool = lifted > 0.0 and fell == tip[2] and (fell or tc.wheels_down() == 4)
 		if not tip_ok:
 			failures += 1
-		print("%-5s %-18s held %.1f s: %s (up %.2f, nose pitch %+d deg, wheels down %d)" % [
-			"PASS" if tip_ok else "FAIL", ("S" if tip[0] == "press" else "W") + " held", tip[1],
-			"fell over" if fell else "back on its wheels", tb.y.y, roundi(rad_to_deg(asin(clampf(tb.x.y, -1, 1)))), tc.wheels_down()])
+		print("%-5s %-18s %s end lifted after %.1f s, let go %.1f s later: %s (up %.2f, nose pitch %+d deg, wheels down %d)" % [
+			"PASS" if tip_ok else "FAIL", "hard " + tip[0], "rear" if tip[0] == "push" else "front", lifted, tip[1],
+			"fell over" if fell else "back on its wheels", tb.y.y, pitch, tc.wheels_down()])
 	# Gate swings into the basket when shoved, and stops at its limit.
 	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 	await _wait(0.5)

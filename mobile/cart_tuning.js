@@ -57,5 +57,10 @@ window.CART_TUNING = {
   "floor_friction": {
     "tile": 0.5,
     "asphalt": 0.7
-  }
+  },
+  "power_base": 25.0,
+  "power_ramp": 60.0,
+  "power_relax": 400.0,
+  "sprint_speed": 8.0,
+  "drive_height": 1.0
 };

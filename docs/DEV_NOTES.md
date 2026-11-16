@@ -3,6 +3,38 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: hand power bars replace the scroll-wheel gears and W/S
+
+- **Controls.** Q/A (left hand) and E/D (right hand) are the only driving keys. Holding a hand's key ramps
+  that hand's force from `power_base` (25 N) by `power_ramp` (60 N/s) with no cap; letting go relaxes it
+  back to zero at `power_relax` (400 N/s). Push and pull share the same base and ramp (`pull_ratio` is gone).
+  The scroll wheel now just zooms the camera (no Ctrl needed); 1-5, W and S do nothing.
+- **Speed.** The per-gear walking speeds are replaced by one `sprint_speed` (8 m/s): a hand stops adding
+  force as the cart approaches it. Holding both hands for 1.5 s from rest gives about 14 km/h.
+- **Tilt is emergent.** The lift/press wrist controller and the hold-to-tip timer are removed. The hands'
+  force acts at the handle (1.0 m up), above the centre of mass (0.42 m), so a very hard push pitches the
+  nose down onto the front casters and the **rear wheels lift** (about 2.2 s of holding both, roughly
+  150 N per hand at about 16 km/h); keep holding and it goes over onto its nose. A very hard pull pitches the
+  nose up and the **front wheels lift** (about 2.8 s, roughly 190 N per hand); keep holding and it goes
+  over backwards. Let go as soon as an end lifts and it drops back onto four wheels. Pulling to brake a
+  rolling cart still uses the planted-arms brake (up to `brake_max`, 110 N), but a hand pulling harder than
+  that wins out, so a hard yank while rolling also lifts the front.
+- **HUD.** `scenes/ui/hud.tscn` has a vertical bar beside each pair of keycaps (left of Q/A, right of E/D):
+  a `TextureProgressBar` above a white zero line that fills up in green while the hand pushes and one
+  below it that fills down in red while it pulls, each with a `GradientTexture2D`, plus the hand's force in
+  newtons. The bars show up to 250 N (their `max_value`); past that they stay full and the number keeps
+  climbing. The gear meter and the W/S keycaps are gone.
+- **Spin brace** is unchanged and still passes (A spin then D stops in 0.71 s, Q+D then A+E in 0.22 s).
+- **Tests.** `drive_test.gd` drops the gear and W/S cases and adds: short push stays flat, hard push lifts
+  the rear, hard pull lifts the front, held on they fall over, let go they land on four wheels, and
+  pull = push from rest. Level tests that drive for several seconds pin the hands at a steady force
+  (`power_ramp = 0`) so the long push doesn't tip the cart.
+- **Which end lifts** is set by `drive_height`, the height the hands' force acts at. It is 1.0 m (the grip)
+  here, which gives the physics above. zack wants it the other way round (a hard push lifts the front, a
+  hard pull lifts the rear to break the back wheels loose for a drift); that follows in the next change.
+- **Mobile.** The exporter adds the new keys and keeps the old ones (gears, tilt, pull_ratio) in
+  `tuning/cart_tuning.json`, so the mobile game drives as before; it doesn't have the hand bars yet.
+
 ## 2026-11-16: floor friction at real-world values
 
 - The floors were tuned by feel: tile 0.18 (very slippery), asphalt and garage concrete 0.9. They now use
