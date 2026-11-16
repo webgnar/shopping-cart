@@ -1,0 +1,35 @@
+[gd_scene format=4]
+
+[ext_resource type="PackedScene" path="res://assets/models/garage/exit_sign/exit_sign.glb" id="1_7o2c1"]
+[ext_resource type="Material" path="res://assets/materials/garage/sign_navy.tres" id="2_p16q3"]
+[ext_resource type="Material" path="res://assets/materials/garage/dark_metal.tres" id="3_nxivm"]
+
+[node name="ExitSign" type="Node3D" unique_id=151390304]
+
+[node name="Model" parent="." unique_id=1498033132 instance=ExtResource("1_7o2c1")]
+
+[node name="Board" parent="Model" index="0" unique_id=224455836]
+surface_material_override/0 = ExtResource("2_p16q3")
+
+[node name="Rods" parent="Model" index="1" unique_id=1300291159]
+surface_material_override/0 = ExtResource("3_nxivm")
+
+[node name="Front" type="Label3D" parent="." unique_id=2035347587]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, -0.61, -0.032)
+pixel_size = 0.004
+double_sided = false
+modulate = Color(0.95686275, 0.95686275, 0.9411765, 1)
+text = "Exit  →"
+font_size = 72
+outline_size = 0
+
+[node name="Back" type="Label3D" parent="." unique_id=965428574]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.61, 0.032)
+pixel_size = 0.004
+double_sided = false
+modulate = Color(0.95686275, 0.95686275, 0.9411765, 1)
+text = "←  Exit"
+font_size = 72
+outline_size = 0
+
+[editable path="Model"]

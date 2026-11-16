@@ -1,0 +1,13 @@
+[gd_scene format=4]
+
+[ext_resource type="PackedScene" path="res://assets/models/garage/floor_arrow/floor_arrow.glb" id="1_ho6up"]
+[ext_resource type="Material" path="res://assets/materials/garage/paint_yellow.tres" id="2_xcaxl"]
+
+[node name="FloorArrow" type="Node3D" unique_id=1607520825]
+
+[node name="Model" parent="." unique_id=552666280 instance=ExtResource("1_ho6up")]
+
+[node name="Arrow" parent="Model" index="0" unique_id=1831751482]
+surface_material_override/0 = ExtResource("2_xcaxl")
+
+[editable path="Model"]

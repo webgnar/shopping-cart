@@ -1,0 +1,57 @@
+[gd_scene format=4]
+
+[ext_resource type="Script" path="res://scripts/props/parked_car.gd" id="1_87sds"]
+[ext_resource type="PackedScene" path="res://assets/models/garage/parked_car/parked_car.glb" id="2_duoon"]
+[ext_resource type="Material" path="res://assets/materials/garage/car_paint.tres" id="3_ueva2"]
+[ext_resource type="Material" path="res://assets/materials/garage/car_glass.tres" id="4_bqhmf"]
+[ext_resource type="Material" path="res://assets/materials/garage/trim_black.tres" id="5_cjwi5"]
+[ext_resource type="Material" path="res://assets/materials/garage/headlight.tres" id="6_rihor"]
+[ext_resource type="Material" path="res://assets/materials/garage/taillight.tres" id="7_w4kwy"]
+[ext_resource type="Material" path="res://assets/materials/garage/plate.tres" id="8_0cox7"]
+[ext_resource type="Material" path="res://assets/materials/garage/rubber.tres" id="9_a5b3j"]
+[ext_resource type="Material" path="res://assets/materials/garage/chrome.tres" id="10_ahou3"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ewdxx"]
+size = Vector3(1.8, 0.85, 4.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8xfld"]
+size = Vector3(1.6, 0.5, 2.3)
+
+[node name="ParkedCar" type="StaticBody3D" unique_id=853654300]
+script = ExtResource("1_87sds")
+
+[node name="Model" parent="." unique_id=684567186 instance=ExtResource("2_duoon")]
+
+[node name="Body" parent="Model" index="0" unique_id=2081793529]
+surface_material_override/0 = ExtResource("3_ueva2")
+
+[node name="Windows" parent="Model" index="1" unique_id=824829170]
+surface_material_override/0 = ExtResource("4_bqhmf")
+
+[node name="Trim" parent="Model" index="2" unique_id=389698237]
+surface_material_override/0 = ExtResource("5_cjwi5")
+
+[node name="Headlights" parent="Model" index="3" unique_id=1621738972]
+surface_material_override/0 = ExtResource("6_rihor")
+
+[node name="Taillights" parent="Model" index="4" unique_id=1474722984]
+surface_material_override/0 = ExtResource("7_w4kwy")
+
+[node name="Plates" parent="Model" index="5" unique_id=1454614957]
+surface_material_override/0 = ExtResource("8_0cox7")
+
+[node name="Tyres" parent="Model" index="6" unique_id=490530927]
+surface_material_override/0 = ExtResource("9_a5b3j")
+
+[node name="Hubs" parent="Model" index="7" unique_id=281964728]
+surface_material_override/0 = ExtResource("10_ahou3")
+
+[node name="BodyCollision" type="CollisionShape3D" parent="." unique_id=1888304157]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("BoxShape3D_ewdxx")
+
+[node name="CabinCollision" type="CollisionShape3D" parent="." unique_id=1199064832]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.2)
+shape = SubResource("BoxShape3D_8xfld")
+
+[editable path="Model"]
