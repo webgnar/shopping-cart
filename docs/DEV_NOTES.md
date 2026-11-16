@@ -3,6 +3,35 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: the inspector is the source of truth for cart physics
+
+- The Godot game no longer reads `tuning/cart_tuning.json`. Every cart setting is an export on the Cart
+  node or a property on its bodies in `scenes/cart/cart.tscn`, and floor friction is in
+  `assets/physics/*.tres`. What the inspector shows is what runs. The values were already equal to the
+  JSON's, so the cart drives exactly as before.
+- Values that were hidden in code are now exports too: `hand_position`, `arm_relax_rate`, `settle_brake`
+  (was 40) and `stop_delay` (was 0.25 s). The centre of mass and wheel radius are read from the Frame
+  body and the wheel shapes instead of constants that had to match them.
+- The mobile web game still reads the JSON (as `mobile/cart_tuning.js`). `tools/export_cart_tuning.gd`
+  (File > Run in the editor, or `tools/export_cart_tuning_cli.gd` headless) writes both files from the
+  scene; `tests/tuning_sync_test.gd` fails if they drift. `tools/sync_tuning.py` is retired.
+- The mobile drive test could not run in the cloud (the three.js CDN is blocked); the exported values
+  are unchanged.
+
+## 2026-11-16: the other hand stops a spin
+
+`scripts/cart.gd`: spin the cart with one hand (say A, left pull), then pull with the other (D) and it
+used to keep spinning at about 120 to 160 degrees a second, because a single hand's force sits only 0.2 m
+off the centre line and the walking-speed limit cut it further. Now, when the hands as a whole work against
+the spin, each hand doing so braces the bar like a planted arm: a twist about the vertical of
+`spin_grip` (150 N per m/s of bar sweep) times its lever, capped at `brake_max` (110 N) at that lever,
+about 55 N*m. It only acts while the cart spins faster than `spin_grip_min` (0.1 rad/s), so after stopping the
+cart the held key turns it the other way as usual. Applied as a pure yaw torque: an earlier try that pushed
+sideways at the handle height tipped the cart onto two wheels. Results: A spin then D stops in 0.64 s,
+Q+D spin then A+E in 0.20 s, all four wheels down (`tests/drive_test.gd`). Holding both pulls (braking) is
+unchanged: the hands cancel, so nothing grabs. Values are in `tuning/cart_tuning.json`; the mobile game
+doesn't read them yet.
+
 ## 2026-11-16: child seat and seat flap on physics
 
 - `cart.tscn` now has `ChildSeat` (backrest, 0.8 kg) and `SeatFlap` (0.4 kg) rigid bodies, each on a

@@ -152,6 +152,34 @@ func _run() -> void:
 		failures += 1
 	print("%-5s %-18s after 0.5 s from rest: pushing %.2f m/s, pulling %.2f m/s" % ["PASS" if pull_ok else "FAIL", "pull > push", accel.push, accel.pull])
 
+	# Countering a spin: pull one hand to spin, then pull with the other hand instead. The second hand works
+	# against the spin, so it grabs the bar and stops it within a second (then turns the cart the other way).
+	for counter in [[["pull_left"], ["pull_right"], "A spin, then D"], [["push_left", "pull_right"], ["pull_left", "push_right"], "Q+D spin, then A+E"]]:
+		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
+		await _wait(1.0)
+		var sc_cart: ShoppingCart = main.cart
+		for a in counter[0]:
+			Input.action_press(a)
+		await _wait(1.5)
+		var w0 := rad_to_deg(sc_cart.frame.angular_velocity.y)
+		for a in counter[0]:
+			Input.action_release(a)
+		for a in counter[1]:
+			Input.action_press(a)
+		var t_stop := -1.0
+		var min_wheels := 4
+		for i in int(1.5 * Engine.physics_ticks_per_second):
+			await physics_frame
+			min_wheels = mini(min_wheels, sc_cart.wheels_down())
+			if t_stop < 0.0 and rad_to_deg(sc_cart.frame.angular_velocity.y) * signf(w0) < 10.0:
+				t_stop = float(i + 1) / Engine.physics_ticks_per_second
+		for a in counter[1]:
+			Input.action_release(a)
+		var stop_ok := absf(w0) > 90.0 and t_stop > 0.0 and t_stop < 1.0 and min_wheels >= 2
+		if not stop_ok:
+			failures += 1
+		print("%-5s %-18s spinning %+d deg/s, stopped in %.2f s (wheels down at least %d)" % [
+			"PASS" if stop_ok else "FAIL", counter[2], roundi(w0), t_stop, min_wheels])
 	# Holding W or S keeps tipping the cart until it falls over (W onto its nose, S back onto the handle);
 	# a short tap only leans it and it drops back onto four wheels.
 	for tip in [["press", 4.0, true], ["lift", 4.0, true], ["press", 0.8, false], ["lift", 0.8, false]]:
