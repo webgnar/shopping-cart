@@ -3,19 +3,5 @@ extends "res://scripts/main.gd"
 ## turn right at each flat landing; at the halfway landing the garage carries on into a second wing where
 ## floors 5 to 1 turn left, and you leave at street level.
 ##
-## Everything (decks, walls, parked cars, lights, sky) is built as nodes in scenes/levels/parking_garage.tscn.
-## This script only skips main.gd's sandbox and starts the cart at the CartSpawn marker.
-
-
-func _build_environment() -> void:
-	pass   # WorldEnvironment and Sun are nodes in the scene
-
-
-func _build_level() -> void:
-	pass   # the garage is nodes in the scene
-
-
-func _ready() -> void:
-	super()
-	var spawn: Marker3D = $CartSpawn
-	spawn_cart(spawn.global_position, spawn.global_rotation.y)
+## Everything (decks, walls, parked cars, lights, sky, the CartSpawn marker) is nodes in
+## scenes/levels/parking_garage.tscn; main.gd supplies the cart, camera, input and HUD.

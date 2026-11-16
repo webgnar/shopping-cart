@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/parking_garage.gd" id="1_3uek5"]
-[ext_resource type="PhysicsMaterial" path="res://assets/materials/garage/concrete_physics.tres" id="2_s7k07"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="2_s7k07"]
 [ext_resource type="Material" path="res://assets/materials/garage/asphalt.tres" id="3_gpcm6"]
 [ext_resource type="Material" path="res://assets/materials/garage/paint_white.tres" id="4_j6fqj"]
 [ext_resource type="Material" path="res://assets/materials/garage/concrete_deck.tres" id="5_51tw1"]
