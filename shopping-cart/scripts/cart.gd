@@ -29,6 +29,8 @@ var walk_max := 2.2                 ## m/s at which a walking hand stops adding 
 @export var stop_spin := 0.05       ## rad/s: same, for turning
 var _rest_time := 0.0
 @export var grip_yaw_damping := 30.0  ## N*m per rad/s: two hands on the bar resist the cart twisting
+@export var spin_grip := 150.0      ## N per m/s: a hand working against the spin grabs the bar and holds it (up to brake_max)
+@export var spin_grip_min := 0.1    ## rad/s: below this the cart isn't really spinning and nothing grabs
 @export_group("Pulling and braking")
 @export var pull_ratio := 1.5       ## pulling (leaning back on your heels) is this much stronger than pushing
 @export var arm_reach := 0.3        ## m each arm can straighten while the body is planted
@@ -93,7 +95,7 @@ func load_tuning() -> void:
 	var t: Variant = load_tuning_file()
 	if t == null:
 		return
-	for key in ["rolling_resistance", "grip_yaw_damping",
+	for key in ["rolling_resistance", "grip_yaw_damping", "spin_grip", "spin_grip_min",
 			"lift_pitch", "press_pitch", "side_roll", "tilt_kp", "tilt_kd", "tilt_max",
 			"tip_delay", "tip_rate", "let_go_pitch",
 			"settle_speed", "settle_spin", "stop_speed", "stop_spin",
@@ -234,6 +236,15 @@ func _apply_hands(delta: float) -> void:
 	# Push one hand and pull the other and it's a spin, not a stop.
 	var pushing_any := Input.is_action_pressed("push_left") or Input.is_action_pressed("push_right")
 	var cart_along := frame.linear_velocity.dot(fwd)
+	# Which way the hands are trying to turn the cart: + = to the left (counter-clockwise from above).
+	# A hand at lateral offset s (left -1, right +1) driving the bar along the nose by dir turns it by s * dir.
+	var yaw_rate := frame.angular_velocity.dot(Vector3.UP)
+	var hand_yaw := {}
+	for side in ["L", "R"]:
+		var suffix := "left" if side == "L" else "right"
+		var dir := int(Input.is_action_pressed("push_" + suffix)) - int(Input.is_action_pressed("pull_" + suffix))
+		hand_yaw[side] = (-1.0 if side == "L" else 1.0) * dir
+	var yaw_cmd: float = hand_yaw.L + hand_yaw.R
 
 	for side in ["L", "R"]:
 		var s := -1.0 if side == "L" else 1.0
@@ -264,6 +275,15 @@ func _apply_hands(delta: float) -> void:
 				var strength := push_force * (pull_ratio if dir < 0 and not pushing_any else 1.0)
 				frame.apply_force(fwd * dir * strength * k, hand_g - frame.global_position)
 				st = "pushing" if dir > 0 else "pulling"
+		# Countering a spin: when the hands as a whole work against the way the cart is spinning, a hand doing so
+		# grabs the bar and braces it, like a planted arm. The bar is a lever about half a metre behind the basket's
+		# centre, so a hand holding up to brake_max there stops a spin within a fraction of a second. It acts as a
+		# twist about the vertical only: the arm resists the yaw, it doesn't shove the cart over sideways.
+		if hand_yaw[side] * yaw_rate < 0.0 and yaw_cmd * yaw_rate < 0.0 and absf(yaw_rate) > spin_grip_min:
+			var lever := Vector2(r.x, r.z).length()
+			var t := minf(brake_max * lever, spin_grip * lever * lever * absf(yaw_rate))
+			frame.apply_torque(Vector3.UP * -signf(yaw_rate) * t)
+			st = (st + " + " if st else "") + "holding the spin"
 		if (lift or press) and (held[side] or none_held):
 			st = (st + " + " if st else "") + ("lost grip" if _let_go else ("lifting" if lift else "pressing"))
 		hand_state[side] = st
@@ -273,7 +293,6 @@ func _apply_hands(delta: float) -> void:
 	var same_way := (Input.is_action_pressed("push_left") and Input.is_action_pressed("push_right")) \
 		or (Input.is_action_pressed("pull_left") and Input.is_action_pressed("pull_right"))
 	if same_way:
-		var yaw_rate := frame.angular_velocity.dot(Vector3.UP)
 		frame.apply_torque(Vector3.UP * -grip_yaw_damping * yaw_rate)
 
 	# Tilt: the wrists roll the bar toward a target angle with capped torque.
