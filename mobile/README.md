@@ -1,32 +1,46 @@
-# Shopping Cart: mobile web version
+# Shopping Cart: browser version
 
-A tap-and-play browser version of the game, built with three.js and the Rapier physics engine.
-Open `index.html` (or the published link) on a phone, turn it sideways and tap **Tap to start**.
+The in-browser build (three.js + Rapier) for phones and computers. It plays the same levels and the same cart
+as the Godot game, copied from the Godot scenes by export tools, so the Godot project stays the source of truth.
 
-- **Left / right thumb:** the cart's left / right hand. Drag up to push, down to pull; the further you drag,
-  the harder you push and the faster you can walk (from a stroll to a run).
-- **Tilt the phone:** back for a wheelie, forward to lift the rear wheels, sideways to lean onto two wheels.
-  **Set level** re-zeroes the tilt; **Tilt** cycles on / flipped / off.
-- On a computer: Q/A left hand, E/D right hand, W/S lift/press, R reset, scroll to zoom.
+It fetches its levels, so serve the folder instead of opening the file: `python3 -m http.server -d mobile`
+and open http://localhost:8000 (or upload the `mobile/` folder as an HTML5 game on itch.io). Add
+`?level=garage` (sandbox, plot, garage, market) or `?controls=desk` / `?controls=touch` to the URL to pick.
+
+## Controls
+
+- **Phones** (touch screen detected): the bottom corners are your hands. Hold above the middle of the left rocker
+  to push with the left hand, below to pull; slide across to switch. The longer you hold, the harder the hand
+  pushes (its bar fills, as in Godot). One hand turns, push one and pull the other to spin. Lean: tip the phone
+  back for the front up (S), forward for the back up (W), or hold the **Back up** / **Front up** buttons.
+  Drag near the top of the screen to look around. **Level** fast-travels, **Tilt** cycles on / flipped / off,
+  **Set level** re-zeroes the tilt.
+- **Computers** (mouse and keyboard detected): the Godot keys. Q/A left hand push/pull, E/D right, W/S lean the
+  back/front up, R a fresh cart where you are, click to look around (Esc to let go), wheel to zoom,
+  ` opens the console (`help`, `where`, `plot`, `garage`, `market`, `sandbox`), F full screen. Touching the screen
+  switches to the phone controls and a game key switches back.
 
 ## Files
 
-| File | What it is | How it's made |
+| Path | What it is | How it's made |
 | --- | --- | --- |
-| `index.html` | The game | Hand-written |
-| `cart_tuning.js` | Cart feel (masses, forces, gears, friction...) | Exported from the Godot cart scene by `shopping-cart/tools/export_cart_tuning.gd` (also writes `shopping-cart/tuning/cart_tuning.json`) |
-| `cart_model_mobile.js` | Phone-weight cart model (about 89k faces, 11 meshes) | `blender -b ShoppingCart_Rigged.blend --python tools/export_mobile_model.py` |
+| `index.html`, `game/*.js` | The game: `cart.js` is a line-for-line port of `scripts/cart.gd`, `level.js` builds an exported level, `main.js` is input, camera (`cart_camera.gd`), HUD, console and the loop | Hand-written |
+| `cart_tuning.js` | Cart feel (every Cart export and body mass) | `shopping-cart/tools/export_cart_tuning.gd` |
+| `levels/<key>.glb` + `.json` | Each fast-travel level: meshes and materials; collision shapes with friction, loose props, CartSpawn, spare carts, sky, sun, lamps, 3D labels | `godot --headless -s res://tools/export_mobile_levels_cli.gd` (from `shopping-cart/`) |
+| `levels/cart.json` | The cart rig (bodies, masses, shapes, hinges and limits) and its materials | same |
+| `models/cart.glb` | Phone-weight cart model (85k faces, 10 meshes) from the Godot one | `blender -b --python tools/export_mobile_model.py` |
+| `vendor/` | three.js 0.170 and Rapier 0.14 (so it runs without a CDN) | copied from npm |
 
-To change how the cart feels in both games, change it in the Godot editor (the Cart node's settings and
-body masses in `scenes/cart/cart.tscn`, floor friction in `assets/physics/*.tres`), then open
-`tools/export_cart_tuning.gd` and use File > Run, or from `shopping-cart/` run
-`godot --headless -s res://tools/export_cart_tuning_cli.gd`.
+Change levels and the cart in Godot, then run both export tools. `tests/tuning_sync_test.gd` and
+`tests/mobile_levels_sync_test.gd` (Godot) fail when the copies are out of date.
 
 ## Test
 
 ```
-node mobile/test/drive_test.js
+node mobile/test/drive_test.js [screenshot-dir]
 ```
 
-Drives the thumbs and tilt through the page's test hook and checks pushing, pulling, turning, spinning,
-stroll and run speeds, wheelie, rear lift, leaning, coming to rest and the gate (13 checks).
+Serves the folder and runs the same checks as the Godot drive test (push, pull, turn, spin, wheelies, W/S lean and
+tip-over, hard push/pull, braking, spin brace, getting back up, gate, child seat, knocked when pinned), then loads
+every level (spawns, comes to rest, drives, camera never inside a wall), rams a spare cart, and drives the phone's
+touch rockers, the keyboard and the console.

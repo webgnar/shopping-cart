@@ -1,46 +1,46 @@
 """Export a phone-weight copy of the rigged cart for the mobile web game.
 
-Run headless from the repo root after tools/rig_cart.py:
-    blender -b ShoppingCart_Rigged.blend --python tools/export_mobile_model.py
+Run headless from the repo root (after tools/rig_cart.py has exported the Godot model):
+    blender -b --python tools/export_mobile_model.py
 
+Starts from the same model the Godot game uses (shopping-cart/assets/models/shopping_cart.glb), so the
+rig pivots and material names match it exactly:
 - Drops the caster ball bearings (CirPattern1[n]): 30 tiny parts nobody can see.
-- Lowers subdivision on the wheels and simplifies any part over FACE_BUDGET faces.
+- Simplifies any part over FACE_BUDGET faces (the wheels and wire basket are very dense).
 - Joins each moving part (frame, gate, child seat, flap, casters, wheels) into one mesh, so the phone
-  draws about 10 meshes instead of 116. The rig pivots (empties) and their names are kept.
-Writes mobile/cart_model_mobile.js: the glTF, gzipped and base64-encoded into a script (no fetches needed).
-The rigged .blend is not modified (nothing is saved).
+  draws about 10 meshes (one draw per material in each) instead of 116. Pivot names are kept.
+- Keeps each part's material name (cart_chrome, cart_steel, ...). The phone colours them from the shared Godot
+  materials (assets/materials/cart/*.tres, copied into mobile/levels/cart.json by the level export), the same
+  way Godot's import does, so tune the look in Godot.
+Writes mobile/models/cart.glb.
 """
-import base64, gzip, os, tempfile
+import os
 import bpy
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FACE_BUDGET = 2500      # parts above this get decimated toward it
-MIN_RATIO = 0.25        # never decimate a part below a quarter of its faces (keeps thin wires intact)
+SRC = os.path.join(REPO, "shopping-cart", "assets", "models", "shopping_cart.glb")
+OUT = os.path.join(REPO, "mobile", "models", "cart.glb")
+FACE_BUDGET = 1000      # parts above this get decimated toward it
+MIN_RATIO = 0.15        # never decimate a part below this share of its faces (keeps thin wires intact)
 
-ref = set(o.name for o in bpy.data.collections["Reference"].objects)
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.import_scene.gltf(filepath=SRC)
+
 for o in list(bpy.data.objects):
-    if o.name in ref or (o.type == "MESH" and o.name.startswith("CirPattern1[")):
+    if o.type == "MESH" and o.name.startswith("CirPattern1["):
         bpy.data.objects.remove(o, do_unlink=True)
 
-dg = bpy.context.evaluated_depsgraph_get()
 before = 0
 for o in bpy.data.objects:
     if o.type != "MESH" or not len(o.data.vertices):
         continue
-    for m in o.modifiers:
-        if m.type == "SUBSURF":
-            m.levels = min(m.levels, 1)
-            m.render_levels = min(m.render_levels, 1)
-    e = o.evaluated_get(dg)
-    faces = len(e.to_mesh().polygons)
-    e.to_mesh_clear()
+    faces = len(o.data.polygons)
     before += faces
     if faces > FACE_BUDGET:
         d = o.modifiers.new("MobileDecimate", "DECIMATE")
         d.ratio = max(MIN_RATIO, FACE_BUDGET / faces)
 
-# Apply modifiers, then join each pivot's meshes into one.
-bpy.ops.object.select_all(action="DESELECT")
+# Apply modifiers, then join each pivot's meshes into one (materials stay per face).
 groups = {}
 for o in bpy.data.objects:
     if o.type == "MESH" and len(o.data.vertices):
@@ -48,6 +48,8 @@ for o in bpy.data.objects:
 for pivot, objs in groups.items():
     for o in objs:
         o.data = o.data.copy()
+        bpy.ops.object.select_all(action="DESELECT")
+        o.select_set(True)
         bpy.context.view_layer.objects.active = o
         for m in list(o.modifiers):
             try:
@@ -64,18 +66,12 @@ for pivot, objs in groups.items():
 
 after = sum(len(o.data.polygons) for o in bpy.data.objects if o.type == "MESH")
 meshes = sum(1 for o in bpy.data.objects if o.type == "MESH")
+mats = sorted({s.material.name for o in bpy.data.objects if o.type == "MESH" for s in o.material_slots if s.material})
 
+os.makedirs(os.path.dirname(OUT), exist_ok=True)
 bpy.ops.object.select_all(action="SELECT")
-with tempfile.TemporaryDirectory() as tmp:
-    glb = os.path.join(tmp, "cart_mobile.glb")
-    bpy.ops.export_scene.gltf(filepath=glb, use_selection=True, export_apply=True, export_extras=True,
-                              export_yup=True, export_texcoords=False, export_tangents=False,
-                              export_attributes=False)
-    raw = open(glb, "rb").read()
-data = gzip.compress(raw, compresslevel=9)
-out = os.path.join(REPO, "mobile", "cart_model_mobile.js")
-os.makedirs(os.path.dirname(out), exist_ok=True)
-with open(out, "w") as f:
-    f.write('window.CART_GLB_GZ_B64="' + base64.b64encode(data).decode() + '";\n')
-print("MOBILE MODEL faces %d -> %d, %d meshes, glb %.1f MB, script %.1f MB -> %s" % (
-    before, after, meshes, len(raw) / 1e6, os.path.getsize(out) / 1e6, out))
+bpy.ops.export_scene.gltf(filepath=OUT, use_selection=True, export_apply=True, export_extras=True,
+                          export_yup=True, export_texcoords=False, export_tangents=False,
+                          export_attributes=False, export_draco_mesh_compression_enable=False)
+print("MOBILE MODEL faces %d -> %d, %d meshes, materials %s, glb %.1f MB -> %s" % (
+    before, after, meshes, ", ".join(mats), os.path.getsize(OUT) / 1e6, OUT))
