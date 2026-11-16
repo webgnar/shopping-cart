@@ -75,6 +75,47 @@ const SCENARIOS = [
     if (!ok) failures++;
     console.log(`${ok ? 'PASS' : 'FAIL'}  ${name.padEnd(24)} moved ${r.moved.toFixed(2)} m  speed along nose ${r.along >= 0 ? '+' : ''}${r.along.toFixed(2)} m/s  turned ${Math.round(r.turn)} deg  front up ${r.maxFront.toFixed(2)} m  rear up ${r.maxRear.toFixed(2)} m  roll ${r.maxRoll.toFixed(1)}  groceries ${r.groceries}/5${r.pinned ? '  (pinned)' : ''}`);
   }
+  // Braking: run the cart up to speed with both thumbs, then pull both back fully (body plants, arms extend).
+  for (const [label, push] of [['walk', 0.45], ['run', 1.0]]) {
+    for (const mode of ['let go', 'pull back']) {
+      const r = await page.evaluate(([push, mode]) => {
+        const c = window.__cart;
+        c.spawn(c.v3(-14, 0, -3), 0); c.simulate(0.5);
+        const f = c.cart.frame;
+        c.setThumb('L', push); c.setThumb('R', push); c.simulate(3);
+        const nose = () => { const q = f.rotation(); return { x: 1 - 2 * (q.y * q.y + q.z * q.z), z: 2 * (q.x * q.z - q.w * q.y) }; };
+        const along = () => { const n = nose(), lv = f.linvel(), h = Math.hypot(n.x, n.z); return (lv.x * n.x + lv.z * n.z) / h; };
+        const v0 = along(), p0 = { ...f.translation() };
+        c.setThumb('L', mode === 'let go' ? 0 : -1); c.setThumb('R', mode === 'let go' ? 0 : -1);
+        let t = 0, maxPitch = 0, stopped = false;
+        c.simulate(8, () => {
+          if (stopped) return;
+          t += 1 / 120;
+          const q = f.rotation(), ny = 2 * (q.x * q.y + q.w * q.z);
+          maxPitch = Math.max(maxPitch, Math.asin(Math.max(-1, Math.min(1, ny))) * 57.3);
+          if (along() < 0.05) { stopped = true; c.setThumb('L', 0); c.setThumb('R', 0); }
+        });
+        const p1 = f.translation();
+        return { v0, dist: Math.hypot(p1.x - p0.x, p1.z - p0.z), t, maxPitch, groceries: c.groceriesIn() };
+      }, [push, mode]);
+      const ok = mode === 'let go' || (r.dist < 1.0 && r.t < 1.5 && r.maxPitch < 25 && r.groceries >= 4);
+      if (!ok) failures++;
+      console.log(`${mode === 'let go' ? 'info' : ok ? 'PASS' : 'FAIL'}  ${(label + ' ' + mode).padEnd(24)} from ${(r.v0 * 3.6).toFixed(1)} km/h: stopped in ${r.dist.toFixed(2)} m and ${r.t.toFixed(2)} s  max nose-up ${r.maxPitch.toFixed(1)} deg  groceries ${r.groceries}/5`);
+    }
+  }
+  const acc = await page.evaluate(() => {
+    const c = window.__cart, out = {};
+    for (const [k, v] of [['push', 0.5], ['pull', -0.5]]) {
+      c.spawn(c.v3(-10, 0, -3), 0); c.simulate(0.5);
+      c.setThumb('L', v); c.setThumb('R', v); c.simulate(0.5); c.setThumb('L', 0); c.setThumb('R', 0);
+      const lv = c.cart.frame.linvel(); out[k] = Math.hypot(lv.x, lv.z);
+    }
+    return out;
+  });
+  const pullOk = acc.pull > acc.push * 1.2;
+  if (!pullOk) failures++;
+  console.log(`${pullOk ? 'PASS' : 'FAIL'}  ${'pull > push'.padEnd(24)} after 0.5 s from rest: pushing ${acc.push.toFixed(2)} m/s, pulling ${acc.pull.toFixed(2)} m/s`);
+
   // Gate: swings into the basket when shoved, stops at its limit, falls back to rest (empty basket).
   const g = await page.evaluate(() => {
     const c = window.__cart;

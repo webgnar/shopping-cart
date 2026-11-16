@@ -1,0 +1,341 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/cart.gd" id="1_ytnl2"]
+[ext_resource type="PackedScene" path="res://assets/models/shopping_cart.glb" id="2_0ipfc"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_i6241"]
+friction = 0.5
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ugsv0"]
+size = Vector3(0.72, 0.024, 0.58)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_tku7t"]
+size = Vector3(0.03, 0.5, 0.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3wkw5"]
+size = Vector3(0.84, 0.5, 0.03)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_kqe1s"]
+size = Vector3(0.84, 0.5, 0.03)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_4s2v8"]
+size = Vector3(0.7, 0.06, 0.56)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pxplm"]
+size = Vector3(0.06, 0.06, 0.52)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_nyi84"]
+size = Vector3(1.4, 1.4, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ld83i"]
+size = Vector3(0.03, 0.54, 0.56)
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_qxkkq"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_daan1"]
+radius = 0.0635
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_t7hac"]
+size = Vector3(0.05, 0.1, 0.04)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_7vkct"]
+radius = 0.0635
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_dnshu"]
+radius = 0.0635
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_it83f"]
+size = Vector3(0.05, 0.1, 0.04)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_qy1of"]
+radius = 0.0635
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2e6ms"]
+size = Vector3(0.18, 0.26, 0.07)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_u04xa"]
+albedo_color = Color(0.9137255, 0.30980393, 0.21568628, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_86jky"]
+material = SubResource("StandardMaterial3D_u04xa")
+size = Vector3(0.18, 0.26, 0.07)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_solss"]
+size = Vector3(0.12, 0.12, 0.12)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_74o5h"]
+albedo_color = Color(0.24313726, 0.57254905, 0.8, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_0o2g5"]
+material = SubResource("StandardMaterial3D_74o5h")
+size = Vector3(0.12, 0.12, 0.12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_njrqe"]
+size = Vector3(0.22, 0.1, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_g4kfs"]
+albedo_color = Color(0.9647059, 0.76862746, 0.27058825, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_1c47u"]
+material = SubResource("StandardMaterial3D_g4kfs")
+size = Vector3(0.22, 0.1, 0.15)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3c8km"]
+size = Vector3(0.1, 0.2, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rl4mg"]
+albedo_color = Color(0.42745098, 0.7490196, 0.40392157, 1)
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_os1gc"]
+material = SubResource("StandardMaterial3D_rl4mg")
+size = Vector3(0.1, 0.2, 0.1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_e5q21"]
+size = Vector3(0.16, 0.08, 0.16)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xlsfj"]
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_fqqwn"]
+material = SubResource("StandardMaterial3D_xlsfj")
+size = Vector3(0.16, 0.08, 0.16)
+
+[node name="Cart" type="Node3D" unique_id=148615909]
+script = ExtResource("1_ytnl2")
+
+[node name="Frame" type="RigidBody3D" parent="." unique_id=1338543223]
+collision_layer = 2
+collision_mask = 5
+mass = 18.0
+physics_material_override = SubResource("PhysicsMaterial_i6241")
+center_of_mass_mode = 1
+center_of_mass = Vector3(0.45, 0.42, 0)
+can_sleep = false
+freeze_mode = 1
+
+[node name="BasketFloor" type="CollisionShape3D" parent="Frame" unique_id=158781773]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.57, 0.46, 0)
+shape = SubResource("BoxShape3D_ugsv0")
+
+[node name="FrontWall" type="CollisionShape3D" parent="Frame" unique_id=1209968763]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.95, 0.71, 0)
+shape = SubResource("BoxShape3D_tku7t")
+
+[node name="LeftWall" type="CollisionShape3D" parent="Frame" unique_id=387796722]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.53, 0.71, -0.3)
+shape = SubResource("BoxShape3D_3wkw5")
+
+[node name="RightWall" type="CollisionShape3D" parent="Frame" unique_id=476805608]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.53, 0.71, 0.3)
+shape = SubResource("BoxShape3D_kqe1s")
+
+[node name="LowerTray" type="CollisionShape3D" parent="Frame" unique_id=642358260]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.57, 0.22, 0)
+shape = SubResource("BoxShape3D_4s2v8")
+
+[node name="Handlebar" type="CollisionShape3D" parent="Frame" unique_id=149841505]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("BoxShape3D_pxplm")
+
+[node name="Guard" type="Area3D" parent="Frame" unique_id=1691249572]
+collision_layer = 0
+
+[node name="Zone" type="CollisionShape3D" parent="Frame/Guard" unique_id=57741320]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.47, 0.6, 0)
+shape = SubResource("BoxShape3D_nyi84")
+
+[node name="Gate" type="RigidBody3D" parent="." unique_id=354311188]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.068, 0.985, 0)
+collision_layer = 2
+collision_mask = 5
+mass = 1.5
+physics_material_override = SubResource("PhysicsMaterial_i6241")
+can_sleep = false
+
+[node name="Panel" type="CollisionShape3D" parent="Gate" unique_id=1693527483]
+transform = Transform3D(0.94923544, 0.31456655, 0, -0.31456655, 0.94923544, 0, 0, 0, 1, 0.087, -0.265, 0)
+shape = SubResource("BoxShape3D_ld83i")
+
+[node name="Wheel_RL" type="RigidBody3D" parent="." unique_id=1742865923]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0685, 0.062, -0.3045)
+collision_layer = 2
+collision_mask = 5
+mass = 0.5
+physics_material_override = SubResource("PhysicsMaterial_qxkkq")
+can_sleep = false
+angular_damp = 0.05
+
+[node name="Shape" type="CollisionShape3D" parent="Wheel_RL" unique_id=723913140]
+shape = SubResource("SphereShape3D_daan1")
+
+[node name="Fork_FL" type="RigidBody3D" parent="." unique_id=1127588295]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.887, 0.16, -0.1545)
+collision_layer = 0
+collision_mask = 0
+mass = 0.6
+can_sleep = false
+angular_damp = 2.0
+
+[node name="Shape" type="CollisionShape3D" parent="Fork_FL" unique_id=879034501]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02, -0.05, 0)
+shape = SubResource("BoxShape3D_t7hac")
+
+[node name="Wheel_FL" type="RigidBody3D" parent="." unique_id=717199492]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.849, 0.063, -0.1545)
+collision_layer = 2
+collision_mask = 5
+mass = 0.5
+physics_material_override = SubResource("PhysicsMaterial_qxkkq")
+can_sleep = false
+angular_damp = 0.05
+
+[node name="Shape" type="CollisionShape3D" parent="Wheel_FL" unique_id=53738916]
+shape = SubResource("SphereShape3D_7vkct")
+
+[node name="Wheel_RR" type="RigidBody3D" parent="." unique_id=1217511901]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0685, 0.062, 0.3045)
+collision_layer = 2
+collision_mask = 5
+mass = 0.5
+physics_material_override = SubResource("PhysicsMaterial_qxkkq")
+can_sleep = false
+angular_damp = 0.05
+
+[node name="Shape" type="CollisionShape3D" parent="Wheel_RR" unique_id=2133878828]
+shape = SubResource("SphereShape3D_dnshu")
+
+[node name="Fork_FR" type="RigidBody3D" parent="." unique_id=1715990862]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.887, 0.16, 0.1545)
+collision_layer = 0
+collision_mask = 0
+mass = 0.6
+can_sleep = false
+angular_damp = 2.0
+
+[node name="Shape" type="CollisionShape3D" parent="Fork_FR" unique_id=158427550]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02, -0.05, 0)
+shape = SubResource("BoxShape3D_it83f")
+
+[node name="Wheel_FR" type="RigidBody3D" parent="." unique_id=722139240]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.849, 0.063, 0.1545)
+collision_layer = 2
+collision_mask = 5
+mass = 0.5
+physics_material_override = SubResource("PhysicsMaterial_qxkkq")
+can_sleep = false
+angular_damp = 0.05
+
+[node name="Shape" type="CollisionShape3D" parent="Wheel_FR" unique_id=2089392624]
+shape = SubResource("SphereShape3D_qy1of")
+
+[node name="GateHinge" type="HingeJoint3D" parent="." unique_id=1885623471]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.068, 0.985, 0)
+node_a = NodePath("../Frame")
+node_b = NodePath("../Gate")
+angular_limit/enable = true
+angular_limit/upper = 0.0
+angular_limit/lower = -1.2217305
+
+[node name="Axle_RL" type="HingeJoint3D" parent="." unique_id=1989381388]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0685, 0.062, -0.3045)
+node_a = NodePath("../Frame")
+node_b = NodePath("../Wheel_RL")
+
+[node name="Swivel_FL" type="HingeJoint3D" parent="." unique_id=1271210129]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0.887, 0.16, -0.1545)
+node_a = NodePath("../Frame")
+node_b = NodePath("../Fork_FL")
+
+[node name="Axle_FL" type="HingeJoint3D" parent="." unique_id=1283811593]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.849, 0.063, -0.1545)
+node_a = NodePath("../Fork_FL")
+node_b = NodePath("../Wheel_FL")
+
+[node name="Axle_RR" type="HingeJoint3D" parent="." unique_id=1405559195]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0685, 0.062, 0.3045)
+node_a = NodePath("../Frame")
+node_b = NodePath("../Wheel_RR")
+
+[node name="Swivel_FR" type="HingeJoint3D" parent="." unique_id=1607571563]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0.887, 0.16, 0.1545)
+node_a = NodePath("../Frame")
+node_b = NodePath("../Fork_FR")
+
+[node name="Axle_FR" type="HingeJoint3D" parent="." unique_id=499257333]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.849, 0.063, 0.1545)
+node_a = NodePath("../Fork_FR")
+node_b = NodePath("../Wheel_FR")
+
+[node name="Groceries" type="Node3D" parent="." unique_id=1927527074]
+
+[node name="Cereal" type="RigidBody3D" parent="Groceries" unique_id=1147900560]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.75, 0.62, -0.12)
+collision_layer = 4
+collision_mask = 7
+mass = 0.6
+can_sleep = false
+
+[node name="Shape" type="CollisionShape3D" parent="Groceries/Cereal" unique_id=465891686]
+shape = SubResource("BoxShape3D_2e6ms")
+
+[node name="Mesh" type="MeshInstance3D" parent="Groceries/Cereal" unique_id=998225742]
+mesh = SubResource("BoxMesh_86jky")
+
+[node name="Milk" type="RigidBody3D" parent="Groceries" unique_id=1223593338]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4, 0.55, 0.15)
+collision_layer = 4
+collision_mask = 7
+mass = 1.2
+can_sleep = false
+
+[node name="Shape" type="CollisionShape3D" parent="Groceries/Milk" unique_id=1688468196]
+shape = SubResource("BoxShape3D_solss")
+
+[node name="Mesh" type="MeshInstance3D" parent="Groceries/Milk" unique_id=28331224]
+mesh = SubResource("BoxMesh_0o2g5")
+
+[node name="Cheese" type="RigidBody3D" parent="Groceries" unique_id=926503609]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.62, 0.56, 0.12)
+collision_layer = 4
+collision_mask = 7
+mass = 1.5
+can_sleep = false
+
+[node name="Shape" type="CollisionShape3D" parent="Groceries/Cheese" unique_id=969761030]
+shape = SubResource("BoxShape3D_njrqe")
+
+[node name="Mesh" type="MeshInstance3D" parent="Groceries/Cheese" unique_id=1195596600]
+mesh = SubResource("BoxMesh_1c47u")
+
+[node name="Juice" type="RigidBody3D" parent="Groceries" unique_id=2082782710]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.85, 0.58, 0.16)
+collision_layer = 4
+collision_mask = 7
+can_sleep = false
+
+[node name="Shape" type="CollisionShape3D" parent="Groceries/Juice" unique_id=979748512]
+shape = SubResource("BoxShape3D_3c8km")
+
+[node name="Mesh" type="MeshInstance3D" parent="Groceries/Juice" unique_id=1433178270]
+mesh = SubResource("BoxMesh_os1gc")
+
+[node name="Eggs" type="RigidBody3D" parent="Groceries" unique_id=1057462897]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.42, 0.52, -0.15)
+collision_layer = 4
+collision_mask = 7
+mass = 0.8
+can_sleep = false
+
+[node name="Shape" type="CollisionShape3D" parent="Groceries/Eggs" unique_id=1028390206]
+shape = SubResource("BoxShape3D_e5q21")
+
+[node name="Mesh" type="MeshInstance3D" parent="Groceries/Eggs" unique_id=2072674624]
+mesh = SubResource("BoxMesh_fqqwn")
+
+[node name="Model" type="Node3D" parent="." unique_id=1098803667 instance=ExtResource("2_0ipfc")]
+
+[connection signal="body_entered" from="Frame/Guard" to="." method="_on_frame_hit"]

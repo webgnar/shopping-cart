@@ -1,0 +1,5 @@
+[gd_scene format=3]
+
+[node name="Camera" type="Camera3D" unique_id=2083043449]
+current = true
+fov = 55.0

@@ -2,21 +2,18 @@ class_name ShoppingCart
 extends Node3D
 ## The shopping cart as a real multi-body rig, driven only by the two hands on the handlebar.
 ##
-## Built in code from the rigged model (assets/models/shopping_cart.glb):
-##  - Frame: 18 kg body with a hollow basket (floor, walls, lower tray, handlebar).
+## The rig is built in the editor in scenes/cart/cart.tscn (this script only drives it):
+##  - Frame: 18 kg body with a hollow basket (floor, walls, lower tray, handlebar) and a Guard zone.
 ##  - Front casters: a fork that swivels 360 degrees on a vertical hinge, wheel trailing 3.8 cm behind.
 ##  - Rear wheels: fixed, spin on their axles.
 ##  - Gate: hinged at the top rail, swings into the basket 0 to 70 degrees (child seat and flap ride on it).
+##  - Groceries: loose bodies in the basket; add or move them under the Groceries node.
+##  - Model: the rigged model (assets/models/shopping_cart.glb); its pivots follow the physics bodies.
 ## Cart local axes: nose = +X, up = +Y, left = -Z. Units: metres, kg, newtons.
+## Masses live on the bodies in the scene; tuning/cart_tuning.json overrides them at start.
 
-const MODEL := preload("res://assets/models/shopping_cart.glb")
 const TUNING_PATH := "res://tuning/cart_tuning.json"   ## shared with the mobile web game
 
-@export_group("Masses")
-@export var frame_mass := 18.0
-@export var wheel_mass := 0.5
-@export var fork_mass := 0.6
-@export var gate_mass := 1.5
 @export_group("Hands")
 ## Push gears: [N per hand, top walking speed m/s]. Scroll wheel or 1-5 picks one.
 @export var gears: Array[Vector2] = [Vector2(25, 1.2), Vector2(35, 1.8), Vector2(45, 2.2), Vector2(65, 3.0), Vector2(90, 4.0)]
@@ -30,6 +27,13 @@ var walk_max := 2.2                 ## m/s at which a walking hand stops adding 
 @export var stop_spin := 0.05       ## rad/s: same, for turning
 var _rest_time := 0.0
 @export var grip_yaw_damping := 30.0  ## N*m per rad/s: two hands on the bar resist the cart twisting
+@export_group("Pulling and braking")
+@export var pull_ratio := 1.5       ## pulling (leaning back on your heels) is this much stronger than pushing
+@export var arm_reach := 0.3        ## m each arm can straighten while the body is planted
+@export var brake_spring := 350.0   ## N per m of arm extension, per hand: arms stiffen as they straighten
+@export var brake_damping := 25.0   ## N per m/s, per hand
+@export var brake_max := 110.0      ## N per hand: leaning back with full body weight
+var arm_extension := {"L": 0.0, "R": 0.0}   ## m each arm is currently stretched past its relaxed bend
 @export_group("Lift and press")
 @export var lift_pitch := -0.2      ## rad, W: rear wheels up
 @export var press_pitch := 0.3      ## rad, S: wheelie
@@ -38,56 +42,59 @@ var _rest_time := 0.0
 @export var tilt_kd := 80.0
 @export var tilt_max := 200.0       ## N*m the wrists can apply
 
-const COM := Vector3(0.45, 0.42, 0.0)
-const WHEEL_R := 0.0635
-const WHEEL_W := 0.04
-const REAR_AXLE := Vector3(0.0685, 0.062, 0.3045)
-const KINGPIN := Vector3(0.887, 0.16, 0.1545)
-const FRONT_AXLE := Vector3(0.849, 0.063, 0.1545)
+const COM := Vector3(0.45, 0.42, 0.0)    ## matches Frame's center_of_mass in the scene
+const WHEEL_R := 0.0635                    ## matches the wheels' sphere radius in the scene
 const HAND := Vector3(0.0, 1.0, 0.2)
-const GATE_HINGE := Vector3(0.068, 0.985, 0.0)
-const GATE_OPEN_DEG := 70.0
 
 const LAYER_WORLD := 1
 const LAYER_CART := 2
 const LAYER_CARGO := 4
 
-const GROCERIES := [
-	# size, mass kg, colour, spot in the basket (cart local)
-	[Vector3(0.18, 0.26, 0.07), 0.6, Color("e94f37"), Vector3(0.75, 0.62, -0.12)],
-	[Vector3(0.12, 0.12, 0.12), 1.2, Color("3e92cc"), Vector3(0.40, 0.55, 0.15)],
-	[Vector3(0.22, 0.10, 0.15), 1.5, Color("f6c445"), Vector3(0.62, 0.56, 0.12)],
-	[Vector3(0.10, 0.20, 0.10), 1.0, Color("6dbf67"), Vector3(0.85, 0.58, 0.16)],
-	[Vector3(0.16, 0.08, 0.16), 0.8, Color("ffffff"), Vector3(0.42, 0.52, -0.15)],
-]
-
-var frame: RigidBody3D
-var gate: RigidBody3D
-var forks := {}            ## "FL", "FR" -> RigidBody3D
-var wheels := {}           ## "FL", "FR", "RL", "RR" -> RigidBody3D
+@onready var frame: RigidBody3D = $Frame
+@onready var gate: RigidBody3D = $Gate
+@onready var forks := {"FL": $Fork_FL, "FR": $Fork_FR}   ## RigidBody3D each
+@onready var wheels := {"FL": $Wheel_FL, "FR": $Wheel_FR, "RL": $Wheel_RL, "RR": $Wheel_RR}   ## RigidBody3D each
+@onready var _model: Node3D = $Model
 var groceries: Array[RigidBody3D] = []
 var hand_state := {"L": "", "R": ""}
 
-var _model: Node3D
 var _links := []           ## [visual node, body, offset] kept in step every frame
 
 
 func _ready() -> void:
 	load_tuning()
 	set_gear(gear)
-	_build()
+	for g in $Groceries.get_children():
+		if g is RigidBody3D:
+			groceries.append(g)
+	# Each rig pivot of the visual model follows its physics body.
+	_link(_model, frame)
+	_link(_model.find_child("Gate_Hinge"), gate)
+	for side in ["L", "R"]:
+		_link(_model.find_child("Caster_F%s_Swivel" % side), forks["F" + side])
+		_link(_model.find_child("Wheel_F%s_Axle" % side), wheels["F" + side])
+		_link(_model.find_child("Wheel_R%s_Axle" % side), wheels["R" + side])
 
 
-## Reads the shared tuning file (also used by the mobile web game) over the defaults above.
+## Reads the shared tuning file (also used by the mobile web game) over the values set in the scene.
 func load_tuning() -> void:
 	var t: Variant = load_tuning_file()
 	if t == null:
 		return
-	for key in ["frame_mass", "wheel_mass", "fork_mass", "gate_mass", "rolling_resistance", "grip_yaw_damping",
+	for key in ["rolling_resistance", "grip_yaw_damping",
 			"lift_pitch", "press_pitch", "side_roll", "tilt_kp", "tilt_kd", "tilt_max",
-			"settle_speed", "settle_spin", "stop_speed", "stop_spin"]:
+			"settle_speed", "settle_spin", "stop_speed", "stop_spin",
+			"pull_ratio", "arm_reach", "brake_spring", "brake_damping", "brake_max"]:
 		if t.has(key):
 			set(key, float(t[key]))
+	if t.has("frame_mass"):
+		frame.mass = float(t.frame_mass)
+	if t.has("gate_mass"):
+		gate.mass = float(t.gate_mass)
+	for b in wheels.values():
+		b.mass = float(t.get("wheel_mass", b.mass))
+	for b in forks.values():
+		b.mass = float(t.get("fork_mass", b.mass))
 	if t.has("gears"):
 		var g: Array[Vector2] = []
 		for pair in t.gears:
@@ -114,85 +121,6 @@ func set_gear(g: int) -> int:
 	return gear
 
 
-func _build() -> void:
-	var wheel_mat := PhysicsMaterial.new()
-	wheel_mat.friction = 1.0   # Godot uses the lower friction of the pair, so the floor decides grip
-	var cart_mat := PhysicsMaterial.new()
-	cart_mat.friction = 0.5
-
-	# Frame
-	frame = _body("Frame", frame_mass, Vector3.ZERO, LAYER_CART, LAYER_WORLD | LAYER_CARGO)
-	frame.physics_material_override = cart_mat
-	frame.center_of_mass_mode = RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
-	frame.center_of_mass = COM
-	frame.freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC   # when the cart is at rest it is pinned, see _stop()
-	# A zone a little larger than the cart: a loose object entering it releases the pin before it hits.
-	var guard := Area3D.new()
-	guard.collision_layer = 0
-	guard.collision_mask = LAYER_WORLD
-	var gcs := CollisionShape3D.new()
-	var gshape := BoxShape3D.new()
-	gshape.size = Vector3(1.4, 1.4, 1.0)
-	gcs.shape = gshape
-	gcs.position = Vector3(0.47, 0.6, 0)
-	guard.add_child(gcs)
-	frame.add_child(guard)
-	guard.body_entered.connect(_on_frame_hit)
-	_box(frame, Vector3(0.72, 0.024, 0.58), Vector3(0.57, 0.46, 0))     # basket floor
-	_box(frame, Vector3(0.03, 0.50, 0.60), Vector3(0.95, 0.71, 0))      # front wall
-	_box(frame, Vector3(0.84, 0.50, 0.03), Vector3(0.53, 0.71, -0.30))  # left wall
-	_box(frame, Vector3(0.84, 0.50, 0.03), Vector3(0.53, 0.71, 0.30))   # right wall
-	_box(frame, Vector3(0.70, 0.06, 0.56), Vector3(0.57, 0.22, 0))      # lower tray
-	_box(frame, Vector3(0.06, 0.06, 0.52), Vector3(0.0, 1.0, 0))        # handlebar
-
-	# Gate: hangs from the top rail, leans back about 18 degrees, swings forward into the basket.
-	gate = _body("Gate", gate_mass, GATE_HINGE, LAYER_CART, LAYER_WORLD | LAYER_CARGO)
-	gate.physics_material_override = cart_mat
-	_box(gate, Vector3(0.03, 0.54, 0.56), Vector3(0.087, -0.265, 0), -0.32)
-	var gj := _hinge(frame, gate, GATE_HINGE, Basis.IDENTITY)
-	gj.set_flag(HingeJoint3D.FLAG_USE_LIMIT, true)
-	# Godot's hinge angle runs opposite to Blender's: negative = swung forward into the basket.
-	gj.set_param(HingeJoint3D.PARAM_LIMIT_LOWER, -deg_to_rad(GATE_OPEN_DEG))
-	gj.set_param(HingeJoint3D.PARAM_LIMIT_UPPER, 0.0)
-
-	var swivel_axis := Basis(Vector3.RIGHT, -PI / 2)   # hinge axis is the joint's local Z; this turns it to +Y
-	for side in ["L", "R"]:
-		var s := -1.0 if side == "L" else 1.0
-		# Rear: fixed wheel on an axle.
-		var rp := Vector3(REAR_AXLE.x, REAR_AXLE.y, s * REAR_AXLE.z)
-		var rw := _wheel("Wheel_R" + side, rp, wheel_mat)
-		_hinge(frame, rw, rp, Basis.IDENTITY)
-		wheels["R" + side] = rw
-		# Front: fork swivels freely about the kingpin; the wheel trails behind it.
-		var kp := Vector3(KINGPIN.x, KINGPIN.y, s * KINGPIN.z)
-		var fork := _body("Fork_F" + side, fork_mass, kp, 0, 0)
-		fork.angular_damp = 2.0   # a little swivel friction so the casters settle instead of fluttering forever
-		_box(fork, Vector3(0.05, 0.10, 0.04), Vector3(-0.02, -0.05, 0))
-		_hinge(frame, fork, kp, swivel_axis)
-		var fp := Vector3(FRONT_AXLE.x, FRONT_AXLE.y, s * FRONT_AXLE.z)
-		var fw := _wheel("Wheel_F" + side, fp, wheel_mat)
-		_hinge(fork, fw, fp, Basis.IDENTITY)
-		forks["F" + side] = fork
-		wheels["F" + side] = fw
-
-	# Groceries, loose in the basket.
-	for g in GROCERIES:
-		var b := _body("Grocery", g[1], g[3], LAYER_CARGO, LAYER_WORLD | LAYER_CART | LAYER_CARGO)
-		_box(b, g[0], Vector3.ZERO, 0.0, g[2])
-		groceries.append(b)
-
-	# Visual model, with each rig pivot following its physics body.
-	_model = MODEL.instantiate()
-	add_child(_model)
-	_model.transform = Transform3D.IDENTITY
-	_link(_model, frame)
-	_link(_model.find_child("Gate_Hinge"), gate)
-	for side in ["L", "R"]:
-		_link(_model.find_child("Caster_F%s_Swivel" % side), forks["F" + side])
-		_link(_model.find_child("Wheel_F%s_Axle" % side), wheels["F" + side])
-		_link(_model.find_child("Wheel_R%s_Axle" % side), wheels["R" + side])
-
-
 func _process(_delta: float) -> void:
 	for l in _links:
 		l[0].global_transform = l[1].global_transform * l[2]
@@ -209,7 +137,7 @@ func _physics_process(delta: float) -> void:
 			break
 	if any_input and frame.freeze:
 		_wake()
-	_apply_hands()
+	_apply_hands(delta)
 	_apply_rolling_resistance(delta)
 	if not any_input:
 		_settle(delta)
@@ -226,7 +154,7 @@ func _settle(delta: float) -> void:
 	var v := frame.linear_velocity
 	var w := frame.angular_velocity
 	if v.length() < settle_speed and w.length() < settle_spin:
-		frame.apply_central_force(-v * frame_mass * 40.0)
+		frame.apply_central_force(-v * frame.mass * 40.0)
 		frame.apply_torque(-w * 40.0)
 	# Creeping this slowly for a moment with nothing pressed: stop dead and sleep, so it can't drift at all.
 	if v.length() < stop_speed and w.length() < stop_spin and gate.angular_velocity.length() < 0.1:
@@ -261,7 +189,9 @@ func _wake() -> void:
 
 ## Each wheel resists rolling with a small torque, as real casters do. Also keeps the cart still on flat ground.
 func _apply_rolling_resistance(delta: float) -> void:
-	var total_mass := frame_mass + gate_mass + 4.0 * wheel_mass + 2.0 * fork_mass
+	var total_mass := frame.mass + gate.mass
+	for b in wheels.values() + forks.values():
+		total_mass += b.mass
 	var max_torque := rolling_resistance * total_mass * 9.81 / 4.0 * WHEEL_R
 	for k in wheels:
 		var w: RigidBody3D = wheels[k]
@@ -269,12 +199,12 @@ func _apply_rolling_resistance(delta: float) -> void:
 			continue   # off the ground
 		var axle := w.global_transform.basis.z.normalized()
 		var spin := w.angular_velocity.dot(axle)
-		var inertia := 0.5 * wheel_mass * WHEEL_R * WHEEL_R
+		var inertia := 0.5 * w.mass * WHEEL_R * WHEEL_R
 		var t := minf(max_torque, absf(spin) * inertia / delta)   # never reverse the spin within one step
 		w.apply_torque(-axle * signf(spin) * t)
 
 
-func _apply_hands() -> void:
+func _apply_hands(delta: float) -> void:
 	var xf := frame.global_transform
 	var nose := xf.basis.x.normalized()
 	var side_axis := xf.basis.z.normalized()
@@ -287,6 +217,10 @@ func _apply_hands() -> void:
 		"R": Input.is_action_pressed("push_right") or Input.is_action_pressed("pull_right"),
 	}
 	var none_held: bool = not held.L and not held.R
+	# Stopping is when you pull back with no hand pushing while the cart is still rolling forward.
+	# Push one hand and pull the other and it's a spin, not a stop.
+	var pushing_any := Input.is_action_pressed("push_left") or Input.is_action_pressed("push_right")
+	var cart_along := frame.linear_velocity.dot(fwd)
 
 	for side in ["L", "R"]:
 		var s := -1.0 if side == "L" else 1.0
@@ -295,12 +229,28 @@ func _apply_hands() -> void:
 		var r := hand_g - com_g
 		var v_hand := frame.linear_velocity + frame.angular_velocity.cross(r)
 		var dir := int(Input.is_action_pressed("push_" + suffix)) - int(Input.is_action_pressed("pull_" + suffix))
+		var along := v_hand.dot(fwd)
 		var st := ""
-		if dir != 0:
-			# A walking person can only add force up to their walking speed.
-			var k := clampf(1.0 - dir * v_hand.dot(fwd) / walk_max, 0.0, 1.0)
-			frame.apply_force(fwd * dir * push_force * k, hand_g - frame.global_position)
-			st = "pushing" if dir > 0 else "pulling"
+		if dir < 0 and not pushing_any and cart_along > 0.05 and along > 0.0:
+			# Stopping a rolling cart: the body plants its feet and the arms straighten as the cart carries on.
+			# Bent arms give a little; the further they straighten the harder they hold, up to leaning back
+			# with full body weight. Out of reach, the player is dragged at that full force.
+			arm_extension[side] = minf(arm_reach, arm_extension[side] + along * delta)
+			var f := minf(brake_max, brake_spring * arm_extension[side] + brake_damping * along)
+			if arm_extension[side] >= arm_reach:
+				f = brake_max
+			frame.apply_force(-fwd * f, hand_g - frame.global_position)
+			st = "braking (arm %d%%)" % roundi(100.0 * arm_extension[side] / arm_reach)
+		else:
+			# Not braking: the body steps back in to its relaxed distance from the handle.
+			arm_extension[side] = maxf(0.0, arm_extension[side] - 1.0 * delta)
+			if dir != 0:
+				# A walking person can only add force up to their walking speed. Pulling back with both hands (leaning
+				# back on your heels) is stronger; with one hand pushing, your weight is forward, so the pull matches the push.
+				var k := clampf(1.0 - dir * along / walk_max, 0.0, 1.0)
+				var strength := push_force * (pull_ratio if dir < 0 and not pushing_any else 1.0)
+				frame.apply_force(fwd * dir * strength * k, hand_g - frame.global_position)
+				st = "pushing" if dir > 0 else "pulling"
 		if (lift or press) and (held[side] or none_held):
 			st = (st + " + " if st else "") + ("lifting" if lift else "pressing")
 		hand_state[side] = st
@@ -354,63 +304,6 @@ func groceries_in_basket() -> int:
 		if p.x > 0.05 and p.x < 1.0 and absf(p.z) < 0.33 and p.y > 0.4 and p.y < 1.2:
 			n += 1
 	return n
-
-
-# ---------------------------------------------------------------- builders
-
-func _body(n: String, mass: float, pos: Vector3, layer: int, mask: int) -> RigidBody3D:
-	var b := RigidBody3D.new()
-	b.name = n
-	b.mass = mass
-	b.collision_layer = layer
-	b.collision_mask = mask
-	b.position = pos
-	b.can_sleep = false
-	add_child(b)
-	return b
-
-
-func _box(b: RigidBody3D, size: Vector3, pos: Vector3, rot_z := 0.0, color = null) -> void:
-	var cs := CollisionShape3D.new()
-	var shape := BoxShape3D.new()
-	shape.size = size
-	cs.shape = shape
-	cs.position = pos
-	cs.rotation.z = rot_z
-	b.add_child(cs)
-	if color != null:
-		var mi := MeshInstance3D.new()
-		var mesh := BoxMesh.new()
-		mesh.size = size
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = color
-		mat.roughness = 0.7
-		mesh.material = mat
-		mi.mesh = mesh
-		mi.position = pos
-		b.add_child(mi)
-
-
-func _wheel(n: String, pos: Vector3, mat: PhysicsMaterial) -> RigidBody3D:
-	var b := _body(n, wheel_mass, pos, LAYER_CART, LAYER_WORLD | LAYER_CARGO)
-	b.physics_material_override = mat
-	b.angular_damp = 0.05   # rolling resistance
-	# A sphere rolls cleanly in Jolt; cylinders on flat ground jitter at speed and drag the axle joints.
-	var cs := CollisionShape3D.new()
-	var shape := SphereShape3D.new()
-	shape.radius = WHEEL_R
-	cs.shape = shape
-	b.add_child(cs)
-	return b
-
-
-func _hinge(a: RigidBody3D, b: RigidBody3D, pos: Vector3, basis: Basis) -> HingeJoint3D:
-	var j := HingeJoint3D.new()
-	j.transform = Transform3D(basis, pos)
-	add_child(j)
-	j.node_a = j.get_path_to(a)
-	j.node_b = j.get_path_to(b)
-	return j
 
 
 func _link(node: Node3D, body: RigidBody3D) -> void:
