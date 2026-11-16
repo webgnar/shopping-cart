@@ -63,5 +63,8 @@ window.CART_TUNING = {
   "power_relax": 400.0,
   "sprint_speed": 8.0,
   "drive_height": 1.0,
-  "wrist_lever": 0.4
+  "wrist_lever": 0.4,
+  "fallen_upright": 0.3,
+  "fallen_still": 1.0,
+  "stood_upright": 0.95
 };

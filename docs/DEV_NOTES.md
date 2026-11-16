@@ -3,6 +3,32 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: W/S lean keys are back, and a fallen cart can be hauled up
+
+- **W/S lean keys** (zack picked this over hand keys alone). W tips the back up (`lift_pitch` -0.2 rad,
+  rear wheels about 0.19 m up), S tips the front up (`press_pitch` 0.3 rad, front wheels about 0.28 m up), at
+  any speed, using the earlier wrist controller (`tilt_kp` 1400, `tilt_kd` 80, capped at `tilt_max` 200 N*m).
+  With one hand key held as well, only that side leans (`side_roll` 0.22 rad). Unlike the first W/S there's no
+  hold-to-tip: holding W or S for 4 s keeps the lean and never throws the cart over. The point is lifting the
+  back for a drift at walking pace. The HUD keycaps are back (W "BACK UP", S "FRONT UP").
+- **Getting back up.** Tests first (both floors, cart metal friction 0.5 and 1.0): raising friction made no
+  real difference, because grip is the lower of metal and floor (tile stays 0.5) and what rights the cart is a
+  twist, not friction. What did block it: the hands' push skated a cart lying on its nose across the floor
+  (with the nose vertical, "forward" is undefined), and nothing could roll a cart off its side. So:
+  - The hands' push and pull fade out as the cart tips past 45 degrees and are gone by `fallen_upright`
+    (cos 0.3, about 73 degrees), so they never shove a tipped cart.
+  - Once the cart lies past that tilt and has nearly stopped (`fallen_still`, 1 rad/s), it is "fallen". After
+    every key has been let go once, a held hand key twists it toward upright by the hand's power times
+    `wrist_lever`, damped by `tilt_kd` so it settles instead of going over the other way. Any hand key works,
+    whichever way it fell, including from its side or upside down.
+  - Back within `stood_upright` (about 18 degrees): the hand power resets and the hands rest until the keys are
+    let go, so the power built up hauling doesn't throw it over again.
+  - One hand gets it up in about 3.5 s (the power has to climb to about 400 N); two hands are quicker. It moved
+    0.4 to 0.8 m while getting up (`tests/drive_test.gd`, "get up").
+- Holding a very hard push for 4 s after the front lifts now usually brings the cart back down instead of
+  over (the push fades as it tips); a very hard pull still goes over. The drive test reports either.
+- Diagram of the forces: `cart-tip/righting_forces.png` in the project files.
+
 ## 2026-11-16: performance pass (why the laptop fans spin up)
 
 Profiled every level (`tests/perf_probe.gd` for CPU, `tests/perf_render.gd` for rendering; in the cloud the

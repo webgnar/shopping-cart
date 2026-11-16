@@ -11,6 +11,11 @@ const SCENARIOS := [
 	["E right push", ["push_right"], 1.5, "turns_left"],
 	["Q left push", ["push_left"], 1.5, "turns_right"],
 	["Q+D spin", ["push_left", "pull_right"], 1.2, "spins_right"],
+	["S front up", ["press"], 1.5, "wheelie"],
+	["W back up", ["lift"], 1.5, "rear_up"],
+	["W+E right side up", ["lift", "push_right"], 1.5, "right_up"],
+	["S held 4 s", ["press"], 4.0, "lean_holds"],
+	["W held 4 s", ["lift"], 4.0, "lean_holds"],
 	["Q+E short push", ["push_left", "push_right"], 1.2, "flat"],
 	["Q+E hard push", ["push_left", "push_right"], 2.1, "wheelie"],
 	["A+D hard pull", ["pull_left", "pull_right"], 2.6, "rear_up"],
@@ -53,6 +58,7 @@ func _run() -> void:
 		var max_pitch := 0.0
 		var max_rear := 0.0
 		var max_front := 0.0
+		var max_right_up := 0.0
 		var ticks := int(sc[2] * Engine.physics_ticks_per_second)
 		for i in ticks:
 			if coast and i == int(Engine.physics_ticks_per_second):
@@ -62,6 +68,7 @@ func _run() -> void:
 			max_pitch = maxf(max_pitch, absf(rad_to_deg(asin(b.x.y))))
 			max_rear = maxf(max_rear, minf(cart.wheels.RL.global_position.y, cart.wheels.RR.global_position.y))
 			max_front = maxf(max_front, minf(cart.wheels.FL.global_position.y, cart.wheels.FR.global_position.y))
+			max_right_up = maxf(max_right_up, rad_to_deg(asin(clampf(b.z.y, -1, 1))))
 		for a in (["push_right"] if coast else sc[1]):
 			Input.action_release(a)
 		var d := cart.cart_origin() - p0
@@ -78,6 +85,8 @@ func _run() -> void:
 			"spins_right": ok = turn < -60 and d.length() < 1.0
 			"wheelie": ok = max_front > 0.12 and max_rear < 0.09
 			"rear_up": ok = max_rear > 0.10 and max_front < 0.09
+			"right_up": ok = max_right_up > 5
+			"lean_holds": ok = (max_front > 0.12 or max_rear > 0.10) and cart.frame.global_transform.basis.y.y > 0.8
 			"flat": ok = along > 2.0 and max_rear < 0.09 and max_front < 0.09 and cart.wheels_down() == 4
 			"wakes_and_moves": ok = along > 1.0
 			"comes_to_rest": ok = cart.frame.freeze
@@ -175,7 +184,7 @@ func _run() -> void:
 	# Hand power tips the cart: keep pushing hard and the front wheels lift (wheelie) until it goes over; keep
 	# pulling hard and the rear wheels lift until it goes over. Let go as soon as an end lifts
 	# and it drops back onto four wheels.
-	for tip in [["push", 4.0, true], ["pull", 4.0, true], ["push", 0.0, false], ["pull", 0.0, false]]:
+	for tip in [["push", 4.0, true], ["pull", 4.0, true], ["push", 0.0, false], ["pull", 0.0, false]]:   # [keys, hold after lift, falls]
 		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 		await _wait(1.0)
 		var tc: ShoppingCart = main.cart
@@ -199,12 +208,52 @@ func _run() -> void:
 		var tb := tc.frame.global_transform.basis
 		var fell := tb.y.y < 0.7   # well off upright: on its nose, its handle or its side
 		var pitch := roundi(rad_to_deg(asin(clampf(tb.x.y, -1, 1))))
-		var tip_ok: bool = lifted > 0.0 and fell == tip[2] and (fell or tc.wheels_down() == 4)
+		# Held on long after an end lifts, the cart may go over or come back down: either is fine, it's reported.
+		var tip_ok: bool = lifted > 0.0 and (fell == tip[2] or tip[1] > 0.0) and (fell or tc.wheels_down() == 4)
 		if not tip_ok:
 			failures += 1
 		print("%-5s %-18s %s end lifted after %.1f s, let go %.1f s later: %s (up %.2f, nose pitch %+d deg, wheels down %d)" % [
 			"PASS" if tip_ok else "FAIL", "hard " + tip[0], "front" if tip[0] == "push" else "rear", lifted, tip[1],
 			"fell over" if fell else "back on its wheels", tb.y.y, pitch, tc.wheels_down()])
+	# Getting back up: tip the cart over (hard push, hard pull) or lay it on its side, let go, then hold one hand
+	# key. The hand hauls it back onto its wheels without shoving it across the floor.
+	for setup in ["push", "pull", "side"]:
+		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
+		var rc: ShoppingCart = main.cart
+		if setup == "side":
+			rc.transform = Transform3D(Basis(Vector3.RIGHT, PI / 2.0), Vector3(-10, 0.4, -3))
+			await _wait(2.0)
+		else:
+			await _wait(1.0)
+			var tkeys: Array = [setup + "_left", setup + "_right"]
+			for a in tkeys:
+				Input.action_press(a)
+			var held_t := 0.0
+			while held_t < 8.0 and rc.frame.global_transform.basis.y.y > 0.3:
+				await physics_frame
+				held_t += 1.0 / Engine.physics_ticks_per_second
+			for a in tkeys:
+				Input.action_release(a)
+			await _wait(3.0)
+		var down_up := rc.frame.global_transform.basis.y.y
+		var was_fallen := rc.fallen
+		var p_down := rc.cart_origin()
+		Input.action_press("push_right")
+		var t_up := -1.0
+		for i in int(5.0 * Engine.physics_ticks_per_second):
+			await physics_frame
+			if rc.frame.global_transform.basis.y.y > 0.95:
+				t_up = float(i + 1) / Engine.physics_ticks_per_second
+				break
+		Input.action_release("push_right")
+		var slid := Vector2(rc.cart_origin().x - p_down.x, rc.cart_origin().z - p_down.z).length()
+		await _wait(3.0)
+		var up_ok := was_fallen and down_up < 0.3 and t_up > 0.0 and rc.wheels_down() == 4 and slid < 3.0   # one it rolls over from upside down travels a little
+		if not up_ok:
+			failures += 1
+		print("%-5s %-18s lying at up %.2f (fallen %s), E held: %s, moved %.2f m, then %d / 4 wheels down" % [
+			"PASS" if up_ok else "FAIL", "get up (" + setup + ")", down_up, was_fallen,
+			("upright in %.2f s" % t_up) if t_up > 0.0 else "still down after 5 s", slid, rc.wheels_down()])
 	# Gate swings into the basket when shoved, and stops at its limit.
 	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 	await _wait(0.5)

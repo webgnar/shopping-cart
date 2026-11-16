@@ -43,6 +43,20 @@ width = 24
 height = 64
 fill_to = Vector2(0, 1)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4d46k"]
+content_margin_top = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.3529412, 0.6627451, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3529412, 0.6627451, 1, 1)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kicr4"]
 content_margin_left = 12.0
 content_margin_top = 12.0
@@ -197,7 +211,7 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
-columns = 2
+columns = 3
 
 [node name="KeyQ" type="PanelContainer" parent="ControlsPanel/Rows/Drive/KeyCaps" unique_id=1580317203]
 custom_minimum_size = Vector2(80, 64)
@@ -223,6 +237,32 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "LEFT PUSH"
+horizontal_alignment = 1
+
+[node name="KeyW" type="PanelContainer" parent="ControlsPanel/Rows/Drive/KeyCaps" unique_id=1337089900]
+custom_minimum_size = Vector2(80, 64)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_mj13f")
+script = ExtResource("2_bo48s")
+action = &"lift"
+idle_style = SubResource("StyleBoxFlat_mj13f")
+pressed_style = SubResource("StyleBoxFlat_4d46k")
+
+[node name="Text" type="VBoxContainer" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyW" unique_id=484706470]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="Letter" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyW/Text" unique_id=49616695]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "W"
+horizontal_alignment = 1
+
+[node name="Caption" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyW/Text" unique_id=1360810997]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "BACK UP"
 horizontal_alignment = 1
 
 [node name="KeyE" type="PanelContainer" parent="ControlsPanel/Rows/Drive/KeyCaps" unique_id=963085705]
@@ -275,6 +315,32 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "LEFT PULL"
+horizontal_alignment = 1
+
+[node name="KeyS" type="PanelContainer" parent="ControlsPanel/Rows/Drive/KeyCaps" unique_id=790888032]
+custom_minimum_size = Vector2(80, 64)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_mj13f")
+script = ExtResource("2_bo48s")
+action = &"press"
+idle_style = SubResource("StyleBoxFlat_mj13f")
+pressed_style = SubResource("StyleBoxFlat_4d46k")
+
+[node name="Text" type="VBoxContainer" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyS" unique_id=483489790]
+layout_mode = 2
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="Letter" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyS/Text" unique_id=460629738]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "S"
+horizontal_alignment = 1
+
+[node name="Caption" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyS/Text" unique_id=329010553]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "FRONT UP"
 horizontal_alignment = 1
 
 [node name="KeyD" type="PanelContainer" parent="ControlsPanel/Rows/Drive/KeyCaps" unique_id=1157445738]

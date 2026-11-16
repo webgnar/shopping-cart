@@ -21,7 +21,8 @@ extends Node3D
 ## cap. The HUD shows it as that hand's bar. Pushing and pulling share the same base and ramp. As the arms strain,
 ## the wrists lever the bar (wrist_lever): pushing hard presses it down and the front wheels come up (a wheelie);
 ## pulling hard lifts it and the rear wheels come up onto the front casters, which breaks the back loose for a
-## drift. Nothing else tilts the cart.
+## drift. W/S lean the cart on purpose (see "Lean keys"). Once the cart has fallen over and come to rest, any hand
+## key hauls it back onto its wheels (see "Getting back up").
 @export var power_base := 25.0      ## N per hand the moment a key goes down
 @export var power_ramp := 120.0     ## N per second the hand's power grows while its key stays held
 @export var power_relax := 400.0    ## N per second the bar falls back to zero once the key is let go
@@ -36,6 +37,24 @@ extends Node3D
 ## true: the groceries are taken out (spare carts in a level start empty).
 @export var empty_basket := false
 var hand_power := {"L": 0.0, "R": 0.0}   ## N each hand is putting into the bar: + push, - pull
+@export_group("Lean keys")
+## W tips the back up, S tips the front up, at any speed, toward a fixed lean with capped wrist torque: holding
+## them never throws the cart over. With one hand key held as well, only that side leans (W lifts it, S drops it).
+@export var lift_pitch := -0.2      ## rad, W: nose down, rear wheels up
+@export var press_pitch := 0.3      ## rad, S: nose up, front wheels up
+@export var side_roll := 0.22       ## rad, W/S with one hand held
+@export var tilt_kp := 1400.0       ## N*m per rad toward the lean
+@export var tilt_kd := 80.0         ## N*m per rad/s
+@export var tilt_max := 200.0       ## N*m the wrists can apply for a lean
+@export_group("Getting back up")
+## The cart counts as fallen over once it lies past this tilt (cosine of the angle from upright) and has nearly
+## stopped moving. Then, after every key has been let go once, a held hand key hauls it upright: a twist toward
+## upright of the hand's power times wrist_lever. The hands' push and pull fade out as the cart tips, so a fallen
+## cart is levered up rather than shoved along the floor.
+@export var fallen_upright := 0.3   ## cos of tilt: 0.3 is about 73 degrees over
+@export var fallen_still := 1.0     ## rad/s: slower than this it has come to rest
+@export var stood_upright := 0.95   ## cos of tilt: back up once it's within about 18 degrees of upright
+@export_group("Hands")
 @export var rolling_resistance := 0.015  ## fraction of each wheel's load that resists rolling (real casters: 0.01 to 0.02)
 @export var settle_speed := 0.15    ## m/s: below this, with no hands on, the cart brakes to a stop
 @export var settle_spin := 0.25     ## rad/s: same, for turning
@@ -74,6 +93,8 @@ const LAYER_CARGO := 4
 @onready var wheel_radius: float = (($Wheel_FL/Shape as CollisionShape3D).shape as SphereShape3D).radius
 var groceries: Array[RigidBody3D] = []
 var hand_state := {"L": "", "R": ""}
+var fallen := false                 ## lying over; the hands haul it back up
+var _wait_release := false          ## fell over or got back up with keys held: the hands rest until they are let go
 
 var _links := []           ## [visual node, body, offset] kept in step every frame
 
@@ -104,6 +125,8 @@ func _ready() -> void:
 ## Cart feel as the shared tuning dictionary (same keys as tuning/cart_tuning.json). The values come from this
 ## scene: the exports above and the bodies' masses. tools/export_cart_tuning.gd writes them out for the mobile game.
 const TUNING_KEYS := ["power_base", "power_ramp", "power_relax", "sprint_speed", "wrist_lever",
+	"lift_pitch", "press_pitch", "side_roll", "tilt_kp", "tilt_kd", "tilt_max",
+	"fallen_upright", "fallen_still", "stood_upright",
 	"rolling_resistance", "grip_yaw_damping", "spin_grip", "spin_grip_min",
 	"settle_speed", "settle_spin", "stop_speed", "stop_spin",
 	"arm_reach", "brake_spring", "brake_damping", "brake_max"]
@@ -126,7 +149,7 @@ func _process(_delta: float) -> void:
 		l[0].global_transform = l[1].global_transform * l[2]
 
 
-const ACTIONS := ["push_left", "pull_left", "push_right", "pull_right"]
+const ACTIONS := ["push_left", "pull_left", "push_right", "pull_right", "lift", "press"]
 
 
 func _physics_process(delta: float) -> void:
@@ -212,6 +235,25 @@ func _apply_hands(delta: float) -> void:
 	var nose := xf.basis.x.normalized()
 	var fwd := Vector3(nose.x, 0, nose.z).normalized()
 	var com_g := xf * frame.center_of_mass
+	var upright := xf.basis.y.normalized().y
+	var any_key := false
+	for a in ACTIONS:
+		any_key = any_key or Input.is_action_pressed(a)
+	if not fallen and upright < fallen_upright and frame.angular_velocity.length() < fallen_still:
+		fallen = true
+		_wait_release = any_key
+	elif fallen and upright > stood_upright:
+		# Back on its wheels: the hands let go of the haul and rest until the keys are let go, so the power built
+		# up hauling doesn't throw it straight over again.
+		fallen = false
+		_wait_release = any_key
+		hand_power = {"L": 0.0, "R": 0.0}
+	if not any_key:
+		_wait_release = false
+	# The push and pull drive the cart along the floor only while it stands: they fade out as it tips past 45
+	# degrees and are gone by fallen_upright, so the nose pointing straight up can't send it skating. While it's
+	# fallen over they stay off until it's back on its wheels.
+	var drive_scale := 0.0 if fallen else clampf((upright - fallen_upright) / (0.7 - fallen_upright), 0.0, 1.0)
 	# Stopping is when you pull back with no hand pushing while the cart is still rolling forward.
 	# Push one hand and pull the other and it's a spin, not a stop.
 	var pushing_any := Input.is_action_pressed("push_left") or Input.is_action_pressed("push_right")
@@ -223,7 +265,8 @@ func _apply_hands(delta: float) -> void:
 	var hand_yaw := {}
 	for side in ["L", "R"]:
 		var suffix := "left" if side == "L" else "right"
-		dirs[side] = int(Input.is_action_pressed("push_" + suffix)) - int(Input.is_action_pressed("pull_" + suffix))
+		dirs[side] = 0 if _wait_release else \
+			int(Input.is_action_pressed("push_" + suffix)) - int(Input.is_action_pressed("pull_" + suffix))
 		hand_yaw[side] = (-1.0 if side == "L" else 1.0) * dirs[side]
 	var yaw_cmd: float = hand_yaw.L + hand_yaw.R
 
@@ -254,7 +297,7 @@ func _apply_hands(delta: float) -> void:
 			var f := minf(brake_max, brake_spring * arm_extension[side] + brake_damping * along)
 			if arm_extension[side] >= arm_reach:
 				f = brake_max
-			frame.apply_force(-fwd * maxf(f, strength), drive_g - frame.global_position)
+			frame.apply_force(-fwd * maxf(f, strength) * drive_scale, drive_g - frame.global_position)
 			st = "braking %d N (arm %d%%)" % [roundi(maxf(f, strength)), roundi(100.0 * arm_extension[side] / arm_reach)]
 		else:
 			# Not braking: the body steps back in to its relaxed distance from the handle.
@@ -262,7 +305,7 @@ func _apply_hands(delta: float) -> void:
 			if dir != 0:
 				# A running person can only add force up to their running speed.
 				var k := clampf(1.0 - dir * along / sprint_speed, 0.0, 1.0)
-				frame.apply_force(fwd * dir * strength * k, drive_g - frame.global_position)
+				frame.apply_force(fwd * dir * strength * k * drive_scale, drive_g - frame.global_position)
 				st = ("pushing %d N" if dir > 0 else "pulling %d N") % roundi(strength)
 		# Countering a spin: when the hands as a whole work against the way the cart is spinning, a hand doing so
 		# grabs the bar and braces it, like a planted arm. The bar is a lever about half a metre behind the basket's
@@ -273,8 +316,21 @@ func _apply_hands(delta: float) -> void:
 			var t := minf(brake_max * lever, spin_grip * lever * lever * absf(yaw_rate))
 			frame.apply_torque(Vector3.UP * -signf(yaw_rate) * t)
 			st = (st + " + " if st else "") + "holding the spin"
-		# The wrists lever the bar by the hand's full power: a push raises the nose, a pull drops it.
-		if dir != 0:
+		if fallen:
+			# Lying over: a held hand grabs the bar and hauls the cart back toward upright, whichever way it fell.
+			# The wrists damp the swing (tilt_kd) so the cart settles onto its wheels instead of going over the other way.
+			if dir != 0:
+				var axis := xf.basis.y.normalized().cross(Vector3.UP)
+				if axis.length() < 0.05:   # upside down: any horizontal axis will do
+					axis = xf.basis.z
+				axis = axis.normalized()
+				var spin := frame.angular_velocity.dot(axis)
+				frame.apply_torque(axis * (strength * wrist_lever - tilt_kd * spin))
+				st = "hauling it upright"
+			elif _wait_release:
+				st = "let go, then hold to haul it up"
+		elif dir != 0:
+			# The wrists lever the bar by the hand's full power: a push raises the nose, a pull drops it.
 			frame.apply_torque(xf.basis.z.normalized() * dir * strength * wrist_lever)
 		hand_state[side] = st
 
@@ -282,6 +338,27 @@ func _apply_hands(delta: float) -> void:
 	# pulled back). Opposite hands (spin) or one hand (turn) twist it freely.
 	if dirs.L != 0 and dirs.L == dirs.R:
 		frame.apply_torque(Vector3.UP * -grip_yaw_damping * yaw_rate)
+
+	# Lean keys: W tips the back up, S the front, toward a fixed lean with capped torque, so holding them never
+	# throws the cart over. One hand key held as well: only that side (W lifts it, S drops it).
+	var lift := Input.is_action_pressed("lift")
+	var press := Input.is_action_pressed("press")
+	if lift != press and not fallen:
+		var side_axis := xf.basis.z.normalized()
+		var pitch := asin(clampf(nose.y, -1, 1))        # + = nose up
+		var roll := asin(clampf(side_axis.y, -1, 1))    # + = right side up
+		var sides := 0.0
+		if (dirs.L != 0) != (dirs.R != 0):
+			sides = 1.0 if dirs.R != 0 else -1.0
+		var pitch_t := (lift_pitch if lift else press_pitch) * (0.6 if sides != 0.0 else 1.0)
+		var roll_t := sides * (1.0 if lift else -1.0) * side_roll
+		var w := frame.angular_velocity
+		var tp := clampf(tilt_kp * (pitch_t - pitch) - tilt_kd * w.dot(side_axis), -tilt_max, tilt_max)
+		var tr := clampf(tilt_kp * (roll_t - roll) + tilt_kd * w.dot(nose), -tilt_max, tilt_max)
+		frame.apply_torque(side_axis * tp - nose * tr)   # rotating about -nose raises the right side
+		for side in ["L", "R"]:
+			var st: String = hand_state[side]
+			hand_state[side] = (st + " + " if st else "") + ("leaning back up" if lift else "leaning front up")
 
 
 ## Cart origin (on the ground under the handle) in world space.

@@ -1,6 +1,7 @@
 extends Node3D
 ## Prototype sandbox: slippery store floor with shelves on +X, grippy parking lot with ramp, curb and
-## speed bumps on -X. Q/A = left hand push/pull, E/D = right hand push/pull (hold to push or pull harder), R reset.
+## speed bumps on -X. Q/A = left hand push/pull, E/D = right hand push/pull (hold to push or pull harder),
+## W/S lean the back/front up, R reset.
 ## The mouse only moves the camera (click to capture, Esc to release, wheel to zoom).
 ##
 ## The level, lights, camera, HUD and the CartSpawn marker are all nodes in the scene (scenes/main.tscn).
@@ -15,7 +16,7 @@ const HUD_SCENE := preload("res://scenes/ui/hud.tscn")
 const KEYS := {
 	"push_left": KEY_Q, "pull_left": KEY_A,
 	"push_right": KEY_E, "pull_right": KEY_D,
-	"reset": KEY_R,
+	"lift": KEY_W, "press": KEY_S, "reset": KEY_R,
 	"fullscreen": KEY_F11,
 }
 
