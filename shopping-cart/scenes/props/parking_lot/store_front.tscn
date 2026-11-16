@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="PhysicsMaterial" path="res://assets/parking_lot/physics/concrete.tres" id="1_erd6d"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="1_erd6d"]
 [ext_resource type="PackedScene" path="res://assets/models/parking_lot/store_front/store_front.glb" id="2_ycax4"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_exavl"]
@@ -15,28 +15,28 @@ size = Vector3(0.35, 3.75, 0.35)
 [sub_resource type="BoxShape3D" id="BoxShape3D_1pcmu"]
 size = Vector3(0.35, 3.75, 0.35)
 
-[node name="StoreFront" type="StaticBody3D" unique_id=1778007381]
+[node name="StoreFront" type="StaticBody3D" unique_id=1461209329]
 physics_material_override = ExtResource("1_erd6d")
 
 [node name="Model" type="Node3D" parent="." unique_id=1510658959 instance=ExtResource("2_ycax4")]
 
-[node name="BuildingShape" type="CollisionShape3D" parent="." unique_id=1448696094]
+[node name="BuildingShape" type="CollisionShape3D" parent="." unique_id=1958773586]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -6)
 shape = SubResource("BoxShape3D_exavl")
 
-[node name="TowerShape" type="CollisionShape3D" parent="." unique_id=829977130]
+[node name="TowerShape" type="CollisionShape3D" parent="." unique_id=2030599358]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.75, -0.3)
 shape = SubResource("BoxShape3D_3uvww")
 
-[node name="ColumnWShape" type="CollisionShape3D" parent="." unique_id=773947782]
+[node name="ColumnWShape" type="CollisionShape3D" parent="." unique_id=651113514]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.2, 1.875, 2.6)
 shape = SubResource("BoxShape3D_omkne")
 
-[node name="ColumnEShape" type="CollisionShape3D" parent="." unique_id=1783866275]
+[node name="ColumnEShape" type="CollisionShape3D" parent="." unique_id=1350019551]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2, 1.875, 2.6)
 shape = SubResource("BoxShape3D_1pcmu")
 
-[node name="Sign" type="Label3D" parent="." unique_id=77987611]
+[node name="Sign" type="Label3D" parent="." unique_id=413814848]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.2, 0.52)
 pixel_size = 0.02
 double_sided = false
@@ -46,7 +46,7 @@ text = "SUPERMARKET"
 font_size = 160
 outline_size = 10
 
-[node name="SignBakery" type="Label3D" parent="." unique_id=798005589]
+[node name="SignBakery" type="Label3D" parent="." unique_id=1244279487]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 4.6, 0.175)
 pixel_size = 0.012
 double_sided = false
@@ -56,7 +56,7 @@ text = "BAKERY"
 font_size = 90
 outline_size = 10
 
-[node name="SignDeli" type="Label3D" parent="." unique_id=236650214]
+[node name="SignDeli" type="Label3D" parent="." unique_id=1567720656]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 4.6, 0.175)
 pixel_size = 0.012
 double_sided = false
@@ -66,29 +66,29 @@ text = "DELI"
 font_size = 90
 outline_size = 10
 
-[node name="FacadeLights" type="Node3D" parent="." unique_id=226909685]
+[node name="FacadeLights" type="Node3D" parent="." unique_id=2011737773]
 
-[node name="Wash1" type="OmniLight3D" parent="FacadeLights" unique_id=535839780]
+[node name="Wash1" type="OmniLight3D" parent="FacadeLights" unique_id=385817045]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 5.3, 1)
 light_color = Color(1, 0.8352941, 0.6039216, 1)
 omni_range = 8.0
 
-[node name="Wash2" type="OmniLight3D" parent="FacadeLights" unique_id=117831007]
+[node name="Wash2" type="OmniLight3D" parent="FacadeLights" unique_id=904280365]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 5.3, 1)
 light_color = Color(1, 0.8352941, 0.6039216, 1)
 omni_range = 8.0
 
-[node name="Wash3" type="OmniLight3D" parent="FacadeLights" unique_id=624390528]
+[node name="Wash3" type="OmniLight3D" parent="FacadeLights" unique_id=657906389]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 5.3, 1)
 light_color = Color(1, 0.8352941, 0.6039216, 1)
 omni_range = 8.0
 
-[node name="Wash4" type="OmniLight3D" parent="FacadeLights" unique_id=559110986]
+[node name="Wash4" type="OmniLight3D" parent="FacadeLights" unique_id=1216461191]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 5.3, 1)
 light_color = Color(1, 0.8352941, 0.6039216, 1)
 omni_range = 8.0
 
-[node name="EntranceLight" type="SpotLight3D" parent="FacadeLights" unique_id=1975814766]
+[node name="EntranceLight" type="SpotLight3D" parent="FacadeLights" unique_id=1878056433]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.7, 2)
 light_color = Color(1, 0.8862745, 0.6901961, 1)
 light_energy = 4.0

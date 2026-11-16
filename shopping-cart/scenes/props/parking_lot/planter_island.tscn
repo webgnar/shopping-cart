@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="PhysicsMaterial" path="res://assets/parking_lot/physics/concrete.tres" id="1_64vjv"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="1_64vjv"]
 [ext_resource type="PackedScene" path="res://assets/models/parking_lot/planter_island/planter_island.glb" id="2_obqyy"]
 [ext_resource type="PackedScene" path="res://scenes/props/parking_lot/streetlight.tscn" id="3_wt7wb"]
 [ext_resource type="PackedScene" path="res://scenes/props/parking_lot/palm_tree.tscn" id="4_esctc"]
@@ -16,28 +16,28 @@ radius = 1.2
 height = 0.15
 radius = 1.2
 
-[node name="PlanterIsland" type="StaticBody3D" unique_id=1283086500]
+[node name="PlanterIsland" type="StaticBody3D" unique_id=1808013329]
 physics_material_override = ExtResource("1_64vjv")
 
 [node name="Model" type="Node3D" parent="." unique_id=986583276 instance=ExtResource("2_obqyy")]
 
-[node name="CurbShape" type="CollisionShape3D" parent="." unique_id=667805397]
+[node name="CurbShape" type="CollisionShape3D" parent="." unique_id=1755363020]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.075, 0)
 shape = SubResource("BoxShape3D_7enfx")
 
-[node name="CurbEndNShape" type="CollisionShape3D" parent="." unique_id=1787276797]
+[node name="CurbEndNShape" type="CollisionShape3D" parent="." unique_id=1391159176]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.075, -4.3)
 shape = SubResource("CylinderShape3D_olkbv")
 
-[node name="CurbEndSShape" type="CollisionShape3D" parent="." unique_id=198879709]
+[node name="CurbEndSShape" type="CollisionShape3D" parent="." unique_id=1081151054]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.075, 4.3)
 shape = SubResource("CylinderShape3D_3ub1u")
 
-[node name="Streetlight" type="StaticBody3D" parent="." unique_id=834373790 instance=ExtResource("3_wt7wb")]
+[node name="Streetlight" type="StaticBody3D" parent="." unique_id=948453127 instance=ExtResource("3_wt7wb")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, 0)
 
-[node name="PalmTreeN" type="StaticBody3D" parent="." unique_id=146556698 instance=ExtResource("4_esctc")]
+[node name="PalmTreeN" type="StaticBody3D" parent="." unique_id=130579495 instance=ExtResource("4_esctc")]
 transform = Transform3D(0.9396926, 0, 0.34202012, 0, 1, 0, -0.34202012, 0, 0.9396926, 0, 0, -3.8)
 
-[node name="PalmTreeS" type="StaticBody3D" parent="." unique_id=212007818 instance=ExtResource("4_esctc")]
+[node name="PalmTreeS" type="StaticBody3D" parent="." unique_id=1136493344 instance=ExtResource("4_esctc")]
 transform = Transform3D(-0.9396926, 0, -0.34202015, 0, 1, 0, 0.34202015, 0, -0.9396926, 0, 0, 3.8)

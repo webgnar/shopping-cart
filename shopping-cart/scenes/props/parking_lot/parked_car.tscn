@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="PhysicsMaterial" path="res://assets/parking_lot/physics/concrete.tres" id="1_u31ah"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="1_u31ah"]
 [ext_resource type="Script" path="res://scripts/levels/parked_car.gd" id="2_6u5d3"]
 [ext_resource type="PackedScene" path="res://assets/models/parking_lot/parked_car/parked_car.glb" id="3_aejuf"]
 
@@ -10,16 +10,16 @@ size = Vector3(1.76, 0.6, 4.68)
 [sub_resource type="BoxShape3D" id="BoxShape3D_3mi21"]
 size = Vector3(1.52, 0.52, 2.8)
 
-[node name="ParkedCar" type="StaticBody3D" unique_id=574939480]
+[node name="ParkedCar" type="StaticBody3D" unique_id=158831307]
 physics_material_override = ExtResource("1_u31ah")
 script = ExtResource("2_6u5d3")
 
-[node name="Model" type="Node3D" parent="." unique_id=80877511 instance=ExtResource("3_aejuf")]
+[node name="Model" type="Node3D" parent="." unique_id=208134655 instance=ExtResource("3_aejuf")]
 
-[node name="BodyShape" type="CollisionShape3D" parent="." unique_id=1919378952]
+[node name="BodyShape" type="CollisionShape3D" parent="." unique_id=1226129813]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.63, 0)
 shape = SubResource("BoxShape3D_owrxv")
 
-[node name="CabinShape" type="CollisionShape3D" parent="." unique_id=411243059]
+[node name="CabinShape" type="CollisionShape3D" parent="." unique_id=791981672]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.18, 0.265)
 shape = SubResource("BoxShape3D_3mi21")
