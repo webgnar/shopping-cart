@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "packing_tape"
+albedo_color = Color(0.5490, 0.4157, 0.2471, 1)
+roughness = 0.40

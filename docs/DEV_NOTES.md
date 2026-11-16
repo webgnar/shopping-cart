@@ -3,6 +3,52 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: supermarket level
+
+`scenes/levels/supermarket.tscn` (root script `main.gd`): the inside of the store, from zack's reference
+photos (long stocked aisles with hanging aisle signs, polished concrete, a high warehouse ceiling with
+trusses and ducts) and matched to the store-front photo the parking lot uses (cream stucco walls, the
+green sign band carried inside, shop-front windows either side of the doors, warm light). 36 x 28 m,
+8 m to the roof deck. Entrance on -X, `CartSpawn` just inside it facing +X. Six 12 m gondolas make seven
+aisles (signs 1-7), checkouts and produce up front, dairy cases on three walls, five pallet displays of
+loose cases to crash into. Check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
+(spawn on 4 wheels, push 5+ m through the store, ram a display and knock cases; saves 7 screenshots).
+
+**Models** (`tools/supermarket_models.py`, Blender primitives, `assets/models/supermarket/<name>/<name>.glb`).
+One material per object, all parts sharing a material merged into one object; materials are
+`assets/materials/supermarket/<name>.tres`, written by the builder and linked by name in each `.glb.import`
+(`python3 tools/supermarket_models.py --link-materials` after a first import). Shelf stock uses one
+triplanar texture (`assets/textures/supermarket/product_facings.png`) so each block reads as a row of products.
+
+| Model | Tris | KB | Size chosen | Notes |
+| --- | --- | --- | --- | --- |
+| gondola | 3192 | 179 | 12 m run, 1.0 m deep, 1.8 m tall (+ 0.6 m endcap each end) | Plinth, back panel, 11 uprights, 3 shelves a side on brackets, price-tag channels, stock, taped overstock on top, endcaps with red SALE header (text is a Label3D) |
+| fridge_case | 492 | 35 | 4 m long, 1.0 m deep, 2.3 m tall | Open multi-deck: grille, lit back, chrome shelves with lips, canopy with blue stripe and light strip, bumper rail |
+| produce_table | 4596 | 264 | 2.6 x 1.6 m, 0.78 m to the rim | Slatted crate sides, corner posts, dividers, six heaped bins of fruit, clipped price cards |
+| checkout_counter | 388 | 29 | 3.2 m long, 0.93 m high | Belt with rollers and rail, scanner, register with screen, card reader, lane pole and light, impulse rack |
+| product_case | 36 | 4 | 36 x 26 x 28 cm, 2 kg | Carton, printed band (material set per display), tape |
+| pallet | 156 | 10 | 1.2 x 1.0 x 0.14 m | Deck boards, blocks, bottom boards |
+| aisle_sign | 104 | 8 | 1.8 x 0.9 m, hung 3.2 m up on 3 m rods | Double-sided; number and aisle contents are Label3Ds set from the sign's inspector |
+| strip_light | 88 | 8 | 2.4 m linear LED, hung at 5 m | Warm diffuser, housing, end caps, cables; an OmniLight3D sits under each one in the scene |
+| banner | 204 | 14 | 0.7 x 1.8 m | Fabric with stripe, rod and finials, hangers; "LOW PRICES" is a Label3D |
+| store_shell | 4256 | 212 | 36 x 28 m floor, 8 m walls, 0.4 m thick | Floor, cream lower walls / grey upper, green band at 2.95-3.25 m, base trim, clerestory and shop-front windows, sliding doors, roof deck, trusses, joists, two ducts with bands and hangers, five columns with guards. Building convention: origin at the floor centre, entrance on -X |
+
+Judgment calls:
+- Gondolas are 1.8 m (the low end of real ones) so the follow camera sees over them.
+- Aisles are 2.6 m clear: room to turn the cart around, tight enough to clip shelves at speed.
+- Pallet displays put the bottom layer 4 cases wide, overhanging the pallet a little; with cases
+  flush the cart's casters stop on the 14 cm pallet before the basket reaches the cases.
+- Collision is plain boxes next to each model (gondola + endcaps, case bodies, the building's floor,
+  walls and columns); fruit, signs, lights and banners have none. Shelves use `solid.tres`, the floor `tile.tres`.
+- Products on shelves are static; only the display cases are loose.
+
+Left out: shoppers, baskets, a deli/bakery counter, freezer doors, the tile roof and pergola (outside).
+
+Z-fighting: the builder checks every pair of boxes in a model for coplanar, overlapping faces pointing
+the same way and refuses to export if it finds any. All ten models pass. Fixed on the way: produce
+table core vs posts and crossing dividers, banner stripe edges, windows vs trusses and joists in the
+shell, column feet vs their guards.
+
 ## 2026-11-16: parking lot level
 
 `scenes/levels/parking_lot.tscn` (root script `main.gd`): a supermarket lot at night, from zack's

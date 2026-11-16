@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "counter_white"
+albedo_color = Color(0.8510, 0.8667, 0.8863, 1)
+roughness = 0.50
