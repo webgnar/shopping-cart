@@ -1,0 +1,108 @@
+[remap]
+
+importer="scene"
+importer_version=1
+type="PackedScene"
+uid="uid://bxnpa57lonqe"
+path="res://.godot/imported/checkout_counter.glb-61b3c98e6685bfd6da90c18ca132bd24.scn"
+
+[deps]
+
+source_file="res://assets/models/supermarket/checkout_counter/checkout_counter.glb"
+dest_files=["res://.godot/imported/checkout_counter.glb-61b3c98e6685bfd6da90c18ca132bd24.scn"]
+
+[params]
+
+nodes/root_type=""
+nodes/root_name=""
+nodes/root_script=null
+mesh_library/use_node_names_as_mesh_names=false
+array_mesh/deduplicate_surfaces=true
+nodes/apply_root_scale=true
+nodes/root_scale=1.0
+nodes/import_as_skeleton_bones=false
+nodes/use_name_suffixes=true
+nodes/use_node_type_suffixes=true
+meshes/ensure_tangents=true
+meshes/generate_lods=true
+meshes/create_shadow_meshes=true
+meshes/light_baking=1
+meshes/lightmap_texel_size=0.2
+meshes/force_disable_compression=false
+skins/use_named_skins=true
+animation/import=true
+animation/fps=30
+animation/trimming=false
+animation/remove_immutable_tracks=true
+animation/import_rest_as_RESET=false
+import_script/path=""
+materials/extract=0
+materials/extract_format=0
+materials/extract_path=""
+_subresources={
+"materials": {
+"belt_black": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/belt_black.tres",
+"use_external/path": "res://assets/materials/supermarket/belt_black.tres"
+},
+"chrome": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/chrome.tres",
+"use_external/path": "res://assets/materials/supermarket/chrome.tres"
+},
+"counter_steel": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/counter_steel.tres",
+"use_external/path": "res://assets/materials/supermarket/counter_steel.tres"
+},
+"counter_white": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/counter_white.tres",
+"use_external/path": "res://assets/materials/supermarket/counter_white.tres"
+},
+"lane_light": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/lane_light.tres",
+"use_external/path": "res://assets/materials/supermarket/lane_light.tres"
+},
+"register_dark": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/register_dark.tres",
+"use_external/path": "res://assets/materials/supermarket/register_dark.tres"
+},
+"sale_red": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/sale_red.tres",
+"use_external/path": "res://assets/materials/supermarket/sale_red.tres"
+},
+"scanner_glass": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/scanner_glass.tres",
+"use_external/path": "res://assets/materials/supermarket/scanner_glass.tres"
+},
+"screen": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/screen.tres",
+"use_external/path": "res://assets/materials/supermarket/screen.tres"
+},
+"stock_orange": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/stock_orange.tres",
+"use_external/path": "res://assets/materials/supermarket/stock_orange.tres"
+},
+"stock_pink": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/stock_pink.tres",
+"use_external/path": "res://assets/materials/supermarket/stock_pink.tres"
+},
+"stock_red": {
+"use_external/enabled": true,
+"use_external/fallback_path": "res://assets/materials/supermarket/stock_red.tres",
+"use_external/path": "res://assets/materials/supermarket/stock_red.tres"
+}
+}
+}
+gltf/naming_version=2
+gltf/embedded_image_handling=1
+gltf/texture_map_mode=1

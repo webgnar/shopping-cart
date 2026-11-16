@@ -1,0 +1,54 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/props/supermarket/aisle_sign.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/supermarket/aisle_sign/aisle_sign.glb" id="2"]
+
+[node name="AisleSign" type="Node3D"]
+script = ExtResource("1")
+
+[node name="Model" parent="." instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Front" type="Node3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+
+[node name="Number" type="Label3D" parent="Front"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.76, 0.0415)
+pixel_size = 0.005
+double_sided = false
+modulate = Color(0.0863, 0.0941, 0.1098, 1)
+text = "1"
+font_size = 56
+outline_size = 0
+
+[node name="Items" type="Label3D" parent="Front"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.31, 0.0315)
+pixel_size = 0.005
+double_sided = false
+modulate = Color(1, 1, 1, 1)
+text = "Aisle"
+font_size = 26
+outline_size = 0
+line_spacing = 4.0
+
+[node name="Back" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Number" type="Label3D" parent="Back"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.76, 0.0415)
+pixel_size = 0.005
+double_sided = false
+modulate = Color(0.0863, 0.0941, 0.1098, 1)
+text = "1"
+font_size = 56
+outline_size = 0
+
+[node name="Items" type="Label3D" parent="Back"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.31, 0.0315)
+pixel_size = 0.005
+double_sided = false
+modulate = Color(1, 1, 1, 1)
+text = "Aisle"
+font_size = 26
+outline_size = 0
+line_spacing = 4.0

@@ -1,0 +1,16 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/garage/red_paint_color.jpg" id="1_0oon1"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/red_paint_normal.jpg" id="2_rchdw"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/red_paint_rough.jpg" id="3_ci2vl"]
+
+[resource]
+resource_name = "red_paint"
+albedo_texture = ExtResource("1_0oon1")
+roughness_texture = ExtResource("3_ci2vl")
+normal_enabled = true
+normal_texture = ExtResource("2_rchdw")
+uv1_scale = Vector3(1.25, 1.25, 1.25)
+uv1_triplanar = true
+uv1_triplanar_sharpness = 4.0
+uv1_world_triplanar = true

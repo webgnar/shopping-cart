@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "roof_deck"
+albedo_color = Color(0.3020, 0.3176, 0.3412, 1)
+roughness = 0.90

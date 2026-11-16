@@ -1,0 +1,7 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "lamp_shade"
+albedo_color = Color(0.8745, 0.8902, 0.9098, 1)
+metallic = 0.60
+roughness = 0.30

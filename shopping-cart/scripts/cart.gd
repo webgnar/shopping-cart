@@ -41,6 +41,12 @@ var arm_extension := {"L": 0.0, "R": 0.0}   ## m each arm is currently stretched
 @export var tilt_kp := 1400.0
 @export var tilt_kd := 80.0
 @export var tilt_max := 200.0       ## N*m the wrists can apply
+@export var tip_delay := 0.6        ## s W/S is held at the normal lean before the player starts tipping further
+@export var tip_rate := 0.7         ## rad/s the lean grows by after that, for as long as W/S stays held
+@export var let_go_pitch := 0.95    ## rad: past this the hands slip off the bar and the cart falls on its own
+var _tilt_time := 0.0               ## s the current W/S has been held
+var _tilt_dir := 0                  ## +1 S (press), -1 W (lift), 0 none
+var _let_go := false                ## the hands slipped off this hold; W/S does nothing until released
 
 const COM := Vector3(0.45, 0.42, 0.0)    ## matches Frame's center_of_mass in the scene
 const WHEEL_R := 0.0635                    ## matches the wheels' sphere radius in the scene
@@ -83,6 +89,7 @@ func load_tuning() -> void:
 		return
 	for key in ["rolling_resistance", "grip_yaw_damping",
 			"lift_pitch", "press_pitch", "side_roll", "tilt_kp", "tilt_kd", "tilt_max",
+			"tip_delay", "tip_rate", "let_go_pitch",
 			"settle_speed", "settle_spin", "stop_speed", "stop_spin",
 			"pull_ratio", "arm_reach", "brake_spring", "brake_damping", "brake_max"]:
 		if t.has(key):
@@ -252,7 +259,7 @@ func _apply_hands(delta: float) -> void:
 				frame.apply_force(fwd * dir * strength * k, hand_g - frame.global_position)
 				st = "pushing" if dir > 0 else "pulling"
 		if (lift or press) and (held[side] or none_held):
-			st = (st + " + " if st else "") + ("lifting" if lift else "pressing")
+			st = (st + " + " if st else "") + ("lost grip" if _let_go else ("lifting" if lift else "pressing"))
 		hand_state[side] = st
 
 	# Grip: with both hands moving the same way the player resists the cart twisting (keeps it tracking when
@@ -265,13 +272,26 @@ func _apply_hands(delta: float) -> void:
 
 	# Tilt: the wrists roll the bar toward a target angle with capped torque.
 	# W lifts the bar (rear wheels up), S presses it down (wheelie). One hand held = that side only.
-	if lift != press:
+	# Keep holding and the lean keeps growing (tip_rate) until the cart passes its balance point; then the
+	# hands slip off (let_go_pitch) and it falls over on its own, nose first for W, onto the handle for S.
+	var tilt_dir := 0 if lift == press else (1 if press else -1)
+	if tilt_dir != _tilt_dir:
+		_tilt_dir = tilt_dir
+		_tilt_time = 0.0
+		_let_go = false
+	if tilt_dir != 0:
+		_tilt_time += delta
+		var pitch := asin(clampf(nose.y, -1, 1))        # + = nose up
+		if pitch * tilt_dir > let_go_pitch or xf.basis.y.y < 0.0:
+			_let_go = true
+	if tilt_dir != 0 and not _let_go:
 		var pitch := asin(clampf(nose.y, -1, 1))        # + = nose up
 		var roll := asin(clampf(side_axis.y, -1, 1))    # + = right side up
 		var sides := 0.0
 		if not none_held and not (held.L and held.R):
 			sides = 1.0 if held.R else -1.0
 		var pitch_t := (lift_pitch if lift else press_pitch) * (0.6 if sides != 0.0 else 1.0)
+		pitch_t += tilt_dir * tip_rate * maxf(0.0, _tilt_time - tip_delay)
 		var roll_t := sides * (1.0 if lift else -1.0) * side_roll
 		var w := frame.angular_velocity
 		var tp := clampf(tilt_kp * (pitch_t - pitch) - tilt_kd * w.dot(side_axis), -tilt_max, tilt_max)

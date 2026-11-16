@@ -1,0 +1,16 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/garage/seat_fabric_color.jpg" id="1_sti10"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/seat_fabric_normal.jpg" id="2_ex2yb"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/seat_fabric_rough.jpg" id="3_pjrq8"]
+
+[resource]
+resource_name = "car_interior"
+albedo_texture = ExtResource("1_sti10")
+roughness_texture = ExtResource("3_pjrq8")
+normal_enabled = true
+normal_texture = ExtResource("2_ex2yb")
+uv1_scale = Vector3(3.3333333, 3.3333333, 3.3333333)
+uv1_triplanar = true
+uv1_triplanar_sharpness = 4.0
+uv1_world_triplanar = true

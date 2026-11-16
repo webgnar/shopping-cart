@@ -1,31 +1,39 @@
 [gd_scene format=4]
 
-[ext_resource type="PackedScene" path="res://assets/models/garage/lamp_post/lamp_post.glb" id="1_q4c1o"]
-[ext_resource type="Material" path="res://assets/materials/garage/dark_metal.tres" id="2_jb0ki"]
-[ext_resource type="Material" path="res://assets/materials/garage/light_fixture.tres" id="3_wyjw0"]
+[ext_resource type="PackedScene" path="res://assets/models/garage/lamp_post/lamp_post.glb" id="1_wyjw0"]
+[ext_resource type="Material" path="res://assets/materials/garage/concrete_pillar.tres" id="2_0mfqo"]
+[ext_resource type="Material" path="res://assets/materials/garage/dark_metal.tres" id="3_1juaq"]
+[ext_resource type="Material" path="res://assets/materials/garage/galvanized.tres" id="4_li0of"]
+[ext_resource type="Material" path="res://assets/materials/garage/light_fixture.tres" id="5_7ih3x"]
 
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_0mfqo"]
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_18pe1"]
 height = 4.5
 radius = 0.1
 
-[node name="LampPost" type="Node3D" unique_id=1994455624]
+[node name="LampPost" type="Node3D" unique_id=695791778]
 
-[node name="Model" parent="." unique_id=31690604 instance=ExtResource("1_q4c1o")]
+[node name="Model" parent="." unique_id=1493074801 instance=ExtResource("1_wyjw0")]
 
-[node name="Post" parent="Model" index="0" unique_id=1840077969]
-surface_material_override/0 = ExtResource("2_jb0ki")
+[node name="Pier" parent="Model" index="0" unique_id=1678695317]
+surface_material_override/0 = ExtResource("2_0mfqo")
 
-[node name="Lens" parent="Model" index="1" unique_id=1993652925]
-surface_material_override/0 = ExtResource("3_wyjw0")
+[node name="Post" parent="Model" index="1" unique_id=1306704273]
+surface_material_override/0 = ExtResource("3_1juaq")
 
-[node name="Pole" type="StaticBody3D" parent="." unique_id=570071744]
+[node name="Bolts" parent="Model" index="2" unique_id=1554396301]
+surface_material_override/0 = ExtResource("4_li0of")
 
-[node name="Collision" type="CollisionShape3D" parent="Pole" unique_id=1107750785]
+[node name="Lens" parent="Model" index="3" unique_id=1973121263]
+surface_material_override/0 = ExtResource("5_7ih3x")
+
+[node name="Pole" type="StaticBody3D" parent="." unique_id=66540781]
+
+[node name="Collision" type="CollisionShape3D" parent="Pole" unique_id=1931694232]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
-shape = SubResource("CylinderShape3D_0mfqo")
+shape = SubResource("CylinderShape3D_18pe1")
 
-[node name="Light" type="OmniLight3D" parent="." unique_id=1343225035]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.2, -0.95)
+[node name="Light" type="OmniLight3D" parent="." unique_id=1289790251]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.25, -0.98)
 light_color = Color(1, 0.8862745, 0.6901961, 1)
 light_energy = 2.5
 omni_range = 14.0

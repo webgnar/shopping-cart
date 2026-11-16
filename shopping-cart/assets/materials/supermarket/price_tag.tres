@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "price_tag"
+albedo_color = Color(0.9490, 0.7608, 0.1882, 1)
+roughness = 0.60

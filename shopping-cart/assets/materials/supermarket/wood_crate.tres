@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "wood_crate"
+albedo_color = Color(0.5412, 0.3843, 0.2235, 1)
+roughness = 0.90

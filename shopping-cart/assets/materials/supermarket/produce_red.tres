@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "produce_red"
+albedo_color = Color(0.7843, 0.1882, 0.1725, 1)
+roughness = 0.50

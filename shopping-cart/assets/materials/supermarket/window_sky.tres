@@ -1,0 +1,9 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "window_sky"
+albedo_color = Color(0.7373, 0.8471, 0.9412, 1)
+roughness = 0.20
+emission_enabled = true
+emission = Color(0.8392, 0.9137, 0.9804, 1)
+emission_energy_multiplier = 1.60
