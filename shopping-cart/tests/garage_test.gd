@@ -38,6 +38,12 @@ func _check(ok: bool, what: String) -> void:
 	print("%-5s %s" % ["PASS" if ok else "FAIL", what])
 
 
+## A steady push at the old middle gear's force, so the hands don't keep ramping up over a long push.
+func _steady(cart: ShoppingCart) -> void:
+	cart.power_base = 45.0
+	cart.power_ramp = 0.0
+
+
 func _run() -> void:
 	await _wait(2.0)
 	var p: Vector3 = main.cart.cart_origin()
@@ -46,7 +52,7 @@ func _run() -> void:
 	for f in FLOORS:
 		var start: Vector3 = f[1]
 		main.spawn_cart(start, f[2])
-		main.cart.set_gear(3)
+		_steady(main.cart)
 		await _wait(0.5)
 		for a in ["push_left", "push_right"]:
 			Input.action_press(a)
@@ -65,7 +71,7 @@ func _run() -> void:
 				f[0], rolled, start.y - end.y, speed * 3.6, end.y - deck, end.z - start.z])
 	# Pushed across the flat halfway landing, the cart carries on straight onto floor 5 without a bump.
 	main.spawn_cart(Vector3(44, 8.0, -3), 0.0)
-	main.cart.set_gear(3)
+	_steady(main.cart)
 	await _wait(0.5)
 	for a in ["push_left", "push_right"]:
 		Input.action_press(a)

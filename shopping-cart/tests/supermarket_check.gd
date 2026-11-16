@@ -20,6 +20,12 @@ func _check(ok: bool, what: String) -> void:
 		failures += 1
 
 
+## A steady push at a fixed force per hand, so the hands don't keep ramping up (and tip the cart) over a long push.
+func _steady(cart: ShoppingCart, newtons: float) -> void:
+	cart.power_base = newtons
+	cart.power_ramp = 0.0
+
+
 func _frames(n: int) -> void:
 	for i in n:
 		await process_frame
@@ -45,6 +51,7 @@ func _run() -> void:
 	var start: Vector3 = main.cart.cart_origin()
 	_check(main.cart.wheels_down() == 4, "spawned at %s on %d / 4 wheels" % [start, main.cart.wheels_down()])
 	await _shot(dir, "1_entrance")
+	_steady(main.cart, 45.0)
 	for a in ["push_left", "push_right"]:
 		Input.action_press(a)
 	await _frames(240)
@@ -71,7 +78,7 @@ func _run() -> void:
 	for c in stack.get_node("Cases").get_children():
 		before.append(c.global_position)
 	main.spawn_cart(Vector3(-13.6, 0, 1.6), 0.0)
-	main.gear = main.cart.set_gear(5)
+	_steady(main.cart, 90.0)
 	main.cam_dist = 3.2
 	main.cam_pitch = 0.38
 	await _frames(30)
@@ -92,6 +99,7 @@ func _run() -> void:
 	var other: ShoppingCart = main.get_node("SpareCarts/FrontAisle")
 	var other_start: Vector3 = other.frame.global_position
 	main.spawn_cart(Vector3(-9.2, 0, 1.4), 0.0)
+	_steady(main.cart, 90.0)
 	await _frames(30)
 	for a in ["push_left", "push_right"]:
 		Input.action_press(a)

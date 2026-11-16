@@ -23,7 +23,10 @@ func _check(name: String, ok: bool, detail: String) -> void:
 	print("%-5s %-26s %s" % ["PASS" if ok else "FAIL", name, detail])
 
 
+## Pushes with both hands at a steady force (the old middle gear's), so a long push doesn't keep ramping up.
 func _push(seconds: float) -> void:
+	main.cart.power_base = 45.0
+	main.cart.power_ramp = 0.0
 	Input.action_press("push_left")
 	Input.action_press("push_right")
 	await _wait(seconds)

@@ -1,6 +1,6 @@
 extends Node3D
 ## Prototype sandbox: slippery store floor with shelves on +X, grippy parking lot with ramp, curb and
-## speed bumps on -X. Q/A = left hand push/pull, E/D = right hand push/pull, W lift, S press, R reset.
+## speed bumps on -X. Q/A = left hand push/pull, E/D = right hand push/pull (hold to push or pull harder), R reset.
 ## The mouse only moves the camera (click to capture, Esc to release, wheel to zoom).
 ##
 ## The level, lights, camera, HUD and the CartSpawn marker are all nodes in the scene (scenes/main.tscn).
@@ -15,13 +15,11 @@ const HUD_SCENE := preload("res://scenes/ui/hud.tscn")
 const KEYS := {
 	"push_left": KEY_Q, "pull_left": KEY_A,
 	"push_right": KEY_E, "pull_right": KEY_D,
-	"lift": KEY_W, "press": KEY_S, "reset": KEY_R,
-	"gear_1": KEY_1, "gear_2": KEY_2, "gear_3": KEY_3, "gear_4": KEY_4, "gear_5": KEY_5,
+	"reset": KEY_R,
 	"fullscreen": KEY_F11,
 }
 
 var cart: ShoppingCart
-var gear := 3   ## push gear, kept across resets
 var camera: Camera3D
 var cam_yaw := 0.0
 var cam_pitch := 0.38
@@ -70,7 +68,6 @@ func spawn_cart(at: Vector3, yaw: float) -> void:
 		cart.free()
 	cart = CART_SCENE.instantiate()
 	cart.name = "Cart"
-	cart.gear = gear
 	cart.transform = Transform3D(Basis(Vector3.UP, yaw), at + Vector3(0, 0.005, 0))
 	add_child(cart)
 	cam_heading = yaw
@@ -83,10 +80,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		elif event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
 			var up: bool = event.button_index == MOUSE_BUTTON_WHEEL_UP
-			if event.ctrl_pressed:   # Ctrl + scroll zooms the camera
-				cam_dist = maxf(1.4, cam_dist * 0.9) if up else minf(9.0, cam_dist * 1.1)
-			else:                    # scroll shifts the push gear
-				gear = cart.set_gear(gear + (1 if up else -1))
+			cam_dist = maxf(1.4, cam_dist * 0.9) if up else minf(9.0, cam_dist * 1.1)
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		cam_yaw -= event.relative.x * 0.004
 		cam_pitch = clampf(cam_pitch + event.relative.y * 0.003, 0.05, 1.3)
@@ -95,8 +89,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("fullscreen"):
 		var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED if fs else DisplayServer.WINDOW_MODE_FULLSCREEN)
-	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode >= KEY_1 and event.physical_keycode <= KEY_5:
-		gear = cart.set_gear(event.physical_keycode - KEY_0)
 	elif event.is_action_pressed("reset"):
 		var p := cart.cart_origin()
 		spawn_cart(Vector3(p.x, 0.05, p.z), cart.heading())
