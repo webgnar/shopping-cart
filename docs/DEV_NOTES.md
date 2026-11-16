@@ -3,6 +3,18 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: floor friction at real-world values
+
+- The floors were tuned by feel: tile 0.18 (very slippery), asphalt and garage concrete 0.9. They now use
+  typical dry sliding friction for polyurethane/rubber caster treads: **asphalt 0.7** and **concrete 0.7**
+  (typical range 0.6 to 0.8), **polished store tile 0.5** (typical range 0.4 to 0.6). Solid (walls,
+  shelves, props) stays 0.5. These are textbook ranges for rubber-like treads on dry surfaces, not
+  measurements of a specific cart.
+- The wheel material stays at friction 1.0 so the floor sets the grip (Godot uses the lower friction of
+  the pair when neither material is rough), and `rolling_resistance` stays 0.015.
+- Effect: the store floor grips much better than before, so the cart slides sideways less on tile.
+  All tests passed without changing any expectations. The mobile game's copy was re-exported.
+
 ## 2026-11-16: the inspector is the source of truth for cart physics
 
 - The Godot game no longer reads `tuning/cart_tuning.json`. Every cart setting is an export on the Cart
