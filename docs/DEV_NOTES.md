@@ -45,6 +45,7 @@ glass, pole vs collar, hanger rod vs anchor). `tests/garage_zfight_test.gd` repo
 **Left out:** no grime gradient at the bottom of walls (triplanar tiles can't know the wall
 height; would need a second UV or a decal pass), glass and light lenses stay flat colour, every
 car has the same plate text.
+
 ## 2026-11-16: in-game debug console
 
 `scenes/ui/console.tscn` (script `scripts/ui/console.gd`), registered as the `Console` autoload in
