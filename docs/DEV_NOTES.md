@@ -3,6 +3,21 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: push lifts the front, pull lifts the back; faster power bars
+
+- zack chose the lift direction: a very hard **push lifts the front wheels** (wheelie) and a very hard
+  **pull lifts the back wheels** onto the front casters, to break the back loose for a drift. The bare
+  physics of a force at the handle (above the centre of mass) is the reverse, so `drive_height` is replaced
+  by `wrist_lever` (0.4 m): each hand twists the cart about its axle line by its full power times that
+  lever (push: nose up, pull: nose down), as if the wrists press or lift the bar while the arms strain.
+  The push and pull themselves now act at the centre of mass height, so they don't tilt the cart on their own.
+- The bars ramp twice as fast (`power_ramp` 60 to 120 N/s, at zack's request). With that, holding both
+  hands lifts the front after about 1.8 s (about 240 N per hand, about 22 km/h) and the back after about
+  2.1 s. Let go right away and it lands on four wheels; keep holding and it goes over. The HUD bars now
+  show up to 400 N.
+- Drifting itself isn't tuned yet: the back wheels lose grip when they lift, and floor friction is at the
+  real-world values from the floor friction change. zack wants to drive it before deciding more.
+
 ## 2026-11-16: hand power bars replace the scroll-wheel gears and W/S
 
 - **Controls.** Q/A (left hand) and E/D (right hand) are the only driving keys. Holding a hand's key ramps

@@ -12,8 +12,8 @@ const SCENARIOS := [
 	["Q left push", ["push_left"], 1.5, "turns_right"],
 	["Q+D spin", ["push_left", "pull_right"], 1.2, "spins_right"],
 	["Q+E short push", ["push_left", "push_right"], 1.2, "flat"],
-	["Q+E hard push", ["push_left", "push_right"], 2.4, "rear_up"],
-	["A+D hard pull", ["pull_left", "pull_right"], 3.2, "wheelie"],
+	["Q+E hard push", ["push_left", "push_right"], 2.1, "wheelie"],
+	["A+D hard pull", ["pull_left", "pull_right"], 2.6, "rear_up"],
 	["tile Q+E push", ["push_left", "push_right"], 1.5, "forward_straight"],
 	["coast then rest", ["coast"], 12.0, "comes_to_rest"],
 	["rested 4 s, then Q+E", ["push_left", "push_right"], 1.5, "wakes_and_moves"],
@@ -172,8 +172,8 @@ func _run() -> void:
 			failures += 1
 		print("%-5s %-18s spinning %+d deg/s, stopped in %.2f s (wheels down at least %d)" % [
 			"PASS" if stop_ok else "FAIL", counter[2], roundi(w0), t_stop, min_wheels])
-	# Hand power tips the cart: keep pushing hard and the rear wheels lift until it goes over onto its nose; keep
-	# pulling hard and the front wheels lift until it goes over onto the handle. Let go as soon as an end lifts
+	# Hand power tips the cart: keep pushing hard and the front wheels lift (wheelie) until it goes over; keep
+	# pulling hard and the rear wheels lift until it goes over. Let go as soon as an end lifts
 	# and it drops back onto four wheels.
 	for tip in [["push", 4.0, true], ["pull", 4.0, true], ["push", 0.0, false], ["pull", 0.0, false]]:
 		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
@@ -187,8 +187,8 @@ func _run() -> void:
 		while held < 6.0:
 			await physics_frame
 			held += 1.0 / Engine.physics_ticks_per_second
-			var end_up := minf(tc.wheels.RL.global_position.y, tc.wheels.RR.global_position.y) if tip[0] == "push" \
-				else minf(tc.wheels.FL.global_position.y, tc.wheels.FR.global_position.y)
+			var end_up := minf(tc.wheels.FL.global_position.y, tc.wheels.FR.global_position.y) if tip[0] == "push" \
+				else minf(tc.wheels.RL.global_position.y, tc.wheels.RR.global_position.y)
 			if end_up > 0.15 and lifted == 0.0:
 				lifted = held
 			if lifted > 0.0 and held >= lifted + tip[1]:
@@ -203,7 +203,7 @@ func _run() -> void:
 		if not tip_ok:
 			failures += 1
 		print("%-5s %-18s %s end lifted after %.1f s, let go %.1f s later: %s (up %.2f, nose pitch %+d deg, wheels down %d)" % [
-			"PASS" if tip_ok else "FAIL", "hard " + tip[0], "rear" if tip[0] == "push" else "front", lifted, tip[1],
+			"PASS" if tip_ok else "FAIL", "hard " + tip[0], "front" if tip[0] == "push" else "rear", lifted, tip[1],
 			"fell over" if fell else "back on its wheels", tb.y.y, pitch, tc.wheels_down()])
 	# Gate swings into the basket when shoved, and stops at its limit.
 	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
