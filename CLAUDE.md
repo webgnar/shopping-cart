@@ -61,7 +61,7 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
 - `scenes/cart/cart.tscn` — the cart rig (frame, gate, casters, wheels, hinge joints, groceries, model).
 - `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun.
   `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
-  (` key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera.
+  (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera.
 - `assets/physics/*.tres` — shared physics materials (tile, asphalt, solid).
 - `scripts/` — behaviour scripts for the scenes above.
 - `tools/` (repo root) — Blender builder and export scripts. `docs/DEV_NOTES.md` — dev notes.

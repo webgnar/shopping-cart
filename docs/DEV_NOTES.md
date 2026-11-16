@@ -6,7 +6,7 @@ triangle count and file size for new models, judgment calls, what was left out, 
 ## 2026-11-16: in-game debug console
 
 `scenes/ui/console.tscn` (script `scripts/ui/console.gd`), registered as the `Console` autoload in
-`project.godot`, so it is there in every level. The ` / ~ key (physical key, so it works on any
+`project.godot`, so it is there in every level. The tilde key (` / ~, matched by physical key, so it works on any
 layout) opens it; while open the game is paused and the mouse is free. Esc closes it, Up / Down
 recall earlier commands. Commands: `help`, `clear`, `where`, and one fast-travel command per entry
 in the `destinations` export on the Console node: `plot` (parking lot), `garage`, `market`
