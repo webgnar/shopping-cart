@@ -11,15 +11,19 @@
 [node name="Model" parent="." unique_id=347437388 instance=ExtResource("1_bnhev")]
 
 [node name="Pipe" parent="Model" index="0" unique_id=667313263]
+cast_shadow = 0
 surface_material_override/0 = ExtResource("2_sl8wx")
 
 [node name="Fittings" parent="Model" index="1" unique_id=412450998]
+cast_shadow = 0
 surface_material_override/0 = ExtResource("3_110eu")
 
 [node name="Hanger" parent="Model" index="2" unique_id=1068035629]
+cast_shadow = 0
 surface_material_override/0 = ExtResource("4_pasm2")
 
 [node name="Head" parent="Model" index="3" unique_id=1827839298]
+cast_shadow = 0
 surface_material_override/0 = ExtResource("5_518g2")
 
 [editable path="Model"]
