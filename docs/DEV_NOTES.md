@@ -3,6 +3,18 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: in-game debug console
+
+`scenes/ui/console.tscn` (script `scripts/ui/console.gd`), registered as the `Console` autoload in
+`project.godot`, so it is there in every level. The tilde key (` / ~, matched by physical key, so it works on any
+layout) opens it; while open the game is paused and the mouse is free. Esc closes it, Up / Down
+recall earlier commands. Commands: `help`, `clear`, `where`, and one fast-travel command per entry
+in the `destinations` export on the Console node: `plot` (parking lot), `garage`, `market`
+(`res://scenes/levels/supermarket.tscn`, which says it isn't built yet until that level lands) and
+`sandbox` (`main.tscn`). Travel uses `change_scene_to_file`, so the level spawns the cart at its own
+`CartSpawn`. Add a destination in the inspector; add other commands with `_add_command` in
+`_ready`. Test: `godot --headless --fixed-fps 120 -s res://tests/console_test.gd`.
+
 ## 2026-11-16: parking lot level
 
 `scenes/levels/parking_lot.tscn` (root script `main.gd`): a supermarket lot at night, from zack's
