@@ -1,20 +1,24 @@
 [gd_scene format=4]
 
-[ext_resource type="PackedScene" path="res://assets/models/garage/garage_light/garage_light.glb" id="1_ldlc5"]
-[ext_resource type="Material" path="res://assets/materials/garage/dark_metal.tres" id="2_hrbmu"]
-[ext_resource type="Material" path="res://assets/materials/garage/light_fixture.tres" id="3_vdoi3"]
+[ext_resource type="PackedScene" path="res://assets/models/garage/garage_light/garage_light.glb" id="1_hrbmu"]
+[ext_resource type="Material" path="res://assets/materials/garage/white_enamel.tres" id="2_vdoi3"]
+[ext_resource type="Material" path="res://assets/materials/garage/light_fixture.tres" id="3_76rmf"]
+[ext_resource type="Material" path="res://assets/materials/garage/galvanized.tres" id="4_asyxb"]
 
-[node name="GarageLight" type="Node3D" unique_id=2073932636]
+[node name="GarageLight" type="Node3D" unique_id=2145392370]
 
-[node name="Model" parent="." unique_id=131211269 instance=ExtResource("1_ldlc5")]
+[node name="Model" parent="." unique_id=603449689 instance=ExtResource("1_hrbmu")]
 
-[node name="Housing" parent="Model" index="0" unique_id=1880381686]
-surface_material_override/0 = ExtResource("2_hrbmu")
+[node name="Housing" parent="Model" index="0" unique_id=1067561648]
+surface_material_override/0 = ExtResource("2_vdoi3")
 
-[node name="Tubes" parent="Model" index="1" unique_id=2027941025]
-surface_material_override/0 = ExtResource("3_vdoi3")
+[node name="Tubes" parent="Model" index="1" unique_id=397603593]
+surface_material_override/0 = ExtResource("3_76rmf")
 
-[node name="Light" type="OmniLight3D" parent="." unique_id=2095202454]
+[node name="Guard" parent="Model" index="2" unique_id=1338714952]
+surface_material_override/0 = ExtResource("4_asyxb")
+
+[node name="Light" type="OmniLight3D" parent="." unique_id=1384325892]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0)
 light_color = Color(0.93333334, 0.9529412, 1, 1)
 light_energy = 1.4

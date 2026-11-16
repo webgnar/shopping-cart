@@ -1,5 +1,16 @@
 [gd_resource type="StandardMaterial3D" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/textures/garage/paint_white_color.jpg" id="1_eranq"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/paint_white_normal.jpg" id="2_yp4e0"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/paint_white_rough.jpg" id="3_cjmh7"]
+
 [resource]
-albedo_color = Color(0.9137255, 0.90588236, 0.8627451, 1)
-roughness = 0.6
+resource_name = "paint_white"
+albedo_texture = ExtResource("1_eranq")
+roughness_texture = ExtResource("3_cjmh7")
+normal_enabled = true
+normal_texture = ExtResource("2_yp4e0")
+uv1_scale = Vector3(0.5, 0.5, 0.5)
+uv1_triplanar = true
+uv1_triplanar_sharpness = 4.0
+uv1_world_triplanar = true

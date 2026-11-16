@@ -1,0 +1,18 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/garage/brushed_metal_color.jpg" id="1_fftch"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/brushed_metal_normal.jpg" id="2_vg67l"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/brushed_metal_rough.jpg" id="3_twaeo"]
+
+[resource]
+resource_name = "rim_metal"
+albedo_color = Color(0.78431374, 0.7921569, 0.8039216, 1)
+albedo_texture = ExtResource("1_fftch")
+metallic = 0.8
+roughness_texture = ExtResource("3_twaeo")
+normal_enabled = true
+normal_texture = ExtResource("2_vg67l")
+uv1_scale = Vector3(1.6666666, 1.6666666, 1.6666666)
+uv1_triplanar = true
+uv1_triplanar_sharpness = 4.0
+uv1_world_triplanar = true

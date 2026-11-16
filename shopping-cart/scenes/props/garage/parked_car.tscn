@@ -1,57 +1,113 @@
 [gd_scene format=4]
 
-[ext_resource type="Script" path="res://scripts/props/parked_car.gd" id="1_87sds"]
-[ext_resource type="PackedScene" path="res://assets/models/garage/parked_car/parked_car.glb" id="2_duoon"]
-[ext_resource type="Material" path="res://assets/materials/garage/car_paint.tres" id="3_ueva2"]
-[ext_resource type="Material" path="res://assets/materials/garage/car_glass.tres" id="4_bqhmf"]
-[ext_resource type="Material" path="res://assets/materials/garage/trim_black.tres" id="5_cjwi5"]
-[ext_resource type="Material" path="res://assets/materials/garage/headlight.tres" id="6_rihor"]
-[ext_resource type="Material" path="res://assets/materials/garage/taillight.tres" id="7_w4kwy"]
-[ext_resource type="Material" path="res://assets/materials/garage/plate.tres" id="8_0cox7"]
-[ext_resource type="Material" path="res://assets/materials/garage/rubber.tres" id="9_a5b3j"]
-[ext_resource type="Material" path="res://assets/materials/garage/chrome.tres" id="10_ahou3"]
+[ext_resource type="Script" path="res://scripts/props/parked_car.gd" id="1_bqhmf"]
+[ext_resource type="PackedScene" path="res://assets/models/garage/parked_car/parked_car.glb" id="2_cjwi5"]
+[ext_resource type="Material" path="res://assets/materials/garage/car_paint.tres" id="3_rihor"]
+[ext_resource type="Material" path="res://assets/materials/garage/car_glass.tres" id="4_w4kwy"]
+[ext_resource type="Material" path="res://assets/materials/garage/car_interior.tres" id="5_0cox7"]
+[ext_resource type="Material" path="res://assets/materials/garage/trim_black.tres" id="6_a5b3j"]
+[ext_resource type="Material" path="res://assets/materials/garage/chrome.tres" id="7_ahou3"]
+[ext_resource type="Material" path="res://assets/materials/garage/headlight.tres" id="8_ewdxx"]
+[ext_resource type="Material" path="res://assets/materials/garage/taillight.tres" id="9_8xfld"]
+[ext_resource type="Material" path="res://assets/materials/garage/indicator.tres" id="10_c1h0x"]
+[ext_resource type="Material" path="res://assets/materials/garage/plate.tres" id="11_ihiwa"]
+[ext_resource type="Material" path="res://assets/materials/garage/rubber.tres" id="12_sf52n"]
+[ext_resource type="Material" path="res://assets/materials/garage/rim_metal.tres" id="13_jk7qt"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_ewdxx"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_v7dyw"]
 size = Vector3(1.8, 0.85, 4.5)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_8xfld"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_ghm2v"]
 size = Vector3(1.6, 0.5, 2.3)
 
-[node name="ParkedCar" type="StaticBody3D" unique_id=853654300]
-script = ExtResource("1_87sds")
+[node name="ParkedCar" type="StaticBody3D" unique_id=709724472]
+script = ExtResource("1_bqhmf")
 
-[node name="Model" parent="." unique_id=684567186 instance=ExtResource("2_duoon")]
+[node name="Model" parent="." unique_id=615410003 instance=ExtResource("2_cjwi5")]
 
-[node name="Body" parent="Model" index="0" unique_id=2081793529]
-surface_material_override/0 = ExtResource("3_ueva2")
+[node name="Body" parent="Model" index="0" unique_id=143116319]
+surface_material_override/0 = ExtResource("3_rihor")
 
-[node name="Windows" parent="Model" index="1" unique_id=824829170]
-surface_material_override/0 = ExtResource("4_bqhmf")
+[node name="Windows" parent="Model" index="1" unique_id=587805878]
+surface_material_override/0 = ExtResource("4_w4kwy")
 
-[node name="Trim" parent="Model" index="2" unique_id=389698237]
-surface_material_override/0 = ExtResource("5_cjwi5")
+[node name="Interior" parent="Model" index="2" unique_id=505479540]
+surface_material_override/0 = ExtResource("5_0cox7")
 
-[node name="Headlights" parent="Model" index="3" unique_id=1621738972]
-surface_material_override/0 = ExtResource("6_rihor")
+[node name="Trim" parent="Model" index="3" unique_id=624514198]
+surface_material_override/0 = ExtResource("6_a5b3j")
 
-[node name="Taillights" parent="Model" index="4" unique_id=1474722984]
-surface_material_override/0 = ExtResource("7_w4kwy")
+[node name="Chrome" parent="Model" index="4" unique_id=1067929345]
+surface_material_override/0 = ExtResource("7_ahou3")
 
-[node name="Plates" parent="Model" index="5" unique_id=1454614957]
-surface_material_override/0 = ExtResource("8_0cox7")
+[node name="Headlights" parent="Model" index="5" unique_id=1783417579]
+surface_material_override/0 = ExtResource("8_ewdxx")
 
-[node name="Tyres" parent="Model" index="6" unique_id=490530927]
-surface_material_override/0 = ExtResource("9_a5b3j")
+[node name="Taillights" parent="Model" index="6" unique_id=407000470]
+surface_material_override/0 = ExtResource("9_8xfld")
 
-[node name="Hubs" parent="Model" index="7" unique_id=281964728]
-surface_material_override/0 = ExtResource("10_ahou3")
+[node name="Indicators" parent="Model" index="7" unique_id=929086291]
+surface_material_override/0 = ExtResource("10_c1h0x")
 
-[node name="BodyCollision" type="CollisionShape3D" parent="." unique_id=1888304157]
+[node name="Plates" parent="Model" index="8" unique_id=944054767]
+surface_material_override/0 = ExtResource("11_ihiwa")
+
+[node name="TyreFL" parent="Model" index="9" unique_id=1125563502]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 0.33, -1.4)
+surface_material_override/0 = ExtResource("12_sf52n")
+
+[node name="RimFL" parent="Model" index="10" unique_id=1916454172]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 0.33, -1.4)
+surface_material_override/0 = ExtResource("13_jk7qt")
+
+[node name="TyreBL" parent="Model" index="11" unique_id=559917132]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 0.33, 1.4)
+surface_material_override/0 = ExtResource("12_sf52n")
+
+[node name="RimBL" parent="Model" index="12" unique_id=575962869]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.8, 0.33, 1.4)
+surface_material_override/0 = ExtResource("13_jk7qt")
+
+[node name="TyreFR" parent="Model" index="13" unique_id=59656867]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0.33, -1.4)
+surface_material_override/0 = ExtResource("12_sf52n")
+
+[node name="RimFR" parent="Model" index="14" unique_id=313122028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0.33, -1.4)
+surface_material_override/0 = ExtResource("13_jk7qt")
+
+[node name="TyreBR" parent="Model" index="15" unique_id=446994726]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0.33, 1.4)
+surface_material_override/0 = ExtResource("12_sf52n")
+
+[node name="RimBR" parent="Model" index="16" unique_id=1989604306]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0.33, 1.4)
+surface_material_override/0 = ExtResource("13_jk7qt")
+
+[node name="BodyCollision" type="CollisionShape3D" parent="." unique_id=521346137]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
-shape = SubResource("BoxShape3D_ewdxx")
+shape = SubResource("BoxShape3D_v7dyw")
 
-[node name="CabinCollision" type="CollisionShape3D" parent="." unique_id=1199064832]
+[node name="CabinCollision" type="CollisionShape3D" parent="." unique_id=1831692530]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0.2)
-shape = SubResource("BoxShape3D_8xfld")
+shape = SubResource("BoxShape3D_ghm2v")
+
+[node name="FrontPlateText" type="Label3D" parent="." unique_id=1894165378]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 0.42, -2.322)
+pixel_size = 0.002
+double_sided = false
+modulate = Color(0.11764706, 0.16470589, 0.27058825, 1)
+text = "GRG 4K2"
+font_size = 44
+outline_size = 0
+
+[node name="RearPlateText" type="Label3D" parent="." unique_id=1371151109]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.42, 2.322)
+pixel_size = 0.002
+double_sided = false
+modulate = Color(0.11764706, 0.16470589, 0.27058825, 1)
+text = "GRG 4K2"
+font_size = 44
+outline_size = 0
 
 [editable path="Model"]

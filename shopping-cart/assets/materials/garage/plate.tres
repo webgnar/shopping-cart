@@ -1,5 +1,18 @@
 [gd_resource type="StandardMaterial3D" format=3]
 
+[ext_resource type="Texture2D" path="res://assets/textures/garage/sign_paint_color.jpg" id="1_qg55l"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/sign_paint_normal.jpg" id="2_pm8yt"]
+[ext_resource type="Texture2D" path="res://assets/textures/garage/sign_paint_rough.jpg" id="3_04vai"]
+
 [resource]
+resource_name = "plate"
 albedo_color = Color(0.9490196, 0.9411765, 0.9019608, 1)
-roughness = 0.6
+albedo_texture = ExtResource("1_qg55l")
+roughness_texture = ExtResource("3_04vai")
+normal_enabled = true
+normal_scale = 0.3
+normal_texture = ExtResource("2_pm8yt")
+uv1_scale = Vector3(1.25, 1.25, 1.25)
+uv1_triplanar = true
+uv1_triplanar_sharpness = 4.0
+uv1_world_triplanar = true
