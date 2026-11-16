@@ -14,8 +14,6 @@ const SCENARIOS := [
 	["S front up", ["press"], 1.5, "wheelie"],
 	["W back up", ["lift"], 1.5, "rear_up"],
 	["W+E right side up", ["lift", "push_right"], 1.5, "right_up"],
-	["S held 4 s", ["press"], 4.0, "lean_holds"],
-	["W held 4 s", ["lift"], 4.0, "lean_holds"],
 	["Q+E short push", ["push_left", "push_right"], 1.2, "flat"],
 	["Q+E hard push", ["push_left", "push_right"], 2.1, "wheelie"],
 	["A+D hard pull", ["pull_left", "pull_right"], 2.6, "rear_up"],
@@ -86,7 +84,6 @@ func _run() -> void:
 			"wheelie": ok = max_front > 0.12 and max_rear < 0.09
 			"rear_up": ok = max_rear > 0.10 and max_front < 0.09
 			"right_up": ok = max_right_up > 5
-			"lean_holds": ok = (max_front > 0.12 or max_rear > 0.10) and cart.frame.global_transform.basis.y.y > 0.8
 			"flat": ok = along > 2.0 and max_rear < 0.09 and max_front < 0.09 and cart.wheels_down() == 4
 			"wakes_and_moves": ok = along > 1.0
 			"comes_to_rest": ok = cart.frame.freeze
@@ -215,6 +212,41 @@ func _run() -> void:
 		print("%-5s %-18s %s end lifted after %.1f s, let go %.1f s later: %s (up %.2f, nose pitch %+d deg, wheels down %d)" % [
 			"PASS" if tip_ok else "FAIL", "hard " + tip[0], "front" if tip[0] == "push" else "rear", lifted, tip[1],
 			"fell over" if fell else "back on its wheels", tb.y.y, pitch, tc.wheels_down()])
+	# Holding W or S keeps tipping the cart until it falls over (W onto its nose, S back onto the handle); a short
+	# hold only leans it and it drops back onto four wheels. Then, let go and hold the same key: it hauls the cart
+	# back up.
+	for tip in [["press", 4.0, true], ["lift", 4.0, true], ["press", 0.8, false], ["lift", 0.8, false]]:
+		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
+		await _wait(1.0)
+		var tc: ShoppingCart = main.cart
+		Input.action_press(tip[0])
+		await _wait(tip[1])
+		Input.action_release(tip[0])
+		await _wait(3.0)
+		var tb := tc.frame.global_transform.basis
+		var fell := tb.y.y < 0.4
+		var pitch := roundi(rad_to_deg(asin(clampf(tb.x.y, -1, 1))))
+		var tip_ok: bool = fell == tip[2] and (fell or tc.wheels_down() == 4)
+		if fell:
+			tip_ok = tip_ok and (pitch > 45 if tip[0] == "press" else pitch < -45)
+		var back := ""
+		if fell:
+			Input.action_press(tip[0])
+			var t_up := -1.0
+			for i in int(5.0 * Engine.physics_ticks_per_second):
+				await physics_frame
+				if tc.frame.global_transform.basis.y.y > 0.95:
+					t_up = float(i + 1) / Engine.physics_ticks_per_second
+					break
+			Input.action_release(tip[0])
+			await _wait(3.0)
+			tip_ok = tip_ok and t_up > 0.0 and tc.wheels_down() == 4
+			back = ", same key again: %s, %d / 4 wheels down" % [("upright in %.2f s" % t_up) if t_up > 0.0 else "still down", tc.wheels_down()]
+		if not tip_ok:
+			failures += 1
+		print("%-5s %-18s held %.1f s: %s (nose pitch %+d deg)%s" % [
+			"PASS" if tip_ok else "FAIL", ("S" if tip[0] == "press" else "W") + " held", tip[1],
+			"fell over" if fell else "back on its wheels", pitch, back])
 	# Getting back up: tip the cart over (hard push, hard pull) or lay it on its side, let go, then hold one hand
 	# key. The hand hauls it back onto its wheels without shoving it across the floor.
 	for setup in ["push", "pull", "side"]:
