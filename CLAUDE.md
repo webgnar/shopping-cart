@@ -1,9 +1,11 @@
 # Shopping Cart
 
-The game lives in `shopping-cart/` (Godot 4.7, Jolt physics). `mobile/` is a three.js web version,
-`tools/` holds Blender scripts. The Godot cart scene is the source of truth for how the cart drives;
-`shopping-cart/tools/export_cart_tuning.gd` copies its settings to the mobile game (`tuning/cart_tuning.json`,
-`mobile/cart_tuning.js`). Never read the JSON from the Godot game.
+The game lives in `shopping-cart/` (Godot 4.7, Jolt physics). `mobile/` is the in-browser version (three.js +
+Rapier, phones and computers; see `mobile/README.md`), `tools/` holds Blender scripts. The Godot scenes are the
+source of truth: `shopping-cart/tools/export_cart_tuning.gd` copies the cart's settings to the browser game
+(`tuning/cart_tuning.json`, `mobile/cart_tuning.js`) and `shopping-cart/tools/export_mobile_levels_cli.gd` copies
+every fast-travel level and the cart rig (`mobile/levels/`). Never read those files from the Godot game. After
+changing the cart or a level, run both exports (the sync tests below fail until you do).
 
 ## How we build: scenes first
 
@@ -78,6 +80,9 @@ From `shopping-cart/`:
 - Console test: `godot --headless --fixed-fps 120 -s res://tests/console_test.gd`
 - Tuning in sync with the mobile game: `godot --headless -s res://tests/tuning_sync_test.gd`
   (fix with `godot --headless -s res://tools/export_cart_tuning_cli.gd`)
+- Levels and cart rig in sync with the browser game: `godot --headless -s res://tests/mobile_levels_sync_test.gd`
+  (fix with `godot --headless -s res://tools/export_mobile_levels_cli.gd`)
+- Browser game (from the repo root): `node mobile/test/drive_test.js`
 - Camera never clips into levels (all levels): `godot --headless --fixed-fps 120 -s res://tests/camera_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`

@@ -3,6 +3,52 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-16: browser version brought up to date with the Godot game
+
+The browser build (`mobile/`, three.js + Rapier) is the itch.io in-browser version, so it now plays the Godot
+levels and cart instead of its own sandbox. Nothing is rebuilt by hand: export tools copy the Godot scenes.
+
+- **Levels:** `tools/mobile_level_export.gd` loads each console fast-travel destination as the game does, then
+  writes `mobile/levels/<key>.glb` (meshes and materials, glTF exporter, textures shrunk to 512 px JPEG) and
+  `<key>.json` (every collision shape with its friction, loose props with mass and shapes, CartSpawn, spare carts,
+  WorldEnvironment sky/ambient/fog/tonemap, the sun, lamps, Label3D text). Sizes: sandbox 18 KB, parking lot
+  2.6 MB, garage 4.6 MB, supermarket 1.2 MB of glb. The phone merges static meshes per material within 24 m
+  cells (garage: 1,835 meshes become 222) so it draws a few hundred meshes.
+- **Cart:** `levels/cart.json` is the rig from `scenes/cart/cart.tscn` (10 bodies, 9 hinges with limits,
+  groceries, guard zone) and the six cart materials from `assets/materials/cart/*.tres`. `models/cart.glb`
+  (`tools/export_mobile_model.py`) now starts from the Godot model `shopping_cart.glb`, so it has the child seat
+  and flap pivots and the material names: 447,934 faces decimated to 84,685 (budget 1,000 per part, never below
+  15 %), 10 meshes, 2.5 MB. It replaces the old base64 `cart_model_mobile.js` (no materials).
+- **Behaviour:** `mobile/game/cart.js` ports `scripts/cart.gd` line for line: hand power bars (ramp, relax,
+  sprint cap), wrist lever wheelies, braking with planted arms, spin brace, W/S lean with the long-hold flip
+  (PRs #20, #21), getting back up with hand keys or W/S, settling and pinning, guard zone wake-up, rolling
+  resistance. Spare carts collide with the player's cart (each cart gets its own collision bit, so its own parts
+  never touch). The follow camera ports `cart_camera.gd` (sphere sweep, rise over walls, pull in under ceilings).
+- **Jolt finding:** Jolt caps every body's spin at 47 rad/s (`max_angular_velocity`, 0.25 * pi * 60). The cart's
+  6.35 cm wheels hit that at 3 m/s (10.8 km/h), so above a fast walk the Godot cart's wheels skid and drag: a
+  300 N push for 1 s reaches 6.4 m/s in Godot against 9.9 m/s with free wheels. The Godot cart is tuned with
+  that drag, so the browser cart caps its wheels the same way. Left as is in Godot; raising
+  `physics/jolt_physics_3d/simulation/max_angular_velocity` would change how the cart drives.
+- **Lamps:** the levels have 28 to 53 lamps, too many for a phone to shade. A fixed pool of lights (phones 4
+  point + 3 spot, computers 6 + 5) moves to the lamps nearest the cart; light energy is multiplied by pi as
+  Godot does. On phones the level casts no sun shadows (the carts still do), to keep the garage's 511k
+  triangles affordable.
+- **Controls:** phones get a push/pull rocker per hand in the bottom corners (above the middle pushes, below
+  pulls, hold to ramp, as the keys do), phone tilt or two buttons for W/S, a look-drag at the top, and a Level
+  menu. Computers get the Godot keys, pointer-lock mouse look, wheel zoom and the ` console with the same
+  commands. The page picks by pointer type and switches on the first touch or game key.
+- **Small differences from Godot:** wheels count as down when something solid is right under them (Godot checks
+  y < radius, so its HUD reads 0/4 on the garage's upper floors). R respawns on the floor under the cart (Godot
+  drops it to y = 0.05). A cart that falls off the edge of the world respawns at CartSpawn.
+- **Tests:** `node mobile/test/drive_test.js` runs the Godot drive test's checks in the browser (all pass) plus
+  every level, cart-to-cart, camera, touch, keys and console. `tests/mobile_levels_sync_test.gd` fails when a
+  level or the cart changed since the last export. `cart_tuning_export.gd` now drops settings the cart no longer
+  has (the old gears and drive_height were still in the file), and `arm_relax_rate`, `settle_brake` and
+  `stop_delay` joined `ShoppingCart.TUNING_KEYS`.
+- **Not ported:** baked lighting and Godot's per-pixel lamps (pooled instead), Label3D fonts (drawn with the page's
+  font), the HUD's turn-rate decimals. three.js and Rapier are vendored in `mobile/vendor/` (2.9 MB) so the game
+  and its test run without a CDN.
+
 ## 2026-11-16: W/S tip the cart over again, and haul it back up
 
 - zack asked for the old long-hold flip back: holding W or S leans the cart, and after `tip_delay` (0.6 s) the

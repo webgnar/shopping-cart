@@ -137,7 +137,7 @@ const TUNING_KEYS := ["power_base", "power_ramp", "power_relax", "sprint_speed",
 	"fallen_upright", "fallen_still", "stood_upright",
 	"rolling_resistance", "grip_yaw_damping", "spin_grip", "spin_grip_min",
 	"settle_speed", "settle_spin", "stop_speed", "stop_spin",
-	"arm_reach", "brake_spring", "brake_damping", "brake_max"]
+	"arm_reach", "brake_spring", "brake_damping", "brake_max", "arm_relax_rate", "settle_brake", "stop_delay"]
 
 
 func tuning() -> Dictionary:

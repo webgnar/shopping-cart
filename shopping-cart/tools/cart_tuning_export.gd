@@ -27,6 +27,11 @@ static func current() -> Dictionary:
 	t["floor_friction"] = floors
 	for k in t:
 		out[k] = _tidy(t[k])
+	# Drop settings the cart no longer has (and their notes), so the mobile game never reads stale ones.
+	for k in out.keys():
+		var base: String = k.trim_prefix("_")
+		if k != "_about" and not t.has(base):
+			out.erase(k)
 	out["_about"] = ABOUT
 	return out
 

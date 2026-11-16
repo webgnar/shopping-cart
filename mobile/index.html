@@ -5,15 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#12151b">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Shopping Cart</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* One visual world: dim store and parking lot, shelf-tag HUD, two thumb zones split down the middle. */
+/* Shelf-tag HUD over the game. Phones: a push / pull rocker per hand in the bottom corners. Computers: keycaps. */
 :root {
   --ink: #eceef2; --muted: #a2a9b6; --panel: rgba(18, 21, 27, 0.78); --rule: #2e3542;
-  --tag: #ffd23f; --push: #3ddc84; --pull: #ff6b6b; --lift: #5aa9ff;
+  --tag: #ffd23f; --push: #3ddc84; --pull: #ff6b6b;
   --display: "Barlow Condensed", "Arial Narrow", sans-serif;
   --body: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
   --safe-l: env(safe-area-inset-left, 0px); --safe-r: env(safe-area-inset-right, 0px);
@@ -21,634 +22,159 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; background: #12151b; color: var(--ink); font: 14px/1.4 var(--body); overflow: hidden;
   touch-action: none; user-select: none; -webkit-user-select: none; overscroll-behavior: none; }
 canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; }
 .hud { position: fixed; pointer-events: none; z-index: 2; }
-.stats { top: calc(10px + var(--safe-t)); left: calc(12px + var(--safe-l)); background: var(--panel); border: 1px solid var(--rule);
-  border-radius: 8px; padding: 6px 10px; font: 500 12px/1.6 var(--mono); font-variant-numeric: tabular-nums; }
-.stats b { font-size: 18px; font-family: var(--display); letter-spacing: .02em; }
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; }
+.stats { top: calc(10px + var(--safe-t)); left: calc(12px + var(--safe-l)); padding: 6px 10px; font: 500 12px/1.6 var(--mono);
+  font-variant-numeric: tabular-nums; }
+.stats b { font-size: 20px; font-family: var(--display); letter-spacing: .02em; }
 .stats span { color: var(--muted); }
-.tools { top: calc(10px + var(--safe-t)); right: calc(12px + var(--safe-r)); display: flex; gap: 8px; pointer-events: auto; }
+.stats .lv { font: 700 13px/1 var(--display); text-transform: uppercase; letter-spacing: .06em; color: var(--tag); margin-bottom: 3px; }
+.tools { top: calc(10px + var(--safe-t)); right: calc(12px + var(--safe-r)); display: flex; gap: 8px; pointer-events: auto; flex-wrap: wrap; justify-content: flex-end; max-width: 60vw; }
 .chip { font: 600 13px/1 var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 999px;
-  padding: 9px 14px; min-height: 40px; }
-.chip:focus-visible { outline: 2px solid var(--tag); outline-offset: 2px; }
+  padding: 9px 14px; min-height: 40px; cursor: pointer; }
+.chip:focus-visible, .lvl:focus-visible { outline: 2px solid var(--tag); outline-offset: 2px; }
 .chip b { color: var(--tag); }
-/* Thumb meters: one per hand, pinned to the bottom corners */
-.meter { bottom: calc(14px + var(--safe-b)); width: 64px; display: grid; gap: 6px; justify-items: center; }
-.meter.l { left: calc(14px + var(--safe-l)); } .meter.r { right: calc(14px + var(--safe-r)); }
-.meter .track { position: relative; width: 22px; height: 128px; border-radius: 11px; background: rgba(38, 44, 56, .85); border: 1px solid #4a5263; overflow: hidden; }
-.meter .mid { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #4a5263; }
-.meter .fill { position: absolute; left: 0; right: 0; height: 0; }
-.meter .label { font: 700 13px/1 var(--display); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
-.meter .val { font: 500 11px/1 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
-.tilt { bottom: calc(14px + var(--safe-b)); left: 50%; transform: translateX(-50%); font: 500 12px var(--mono); color: var(--muted);
-  background: var(--panel); border: 1px solid var(--rule); border-radius: 999px; padding: 5px 12px; white-space: nowrap; }
-/* Thumb knobs drawn where each thumb is */
-.knob { position: fixed; width: 76px; height: 76px; margin: -38px 0 0 -38px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55);
-  background: rgba(255,255,255,.08); pointer-events: none; z-index: 2; display: none; }
-.knob::after { content: ""; position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: var(--ink); opacity: .9; }
-.knob .rail { position: absolute; left: 50%; width: 2px; margin-left: -1px; top: -60px; bottom: -60px; background: rgba(255,255,255,.18); }
-/* Start screen */
-#start { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; background: rgba(12, 14, 19, .9);
-  padding: calc(16px + var(--safe-t)) calc(16px + var(--safe-r)) calc(16px + var(--safe-b)) calc(16px + var(--safe-l)); }
-.card { max-width: 560px; display: grid; gap: 14px; text-align: center; }
+body:not(.touch) .touch-only, body:not(.desk) .desk-only { display: none !important; }
+.hands { bottom: calc(64px + var(--safe-b)); left: 50%; transform: translateX(-50%); padding: 6px 12px; font: 500 12px/1.5 var(--mono);
+  white-space: pre; color: var(--muted); text-align: center; }
+body.touch .hands { bottom: auto; top: calc(10px + var(--safe-t)); font-size: 11px; display: none; }
+.fps { bottom: 4px; right: 8px; font: 500 10px var(--mono); color: #5d6575; }
+
+/* One hand: a push / pull rocker (phones) or two keycaps (computers), with that hand's power bar. */
+.hand { bottom: calc(14px + var(--safe-b)); display: flex; align-items: flex-end; gap: 10px; }
+.hand.l { left: calc(14px + var(--safe-l)); } .hand.r { right: calc(14px + var(--safe-r)); flex-direction: row-reverse; }
+.bar { display: grid; gap: 5px; justify-items: center; }
+.bar .track { position: relative; width: 18px; height: 150px; border-radius: 9px; background: rgba(38, 44, 56, .85); border: 1px solid #4a5263; overflow: hidden; }
+.bar .mid { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #6a7385; }
+.bar .push { position: absolute; left: 0; right: 0; bottom: 50%; height: 0; background: var(--push); }
+.bar .pull { position: absolute; left: 0; right: 0; top: 50%; height: 0; background: var(--pull); }
+.bar .n { font: 500 11px/1 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 44px; text-align: center; }
+.rocker { width: 96px; height: 196px; border-radius: 48px; border: 2px solid rgba(255,255,255,.35); background: rgba(18,21,27,.45);
+  display: grid; grid-template-rows: 1fr 1fr; overflow: hidden; }
+.rocker div { display: grid; place-items: center; font: 700 15px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+.rocker div + div { border-top: 1px solid rgba(255,255,255,.25); }
+.rocker[data-dir="push"] .p { background: rgba(61,220,132,.55); color: #fff; }
+.rocker[data-dir="pull"] .q { background: rgba(255,107,107,.55); color: #fff; }
+.keys { display: grid; gap: 6px; }
+.cap { display: grid; grid-template-columns: 30px auto; align-items: center; gap: 6px; font: 600 11px/1 var(--body); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.cap kbd { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 6px; background: #262c38; border: 1px solid #4a5263;
+  border-bottom-width: 3px; font: 700 15px/1 var(--display); color: var(--ink); }
+.cap.on kbd { background: var(--tag); color: #12151b; border-color: #b8961c; }
+.hand.r .cap { grid-template-columns: auto 30px; text-align: right; } .hand.r .cap kbd { order: 2; }
+.lean { bottom: calc(14px + var(--safe-b)); left: 50%; transform: translateX(-50%); display: flex; gap: 10px; pointer-events: auto; align-items: center; }
+.lean button { font: 700 14px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); background: var(--panel);
+  border: 1px solid #4a5263; border-radius: 12px; padding: 0 14px; min-height: 52px; min-width: 84px; touch-action: none; }
+.lean button.on { background: #5aa9ff; color: #0b1220; border-color: #5aa9ff; }
+.lean .tilt { font: 500 11px var(--mono); color: var(--muted); }
+.lean .desk-keys { display: flex; gap: 10px; }
+
+/* Start screen, level menu, loading */
+.overlay { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; background: rgba(12, 14, 19, .9);
+  padding: calc(16px + var(--safe-t)) calc(16px + var(--safe-r)) calc(16px + var(--safe-b)) calc(16px + var(--safe-l)); overflow: auto; }
+.card { max-width: 620px; display: grid; gap: 14px; text-align: center; }
 .card h1 { margin: 0; font: 700 clamp(34px, 8vw, 54px)/0.95 var(--display); text-transform: uppercase; letter-spacing: .01em; }
 .card h1 span { color: #ff5257; }
+.card h2 { margin: 0; font: 700 20px/1 var(--display); text-transform: uppercase; letter-spacing: .06em; }
 .how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: left; font-size: 13px; color: var(--muted); }
 .how div { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; }
 .how b { display: block; color: var(--ink); font: 700 15px/1.1 var(--display); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+.levels { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.lvl { font: 700 16px/1 var(--display); letter-spacing: .05em; text-transform: uppercase; color: var(--ink); background: var(--panel);
+  border: 1px solid #4a5263; border-radius: 999px; padding: 11px 16px; cursor: pointer; }
+.lvl.on { border-color: var(--tag); color: var(--tag); }
 #go { font: 700 22px/1 var(--display); text-transform: uppercase; letter-spacing: .06em; color: #12151b; background: var(--tag); border: 0;
-  border-radius: 999px; padding: 16px 34px; justify-self: center; min-width: 220px; }
+  border-radius: 999px; padding: 16px 34px; justify-self: center; min-width: 220px; cursor: pointer; }
 #go:disabled { opacity: .5; }
 #go:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 .small { font-size: 12px; color: var(--muted); }
 #rotate { display: none; }
+#loading { position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%); z-index: 6; font: 700 20px var(--display); text-transform: uppercase;
+  letter-spacing: .06em; background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 22px; }
+/* Console (` / ~) */
+#console { position: fixed; left: 0; right: 0; top: 0; height: 45%; z-index: 7; background: rgba(10, 12, 16, .94); border-bottom: 1px solid var(--rule);
+  display: grid; grid-template-rows: 1fr auto; font: 500 13px/1.5 var(--mono); user-select: text; -webkit-user-select: text; }
+#conOut { overflow: auto; padding: 10px 14px; white-space: pre-wrap; }
+#conIn { font: inherit; color: var(--ink); background: #161a22; border: 0; border-top: 1px solid var(--rule); padding: 10px 14px; outline: none; }
+#console .ok { color: #6fd08c; } #console .bad { color: #ff8a7a; } #console .dim { color: #8a93a6; }
 @media (orientation: portrait) and (max-width: 700px) {
-  #rotate { display: block; }
+  body.touch #rotate { display: block; }
   .how { grid-template-columns: 1fr; }
 }
-@media (max-height: 420px) { .meter .track { height: 96px; } .how { font-size: 12px; } }
+@media (max-height: 460px) { .rocker { height: 150px; width: 84px; } .bar .track { height: 118px; } .how { font-size: 12px; } .card { gap: 10px; } }
 </style>
 <script src="cart_tuning.js"></script>
-<script src="cart_model_mobile.js"></script>
 <script type="importmap">
 { "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
-  "rapier": "https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.14.0/rapier.es.js"
+  "three": "./vendor/three/build/three.module.min.js",
+  "three/addons/": "./vendor/three/examples/jsm/",
+  "rapier": "./vendor/rapier/rapier.es.js"
 } }
 </script>
 </head>
 <body>
-<div id="start">
+<div id="start" class="overlay">
   <div class="card">
     <h1>Shopping <span>Cart</span></h1>
-    <div class="how">
-      <div><b>Left thumb</b>Left hand. Drag up to push, down to pull. Further = harder.</div>
-      <div><b>Tilt the phone</b>Tip it back for a wheelie, forward to lift the rear, sideways to lean on two wheels.</div>
-      <div><b>Right thumb</b>Right hand. One hand turns the cart; push one and pull the other to spin.</div>
+    <div class="how touch-only">
+      <div><b>Left thumb</b>Your left hand. Hold above the middle of the left rocker to push, below to pull. The longer you hold, the harder you push.</div>
+      <div><b>Lean</b>Tip the phone back to lift the front, forward to lift the back. Or hold the Back up / Front up buttons.</div>
+      <div><b>Right thumb</b>Your right hand. One hand turns the cart; push one and pull the other to spin. Push hard for a wheelie.</div>
     </div>
+    <div class="how desk-only">
+      <div><b>Q / A &middot; E / D</b>Left hand push / pull, right hand push / pull. Hold to push harder; one hand turns, push one and pull the other to spin.</div>
+      <div><b>W / S</b>Lean the back up / the front up. With one hand key, only that side leans. R puts a fresh cart where you are.</div>
+      <div><b>Mouse</b>Click to look around, Esc to let go, wheel to zoom. ` opens the console (type help). F for full screen.</div>
+    </div>
+    <div class="levels" id="startLevels"></div>
     <button id="go" type="button" disabled>Loading&hellip;</button>
     <div class="small" id="rotate">Turn your phone sideways for the best view.</div>
-    <div class="small">Hold the phone the way you want to play when you tap; that sets level for tilting.</div>
+    <div class="small touch-only">Hold the phone the way you want to play when you tap; that sets level for tilting. Drag near the top of the screen to look around.</div>
   </div>
 </div>
-<div class="hud stats"><b id="sSpeed">0.0</b> <span>km/h</span><br><span>wheels</span> <span id="sWheels">4/4</span> &middot; <span>groceries</span> <span id="sCargo">5/5</span></div>
-<div class="hud tools">
-  <button class="chip" id="tiltBtn" type="button">Tilt: <b>on</b></button>
-  <button class="chip" id="levelBtn" type="button">Set level</button>
-  <button class="chip" id="resetBtn" type="button">Reset</button>
+<div id="menu" class="overlay" hidden>
+  <div class="card">
+    <h2>Fast travel</h2>
+    <div class="levels" id="menuLevels"></div>
+    <button class="chip" id="menuClose" type="button">Back to the cart</button>
+  </div>
 </div>
-<div class="hud meter l"><div class="label">Left</div><div class="track"><div class="mid"></div><div class="fill" id="fillL"></div></div><div class="val" id="valL">0 N</div></div>
-<div class="hud meter r"><div class="label">Right</div><div class="track"><div class="mid"></div><div class="fill" id="fillR"></div></div><div class="val" id="valR">0 N</div></div>
-<div class="hud tilt" id="tiltRead">tilt off</div>
-<div class="knob" id="knobL"><div class="rail"></div></div>
-<div class="knob" id="knobR"><div class="rail"></div></div>
+<div id="loading" hidden>Loading&hellip;</div>
+<div id="console" hidden><div id="conOut"></div><input id="conIn" type="text" autocomplete="off" spellcheck="false" aria-label="Console command"></div>
 
-<script type="module">
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import RAPIER from 'rapier';
-
-await RAPIER.init();
-
-// ---------------------------------------------------------------- tuning (shared with the Godot game)
-const TUNE = Object.assign({
-  frame_mass: 18, wheel_mass: 0.5, fork_mass: 0.6, gate_mass: 1.5,
-  gears: [[25, 1.2], [35, 1.8], [45, 2.2], [65, 3.0], [90, 4.0]],
-  rolling_resistance: 0.015, grip_yaw_damping: 30,
-  pull_ratio: 1.5, arm_reach: 0.3, brake_spring: 350, brake_damping: 25, brake_max: 110,
-  lift_pitch: -0.2, press_pitch: 0.3, side_roll: 0.22, tilt_kp: 1400, tilt_kd: 80, tilt_max: 200,
-  settle_speed: 0.15, settle_spin: 0.25, stop_speed: 0.05, stop_spin: 0.05,
-  floor_friction: { tile: 0.18, asphalt: 0.9 },
-}, window.CART_TUNING || {});
-// Geometry from the model (cart local: nose +X, up +Y, left -Z), same as the Godot cart.
-const G = {
-  com: [0.45, 0.42, 0], wheelR: 0.0635, wheelW: 0.04,
-  rearAxle: [0.0685, 0.062, 0.3045], kingpin: [0.887, 0.16, 0.1545], frontAxle: [0.849, 0.063, 0.1545],
-  hand: [0.0, 1.0, 0.2], gateHinge: [0.068, 0.985, 0], gateOpen: 70 * Math.PI / 180,
-};
-const PUSH_MAX = TUNE.gears[TUNE.gears.length - 1][0], WALK_MIN = TUNE.gears[0][1], WALK_MAX = TUNE.gears[TUNE.gears.length - 1][1];
-const STEP = 1 / 120;
-
-// ---------------------------------------------------------------- small vector helpers (Rapier uses {x,y,z})
-const v3 = (x, y, z) => ({ x, y, z });
-const add = (a, b) => v3(a.x + b.x, a.y + b.y, a.z + b.z), sub = (a, b) => v3(a.x - b.x, a.y - b.y, a.z - b.z);
-const scale = (a, s) => v3(a.x * s, a.y * s, a.z * s), dot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;
-const cross = (a, b) => v3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
-const len = a => Math.hypot(a.x, a.y, a.z);
-const _q = new THREE.Quaternion(), _v = new THREE.Vector3();
-const rot = (q, a) => { _v.set(a.x, a.y, a.z).applyQuaternion(_q.set(q.x, q.y, q.z, q.w)); return v3(_v.x, _v.y, _v.z); };
-const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-
-// ---------------------------------------------------------------- physics world
-const world = new RAPIER.World(v3(0, -9.81, 0));
-world.timestep = STEP;
-world.integrationParameters.numSolverIterations = 8;
-const eventQueue = new RAPIER.EventQueue(true);
-
-const WORLD = 1, CART = 2, CARGO = 4;
-const groups = (member, filter) => (member << 16) | filter;
-const MIN = RAPIER.CoefficientCombineRule.Min;
-
-// ---------------------------------------------------------------- rendering
-const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-const mobile = matchMedia('(pointer: coarse)').matches;
-renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.5 : 2));
-renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-document.body.prepend(renderer.domElement);
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1c2230);
-scene.fog = new THREE.Fog(0x1c2230, 25, 70);
-scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
-scene.environmentIntensity = 0.35;
-const camera = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, 0.05, 200);
-scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x3a3328, 0.6));
-const sun = new THREE.DirectionalLight(0xffffff, 1.6);
-sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
-Object.assign(sun.shadow.camera, { left: -5, right: 5, top: 5, bottom: -5, near: 1, far: 30 });
-scene.add(sun, sun.target);
-
-const synced = [];   // [rapier body, three mesh]
-function staticBox(size, pos, friction, color, rotZ = 0, rough = 0.85) {
-  const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, rotZ));
-  const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(...pos).setRotation(q));
-  world.createCollider(RAPIER.ColliderDesc.cuboid(size[0] / 2, size[1] / 2, size[2] / 2).setFriction(friction)
-    .setCollisionGroups(groups(WORLD, 0xffff)), body);
-  const m = new THREE.Mesh(new THREE.BoxGeometry(...size), new THREE.MeshStandardMaterial({ color, roughness: rough }));
-  m.position.set(...pos); m.quaternion.copy(q); m.receiveShadow = true; m.castShadow = size[1] > 0.3;
-  scene.add(m);
-}
-function looseBox(size, pos, mass, color, member, filter, friction = 0.5) {
-  const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(...pos));
-  world.createCollider(RAPIER.ColliderDesc.cuboid(size[0] / 2, size[1] / 2, size[2] / 2)
-    .setDensity(mass / (size[0] * size[1] * size[2])).setFriction(friction).setCollisionGroups(groups(member, filter)), body);
-  const m = new THREE.Mesh(new THREE.BoxGeometry(...size), new THREE.MeshStandardMaterial({ color, roughness: 0.75 }));
-  m.castShadow = m.receiveShadow = true; scene.add(m);
-  synced.push([body, m]);
-  return body;
-}
-
-// Level: slippery store tile on +X, grippy parking lot on -X (same layout as the Godot prototype).
-staticBox([30, 1, 40], [15, -0.5, 0], TUNE.floor_friction.tile, 0xaeb5bf, 0, 0.25);
-staticBox([30, 1, 40], [-15, -0.5, 0], TUNE.floor_friction.asphalt, 0x3b3f46);
-for (let i = -3; i <= 3; i++) {
-  const l = new THREE.Mesh(new THREE.PlaneGeometry(5, 0.1), new THREE.MeshBasicMaterial({ color: 0xe8e2c8 }));
-  l.rotation.x = -Math.PI / 2; l.position.set(-10, 0.002, i * 2.8); scene.add(l);
-}
-for (const z of [-6, -2.2, 1.6, 5.4]) staticBox([10, 1.8, 0.6], [12, 0.9, z], 0.5, 0x7d8796);
-staticBox([0.4, 2.4, 40], [29.8, 1.2, 0], 0.5, 0x9aa3b0);
-staticBox([3.2, 0.2, 2.4], [-6, 0.16, -7], TUNE.floor_friction.asphalt, 0x5b616b, 0.12);
-staticBox([2, 0.36, 2.4], [-8.55, 0.18, -7], TUNE.floor_friction.asphalt, 0x5b616b);
-staticBox([0.3, 0.12, 12], [-3.2, 0.06, 6], TUNE.floor_friction.asphalt, 0x9ea3a8);
-for (const x of [-12, -15]) staticBox([0.35, 0.05, 6], [x, 0.025, 4], TUNE.floor_friction.asphalt, 0xd8b23a);
-const crates = [];
-for (let i = 0; i < 6; i++) crates.push(looseBox([0.35, 0.35, 0.35], [5.5, 0.175 + (i % 3) * 0.35, -1.2 + Math.floor(i / 3) * 0.4], 2, 0xb8875a, WORLD, 0xffff));
-
-// ---------------------------------------------------------------- the cart (rebuilt on reset)
-const GROCERIES = [
-  [[0.18, 0.26, 0.07], 0.6, 0xe94f37, [0.75, 0.62, -0.12]], [[0.12, 0.12, 0.12], 1.2, 0x3e92cc, [0.40, 0.55, 0.15]],
-  [[0.22, 0.10, 0.15], 1.5, 0xf6c445, [0.62, 0.56, 0.12]], [[0.10, 0.20, 0.10], 1.0, 0x6dbf67, [0.85, 0.58, 0.16]],
-  [[0.16, 0.08, 0.16], 0.8, 0xffffff, [0.42, 0.52, -0.15]],
-];
-let cart = null;
-
-const boxInertia = (m, x, y, z) => v3(m / 12 * (y * y + z * z), m / 12 * (x * x + z * z), m / 12 * (x * x + y * y));
-const IDQ = { x: 0, y: 0, z: 0, w: 1 };
-
-function buildCart(origin, yaw) {
-  const q0 = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0));
-  const qq = { x: q0.x, y: q0.y, z: q0.z, w: q0.w };
-  const at = p => add(origin, rot(qq, v3(...p)));   // cart-local point -> world
-  const cartGroups = groups(CART, WORLD | CARGO);
-  const body = (p, mass, com, inertia, opts = {}) => {
-    const d = RAPIER.RigidBodyDesc.dynamic().setTranslation(...Object.values(at(p))).setRotation(qq)
-      .setAdditionalMassProperties(mass, com, inertia, IDQ).setCanSleep(false)
-      .setLinearDamping(0.02).setAngularDamping(opts.angDamp ?? 0.05);
-    return world.createRigidBody(d);
-  };
-  const cuboid = (b, size, pos, friction = 0.5, rz = 0) => {
-    const c = RAPIER.ColliderDesc.cuboid(size[0] / 2, size[1] / 2, size[2] / 2).setTranslation(...pos).setDensity(0)
-      .setFriction(friction).setCollisionGroups(cartGroups);
-    if (rz) { const r = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, rz)); c.setRotation({ x: r.x, y: r.y, z: r.z, w: r.w }); }
-    return world.createCollider(c, b);
-  };
-  const hinge = (a, b, anchorWorld, axisLocal, limits) => {
-    // anchors are given in each body's local frame; all bodies start unrotated relative to the cart
-    const pa = a.translation(), pb = b.translation();
-    const la = rot({ x: -qq.x, y: -qq.y, z: -qq.z, w: qq.w }, sub(anchorWorld, pa));
-    const lb = rot({ x: -qq.x, y: -qq.y, z: -qq.z, w: qq.w }, sub(anchorWorld, pb));
-    const j = world.createImpulseJoint(RAPIER.JointData.revolute(la, lb, axisLocal), a, b, true);
-    j.setContactsEnabled(false);
-    if (limits) j.setLimits(limits[0], limits[1]);
-    return j;
-  };
-
-  const c = { wheels: {}, forks: {}, groceries: [], links: [], restTime: 0, pinned: false, armExt: { L: 0, R: 0 }, handState: {} };
-  // Frame: body origin = cart origin (on the ground under the handle); mass centred at COM.
-  c.frame = body([0, 0.005, 0], TUNE.frame_mass, v3(...G.com), boxInertia(TUNE.frame_mass, 0.95, 0.9, 0.6));
-  cuboid(c.frame, [0.72, 0.024, 0.58], [0.57, 0.46, 0]);
-  cuboid(c.frame, [0.03, 0.50, 0.60], [0.95, 0.71, 0]);
-  cuboid(c.frame, [0.84, 0.50, 0.03], [0.53, 0.71, -0.30]);
-  cuboid(c.frame, [0.84, 0.50, 0.03], [0.53, 0.71, 0.30]);
-  cuboid(c.frame, [0.70, 0.06, 0.56], [0.57, 0.22, 0]);
-  cuboid(c.frame, [0.06, 0.06, 0.52], [0.0, 1.0, 0]);
-  // Guard zone: a loose object entering it releases a pinned cart before it hits.
-  c.guard = world.createCollider(RAPIER.ColliderDesc.cuboid(0.7, 0.6, 0.5).setTranslation(0.47, 0.75, 0).setSensor(true).setDensity(0)
-    .setCollisionGroups(groups(CART, WORLD)).setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS), c.frame);
-
-  // Gate: hangs from the top rail and swings into the basket.
-  c.gate = body([G.gateHinge[0], G.gateHinge[1] + 0.005, 0], TUNE.gate_mass, v3(0.087, -0.265, 0), boxInertia(TUNE.gate_mass, 0.03, 0.54, 0.56));
-  cuboid(c.gate, [0.03, 0.54, 0.56], [0.087, -0.265, 0], 0.5, -0.32);
-  // Rapier measures this hinge the opposite way to Godot: positive = swung forward into the basket.
-  hinge(c.frame, c.gate, at([G.gateHinge[0], G.gateHinge[1] + 0.005, 0]), v3(0, 0, 1), [0, G.gateOpen]);
-
-  const wm = TUNE.wheel_mass, r = G.wheelR, h = G.wheelW;
-  const wheelInertia = v3(wm / 12 * (3 * r * r + h * h), wm / 12 * (3 * r * r + h * h), 0.5 * wm * r * r);
-  const wheel = p => {
-    const b = body(p, wm, v3(0, 0, 0), wheelInertia);
-    // A ball touches the floor at one point, so a caster swivels freely on it. A flat-sided cylinder touches
-    // across its width and scrubs, which locks the casters (same choice as the Godot cart).
-    world.createCollider(RAPIER.ColliderDesc.ball(r).setDensity(0).setFriction(1.0).setFrictionCombineRule(MIN)
-      .setCollisionGroups(cartGroups), b);
-    return b;
-  };
-  for (const [side, s] of [['L', -1], ['R', 1]]) {
-    const rp = [G.rearAxle[0], G.rearAxle[1] + 0.005, s * G.rearAxle[2]];
-    c.wheels['R' + side] = wheel(rp);
-    hinge(c.frame, c.wheels['R' + side], at(rp), v3(0, 0, 1));
-    const kp = [G.kingpin[0], G.kingpin[1] + 0.005, s * G.kingpin[2]];
-    const fork = body(kp, TUNE.fork_mass, v3(-0.02, -0.05, 0), boxInertia(TUNE.fork_mass, 0.05, 0.1, 0.04), { angDamp: 2.0 });
-    world.createCollider(RAPIER.ColliderDesc.cuboid(0.025, 0.05, 0.02).setTranslation(-0.02, -0.05, 0).setDensity(0)
-      .setCollisionGroups(groups(0, 0)), fork);
-    hinge(c.frame, fork, at(kp), v3(0, 1, 0));   // 360 degree swivel
-    const fp = [G.frontAxle[0], G.frontAxle[1] + 0.005, s * G.frontAxle[2]];
-    c.wheels['F' + side] = wheel(fp);
-    hinge(fork, c.wheels['F' + side], at(fp), v3(0, 0, 1));
-    c.forks['F' + side] = fork;
-  }
-  for (const [size, mass, color, spot] of GROCERIES) {
-    const p = at(spot);
-    c.groceries.push(looseBox(size, [p.x, p.y, p.z], mass, color, CARGO, WORLD | CART | CARGO));
-    world.getRigidBody(c.groceries.at(-1).handle).setRotation(qq, true);
-  }
-  c.bodies = [c.frame, c.gate, ...Object.values(c.wheels), ...Object.values(c.forks)];
-  return c;
-}
-
-function removeCart() {
-  if (!cart) return;
-  for (const b of [...cart.bodies, ...cart.groceries]) {
-    const i = synced.findIndex(s => s[0] === b);
-    if (i >= 0) { scene.remove(synced[i][1]); synced.splice(i, 1); }
-    world.removeRigidBody(b);
-  }
-  cart = null;
-}
-
-function spawn(origin = v3(2, 0, 0), yaw = 0) {
-  removeCart();
-  cart = buildCart(origin, yaw);
-  linkModel();
-}
-
-// ---------------------------------------------------------------- input: two thumbs, tilt, keyboard
-const thumbs = { L: { id: null, y0: 0, v: 0 }, R: { id: null, y0: 0, v: 0 } };
-const keys = new Set();
-let tiltMode = 'on';        // on / flipped / off
-let tiltRaw = null, tiltZero = null, tiltTest = null;   // degrees {pitch, roll}
-const knob = { L: document.getElementById('knobL'), R: document.getElementById('knobR') };
-const thumbRange = () => 0.17 * Math.min(innerWidth, innerHeight);   // drag distance for full strength
-
-const canvas = renderer.domElement;
-canvas.addEventListener('pointerdown', e => {
-  const side = e.clientX < innerWidth / 2 ? 'L' : 'R';
-  const t = thumbs[side];
-  if (t.id !== null) return;
-  t.id = e.pointerId; t.y0 = e.clientY; t.v = 0;
-  canvas.setPointerCapture(e.pointerId);
-  Object.assign(knob[side].style, { display: 'block', left: e.clientX + 'px', top: e.clientY + 'px' });
-  e.preventDefault();
-});
-canvas.addEventListener('pointermove', e => {
-  for (const side of ['L', 'R']) {
-    const t = thumbs[side];
-    if (t.id !== e.pointerId) continue;
-    t.v = clamp((t.y0 - e.clientY) / thumbRange(), -1, 1);
-    knob[side].style.top = (t.y0 - t.v * thumbRange()) + 'px';
-  }
-});
-const lift = e => { for (const side of ['L', 'R']) if (thumbs[side].id === e.pointerId) { thumbs[side].id = null; thumbs[side].v = 0; knob[side].style.display = 'none'; } };
-canvas.addEventListener('pointerup', lift);
-canvas.addEventListener('pointercancel', lift);
-addEventListener('blur', () => { keys.clear(); for (const s of ['L', 'R']) { thumbs[s].id = null; thumbs[s].v = 0; knob[s].style.display = 'none'; } });
-// Keyboard for testing on a computer: Q/A left, E/D right, W/S lift/press.
-addEventListener('keydown', e => { keys.add(e.code); if (e.code === 'KeyR') resetBtn.click(); });
-addEventListener('keyup', e => keys.delete(e.code));
-let camDist = 3.2;
-canvas.addEventListener('wheel', e => { camDist = clamp(camDist * (1 + Math.sign(e.deltaY) * 0.1), 1.6, 8); e.preventDefault(); }, { passive: false });
-
-// Phone tilt, mapped to the screen's orientation so "tip back" means the same thing held either way.
-addEventListener('deviceorientation', e => {
-  if (e.beta == null) return;
-  const a = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
-  let pitch, roll;
-  if (a === 90) { pitch = e.gamma; roll = -e.beta; }
-  else if (a === -90 || a === 270) { pitch = -e.gamma; roll = e.beta; }
-  else { pitch = -e.beta; roll = e.gamma; }
-  tiltRaw = { pitch, roll };
-});
-function setLevel() { tiltZero = tiltRaw ? { ...tiltRaw } : null; }
-
-function handInput() {
-  const k = s => keys.has(s) ? 1 : 0;
-  const hand = side => {
-    const kv = side === 'L' ? k('KeyQ') - k('KeyA') : k('KeyE') - k('KeyD');
-    return kv !== 0 ? kv * 0.6 : thumbs[side].v;   // keys = a medium push (about gear 3)
-  };
-  // Tilt -> targets in [-1, 1]: + pitch = wheelie, - pitch = rear lift; + roll = right side up.
-  let pitch = 0, roll = 0;
-  const t = tiltTest || (tiltRaw && tiltZero ? { pitch: tiltRaw.pitch - tiltZero.pitch, roll: tiltRaw.roll - tiltZero.roll } : null);
-  if (t && tiltMode !== 'off') {
-    const sign = tiltMode === 'flipped' ? -1 : 1;
-    const shape = deg => Math.sign(deg) * clamp((Math.abs(deg) - 6) / 19, 0, 1);   // 6 degree dead zone, full at 25
-    pitch = sign * shape(t.pitch); roll = sign * shape(-t.roll);
-  }
-  if (keys.has('KeyS')) pitch = 1; else if (keys.has('KeyW')) pitch = -1;
-  return { L: hand('L'), R: hand('R'), pitch, roll };
-}
-
-// ---------------------------------------------------------------- the hands (same model as the Godot cart)
-function applyHands(inp) {
-  const f = cart.frame, q = f.rotation(), p = f.translation();
-  const nose = rot(q, v3(1, 0, 0)), side = rot(q, v3(0, 0, 1));
-  const fwd = (() => { const h = Math.hypot(nose.x, nose.z) || 1; return v3(nose.x / h, 0, nose.z / h); })();
-  const com = add(p, rot(q, v3(...G.com)));
-  const lin = f.linvel(), ang = f.angvel();
-  // Stopping is when you pull back with no hand pushing while the cart is still rolling forward.
-  // Push one thumb and pull the other and it's a spin, not a stop.
-  const pushingAny = inp.L > 0.08 || inp.R > 0.08;
-  const cartAlong = dot(lin, fwd);
-  cart.handState = {};
-  for (const [h, s] of [['L', -1], ['R', 1]]) {
-    const v = inp[h];
-    const handP = add(p, rot(q, v3(G.hand[0], G.hand[1], s * G.hand[2])));
-    const vHand = add(lin, cross(ang, sub(handP, com)));
-    const along = dot(vHand, fwd);
-    const mag = Math.abs(v), dir = Math.abs(v) < 0.08 ? 0 : Math.sign(v);
-    if (dir < 0 && !pushingAny && cartAlong > 0.05 && along > 0) {
-      // The body plants its feet and the arms straighten as the cart carries on: bent arms give a little, the
-      // further they straighten the harder they hold, up to leaning back with full weight (scaled by the thumb).
-      cart.armExt[h] = Math.min(TUNE.arm_reach, cart.armExt[h] + along * STEP);
-      let force = Math.min(TUNE.brake_max, TUNE.brake_spring * cart.armExt[h] + TUNE.brake_damping * along);
-      if (cart.armExt[h] >= TUNE.arm_reach) force = TUNE.brake_max;
-      f.addForceAtPoint(scale(fwd, -force * mag), handP, true);
-      cart.handState[h] = 'brake';
-      continue;
-    }
-    cart.armExt[h] = Math.max(0, cart.armExt[h] - 1.0 * STEP);   // the body steps back in
-    if (!dir) continue;
-    const walk = WALK_MIN + (WALK_MAX - WALK_MIN) * mag;        // light drag = stroll, full drag = run
-    const k = clamp(1 - dir * along / walk, 0, 1);
-    // Pulling back with both hands (leaning back on your heels) is stronger than pushing.
-    const strength = PUSH_MAX * (dir < 0 && !pushingAny ? TUNE.pull_ratio : 1);
-    f.addForceAtPoint(scale(fwd, dir * mag * strength * k), handP, true);
-  }
-  // Two hands going the same way resist the cart twisting (keeps it tracking when pulled back).
-  if (Math.abs(inp.L) > 0.08 && Math.abs(inp.R) > 0.08 && Math.sign(inp.L) === Math.sign(inp.R))
-    f.addTorque(v3(0, -TUNE.grip_yaw_damping * ang.y, 0), true);
-  // Tilt: wrists roll the bar toward a target angle with capped torque.
-  if (inp.pitch || inp.roll) {
-    const pitchNow = Math.asin(clamp(nose.y, -1, 1)), rollNow = Math.asin(clamp(side.y, -1, 1));
-    const pitchT = inp.pitch > 0 ? inp.pitch * TUNE.press_pitch : -inp.pitch * TUNE.lift_pitch;
-    const rollT = inp.roll * TUNE.side_roll;
-    const tp = clamp(TUNE.tilt_kp * (pitchT - pitchNow) - TUNE.tilt_kd * dot(ang, side), -TUNE.tilt_max, TUNE.tilt_max);
-    const tr = clamp(TUNE.tilt_kp * (rollT - rollNow) + TUNE.tilt_kd * dot(ang, nose), -TUNE.tilt_max, TUNE.tilt_max);
-    f.addTorque(add(scale(side, tp), scale(nose, -tr)), true);
-  }
-}
-
-function applyRollingResistance() {
-  const total = TUNE.frame_mass + TUNE.gate_mass + 4 * TUNE.wheel_mass + 2 * TUNE.fork_mass;
-  const maxT = TUNE.rolling_resistance * total * 9.81 / 4 * G.wheelR;
-  const inertia = 0.5 * TUNE.wheel_mass * G.wheelR * G.wheelR;
-  for (const w of Object.values(cart.wheels)) {
-    if (w.translation().y > G.wheelR + 0.02) continue;
-    const axle = rot(w.rotation(), v3(0, 0, 1));
-    const spin = dot(w.angvel(), axle);
-    const t = Math.min(maxT, Math.abs(spin) * inertia / STEP);
-    w.addTorque(scale(axle, -Math.sign(spin) * t), true);
-  }
-}
-
-// Near rest with no hands on: brake gently, then pin the frame so solver drift can't creep it.
-function settle(active) {
-  const f = cart.frame;
-  if (active) { if (cart.pinned) unpin(); cart.restTime = 0; cart.restAnchor = null; return; }
-  if (cart.pinned) return;
-  const v = len(f.linvel()), w = len(f.angvel());
-  if (v < TUNE.settle_speed && w < TUNE.settle_spin) {
-    f.addForce(scale(f.linvel(), -TUNE.frame_mass * 40), true);
-    f.addTorque(scale(f.angvel(), -40), true);
-  }
-  // Judge rest by how far the cart actually moved over the last quarter second: Rapier reports a little
-  // leftover joint-solver velocity (and a hair of per-step jitter) on a cart that is standing still.
-  const pos = f.translation(), q = f.rotation(), WINDOW = 0.25;
-  const a = cart.restAnchor;
-  const drift = a ? len(sub(pos, a.pos)) : Infinity;
-  const twist = a ? 2 * Math.acos(clamp(Math.abs(q.x * a.q.x + q.y * a.q.y + q.z * a.q.z + q.w * a.q.w), 0, 1)) : Infinity;
-  if (drift < TUNE.stop_speed * WINDOW && twist < TUNE.stop_spin * WINDOW) {
-    cart.restTime += STEP;
-    if (cart.restTime >= WINDOW) pin();
-  } else {
-    cart.restAnchor = { pos: { ...pos }, q: { ...q } };
-    cart.restTime = 0;
-  }
-}
-function pin() {
-  for (const b of cart.bodies) { b.setLinvel(v3(0, 0, 0), false); b.setAngvel(v3(0, 0, 0), false); }
-  cart.frame.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased, true);
-  cart.pinned = true;
-}
-function unpin() {
-  cart.frame.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
-  for (const b of cart.bodies) b.wakeUp();
-  cart.pinned = false; cart.restTime = 0; cart.restAnchor = null;
-}
-
-// ---------------------------------------------------------------- visuals: the cart model follows the bodies
-const cartRoot = new THREE.Group(); scene.add(cartRoot);
-let model = null;
-const rigNames = { Frame: 'frame', Gate_Hinge: 'gate', Caster_FL_Swivel: 'FL', Caster_FR_Swivel: 'FR', Wheel_FL_Axle: 'wFL', Wheel_FR_Axle: 'wFR', Wheel_RL_Axle: 'wRL', Wheel_RR_Axle: 'wRR' };
-function bodyFor(key) {
-  if (key === 'frame') return cart.frame; if (key === 'gate') return cart.gate;
-  if (key.startsWith('w')) return cart.wheels[key.slice(1)];
-  return cart.forks[key];
-}
-const bodyMatrix = b => { const t = b.translation(), r = b.rotation(); return new THREE.Matrix4().compose(new THREE.Vector3(t.x, t.y, t.z), new THREE.Quaternion(r.x, r.y, r.z, r.w), new THREE.Vector3(1, 1, 1)); };
-function linkModel() {
-  if (!model || !cart) return;
-  cartRoot.matrix.copy(bodyMatrix(cart.frame)); cartRoot.matrixAutoUpdate = false; cartRoot.updateMatrixWorld(true);
-  cart.links = [];
-  for (const [name, key] of Object.entries(rigNames)) {
-    const node = model.getObjectByName(name);
-    if (!node) continue;
-    node.updateMatrixWorld(true);
-    const offset = bodyMatrix(bodyFor(key)).invert().multiply(node.matrixWorld.clone());
-    cart.links.push([node, key, offset]);
-  }
-}
-const _m = new THREE.Matrix4(), _pinv = new THREE.Matrix4();
-function syncCart() {
-  if (!cart || !model) return;
-  cartRoot.matrix.copy(bodyMatrix(cart.frame)); cartRoot.updateMatrixWorld(true);
-  // Parents before children: Frame, then pivots in model order.
-  for (const [node, key, offset] of cart.links) {
-    if (key === 'frame') continue;
-    _m.multiplyMatrices(bodyMatrix(bodyFor(key)), offset);
-    _pinv.copy(node.parent.matrixWorld).invert();
-    node.matrix.multiplyMatrices(_pinv, _m);
-    node.matrix.decompose(node.position, node.quaternion, node.scale);
-    node.updateMatrixWorld(true);
-  }
-}
-async function loadModel() {
-  const loader = new GLTFLoader();
-  const b64 = window.CART_GLB_GZ_B64;
-  if (!b64) throw new Error('cart_model_mobile.js missing');
-  const bytes = Uint8Array.from(atob(b64), ch => ch.charCodeAt(0));
-  const buf = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
-  const gltf = await loader.parseAsync(buf, '');
-  model = gltf.scene;
-  model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-  cartRoot.add(model);
-}
-
-// ---------------------------------------------------------------- HUD + start
-const $ = id => document.getElementById(id);
-const resetBtn = $('resetBtn'), tiltBtn = $('tiltBtn'), levelBtn = $('levelBtn');
-resetBtn.addEventListener('click', () => {
-  const p = cart.frame.translation(), n = rot(cart.frame.rotation(), v3(1, 0, 0));
-  spawn(v3(p.x, 0.05, p.z), Math.atan2(-n.z, n.x));
-});
-tiltBtn.addEventListener('click', () => {
-  tiltMode = { on: 'flipped', flipped: 'off', off: 'on' }[tiltMode];
-  tiltBtn.innerHTML = 'Tilt: <b>' + tiltMode + '</b>';
-  setLevel();
-});
-levelBtn.addEventListener('click', setLevel);
-
-function hud(inp) {
-  for (const s of ['L', 'R']) {
-    const v = inp[s], fill = $('fill' + s);
-    const hpx = Math.abs(v) * 50;
-    Object.assign(fill.style, { height: hpx + '%', top: v >= 0 ? (50 - hpx) + '%' : '50%', background: v >= 0 ? 'var(--push)' : 'var(--pull)' });
-    $('val' + s).textContent = cart.handState && cart.handState[s] === 'brake' ? 'brake ' + Math.round(100 * cart.armExt[s] / TUNE.arm_reach) + '%' : Math.round(Math.abs(v) < 0.08 ? 0 : Math.abs(v) * PUSH_MAX) + ' N';
-  }
-  const lv = cart.frame.linvel();
-  $('sSpeed').textContent = (Math.hypot(lv.x, lv.z) * 3.6).toFixed(1);
-  let down = 0; for (const w of Object.values(cart.wheels)) if (w.translation().y < G.wheelR + 0.02) down++;
-  $('sWheels').textContent = down + '/4';
-  $('sCargo').textContent = groceriesIn() + '/5';
-  const tr = $('tiltRead');
-  if (tiltMode === 'off') tr.textContent = 'tilt off';
-  else if (!tiltRaw && !tiltTest) tr.textContent = 'no tilt sensor: W / S keys';
-  else tr.textContent = inp.pitch > 0.05 ? 'wheelie' : inp.pitch < -0.05 ? 'rear up' : Math.abs(inp.roll) > 0.05 ? (inp.roll > 0 ? 'lean left' : 'lean right') : 'level';
-}
-function groceriesIn() {
-  const q = cart.frame.rotation(), qi = { x: -q.x, y: -q.y, z: -q.z, w: q.w }, p = cart.frame.translation();
-  let n = 0;
-  for (const g of cart.groceries) {
-    const l = rot(qi, sub(g.translation(), p));
-    if (l.x > 0.05 && l.x < 1.0 && Math.abs(l.z) < 0.33 && l.y > 0.4 && l.y < 1.2) n++;
-  }
-  return n;
-}
-
-const go = $('go');
-let started = false;
-go.addEventListener('click', async () => {
-  // iOS asks permission for motion sensors; it must come from this tap.
-  try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) await DeviceOrientationEvent.requestPermission(); } catch (e) { /* tilt stays off; keys and thumbs still work */ }
-  $('start').remove();
-  started = true;
-  // Nice-to-haves: never wait on these. Orientation lock can stay pending forever on some phones.
-  if (mobile && document.documentElement.requestFullscreen) {
-    document.documentElement.requestFullscreen({ navigationUI: 'hide' })
-      .then(() => screen.orientation?.lock?.('landscape')).catch(() => {});
-  }
-  setTimeout(setLevel, 300);   // let a reading arrive, then call this "level"
-});
-
-// One fixed physics step: hands, rolling resistance, settling, then Rapier.
-function physicsStep(inp) {
-  for (const b of cart.bodies) { b.resetForces(false); b.resetTorques(false); }
-  const active = Math.abs(inp.L) > 0.08 || Math.abs(inp.R) > 0.08 || inp.pitch !== 0 || inp.roll !== 0;
-  settle(active);
-  if (!cart.pinned) { applyHands(inp); applyRollingResistance(); }
-  world.step(eventQueue);
-  eventQueue.drainCollisionEvents((h1, h2, began) => {
-    if (!began || !cart.pinned) return;
-    const other = h1 === cart.guard.handle ? h2 : h2 === cart.guard.handle ? h1 : null;
-    if (other === null) return;
-    const ob = world.getCollider(other).parent();
-    if (ob && ob.isDynamic() && !cart.groceries.includes(ob)) unpin();
-  });
-}
-
-// ---------------------------------------------------------------- camera + loop
-let camHeading = 0;
-const camTarget = new THREE.Vector3(2, 0.7, 0);
-let last = performance.now(), acc = 0, paused = false;
-function heading() { const n = rot(cart.frame.rotation(), v3(1, 0, 0)); return Math.atan2(-n.z, n.x); }
-function frame(now) {
-  acc += paused ? 0 : Math.min(0.05, (now - last) / 1000); last = now;
-  let steps = 0;
-  const inp = handInput();
-  while (acc >= STEP && steps < 6) {
-    physicsStep(inp);
-    acc -= STEP; steps++;
-  }
-  if (steps === 6) acc = 0;   // running slow: drop time rather than spiral
-  for (const [b, m] of synced) { const t = b.translation(), r = b.rotation(); m.position.set(t.x, t.y, t.z); m.quaternion.set(r.x, r.y, r.z, r.w); }
-  syncCart();
-  const dt = 1 / 60;
-  let dh = heading() - camHeading; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); camHeading += dh * 0.05;
-  const p = cart.frame.translation(), cpos = add(p, rot(cart.frame.rotation(), v3(...G.com)));
-  camTarget.lerp(new THREE.Vector3(cpos.x, cpos.y + 0.25, cpos.z), 0.15);
-  const yaw = camHeading + Math.PI, pitch = 0.42;
-  camera.position.set(camTarget.x + Math.cos(yaw) * Math.cos(pitch) * camDist, camTarget.y + Math.sin(pitch) * camDist, camTarget.z - Math.sin(yaw) * Math.cos(pitch) * camDist);
-  camera.lookAt(camTarget);
-  sun.position.set(p.x + 6, 12, p.z + 4); sun.target.position.set(p.x, 0, p.z);
-  hud(inp);
-  renderer.render(scene, camera);
-  requestAnimationFrame(frame);
-}
-addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
-
-await loadModel().catch(e => console.warn('Cart model did not load', e));
-spawn();
-requestAnimationFrame(frame);
-go.disabled = false; go.textContent = 'Tap to start';
-
-// Test hook: scripted checks drive the thumbs and tilt and read the state.
-window.__cart = {
-  get cart() { return cart; }, get started() { return started; }, thumbs, keys, spawn, heading, groceriesIn, v3,
-  setThumb(side, v) { thumbs[side].v = v; thumbs[side].id = v ? -1 : null; },
-  setTilt(t) { tiltTest = t; },
-  // Steps the physics directly (no drawing) for `seconds`, calling sample() after each step.
-  simulate(seconds, sample, onStep) {
-    paused = true;
-    const n = Math.round(seconds / STEP);
-    for (let i = 0; i < n; i++) { onStep && onStep(i * STEP); physicsStep(handInput()); sample && sample(); }
-    paused = false;
-  },
-};
-</script>
+<div class="hud stats panel">
+  <div class="lv" id="levelName"></div>
+  <b id="sSpeed">0.0</b> <span>km/h</span> &middot; <span id="sTurn">0</span><span>&deg;/s</span><br>
+  <span>wheels</span> <span id="sWheels">4/4</span> &middot; <span>groceries</span> <span id="sCargo">5/5</span>
+</div>
+<div class="hud tools">
+  <button class="chip" id="levelBtn" type="button">Level</button>
+  <button class="chip touch-only" id="tiltBtn" type="button">Tilt: <b>on</b></button>
+  <button class="chip touch-only" id="zeroBtn" type="button">Set level</button>
+  <button class="chip" id="resetBtn" type="button">Reset</button>
+  <button class="chip" id="fullBtn" type="button" aria-label="Full screen">&#x26F6;</button>
+</div>
+<div class="hud hands panel desk-only" id="hands"></div>
+<div class="hud hand l">
+  <div class="rocker touch-only" id="rockL"><div class="p">Push</div><div class="q">Pull</div></div>
+  <div class="keys desk-only"><div class="cap" data-key="push_left"><kbd>Q</kbd>push</div><div class="cap" data-key="pull_left"><kbd>A</kbd>pull</div></div>
+  <div class="bar"><div class="track"><div class="push" id="pushL"></div><div class="pull" id="pullL"></div><div class="mid"></div></div><div class="n" id="newtonsL">0 N</div></div>
+</div>
+<div class="hud hand r">
+  <div class="rocker touch-only" id="rockR"><div class="p">Push</div><div class="q">Pull</div></div>
+  <div class="keys desk-only"><div class="cap" data-key="push_right"><kbd>E</kbd>push</div><div class="cap" data-key="pull_right"><kbd>D</kbd>pull</div></div>
+  <div class="bar"><div class="track"><div class="push" id="pushR"></div><div class="pull" id="pullR"></div><div class="mid"></div></div><div class="n" id="newtonsR">0 N</div></div>
+</div>
+<div class="hud lean">
+  <button type="button" id="leanBack" class="touch-only">Back up</button>
+  <span class="tilt touch-only" id="tiltRead"></span>
+  <button type="button" id="leanFront" class="touch-only">Front up</button>
+  <div class="desk-keys desk-only"><div class="cap" data-key="lift"><kbd>W</kbd>back up</div><div class="cap" data-key="press"><kbd>S</kbd>front up</div></div>
+</div>
+<div class="hud fps" id="fps"></div>
+<script type="module" src="game/main.js"></script>
 </body>
 </html>
