@@ -1,0 +1,275 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/parking_lot/physics/concrete.tres" id="1_3uvww"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/facade.tres" id="2_omkne"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/facade_trim.tres" id="3_1pcmu"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/store_glass.tres" id="4_0cafu"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/dark_metal.tres" id="5_qmigo"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bb5wj"]
+size = Vector3(60, 7, 12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7v61j"]
+material = ExtResource("2_omkne")
+size = Vector3(60, 7, 12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_dmkhk"]
+size = Vector3(13, 9.5, 1.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_u51kk"]
+material = ExtResource("3_1pcmu")
+size = Vector3(13, 9.5, 1.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_kbpnj"]
+material = ExtResource("3_1pcmu")
+size = Vector3(60, 0.7, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ibs6q"]
+material = ExtResource("3_1pcmu")
+size = Vector3(11, 0.35, 2.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_dhv6f"]
+material = ExtResource("4_0cafu")
+size = Vector3(8, 3.3, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_eo5qn"]
+material = ExtResource("4_0cafu")
+size = Vector3(16, 2.6, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6msnm"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_subsf"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_hjdr6"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_618o3"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_370xe"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_womwt"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4q8kh"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_i0c14"]
+material = ExtResource("4_0cafu")
+size = Vector3(16, 2.6, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_42nk1"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5po1y"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2howt"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_5iaxc"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_47klc"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_styf5"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_jkfb1"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.12, 2.6, 0.1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6nq5i"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.14, 3.3, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_37ejb"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.14, 3.3, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4qgvh"]
+material = ExtResource("5_qmigo")
+size = Vector3(0.14, 3.3, 0.12)
+
+[node name="StoreFront" type="StaticBody3D" unique_id=1056023655]
+physics_material_override = ExtResource("1_3uvww")
+
+[node name="BuildingShape" type="CollisionShape3D" parent="." unique_id=1158698322]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -6)
+shape = SubResource("BoxShape3D_bb5wj")
+
+[node name="Building" type="MeshInstance3D" parent="." unique_id=1472877052]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -6)
+mesh = SubResource("BoxMesh_7v61j")
+
+[node name="EntranceTowerShape" type="CollisionShape3D" parent="." unique_id=1514401048]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.75, -0.3)
+shape = SubResource("BoxShape3D_dmkhk")
+
+[node name="EntranceTower" type="MeshInstance3D" parent="." unique_id=597696573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.75, -0.3)
+mesh = SubResource("BoxMesh_u51kk")
+
+[node name="Fascia" type="MeshInstance3D" parent="." unique_id=654993682]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.6, 0.06)
+mesh = SubResource("BoxMesh_kbpnj")
+
+[node name="Canopy" type="MeshInstance3D" parent="." unique_id=1205431270]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.9, 1.6)
+mesh = SubResource("BoxMesh_ibs6q")
+
+[node name="EntranceGlass" type="MeshInstance3D" parent="." unique_id=1807075968]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0.52)
+mesh = SubResource("BoxMesh_dhv6f")
+
+[node name="WindowsW" type="MeshInstance3D" parent="." unique_id=741790141]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 1.5, 0.03)
+mesh = SubResource("BoxMesh_eo5qn")
+
+[node name="MullionW1" type="MeshInstance3D" parent="." unique_id=677543492]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.98, 1.5, 0.06)
+mesh = SubResource("BoxMesh_6msnm")
+
+[node name="MullionW2" type="MeshInstance3D" parent="." unique_id=1909153316]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.32, 1.5, 0.06)
+mesh = SubResource("BoxMesh_subsf")
+
+[node name="MullionW3" type="MeshInstance3D" parent="." unique_id=1160386263]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.66, 1.5, 0.06)
+mesh = SubResource("BoxMesh_hjdr6")
+
+[node name="MullionW4" type="MeshInstance3D" parent="." unique_id=1450075731]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 1.5, 0.06)
+mesh = SubResource("BoxMesh_618o3")
+
+[node name="MullionW5" type="MeshInstance3D" parent="." unique_id=1126244592]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.34, 1.5, 0.06)
+mesh = SubResource("BoxMesh_370xe")
+
+[node name="MullionW6" type="MeshInstance3D" parent="." unique_id=712223054]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.68, 1.5, 0.06)
+mesh = SubResource("BoxMesh_womwt")
+
+[node name="MullionW7" type="MeshInstance3D" parent="." unique_id=1272728328]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.02, 1.5, 0.06)
+mesh = SubResource("BoxMesh_4q8kh")
+
+[node name="WindowsE" type="MeshInstance3D" parent="." unique_id=987536447]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 1.5, 0.03)
+mesh = SubResource("BoxMesh_i0c14")
+
+[node name="MullionE1" type="MeshInstance3D" parent="." unique_id=1332366580]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.02, 1.5, 0.06)
+mesh = SubResource("BoxMesh_42nk1")
+
+[node name="MullionE2" type="MeshInstance3D" parent="." unique_id=621347667]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.68, 1.5, 0.06)
+mesh = SubResource("BoxMesh_5po1y")
+
+[node name="MullionE3" type="MeshInstance3D" parent="." unique_id=1803627315]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.34, 1.5, 0.06)
+mesh = SubResource("BoxMesh_2howt")
+
+[node name="MullionE4" type="MeshInstance3D" parent="." unique_id=510566443]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 1.5, 0.06)
+mesh = SubResource("BoxMesh_5iaxc")
+
+[node name="MullionE5" type="MeshInstance3D" parent="." unique_id=430500767]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.66, 1.5, 0.06)
+mesh = SubResource("BoxMesh_47klc")
+
+[node name="MullionE6" type="MeshInstance3D" parent="." unique_id=1784464238]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.32, 1.5, 0.06)
+mesh = SubResource("BoxMesh_styf5")
+
+[node name="MullionE7" type="MeshInstance3D" parent="." unique_id=1520065312]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.98, 1.5, 0.06)
+mesh = SubResource("BoxMesh_jkfb1")
+
+[node name="DoorFrame1" type="MeshInstance3D" parent="." unique_id=1369243969]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.65, 0.56)
+mesh = SubResource("BoxMesh_6nq5i")
+
+[node name="DoorFrame2" type="MeshInstance3D" parent="." unique_id=1869506376]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0.56)
+mesh = SubResource("BoxMesh_37ejb")
+
+[node name="DoorFrame3" type="MeshInstance3D" parent="." unique_id=15976704]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.65, 0.56)
+mesh = SubResource("BoxMesh_4qgvh")
+
+[node name="Sign" type="Label3D" parent="." unique_id=1542650542]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.3, 0.52)
+pixel_size = 0.02
+double_sided = false
+modulate = Color(1, 0.5411765, 0.11764706, 1)
+outline_modulate = Color(0.3529412, 0.11372549, 0, 1)
+text = "SUPERMARKET"
+font_size = 160
+outline_size = 10
+
+[node name="SignBakery" type="Label3D" parent="." unique_id=503648949]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 4.6, 0.14)
+pixel_size = 0.012
+double_sided = false
+modulate = Color(1, 0.8235294, 0.34117648, 1)
+outline_modulate = Color(0.2901961, 0.19607843, 0, 1)
+text = "BAKERY"
+font_size = 90
+outline_size = 10
+
+[node name="SignDeli" type="Label3D" parent="." unique_id=539001204]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 4.6, 0.14)
+pixel_size = 0.012
+double_sided = false
+modulate = Color(1, 0.8235294, 0.34117648, 1)
+outline_modulate = Color(0.2901961, 0.19607843, 0, 1)
+text = "DELI"
+font_size = 90
+outline_size = 10
+
+[node name="FacadeLights" type="Node3D" parent="." unique_id=1016951438]
+
+[node name="Wash1" type="OmniLight3D" parent="FacadeLights" unique_id=792478744]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 5.6, 1.2)
+light_color = Color(1, 0.8352941, 0.6039216, 1)
+omni_range = 8.0
+
+[node name="Wash2" type="OmniLight3D" parent="FacadeLights" unique_id=170102379]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 5.6, 1.2)
+light_color = Color(1, 0.8352941, 0.6039216, 1)
+omni_range = 8.0
+
+[node name="Wash3" type="OmniLight3D" parent="FacadeLights" unique_id=1660470432]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 5.6, 1.2)
+light_color = Color(1, 0.8352941, 0.6039216, 1)
+omni_range = 8.0
+
+[node name="Wash4" type="OmniLight3D" parent="FacadeLights" unique_id=1641017883]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 5.6, 1.2)
+light_color = Color(1, 0.8352941, 0.6039216, 1)
+omni_range = 8.0
+
+[node name="EntranceLight" type="SpotLight3D" parent="FacadeLights" unique_id=662588041]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 3.7, 2)
+light_color = Color(1, 0.8862745, 0.6901961, 1)
+light_energy = 4.0
+spot_range = 8.0
+spot_angle = 60.0

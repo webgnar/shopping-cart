@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Material" path="res://assets/parking_lot/materials/paint_white.tres" id="1_ayg3d"]
+[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/parking_block.tscn" id="2_3e7sk"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ephpl"]
+material = ExtResource("1_ayg3d")
+size = Vector2(0.12, 5.5)
+
+[node name="ParkingStall" type="Node3D" unique_id=1081091471]
+
+[node name="Line" type="MeshInstance3D" parent="." unique_id=1660237955]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.003, 2.75)
+mesh = SubResource("PlaneMesh_ephpl")
+
+[node name="ParkingBlock" type="StaticBody3D" parent="." unique_id=1574929936 instance=ExtResource("2_3e7sk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35, 0, 4.85)
