@@ -24,6 +24,7 @@ triangle count and file size for new models, judgment calls, what was left out, 
   off / on: sandbox 71 / 0, parking lot 8 / 0, supermarket 192 / 0, garage 168 / 0.
 - **Left out.** Loose props on layer 1 (boxes, product cases, oil drums) also push the camera; spare carts
   (layers 2/4) do not, so the camera can still pass through a parked spare cart.
+
 ## 2026-11-16: push lifts the front, pull lifts the back; faster power bars
 
 - zack chose the lift direction: a very hard **push lifts the front wheels** (wheelie) and a very hard
