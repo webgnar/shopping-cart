@@ -7,6 +7,7 @@ import RAPIER from 'rapier';
 import { v3, add, sub, clamp, rot, color, widenMask } from './util.js';
 import { Cart, SIDES } from './cart.js';
 import { fetchLevel, buildLevel, layerPairs, applyEnvironment, ambientFor, makeSkyDome, disposeTree } from './level.js';
+import { RollingSound, unlockAudio, updateListener, loadedLoops } from './sound.js';
 
 await RAPIER.init();
 const STEP = 1 / 120;                // Godot physics ticks at 120 Hz
@@ -62,6 +63,7 @@ async function loadLevel(key) {
     // Tear down the old level.
     if (levelRoot) { scene.remove(levelRoot); disposeTree(levelRoot); }
     if (ambient) scene.remove(ambient);
+    for (const c of [cart, ...spares]) if (c && c.sound) c.sound.remove();
     for (const c of [cart, ...spares]) if (c && c.root) scene.remove(c.root);
     for (const c of [cart, ...spares]) if (c) for (const [, g] of c.meshes) scene.remove(g);
     if (world) world.free();
@@ -83,7 +85,9 @@ async function loadLevel(key) {
     let bit = 1 << 5;
     for (const sc of level.spareCarts) {
       if (bit > 0x8000) break;
-      spares.push(new Cart({ ...ctx, model: cartModel ? cartModel.clone() : null }, { pos: v3(...sc.pos), yaw: sc.yaw, player: false, empty: true, bit }));
+      const spare = new Cart({ ...ctx, model: cartModel ? cartModel.clone() : null }, { pos: v3(...sc.pos), yaw: sc.yaw, player: false, empty: true, bit });
+      if (rig.rolling_sound) spare.sound = new RollingSound(spare, rig.rolling_sound, level.surfaces);
+      spares.push(spare);
       bit <<= 1;
     }
     levelKey = entry.key;
@@ -98,8 +102,9 @@ async function loadLevel(key) {
 
 const PLAYER_BIT = 1 << 4;
 function spawn(pos, yaw) {
-  if (cart) cart.remove();
+  if (cart) { cart.remove(); if (cart.sound) cart.sound.remove(); }
   cart = new Cart({ ...ctx, model: cartModel ? cartModel.clone() : null }, { pos, yaw, player: true, bit: PLAYER_BIT });
+  if (rig.rolling_sound) cart.sound = new RollingSound(cart, rig.rolling_sound, level.surfaces);
   cam.heading = yaw; cam.target.set(pos.x, pos.y + 0.67, pos.z); cam.lift = 0; cam.reach = 1;
 }
 
@@ -315,6 +320,9 @@ function frame(now) {
   if (cart.origin().y < level.spawn.pos[1] - 30) spawn(v3(...level.spawn.pos), level.spawn.yaw);
   cart.sync(); for (const s of spares) s.sync();
   updateCamera(dt);
+  // Rolling sound: silent while paused (menu, console) or before Start.
+  for (const k of [cart, ...spares]) if (k.sound) k.sound.update(dt, paused || !started);
+  updateListener(camera);
   const c = cart.comWorld();
   if (sun.visible) { const d = sun.userData.dir; sun.position.set(c.x - d.x * 30, c.y - d.y * 30, c.z - d.z * 30); sun.target.position.set(c.x, c.y, c.z); }
   skyDome.position.copy(camera.position);
@@ -344,6 +352,7 @@ go.addEventListener('click', async () => {
   try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) await DeviceOrientationEvent.requestPermission(); } catch (e) { /* tilt stays off; the lean buttons still work */ }
   $('start').hidden = true;
   started = true;
+  unlockAudio(rig.rolling_sound);
   if (mode === 'touch' && document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation?.lock?.('landscape')).catch(() => {});
   }
@@ -353,6 +362,9 @@ function toggleFullscreen() {
   if (document.fullscreenElement) document.exitFullscreen?.(); else document.documentElement.requestFullscreen?.().catch(() => {});
 }
 async function travel(key) { releaseTouches(); keys.clear(); await loadLevel(key); }
+
+// Browsers only allow sound after a tap, click or key; Safari sometimes wants another after the Start tap.
+for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => { if (started) unlockAudio(rig.rolling_sound); }, { passive: true });
 
 $('resetBtn').addEventListener('click', () => respawn());
 $('levelBtn').addEventListener('click', () => { markLevel($('menuLevels')); $('menu').hidden = false; paused = true; });
@@ -411,7 +423,7 @@ go.disabled = false; go.textContent = mode === 'touch' ? 'Tap to start' : 'Start
 window.__cart = {
   get cart() { return cart; }, get spares() { return spares; }, get world() { return world; }, get level() { return level; },
   get levelKey() { return levelKey; }, get started() { return started; }, get cam() { return cam; }, camera, renderer,
-  RAPIER, v3, levels: levelList, loadLevel, spawn, respawn, runCommand, setMode, get mode() { return mode; },
+  RAPIER, v3, levels: levelList, loadLevel, loadedLoops, spawn, respawn, runCommand, setMode, get mode() { return mode; },
   /** {L, R: -1/0/1, lift, press} or null to give control back to the keys and screen. */
   setInput(inp) { testInput = inp ? { L: 0, R: 0, lift: false, press: false, ...inp } : null; },
   /** Steps the physics directly (no drawing) for `seconds`, calling sample() after each step. */

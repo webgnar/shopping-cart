@@ -2,6 +2,14 @@
 
 [ext_resource type="Script" path="res://scripts/cart.gd" id="1_ytnl2"]
 [ext_resource type="PackedScene" path="res://assets/models/shopping_cart.glb" id="2_0ipfc"]
+[ext_resource type="Script" uid="uid://byslxb8p8dy47" path="res://scripts/cart/cart_rolling_sound.gd" id="3_roll"]
+[ext_resource type="Script" uid="uid://cc4epghjbfnqw" path="res://scripts/cart/rolling_surface_sound.gd" id="4_rsurf"]
+[ext_resource type="AudioStream" uid="uid://c0lnfh0opwlwg" path="res://assets/audio/cart/roll_asphalt.ogg" id="5_rasph"]
+[ext_resource type="AudioStream" uid="uid://ci6hdyx0xwhpb" path="res://assets/audio/cart/roll_tile.ogg" id="6_rtile"]
+[ext_resource type="AudioStream" uid="uid://bsjr2sg0cjnxu" path="res://assets/audio/cart/roll_concrete.ogg" id="7_rconc"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="8_pasph"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/tile.tres" id="9_ptile"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="10_pconc"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_i6241"]
 friction = 0.5
@@ -154,6 +162,44 @@ collision_mask = 3
 [node name="Zone" type="CollisionShape3D" parent="Frame/Guard" unique_id=57741320]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.47, 0.6, 0)
 shape = SubResource("BoxShape3D_nyi84")
+
+[node name="RollingSound" type="Node3D" parent="Frame" node_paths=PackedStringArray("probe", "fallback")]
+script = ExtResource("3_roll")
+probe = NodePath("FloorProbe")
+fallback = NodePath("Concrete")
+
+[node name="FloorProbe" type="RayCast3D" parent="Frame/RollingSound"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.46, 0.3, 0)
+target_position = Vector3(0, -0.6, 0)
+
+[node name="Asphalt" type="AudioStreamPlayer3D" parent="Frame/RollingSound"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.46, 0.1, 0)
+script = ExtResource("4_rsurf")
+floors = Array[PhysicsMaterial]([ExtResource("8_pasph")])
+stream = ExtResource("5_rasph")
+unit_size = 4.0
+max_distance = 40.0
+volume_db = -80.0
+
+[node name="Tile" type="AudioStreamPlayer3D" parent="Frame/RollingSound"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.46, 0.1, 0)
+script = ExtResource("4_rsurf")
+floors = Array[PhysicsMaterial]([ExtResource("9_ptile")])
+loudness_db = -5.0
+stream = ExtResource("6_rtile")
+unit_size = 4.0
+max_distance = 40.0
+volume_db = -80.0
+
+[node name="Concrete" type="AudioStreamPlayer3D" parent="Frame/RollingSound"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.46, 0.1, 0)
+script = ExtResource("4_rsurf")
+floors = Array[PhysicsMaterial]([ExtResource("10_pconc")])
+loudness_db = -2.0
+stream = ExtResource("7_rconc")
+unit_size = 4.0
+max_distance = 40.0
+volume_db = -80.0
 
 [node name="Gate" type="RigidBody3D" parent="." unique_id=354311188]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.068, 0.985, 0)

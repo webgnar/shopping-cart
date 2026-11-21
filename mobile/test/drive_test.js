@@ -319,7 +319,13 @@ const SCENARIOS = [
       const p = cart.origin(), spares = c.spares.length, wheels = cart.wheelsDown(), pinned = cart.pinned;
       const sparesPinned = c.spares.filter(x => x.pinned).length;
       // Drive forward 2 s, then let it settle: never falls through the floor.
-      c.setInput({ L: 1, R: 1 }); c.simulate(2); c.setInput({}); c.simulate(2);
+      // Rolling sound: the loop for this floor plays while it rolls, and nothing once it has stopped.
+      c.setInput({ L: 1, R: 1 }); c.simulate(1.5); cart.sound.update(1);
+      const rolling = { surface: cart.sound.surface && cart.sound.surface.name, gain: cart.sound.surface ? cart.sound.surface.gain : 0, speed: cart.sound.speed };
+      c.simulate(0.5); c.setInput({}); c.simulate(2);
+      for (let i = 0; i < 4 && !cart.pinned; i++) c.simulate(1);
+      cart.sound.update(1); rolling.atRest = cart.sound.playing();
+      rolling.loaded = c.loadedLoops();
       const p2 = cart.origin();
       // Camera: sweep around the cart, never inside the level.
       let inside = 0, minGap = 9;
@@ -332,8 +338,12 @@ const SCENARIOS = [
       }
       c.cam.yaw = 0; c.renderOnce();
       return { spawnDrop: s.pos[1] - p.y, wheels, pinned, spares, sparesPinned, fell: p2.y < s.pos[1] - 1,
-        moved: Math.hypot(p2.x - p.x, p2.z - p.z), inside, minGap, ...c.stats() };
+        moved: Math.hypot(p2.x - p.x, p2.z - p.z), inside, minGap, rolling, ...c.stats() };
     }, lv);
+    const want = { plot: 'Asphalt', garage: 'Concrete', market: 'Tile' }[lv];
+    const rs = r.rolling;
+    report(rs.surface && (!want || rs.surface === want) && rs.gain > 0.9 && rs.atRest.length === 0 && rs.loaded.length === 3, `sound ${lv}`,
+      `rolling at ${rs.speed.toFixed(1)} m/s: ${rs.surface}${want ? ' (expected ' + want + ')' : ''} at gain ${rs.gain.toFixed(2)}, at rest playing [${rs.atRest}], loops loaded ${rs.loaded.length}/3`);
     report(Math.abs(r.spawnDrop) < 0.1 && r.wheels === 4 && r.pinned && !r.fell && r.moved > 1 && r.inside === 0, `level ${lv}`,
       `spawned on 4 wheels and came to rest: ${r.wheels === 4 && r.pinned}, drove ${r.moved.toFixed(1)} m, camera never inside walls (closest ${r.minGap.toFixed(2)} m), ${r.spares} spare carts (${r.sparesPinned} at rest), ${r.meshes} meshes, ${r.drawCalls} draws, ${Math.round(r.triangles / 1000)}k triangles`);
     if (shots) await page.screenshot({ path: path.join(shots, `level_${lv}.png`), timeout: 180000 });
