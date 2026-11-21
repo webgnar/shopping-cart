@@ -350,6 +350,32 @@ const SCENARIOS = [
     if (shots) await page.screenshot({ path: path.join(shots, `level_${lv}.png`), timeout: 180000 });
   }
 
+  // Endless sandbox: the same chunk layout as Godot (its exported check table), chunks around the cart, and after a
+  // jump far away the ground is there under a 4 m grid around the cart (shopping-cart/tests/sandbox_test.gd in Godot).
+  const sb = await page.evaluate(async () => {
+    const c = window.__cart;
+    await c.loadLevel('sandbox');
+    const st = c.streamer, start = st.loaded.size;
+    const far = { x: 328, y: 0, z: 298 };
+    await st.prime(far);
+    const [i, j] = st.cellOf(far);
+    const x0 = st.origin.x + i * st.size + 1.5, z0 = st.origin.z + j * st.size + 1.5;   // a chunk corner: always flat
+    c.spawn(c.v3(x0, 0.05, z0), 0); c.setInput({}); c.simulate(1);
+    const landed = { ...c.cart.origin() };
+    let holes = 0;
+    for (let x = -40; x <= 40; x += 4) for (let z = -40; z <= 40; z += 4) {
+      const hit = c.world.castRay(new c.RAPIER.Ray({ x: x0 + x + 0.13, y: 20, z: z0 + z + 0.13 }, { x: 0, y: -1, z: 0 }), 30, true, undefined, (1 << 16) | 1);
+      if (!hit || hit.timeOfImpact > 20.05) holes++;
+    }
+    const kinds = new Set([...st.loaded.values()].map(k => st.pick(k.i, k.j)[0]));
+    c.setInput({ L: 1, R: 1 }); c.simulate(2); c.setInput({}); c.simulate(1);
+    c.renderOnce();
+    return { check: st.selfCheck(), start, after: st.loaded.size, holes, landed, kinds: kinds.size, ...c.stats() };
+  });
+  report(sb.check && sb.start >= 8 && sb.holes === 0 && Math.abs(sb.landed.y) < 0.1 && sb.kinds >= 3, 'sandbox stream',
+    `layout matches Godot: ${sb.check}, ${sb.start} chunks at the start, ${sb.after} after the jump (${sb.kinds} kinds), holes ${sb.holes}, landed at y ${sb.landed.y.toFixed(2)}, ${sb.drawCalls} draws, ${Math.round(sb.triangles / 1000)}k triangles`);
+  if (shots) await page.screenshot({ path: path.join(shots, 'sandbox_stream.png'), timeout: 180000 });
+
   // Bot carts: each level's bots drive themselves for 60 s through the player's keys, reach spots on the navigation
   // mesh and stay on their wheels (the same checks as shopping-cart/tests/bot_test.gd).
   for (const lv of ['market', 'plot', 'garage']) {

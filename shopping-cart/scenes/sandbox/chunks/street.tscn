@@ -1,0 +1,495 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="1_asphalt"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/asphalt.tres" id="2_asphalt"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="3_concrete"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/concrete.tres" id="4_concrete"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/grass.tres" id="5_grass"]
+[ext_resource type="Material" path="res://assets/materials/sandbox/grass.tres" id="6_grass"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/sidewalk.tres" id="7_sidewalk"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/curb_concrete.tres" id="8_curb_concr"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/paint_white.tres" id="9_paint_whit"]
+[ext_resource type="PackedScene" path="res://scenes/sandbox/props/streetlight_day.tscn" id="10_streetligh"]
+[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/palm_tree.tscn" id="11_palm_tree"]
+[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/water_machine.tscn" id="12_water_mach"]
+[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/cart_corral.tscn" id="13_cart_corra"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(40.0, 1.0, 16.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2"]
+material = ExtResource("2_asphalt")
+size = Vector3(40.0, 1.0, 16.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3"]
+size = Vector3(40.0, 1.0, 9.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4"]
+material = ExtResource("4_concrete")
+size = Vector3(40.0, 1.0, 9.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5"]
+size = Vector3(40.0, 1.0, 9.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6"]
+material = ExtResource("4_concrete")
+size = Vector3(40.0, 1.0, 9.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_7"]
+size = Vector3(40.0, 1.0, 3.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_8"]
+material = ExtResource("6_grass")
+size = Vector3(40.0, 1.0, 3.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_9"]
+size = Vector3(40.0, 1.0, 3.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_10"]
+material = ExtResource("6_grass")
+size = Vector3(40.0, 1.0, 3.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_11"]
+size = Vector3(13.0, 0.2, 2.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_12"]
+material = ExtResource("7_sidewalk")
+size = Vector3(13.0, 0.2, 2.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_13"]
+size = Vector3(13.0, 0.2, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_14"]
+material = ExtResource("8_curb_concr")
+size = Vector3(13.0, 0.2, 0.2)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_15"]
+points = PackedVector3Array(-1.0, -0.08, -1.5, -1.0, -0.08, 1.5, 1.0, -0.08, -1.5, 1.0, -0.08, 1.5, 1.0, 0.08, -1.5, 1.0, 0.08, 1.5)
+
+[sub_resource type="PrismMesh" id="PrismMesh_16"]
+material = ExtResource("7_sidewalk")
+left_to_right = 1.0
+size = Vector3(2.0, 0.16, 3.0)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_17"]
+points = PackedVector3Array(-1.0, -0.08, -1.5, -1.0, -0.08, 1.5, 1.0, -0.08, -1.5, 1.0, -0.08, 1.5, 1.0, 0.08, -1.5, 1.0, 0.08, 1.5)
+
+[sub_resource type="PrismMesh" id="PrismMesh_18"]
+material = ExtResource("7_sidewalk")
+left_to_right = 1.0
+size = Vector3(2.0, 0.16, 3.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_19"]
+size = Vector3(13.0, 0.2, 2.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_20"]
+material = ExtResource("7_sidewalk")
+size = Vector3(13.0, 0.2, 2.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_21"]
+size = Vector3(13.0, 0.2, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_22"]
+material = ExtResource("8_curb_concr")
+size = Vector3(13.0, 0.2, 0.2)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_23"]
+points = PackedVector3Array(-1.0, -0.08, -1.5, -1.0, -0.08, 1.5, 1.0, -0.08, -1.5, 1.0, -0.08, 1.5, 1.0, 0.08, -1.5, 1.0, 0.08, 1.5)
+
+[sub_resource type="PrismMesh" id="PrismMesh_24"]
+material = ExtResource("7_sidewalk")
+left_to_right = 1.0
+size = Vector3(2.0, 0.16, 3.0)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_25"]
+points = PackedVector3Array(-1.0, -0.08, -1.5, -1.0, -0.08, 1.5, 1.0, -0.08, -1.5, 1.0, -0.08, 1.5, 1.0, 0.08, -1.5, 1.0, 0.08, 1.5)
+
+[sub_resource type="PrismMesh" id="PrismMesh_26"]
+material = ExtResource("7_sidewalk")
+left_to_right = 1.0
+size = Vector3(2.0, 0.16, 3.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_27"]
+size = Vector3(13.0, 0.2, 2.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_28"]
+material = ExtResource("7_sidewalk")
+size = Vector3(13.0, 0.2, 2.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_29"]
+size = Vector3(13.0, 0.2, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_30"]
+material = ExtResource("8_curb_concr")
+size = Vector3(13.0, 0.2, 0.2)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_31"]
+points = PackedVector3Array(-1.0, -0.08, -1.5, -1.0, -0.08, 1.5, 1.0, -0.08, -1.5, 1.0, -0.08, 1.5, 1.0, 0.08, -1.5, 1.0, 0.08, 1.5)
+
+[sub_resource type="PrismMesh" id="PrismMesh_32"]
+material = ExtResource("7_sidewalk")
+left_to_right = 1.0
+size = Vector3(2.0, 0.16, 3.0)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_33"]
+points = PackedVector3Array(-1.0, -0.08, -1.5, -1.0, -0.08, 1.5, 1.0, -0.08, -1.5, 1.0, -0.08, 1.5, 1.0, 0.08, -1.5, 1.0, 0.08, 1.5)
+
+[sub_resource type="PrismMesh" id="PrismMesh_34"]
+material = ExtResource("7_sidewalk")
+left_to_right = 1.0
+size = Vector3(2.0, 0.16, 3.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_35"]
+size = Vector3(13.0, 0.2, 2.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_36"]
+material = ExtResource("7_sidewalk")
+size = Vector3(13.0, 0.2, 2.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_37"]
+size = Vector3(13.0, 0.2, 0.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_38"]
+material = ExtResource("8_curb_concr")
+size = Vector3(13.0, 0.2, 0.2)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_39"]
+points = PackedVector3Array(-1.0, -0.08, -1.5, -1.0, -0.08, 1.5, 1.0, -0.08, -1.5, 1.0, -0.08, 1.5, 1.0, 0.08, -1.5, 1.0, 0.08, 1.5)
+
+[sub_resource type="PrismMesh" id="PrismMesh_40"]
+material = ExtResource("7_sidewalk")
+left_to_right = 1.0
+size = Vector3(2.0, 0.16, 3.0)
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_41"]
+points = PackedVector3Array(-1.0, -0.08, -1.5, -1.0, -0.08, 1.5, 1.0, -0.08, -1.5, 1.0, -0.08, 1.5, 1.0, 0.08, -1.5, 1.0, 0.08, 1.5)
+
+[sub_resource type="PrismMesh" id="PrismMesh_42"]
+material = ExtResource("7_sidewalk")
+left_to_right = 1.0
+size = Vector3(2.0, 0.16, 3.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_43"]
+material = ExtResource("9_paint_whit")
+size = Vector3(3.0, 0.004, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_44"]
+material = ExtResource("9_paint_whit")
+size = Vector3(3.0, 0.004, 0.5)
+
+[node name="StreetChunk" type="Node3D"]
+
+[node name="Road" type="StaticBody3D" parent="."]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, -0.5, 0.0)
+physics_material_override = ExtResource("1_asphalt")
+
+[node name="Shape" type="CollisionShape3D" parent="Road"]
+shape = SubResource("BoxShape3D_1")
+
+[node name="Mesh" type="MeshInstance3D" parent="Road"]
+mesh = SubResource("BoxMesh_2")
+
+[node name="PlazaNorth" type="StaticBody3D" parent="."]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, -0.5, -15.5)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="PlazaNorth"]
+shape = SubResource("BoxShape3D_3")
+
+[node name="Mesh" type="MeshInstance3D" parent="PlazaNorth"]
+mesh = SubResource("BoxMesh_4")
+
+[node name="PlazaSouth" type="StaticBody3D" parent="."]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, -0.5, 15.5)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="PlazaSouth"]
+shape = SubResource("BoxShape3D_5")
+
+[node name="Mesh" type="MeshInstance3D" parent="PlazaSouth"]
+mesh = SubResource("BoxMesh_6")
+
+[node name="ParkwayNorth" type="StaticBody3D" parent="."]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, -0.5, -9.5)
+physics_material_override = ExtResource("5_grass")
+
+[node name="Shape" type="CollisionShape3D" parent="ParkwayNorth"]
+shape = SubResource("BoxShape3D_7")
+
+[node name="Mesh" type="MeshInstance3D" parent="ParkwayNorth"]
+mesh = SubResource("BoxMesh_8")
+
+[node name="ParkwaySouth" type="StaticBody3D" parent="."]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, -0.5, 9.5)
+physics_material_override = ExtResource("5_grass")
+
+[node name="Shape" type="CollisionShape3D" parent="ParkwaySouth"]
+shape = SubResource("BoxShape3D_9")
+
+[node name="Mesh" type="MeshInstance3D" parent="ParkwaySouth"]
+mesh = SubResource("BoxMesh_10")
+
+[node name="SidewalkNorth" type="Node3D" parent="."]
+
+[node name="WalkWest" type="StaticBody3D" parent="SidewalkNorth"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -10.0, 0.05, -6.6)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkNorth/WalkWest"]
+shape = SubResource("BoxShape3D_11")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkNorth/WalkWest"]
+mesh = SubResource("BoxMesh_12")
+
+[node name="CurbWest" type="StaticBody3D" parent="SidewalkNorth"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -10.0, 0.05, -5.1)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkNorth/CurbWest"]
+shape = SubResource("BoxShape3D_13")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkNorth/CurbWest"]
+mesh = SubResource("BoxMesh_14")
+
+[node name="RampInnerWest" type="StaticBody3D" parent="SidewalkNorth"]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, -2.5, 0.07, -6.5)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkNorth/RampInnerWest"]
+shape = SubResource("ConvexPolygonShape3D_15")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkNorth/RampInnerWest"]
+mesh = SubResource("PrismMesh_16")
+
+[node name="RampOuterWest" type="StaticBody3D" parent="SidewalkNorth"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -17.5, 0.07, -6.5)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkNorth/RampOuterWest"]
+shape = SubResource("ConvexPolygonShape3D_17")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkNorth/RampOuterWest"]
+mesh = SubResource("PrismMesh_18")
+
+[node name="WalkEast" type="StaticBody3D" parent="SidewalkNorth"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 10.0, 0.05, -6.6)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkNorth/WalkEast"]
+shape = SubResource("BoxShape3D_19")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkNorth/WalkEast"]
+mesh = SubResource("BoxMesh_20")
+
+[node name="CurbEast" type="StaticBody3D" parent="SidewalkNorth"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 10.0, 0.05, -5.1)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkNorth/CurbEast"]
+shape = SubResource("BoxShape3D_21")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkNorth/CurbEast"]
+mesh = SubResource("BoxMesh_22")
+
+[node name="RampInnerEast" type="StaticBody3D" parent="SidewalkNorth"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 2.5, 0.07, -6.5)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkNorth/RampInnerEast"]
+shape = SubResource("ConvexPolygonShape3D_23")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkNorth/RampInnerEast"]
+mesh = SubResource("PrismMesh_24")
+
+[node name="RampOuterEast" type="StaticBody3D" parent="SidewalkNorth"]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, 17.5, 0.07, -6.5)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkNorth/RampOuterEast"]
+shape = SubResource("ConvexPolygonShape3D_25")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkNorth/RampOuterEast"]
+mesh = SubResource("PrismMesh_26")
+
+[node name="SidewalkSouth" type="Node3D" parent="."]
+
+[node name="WalkWest" type="StaticBody3D" parent="SidewalkSouth"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -10.0, 0.05, 6.6)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkSouth/WalkWest"]
+shape = SubResource("BoxShape3D_27")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkSouth/WalkWest"]
+mesh = SubResource("BoxMesh_28")
+
+[node name="CurbWest" type="StaticBody3D" parent="SidewalkSouth"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -10.0, 0.05, 5.1)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkSouth/CurbWest"]
+shape = SubResource("BoxShape3D_29")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkSouth/CurbWest"]
+mesh = SubResource("BoxMesh_30")
+
+[node name="RampInnerWest" type="StaticBody3D" parent="SidewalkSouth"]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, -2.5, 0.07, 6.5)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkSouth/RampInnerWest"]
+shape = SubResource("ConvexPolygonShape3D_31")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkSouth/RampInnerWest"]
+mesh = SubResource("PrismMesh_32")
+
+[node name="RampOuterWest" type="StaticBody3D" parent="SidewalkSouth"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -17.5, 0.07, 6.5)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkSouth/RampOuterWest"]
+shape = SubResource("ConvexPolygonShape3D_33")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkSouth/RampOuterWest"]
+mesh = SubResource("PrismMesh_34")
+
+[node name="WalkEast" type="StaticBody3D" parent="SidewalkSouth"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 10.0, 0.05, 6.6)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkSouth/WalkEast"]
+shape = SubResource("BoxShape3D_35")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkSouth/WalkEast"]
+mesh = SubResource("BoxMesh_36")
+
+[node name="CurbEast" type="StaticBody3D" parent="SidewalkSouth"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 10.0, 0.05, 5.1)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkSouth/CurbEast"]
+shape = SubResource("BoxShape3D_37")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkSouth/CurbEast"]
+mesh = SubResource("BoxMesh_38")
+
+[node name="RampInnerEast" type="StaticBody3D" parent="SidewalkSouth"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 2.5, 0.07, 6.5)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkSouth/RampInnerEast"]
+shape = SubResource("ConvexPolygonShape3D_39")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkSouth/RampInnerEast"]
+mesh = SubResource("PrismMesh_40")
+
+[node name="RampOuterEast" type="StaticBody3D" parent="SidewalkSouth"]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, 17.5, 0.07, 6.5)
+physics_material_override = ExtResource("3_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="SidewalkSouth/RampOuterEast"]
+shape = SubResource("ConvexPolygonShape3D_41")
+
+[node name="Mesh" type="MeshInstance3D" parent="SidewalkSouth/RampOuterEast"]
+mesh = SubResource("PrismMesh_42")
+
+[node name="Lines" type="Node3D" parent="."]
+
+[node name="Dash1" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -15.0, 0.001, 0.0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_43")
+
+[node name="Dash2" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -9.0, 0.001, 0.0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_43")
+
+[node name="Dash3" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 6.0, 0.001, 0.0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_43")
+
+[node name="Dash4" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 12.0, 0.001, 0.0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_43")
+
+[node name="Zebra1" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, 0.001, -4.0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_44")
+
+[node name="Zebra2" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, 0.001, -3.0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_44")
+
+[node name="Zebra3" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, 0.001, -2.0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_44")
+
+[node name="Zebra4" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, 0.001, -1.0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_44")
+
+[node name="Zebra5" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, 0.001, 0.0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_44")
+
+[node name="Zebra6" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, 0.001, 1.0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_44")
+
+[node name="Zebra7" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, 0.001, 2.0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_44")
+
+[node name="Zebra8" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, 0.001, 3.0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_44")
+
+[node name="Zebra9" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, 0.001, 4.0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_44")
+
+[node name="Streetlights" type="Node3D" parent="."]
+
+[node name="Light1" parent="Streetlights" instance=ExtResource("10_streetligh")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -10.0, 0.15, -7.4)
+
+[node name="Light2" parent="Streetlights" instance=ExtResource("10_streetligh")]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, 10.0, 0.15, 7.4)
+
+[node name="PalmTrees" type="Node3D" parent="."]
+
+[node name="Palm1" parent="PalmTrees" instance=ExtResource("11_palm_tree")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -15.0, 0.0, -9.5)
+
+[node name="Palm2" parent="PalmTrees" instance=ExtResource("11_palm_tree")]
+transform = Transform3D(0.681998, 0, -0.731354, 0, 1, 0, 0.731354, 0, 0.681998, -3.5, 0.0, -9.5)
+
+[node name="Palm3" parent="PalmTrees" instance=ExtResource("11_palm_tree")]
+transform = Transform3D(-0.069756, 0, -0.997564, 0, 1, 0, 0.997564, 0, -0.069756, 8.0, 0.0, -9.5)
+
+[node name="Palm4" parent="PalmTrees" instance=ExtResource("11_palm_tree")]
+transform = Transform3D(-0.777146, 0, -0.62932, 0, 1, 0, 0.62932, 0, -0.777146, -8.0, 0.0, 9.5)
+
+[node name="Palm5" parent="PalmTrees" instance=ExtResource("11_palm_tree")]
+transform = Transform3D(-0.990268, 0, 0.139173, 0, 1, 0, -0.139173, 0, -0.990268, 3.5, 0.0, 9.5)
+
+[node name="Palm6" parent="PalmTrees" instance=ExtResource("11_palm_tree")]
+transform = Transform3D(-0.573576, 0, 0.819152, 0, 1, 0, -0.819152, 0, -0.573576, 15.0, 0.0, 9.5)
+
+[node name="WaterMachine" parent="." instance=ExtResource("12_water_mach")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 6.0, 0.0, -12.5)
+
+[node name="CartCorral" parent="." instance=ExtResource("13_cart_corra")]
+transform = Transform3D(0.0, 0, -1.0, 0, 1, 0, 1.0, 0, 0.0, -9.0, 0.0, 15.0)

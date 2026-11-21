@@ -1,0 +1,128 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="1_asphalt"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/asphalt.tres" id="2_asphalt"]
+[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/parking_row.tscn" id="3_parking_ro"]
+[ext_resource type="PackedScene" path="res://scenes/sandbox/props/planter_island_day.tscn" id="4_planter_is"]
+[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/parked_car.tscn" id="5_parked_car"]
+[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/cart_corral.tscn" id="6_cart_corra"]
+[ext_resource type="Material" path="res://assets/materials/garage/paint_yellow.tres" id="7_paint_yell"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/paint_white.tres" id="8_paint_whit"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(40.0, 1.0, 40.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2"]
+material = ExtResource("2_asphalt")
+size = Vector3(40.0, 1.0, 40.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_3"]
+size = Vector3(0.35, 0.06, 7.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_4"]
+material = ExtResource("7_paint_yell")
+size = Vector3(0.35, 0.06, 7.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5"]
+size = Vector3(0.35, 0.06, 7.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_6"]
+material = ExtResource("7_paint_yell")
+size = Vector3(0.35, 0.06, 7.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_7"]
+material = ExtResource("8_paint_whit")
+size = Vector3(0.3, 0.004, 6.0)
+
+[node name="LotChunk" type="Node3D"]
+
+[node name="Ground" type="StaticBody3D" parent="."]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, -0.5, 0.0)
+physics_material_override = ExtResource("1_asphalt")
+
+[node name="Shape" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxShape3D_1")
+
+[node name="Mesh" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("BoxMesh_2")
+
+[node name="Stalls" type="Node3D" parent="."]
+
+[node name="RowNorth" parent="Stalls" instance=ExtResource("3_parking_ro")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, 0.0, -5.5)
+
+[node name="RowSouth" parent="Stalls" instance=ExtResource("3_parking_ro")]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, 0.0, 0.0, 5.5)
+
+[node name="PlanterIslands" type="Node3D" parent="."]
+
+[node name="West" parent="PlanterIslands" instance=ExtResource("4_planter_is")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -12.4, 0.0, 0.0)
+
+[node name="East" parent="PlanterIslands" instance=ExtResource("4_planter_is")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 12.4, 0.0, 0.0)
+
+[node name="ParkedCars" type="Node3D" parent="."]
+
+[node name="Car1" parent="ParkedCars" instance=ExtResource("5_parked_car")]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, -9.45, 0.0, -3.2)
+paint_color = Color(0.6588, 0.1961, 0.1765, 1)
+
+[node name="Car2" parent="ParkedCars" instance=ExtResource("5_parked_car")]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, -4.05, 0.0, -3.2)
+paint_color = Color(0.1216, 0.2471, 0.4510, 1)
+
+[node name="Car3" parent="ParkedCars" instance=ExtResource("5_parked_car")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 6.75, 0.0, 3.2)
+paint_color = Color(0.7804, 0.6353, 0.2275, 1)
+
+[node name="Car4" parent="ParkedCars" instance=ExtResource("5_parked_car")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -1.35, 0.0, 3.2)
+paint_color = Color(0.8471, 0.8471, 0.8235, 1)
+
+[node name="CartCorral" parent="." instance=ExtResource("6_cart_corra")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 4.05, 0.0, -3.1)
+
+[node name="SpeedBumps" type="Node3D" parent="."]
+
+[node name="Bump1" type="StaticBody3D" parent="SpeedBumps"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -6.0, 0.02, 12.5)
+physics_material_override = ExtResource("1_asphalt")
+
+[node name="Shape" type="CollisionShape3D" parent="SpeedBumps/Bump1"]
+shape = SubResource("BoxShape3D_3")
+
+[node name="Mesh" type="MeshInstance3D" parent="SpeedBumps/Bump1"]
+mesh = SubResource("BoxMesh_4")
+
+[node name="Bump2" type="StaticBody3D" parent="SpeedBumps"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 7.0, 0.02, -12.5)
+physics_material_override = ExtResource("1_asphalt")
+
+[node name="Shape" type="CollisionShape3D" parent="SpeedBumps/Bump2"]
+shape = SubResource("BoxShape3D_5")
+
+[node name="Mesh" type="MeshInstance3D" parent="SpeedBumps/Bump2"]
+mesh = SubResource("BoxMesh_6")
+
+[node name="Lines" type="Node3D" parent="."]
+
+[node name="Stop1" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -15.0, 0.001, 12.5)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_7")
+
+[node name="Stop2" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -15.0, 0.001, -12.5)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_7")
+
+[node name="Stop3" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 15.0, 0.001, 12.5)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_7")
+
+[node name="Stop4" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 15.0, 0.001, -12.5)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_7")
