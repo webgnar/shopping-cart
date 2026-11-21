@@ -1,0 +1,8 @@
+[gd_resource type="AudioStreamRandomizer" format=3]
+
+[ext_resource type="AudioStream" uid="uid://81fq67fv8bnp" path="res://assets/audio/cart/land.wav" id="1_l"]
+
+[resource]
+random_pitch = 1.08
+streams_count = 1
+stream_0/stream = ExtResource("1_l")
