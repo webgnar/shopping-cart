@@ -319,13 +319,7 @@ const SCENARIOS = [
       const p = cart.origin(), spares = c.spares.length, wheels = cart.wheelsDown(), pinned = cart.pinned;
       const sparesPinned = c.spares.filter(x => x.pinned).length;
       // Drive forward 2 s, then let it settle: never falls through the floor.
-      // Rolling sound: the loop for this floor plays while it rolls, and nothing once it has stopped.
-      c.setInput({ L: 1, R: 1 }); c.simulate(1.5); cart.sound.update(1);
-      const rolling = { surface: cart.sound.surface && cart.sound.surface.name, gain: cart.sound.surface ? cart.sound.surface.gain : 0, speed: cart.sound.speed };
-      c.simulate(0.5); c.setInput({}); c.simulate(2);
-      for (let i = 0; i < 4 && !cart.pinned; i++) c.simulate(1);
-      cart.sound.update(1); rolling.atRest = cart.sound.playing();
-      rolling.loaded = c.loadedLoops();
+      c.setInput({ L: 1, R: 1 }); c.simulate(2); c.setInput({}); c.simulate(2);
       const p2 = cart.origin();
       // Camera: sweep around the cart, never inside the level.
       let inside = 0, minGap = 9;
@@ -337,6 +331,13 @@ const SCENARIOS = [
         minGap = Math.min(minGap, gap); if (gap < 0.05) inside++;
       }
       c.cam.yaw = 0; c.renderOnce();
+      // Rolling sound: a fresh cart at the spawn is quiet at rest, then pushed plays the loop for this floor.
+      c.spawn(c.v3(...s.pos), s.yaw); c.setInput({}); c.simulate(3);
+      const sound = c.cart.sound;
+      sound.update(1);
+      const rolling = { atRest: sound.playing(), loaded: c.loadedLoops() };
+      c.setInput({ L: 1, R: 1 }); c.simulate(1.5); sound.update(1); c.setInput({});
+      Object.assign(rolling, { surface: sound.surface && sound.surface.name, gain: sound.surface ? sound.surface.gain : 0, speed: sound.speed });
       return { spawnDrop: s.pos[1] - p.y, wheels, pinned, spares, sparesPinned, fell: p2.y < s.pos[1] - 1,
         moved: Math.hypot(p2.x - p.x, p2.z - p.z), inside, minGap, rolling, ...c.stats() };
     }, lv);
