@@ -20,12 +20,17 @@ extends RefCounted
 ##                                        then u16 chunk bodies, per body: i16 square x, i16 square z, u16 index,
 ##                                          pose (index into that chunk's RigidBody3Ds sorted by path)
 ##   LEFT      host -> guests reliable    u32 player id
+##   RACE      host -> guests reliable    u8 level serial, u8 phase (Race.Phase: 0 idle, 1 waiting for guests,
+##                                          2 counting down, 3 racing, 4 over), f32 clock (counting down: s to GO;
+##                                          else race time), f32 s since the winner finished (< 0: nobody yet),
+##                                          u8 racers, per racer: i32 id (player id; bots -1, -2...),
+##                                          f32 finish time (< 0: not over the line), str name
 ## A snapshot too big for one packet is sent as several, each a complete SNAPSHOT for the same tick.
 
-const VERSION := 2
+const VERSION := 3
 ## Bump VERSION whenever a message changes, so old and new builds refuse each other cleanly.
 
-enum Msg { HELLO = 1, WELCOME, REJECT, LEVEL, INPUT, RESET, SNAPSHOT, LEFT }
+enum Msg { HELLO = 1, WELCOME, REJECT, LEVEL, INPUT, RESET, SNAPSHOT, LEFT, RACE }
 
 const POSE_BYTES := 28
 

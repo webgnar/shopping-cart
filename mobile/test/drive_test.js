@@ -1,6 +1,6 @@
 // Headless test for the browser version: the same drive checks as the Godot drive test
 // (shopping-cart/tests/drive_test.gd), plus every level, spare carts, bot carts, cart-to-cart hits, stacked carts, the follow camera,
-// the phone's touch rockers, the keyboard and the console.
+// the race down the garage, the phone's touch rockers, the keyboard and the console.
 //   node mobile/test/drive_test.js [screenshot-dir]
 // Serves mobile/ on a local port (the game fetches its levels, so it can't run from file://).
 const { chromium, devices } = require('playwright');
@@ -419,6 +419,47 @@ const SCENARIOS = [
       `${b.moved.toFixed(0)} m, ${JSON.stringify(b.stats)}, fallen ${b.fallen}, lowest y ${b.low.toFixed(2)}`));
     if (shots) { await page.evaluate(() => window.__cart.renderOnce()); await page.screenshot({ path: path.join(shots, `bots_${lv}.png`), timeout: 180000 }); }
   }
+
+  // Race (race.js, as shopping-cart/tests/race_test.gd): `race` goes to the garage and lines you and the bots up on
+  // the roof; nobody moves during 3, 2, 1 even with both hands held; at GO you go. Then your cart is put before the
+  // finish line and pushed over it, and the bots race all ten floors down to it.
+  const rc = await page.evaluate(async () => {
+    const c = window.__cart;
+    await c.loadLevel('sandbox');
+    c.runCommand('race');
+    for (let i = 0; i < 300 && !(c.levelKey === 'garage' && c.race && c.race.phase === 2); i++) await new Promise(r => setTimeout(r, 100));
+    const race = c.race, out = { level: c.levelKey, phase: race && race.phase, racers: race ? race.racers.length : 0 };
+    if (!race) return out;
+    const slotOff = race.racers.map((r, i) => { const p = race.cartOf(r).origin(), s = race.D.slots[i].pos; return Math.hypot(p.x - s[0], p.z - s[2]); });
+    out.slotOff = Math.max(...slotOff);
+    const p0 = { ...c.cart.origin() };
+    c.setInput({ L: 1, R: 1 }); c.simulate(2.9);
+    out.heldMoved = Math.hypot(c.cart.origin().x - p0.x, c.cart.origin().z - p0.z);
+    out.countShown = !document.getElementById('raceCount').hidden;
+    c.simulate(1.2);
+    out.goMoved = Math.hypot(c.cart.origin().x - p0.x, c.cart.origin().z - p0.z); out.phaseAfter = race.phase;
+    c.setInput({}); c.simulate(1);
+    const f = race.D.finish.xf;
+    c.spawn(c.v3(f[9] - 1.6, 0, -3), 0); c.simulate(0.3);
+    c.setInput({ L: 1, R: 1 }); c.simulate(6); c.setInput({});
+    out.myTime = race.racers[0].time;
+    const t0 = performance.now();
+    race.D.finish_grace = 400;
+    for (let s = 0; s < 360 && race.phase !== 4; s += 10) c.simulate(10);
+    out.ms = performance.now() - t0;
+    out.done = race.phase === 4; out.bots = race.racers.slice(1).map(r => r.time); out.puts = race.racers.slice(1).map(r => r.bot.stats.put_back);
+    c.renderOnce();
+    out.results = !document.getElementById('raceResults').hidden && document.getElementById('raceTable').textContent;
+    return out;
+  });
+  report(rc.level === 'garage' && rc.phase === 2 && rc.racers === 4 && rc.slotOff < 0.15, 'race: line-up',
+    `race took us to ${rc.level}, counting down, ${rc.racers} racers, all within ${(rc.slotOff ?? 9).toFixed(2)} m of their slots`);
+  report(rc.heldMoved < 0.05 && rc.countShown && rc.goMoved > 0.3 && rc.phaseAfter === 3, 'race: 3 2 1 GO',
+    `holding both pushes through the count moved ${(rc.heldMoved ?? 9).toFixed(3)} m; after GO ${(rc.goMoved ?? 0).toFixed(2)} m`);
+  report(rc.myTime > 0, 'race: you finish', `your time ${(rc.myTime ?? -1).toFixed(2)} s`);
+  report(rc.done && rc.bots.filter(t => t > 0).length >= 2 && !!rc.results, 'race: bots finish',
+    `bots ${JSON.stringify(rc.bots && rc.bots.map(t => +t.toFixed(1)))} s (put back ${JSON.stringify(rc.puts)}), ${((rc.ms || 0) / 1000).toFixed(0)} s to simulate; results:\n${rc.results}`);
+  if (shots) await page.screenshot({ path: path.join(shots, 'race_results.png'), timeout: 180000 });
 
   // Cart-to-cart: roll the player's cart into a spare cart in the supermarket; the spare moves.
   const hit = await page.evaluate(async () => {
