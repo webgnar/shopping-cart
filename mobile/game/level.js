@@ -292,7 +292,9 @@ export function applyEnvironment(renderer, scene, env, skyDome) {
     skyDome.visible = false;
     scene.background = color(env.bg_color || [0.1, 0.12, 0.16, 1]).multiplyScalar(env.bg_energy ?? 1);
   }
-  scene.fog = env.fog ? new THREE.FogExp2(color(env.fog_color), env.fog_density) : null;
+  scene.fog = !env.fog ? null : env.fog_mode === 'depth'
+    ? new THREE.Fog(color(env.fog_color), env.fog_depth_begin, env.fog_depth_end)
+    : new THREE.FogExp2(color(env.fog_color), env.fog_density);
   renderer.toneMapping = TONEMAPS[env.tonemap ?? 3] ?? THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = env.exposure ?? 1;
 }

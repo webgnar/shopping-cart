@@ -17,7 +17,7 @@ extends Node3D
 
 
 @export_group("Hands")
-## Hand power: holding a hand's key (Q/A left, E/D right) ramps that hand's push or pull from power_base, with no
+## Hand power: holding a hand's key (E/A left push/pull, Q/D right; the left-hand keys turn the cart left) ramps that hand's push or pull from power_base, with no
 ## cap. The HUD shows it as that hand's bar. Pushing and pulling share the same base and ramp. As the arms strain,
 ## the wrists lever the bar (wrist_lever): pushing hard presses it down and the front wheels come up (a wheelie);
 ## pulling hard lifts it and the rear wheels come up onto the front casters, which breaks the back loose for a
@@ -93,6 +93,10 @@ var arm_extension := {"L": 0.0, "R": 0.0}   ## m each arm is currently stretched
 @export var settle_brake := 40.0    ## how hard the cart brakes itself below settle_speed (per kg, and N*m per rad/s)
 @export var stop_delay := 0.25      ## s of creeping below stop_speed before the cart stops dead
 @export var settle_max_slope := 0.04   ## rise per run: on anything steeper the cart never settles, it rolls away
+@export_group("Stacks")
+## m, seen from above: two carts that came apart collide again once their basket centres are this far apart
+## (a cart is about a metre long, so they are clear of each other by then).
+@export var ghost_clearance := 1.2
 @export_group("")
 
 const LAYER_WORLD := 1
@@ -119,6 +123,16 @@ var _let_go := false                ## the hands slipped off on this W/S hold; i
 var _links := []           ## [visual node, body, offset] kept in step every frame
 var _own_rids: Array[RID] = []   ## this cart's bodies, which its wheel-on-the-ground rays look past
 
+## Nesting (a stack of carts, see scripts/cart/cart_nest.gd): the cart this one's nose is tucked into, the cart
+## tucked into this one's back, and the joint holding this cart in the one ahead. A stack is the chain of carts
+## linked this way, front to back; it wakes, settles and stops as one.
+var nested_in: ShoppingCart = null
+var nested_behind: ShoppingCart = null
+var nest: CartNest = null
+## Carts this one passes through (their bodies don't collide with this cart's): every cart of its stack, and a
+## cart that has just come apart from it until the two are clear of each other.
+var ghosts := {}
+
 
 func _ready() -> void:
 	for g in $Groceries.get_children():
@@ -134,6 +148,7 @@ func _ready() -> void:
 				a.add_collision_exception_with(b)
 	for b in parts + groceries:
 		_own_rids.append(b.get_rid())
+	add_to_group("carts")
 	# Each rig pivot of the visual model follows its physics body.
 	_link(_model, frame)
 	_link(_model.find_child("Gate_Hinge"), gate)
@@ -176,6 +191,16 @@ func _process(_delta: float) -> void:
 const ACTIONS := ["push_left", "pull_left", "push_right", "pull_right", "lift", "press"]
 
 
+## Whether any of the six keys is held on this cart.
+func keys_held() -> bool:
+	if not player_controlled and driver == null:
+		return false
+	for a in ACTIONS:
+		if held(a):
+			return true
+	return false
+
+
 ## Whether a key is held: the player's keyboard (not while typing in a text box), or the driver's `controls` for
 ## any other cart.
 func held(action: String) -> bool:
@@ -188,9 +213,11 @@ func held(action: String) -> bool:
 func _physics_process(delta: float) -> void:
 	if puppet:
 		return
+	_drop_clear_ghosts()
+	# A stack is one herd: a key held on any of its carts keeps them all awake and rolling.
 	var any_input := false
-	for a in ACTIONS:
-		if held(a):
+	for c in stack():
+		if c.keys_held():
 			any_input = true
 			break
 	if any_input and frame.freeze:
@@ -222,8 +249,10 @@ func _settle(delta: float) -> void:
 	# Creeping this slowly for a moment with nothing pressed: stop dead and sleep, so it can't drift at all.
 	if v.length() < stop_speed and w.length() < stop_spin and gate.angular_velocity.length() < 0.1:
 		_rest_time += delta
-		if _rest_time >= stop_delay:
-			_stop()
+		# In a stack, only once every cart of it has come to rest.
+		if _rest_time >= stop_delay and stack().all(func(c): return c == self or c._rest_time >= c.stop_delay or c.frame.freeze):
+			for c in stack():
+				c._stop()
 	else:
 		_rest_time = 0.0
 
@@ -248,10 +277,108 @@ func _on_frame_hit(body: Node) -> void:
 func _wake() -> void:
 	if puppet:
 		return
-	frame.freeze = false
-	_rest_time = 0.0
-	for b in [frame, gate, child_seat, seat_flap] + wheels.values() + forks.values():
-		b.sleeping = false
+	for c in stack():
+		c.frame.freeze = false
+		c._rest_time = 0.0
+		for b in [c.frame, c.gate, c.child_seat, c.seat_flap] + c.wheels.values() + c.forks.values():
+			b.sleeping = false
+
+
+# ---------------------------------------------------------------- stacks
+
+## The carts of this cart's stack, front to back (just this cart when it stands alone).
+func stack() -> Array[ShoppingCart]:
+	var front := self
+	while front.nested_in != null:
+		front = front.nested_in
+	var list: Array[ShoppingCart] = []
+	var c := front
+	while c != null:
+		list.append(c)
+		c = c.nested_behind
+	return list
+
+
+## Every physics body of the rig, groceries included.
+func bodies() -> Array[RigidBody3D]:
+	var list: Array[RigidBody3D] = [frame, gate, child_seat, seat_flap]
+	list.append_array(wheels.values())
+	list.append_array(forks.values())
+	list.append_array(groceries)
+	return list
+
+
+## Mass of the whole rig (groceries left out).
+func rig_mass() -> float:
+	var m := frame.mass + gate.mass + child_seat.mass + seat_flap.mass
+	for b in wheels.values() + forks.values():
+		m += b.mass
+	return m
+
+
+## Lets this cart and `other` pass through each other (one is tucked inside the other): their bodies stop
+## colliding, and neither's ground rays (wheels on the ground, wheel sounds) see the other.
+func ghost(other: ShoppingCart) -> void:
+	if other == self or ghosts.has(other):
+		return
+	ghosts[other] = true
+	other.ghosts[self] = true
+	for a in bodies():
+		for b in other.bodies():
+			a.add_collision_exception_with(b)
+	for b in other.bodies():
+		_own_rids.append(b.get_rid())
+	for b in bodies():
+		other._own_rids.append(b.get_rid())
+
+
+## Undoes ghost(): the two carts collide again.
+func unghost(other: ShoppingCart) -> void:
+	if not ghosts.has(other):
+		return
+	ghosts.erase(other)
+	other.ghosts.erase(self)
+	if not is_instance_valid(other) or other.is_queued_for_deletion():
+		return
+	for a in bodies():
+		for b in other.bodies():
+			a.remove_collision_exception_with(b)
+	for b in other.bodies():
+		_own_rids.erase(b.get_rid())
+	for b in bodies():
+		other._own_rids.erase(b.get_rid())
+
+
+## Carts that came apart from this one collide again once their baskets are clear of each other: the basket
+## centres more than ghost_clearance apart, seen from above.
+func _drop_clear_ghosts() -> void:
+	if ghosts.is_empty():
+		return
+	var mine := stack()
+	for other in ghosts.keys():
+		if not is_instance_valid(other) or other.is_queued_for_deletion():
+			ghosts.erase(other)
+		elif not mine.has(other):
+			var d: Vector3 = other.basket_centre() - basket_centre()
+			if Vector2(d.x, d.z).length() > ghost_clearance:
+				unghost(other)
+
+
+## The middle of the basket, in world space.
+func basket_centre() -> Vector3:
+	return frame.global_transform * Vector3(0.47, 0.5, 0.0)
+
+
+func _exit_tree() -> void:
+	# Leaving the level (a reset, a level change): let go of the carts on either side.
+	if nest:
+		nest.come_apart()
+	if nested_behind and nested_behind.nest:
+		nested_behind.nest.come_apart()
+	for other in ghosts.keys():
+		if is_instance_valid(other):
+			other.ghosts.erase(self)
+	ghosts.clear()
 
 
 ## Each wheel resists rolling with a small torque, as real casters do. Also keeps the cart still on flat ground.
@@ -475,9 +602,14 @@ func wheel_on_ground(w: RigidBody3D) -> bool:
 	return not _ground_hit(w).is_empty()
 
 
-func _ground_hit(w: RigidBody3D) -> Dictionary:
+## What's right under a wheel (`gap` m of air at most): the ray hit (collider, position, normal), or empty.
+func ground_hit(w: RigidBody3D, gap := 0.02) -> Dictionary:
+	return _ground_hit(w, gap)
+
+
+func _ground_hit(w: RigidBody3D, gap := 0.02) -> Dictionary:
 	var q := PhysicsRayQueryParameters3D.create(w.global_position,
-		w.global_position + Vector3.DOWN * (wheel_radius + 0.02), 0x000f, _own_rids)
+		w.global_position + Vector3.DOWN * (wheel_radius + gap), 0x000f, _own_rids)
 	return w.get_world_3d().direct_space_state.intersect_ray(q)
 
 

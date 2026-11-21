@@ -24,6 +24,7 @@ const CONSOLE_SCENE := "res://scenes/ui/console.tscn"
 const CART_SCENE := "res://scenes/cart/cart.tscn"
 const SPARE_CART_SCENE := "res://scenes/cart/spare_cart.tscn"
 const BOT_CART_SCENE := "res://scenes/cart/bot_cart.tscn"
+const SKYLINE_SKY_SHADER := "res://scenes/environment/skyline_sky.gdshader"
 const CART_MATERIALS_DIR := "res://assets/materials/cart/"
 const OUT_DIR := "../mobile/levels"
 const NAMES := {"sandbox": "Sandbox", "plot": "Parking lot", "garage": "Parking garage", "market": "Supermarket",
@@ -108,16 +109,26 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 		st.free()
 
 	# Things the phone builds itself: the player's cart, spare carts, camera, HUD, UI.
+	# A spare cart tucked into another (a stack, scenes/cart/cart_stack_*.tscn) names the spare it is nested in.
 	var drop: Array[Node] = []
+	var spares: Array[ShoppingCart] = []
 	for n in level.find_children("*", "", true, false):
 		if n is ShoppingCart:
 			if n.driver is CartBot:
 				out.bot_carts.append({"pos": _v(n.global_position), "yaw": n.global_rotation.y})
 			elif n.scene_file_path == SPARE_CART_SCENE or not n.player_controlled:
-				out.spare_carts.append({"pos": _v(n.global_position), "yaw": n.global_rotation.y})
+				spares.append(n)
 			drop.append(n)
-		elif n is Camera3D or n is CanvasLayer:
+		elif n is Camera3D or n is CanvasLayer or n is CartNest:
 			drop.append(n)
+		elif n.is_in_group("mobile_export_skip"):
+			# Local-only content (the garage's Manhattan skyline from Google Earth tiles) never goes to the web.
+			drop.append(n)
+	for n in spares:
+		var e := {"pos": _v(n.global_position), "yaw": n.global_rotation.y}
+		if n.nested_in != null and spares.has(n.nested_in):
+			e["nested_in"] = spares.find(n.nested_in)
+		out.spare_carts.append(e)
 	for n in drop:
 		if is_instance_valid(n) and n.get_parent():
 			n.get_parent().remove_child(n)
@@ -257,7 +268,7 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 ## A ChunkStreamer's settings for mobile/game/stream.js: the grid, the chunks (exported to levels/chunks/<name>),
 ## their weights, the far ground, and a table of picks the browser checks its own hash against.
 static func _stream(st: ChunkStreamer) -> Dictionary:
-	var d := {"origin": _v(st.global_position), "chunk_size": st.chunk_size, "seed": st.world_seed,
+	var d := {"origin": _v(st.global_position), "chunk_size": st.chunk_size, "seed": st.world_seed, "turns": st.turns,
 		"load_distance": st.load_distance, "unload_distance": st.unload_distance,
 		"home_cells": st.home_cells.map(func(c): return [c.x, c.y]), "weights": Array(st.weights),
 		"chunks": st.chunks.map(func(c): return {"key": chunk_key(c.resource_path), "scene": c.resource_path}),
@@ -367,10 +378,12 @@ static func _shape(shape: Shape3D, xf: Transform3D) -> Dictionary:
 		d.type = "mesh"
 		d.faces = _flat(Array(shape.get_faces()).map(func(p): return p * sc))
 	elif shape is WorldBoundaryShape3D:
-		d.type = "box"
+		# An endless floor: the phone uses Rapier's half-space (a box tens of km wide costs contact precision).
+		# xf: a point on the plane, local +Y along its normal.
+		d.type = "plane"
 		var plane: Plane = shape.plane
-		d.xf = _xf(Transform3D(Basis.IDENTITY, xf * (plane.normal * plane.d - plane.normal * 0.5)))
-		d.size = [400, 1, 400]
+		var normal := (xf.basis * plane.normal).normalized()
+		d.xf = _xf(Transform3D(Basis(Quaternion(Vector3.UP, normal)), xf * (plane.normal * plane.d)))
 	else:
 		push_warning("Mobile export: %s isn't supported, skipped" % shape.get_class())
 		return {}
@@ -398,12 +411,23 @@ static func _environment(env: Environment) -> Dictionary:
 		"ambient_sky_contribution": env.ambient_light_sky_contribution,
 		"tonemap": env.tonemap_mode, "exposure": env.tonemap_exposure,
 		"fog": env.fog_enabled, "fog_color": _c(env.fog_light_color), "fog_density": env.fog_density,
+		"fog_mode": ["exponential", "depth"][env.fog_mode], "fog_depth_begin": env.fog_depth_begin,
+		"fog_depth_end": env.fog_depth_end,
 	}
 	if env.sky and env.sky.sky_material is ProceduralSkyMaterial:
 		var s := env.sky.sky_material as ProceduralSkyMaterial
 		d.sky = {"top": _c(s.sky_top_color), "horizon": _c(s.sky_horizon_color),
 			"ground_bottom": _c(s.ground_bottom_color), "ground_horizon": _c(s.ground_horizon_color),
 			"energy": s.sky_energy_multiplier}
+	elif env.sky and env.sky.sky_material is ShaderMaterial and env.sky.sky_material.shader \
+			and env.sky.sky_material.shader.resource_path == SKYLINE_SKY_SHADER:
+		# The garage's sky: a procedural sky in a shader (plus a skyline the phone doesn't get).
+		var m := env.sky.sky_material as ShaderMaterial
+		d.sky = {"top": _c(m.get_shader_parameter("sky_top_color")),
+			"horizon": _c(m.get_shader_parameter("sky_horizon_color")),
+			"ground_bottom": _c(m.get_shader_parameter("ground_bottom_color")),
+			"ground_horizon": _c(m.get_shader_parameter("ground_horizon_color")),
+			"energy": float(m.get_shader_parameter("sky_energy"))}
 	elif env.sky and env.sky.sky_material is PhysicalSkyMaterial:
 		var p := env.sky.sky_material as PhysicalSkyMaterial
 		d.sky = {"top": _c(p.rayleigh_color), "horizon": _c(p.mie_color), "ground_bottom": _c(p.ground_color),
@@ -460,9 +484,10 @@ static func export_cart() -> Dictionary:
 			if m:
 				out.materials[f.get_basename()] = {"color": _c(m.albedo_color), "metallic": m.metallic,
 					"roughness": m.roughness}
-	out["rolling_sound"] = _rolling_sound(cart.get_node("Frame/RollingSound"))
+	out["wheel_sound"] = _wheel_sound(cart.get_node("Wheel_RL/WheelSound"))
 	out["wheel_radius"] = cart.get_node("Wheel_FL/Shape").shape.radius
 	out["hand_position"] = _v(cart.hand_position)
+	out["nest"] = _nest_settings(cart.get_node("Frame/NestMouth"))
 	cart.free()
 	out["bot"] = _bot_settings()
 	var f := FileAccess.open(out_path("cart.json"), FileAccess.WRITE)
@@ -470,6 +495,27 @@ static func export_cart() -> Dictionary:
 	f.close()
 	print("MOBILE CART: %d bodies, %d hinges, %d groceries, %d materials" % [out.bodies.size(), out.joints.size(),
 		out.groceries.size(), out.materials.size()])
+	return out
+
+
+## How carts nest (scenes/cart/nest_joint.tscn and the cart's Frame/NestMouth): the slide, its grip, the play,
+## where the pivot sits, the gate motor, what breaks a nest and when a nose is caught.
+static func _nest_settings(mouth: CartNestMouth) -> Dictionary:
+	var j: CartNest = mouth.nest_scene.instantiate()
+	var out := {"spacing": j.spacing, "pivot": _v(j.pivot), "gate_speed": j.gate_speed, "gate_impulse": j.gate_impulse,
+		"break_impulse": j.break_impulse, "impulse_window": j.impulse_window, "release_margin": j.release_margin,
+		"slide": [j.get("linear_limit_x/lower_distance"), j.get("linear_limit_x/upper_distance")],
+		"grip": j.get("linear_motor_x/force_limit") if j.get("linear_motor_x/enabled") else 0.0,
+		"yaw": [j.get("angular_limit_y/lower_angle"), j.get("angular_limit_y/upper_angle")],
+		"pitch": [j.get("angular_limit_z/lower_angle"), j.get("angular_limit_z/upper_angle")],
+		"roll": [j.get("angular_limit_x/lower_angle"), j.get("angular_limit_x/upper_angle")],
+		"capture_depth": mouth.capture_depth, "capture_offset": mouth.capture_offset, "capture_angle": mouth.capture_angle,
+		"capture_tilt": mouth.capture_tilt, "capture_speed": mouth.capture_speed, "nose": _v(mouth.nose)}
+	var zone := mouth.get_node("Zone") as CollisionShape3D
+	out["mouth"] = _shape(zone.shape, zone.transform)
+	j.free()
+	var cart: ShoppingCart = mouth.get_parent().get_parent()
+	out["ghost_clearance"] = cart.ghost_clearance
 	return out
 
 
@@ -503,19 +549,28 @@ static func _bot_settings() -> Dictionary:
 	return out
 
 
-## The rolling sound (Frame/RollingSound): its settings, the floor probe and each surface's loop. The phone plays
-## mobile/audio/<loop>.wav, cut from the same recordings as the .ogg (tools/audio/make_cart_rolling_loops.py).
-static func _rolling_sound(rs: CartRollingSound) -> Dictionary:
-	var out := {"probe": _xf(rs.transform * rs.probe.transform), "probe_target": _v(rs.probe.target_position),
-		"fallback": String(rs.fallback.name), "sounds": []}
-	for key in ["silent_speed", "full_volume_speed", "volume_curve", "recorded_speed", "min_pitch", "max_pitch",
-			"pitch_per_speed", "fade_time"]:
-		out[key] = rs.get(key)
-	for s in rs.get_children():
-		if s is RollingSurfaceSound:
-			out.sounds.append({"name": String(s.name), "file": "audio/%s.wav" % s.stream.resource_path.get_file().get_basename(),
-				"floors": s.floors.map(func(m): return m.resource_path.get_file().get_basename()),
-				"loudness_db": s.loudness_db, "unit_size": s.unit_size, "max_distance": s.max_distance})
+## The wheel sound (scenes/cart/wheel_sound.tscn, the same under every wheel): its settings, each floor's roll and
+## scrub loops, the knocks and the landing. The phone plays mobile/audio/<name>.wav, cut from the same recordings
+## as the Godot files (tools/audio/make_cart_rolling_loops.py).
+static func _wheel_sound(ws: WheelSound) -> Dictionary:
+	var wav := func(stream: AudioStream) -> String: return "audio/%s.wav" % stream.resource_path.get_file().get_basename()
+	var floor_dict := func(f: CartFloorSound) -> Dictionary: return {"name": f.resource_path.get_file().get_basename(),
+		"floors": f.floors.map(func(m): return m.resource_path.get_file().get_basename()),
+		"roll": wav.call(f.roll), "roll_db": f.roll_db, "scrub": wav.call(f.scrub), "scrub_db": f.scrub_db}
+	var shots := func(p: AudioStreamPlayer3D) -> Dictionary:
+		var r := p.stream as AudioStreamRandomizer
+		var files := []
+		for i in r.streams_count:
+			files.append(wav.call(r.get_stream(i)))
+		return {"files": files, "random_pitch": r.random_pitch}
+	var out := {"floors": ws.floor_sounds.map(floor_dict), "fallback": ws.fallback.resource_path.get_file().get_basename(),
+		"knock": shots.call(ws.knock_player), "land": shots.call(ws.land_player),
+		"unit_size": ws.roll_player.unit_size, "max_distance": ws.roll_player.max_distance}
+	for key in ["contact_gap", "wheel_db", "silent_speed", "full_volume_speed", "volume_curve", "recorded_speed",
+			"min_pitch", "max_pitch", "pitch_per_speed", "fade_time", "scrub_start", "scrub_full", "skid_tolerance", "scrub_pitch_low",
+			"scrub_pitch_per_speed", "scrub_max_pitch", "knock_start", "knock_full", "knock_db", "knock_gap",
+			"land_air_time", "land_start", "land_full", "land_db"]:
+		out[key] = ws.get(key)
 	return out
 
 
