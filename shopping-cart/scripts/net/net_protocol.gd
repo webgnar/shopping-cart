@@ -26,12 +26,19 @@ extends RefCounted
 ##                                          else race time), f32 s since the winner finished (< 0: nobody yet),
 ##                                          u8 racers, per racer: i32 id (player id; bots -1, -2...),
 ##                                          f32 finish time (< 0: not over the line), str name
+##   SWEEP     host -> guests reliable    u8 level serial, u8 phase (Sweep.Phase: 0 idle, 1 waiting for guests,
+##                                          2 counting down, 3 sweeping, 4 over), f32 clock (counting down: s to GO;
+##                                          sweeping: s left), f32 round length s, u8 item limit,
+##                                          u8 shoppers, per shopper: i32 id (player id; bots -1, -2...), u32 score
+##                                          in cents (basket + bonuses), u16 items, u32 bonus cents, str name;
+##                                          u8 displays, per display: u8 items left (in Sweep/Displays order);
+##                                          u8 events, per event: i32 shopper id, str text (that shopper's pop-up)
 ## A snapshot too big for one packet is sent as several, each a complete SNAPSHOT for the same tick.
 
-const VERSION := 4
+const VERSION := 5
 ## Bump VERSION whenever a message changes, so old and new builds refuse each other cleanly.
 
-enum Msg { HELLO = 1, WELCOME, REJECT, LEVEL, INPUT, RESET, SNAPSHOT, LEFT, RACE }
+enum Msg { HELLO = 1, WELCOME, REJECT, LEVEL, INPUT, RESET, SNAPSHOT, LEFT, RACE, SWEEP }
 
 const POSE_BYTES := 28
 

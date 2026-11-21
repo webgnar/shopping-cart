@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "pack_olive"
+albedo_color = Color(0.4196, 0.4784, 0.1333, 1)
+roughness = 0.25

@@ -1,0 +1,205 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/sweep_hud.gd" id="1_shud"]
+
+[sub_resource type="SystemFont" id="SystemFont_bold"]
+font_names = PackedStringArray("Arial Black", "Helvetica Neue", "DejaVu Sans", "Sans-Serif")
+font_weight = 900
+
+[sub_resource type="SystemFont" id="SystemFont_mono"]
+font_names = PackedStringArray("Consolas", "Menlo", "DejaVu Sans Mono", "Monospace")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_basket"]
+content_margin_left = 18.0
+content_margin_top = 6.0
+content_margin_right = 18.0
+content_margin_bottom = 8.0
+bg_color = Color(0.05882353, 0.07058824, 0.09411765, 0.72)
+border_width_bottom = 3
+border_color = Color(0.42, 0.9, 0.5, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_results"]
+content_margin_left = 28.0
+content_margin_top = 20.0
+content_margin_right = 28.0
+content_margin_bottom = 20.0
+bg_color = Color(0.05882353, 0.07058824, 0.09411765, 0.88)
+border_width_top = 3
+border_color = Color(0.42, 0.9, 0.5, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="SweepHUD" type="CanvasLayer"]
+layer = 4
+visible = false
+script = ExtResource("1_shud")
+
+[node name="Clock" type="Label" parent="."]
+unique_name_in_owner = true
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 10.0
+offset_right = 200.0
+offset_bottom = 70.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 10
+theme_override_fonts/font = SubResource("SystemFont_bold")
+theme_override_font_sizes/font_size = 48
+text = "1:30"
+horizontal_alignment = 1
+
+[node name="Status" type="Label" parent="."]
+unique_name_in_owner = true
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -340.0
+offset_top = 72.0
+offset_right = 340.0
+offset_bottom = 104.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.42, 0.9, 0.5, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+
+[node name="Basket" type="PanelContainer" parent="."]
+offset_left = 16.0
+offset_top = 84.0
+offset_right = 256.0
+offset_bottom = 162.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_basket")
+
+[node name="Rows" type="VBoxContainer" parent="Basket"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Caption" type="Label" parent="Basket/Rows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5411765, 0.5764706, 0.6509804, 1)
+theme_override_font_sizes/font_size = 12
+text = "IN YOUR CART"
+horizontal_alignment = 1
+
+[node name="Total" type="Label" parent="Basket/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.42, 0.9, 0.5, 1)
+theme_override_fonts/font = SubResource("SystemFont_bold")
+theme_override_font_sizes/font_size = 30
+text = "$0.00"
+horizontal_alignment = 1
+
+[node name="Detail" type="Label" parent="Basket/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.94, 0.97, 1)
+theme_override_font_sizes/font_size = 13
+text = "0 items"
+horizontal_alignment = 1
+
+[node name="Toasts" type="Label" parent="."]
+unique_name_in_owner = true
+offset_left = 16.0
+offset_top = 172.0
+offset_right = 616.0
+offset_bottom = 280.0
+theme_override_colors/font_color = Color(1, 0.86, 0.35, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 24
+
+[node name="Standings" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -300.0
+offset_top = 128.0
+offset_right = -16.0
+offset_bottom = 400.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(0.92, 0.94, 0.97, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.8)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = SubResource("SystemFont_mono")
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 2
+
+[node name="Countdown" type="Label" parent="."]
+unique_name_in_owner = true
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -170.0
+offset_right = 300.0
+offset_bottom = 30.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(300, 100)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 24
+theme_override_fonts/font = SubResource("SystemFont_bold")
+theme_override_font_sizes/font_size = 170
+text = "3"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Results" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -330.0
+offset_top = -110.0
+offset_right = 330.0
+offset_bottom = 170.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_results")
+
+[node name="Rows" type="VBoxContainer" parent="Results"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Results/Rows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.42, 0.9, 0.5, 1)
+theme_override_fonts/font = SubResource("SystemFont_bold")
+theme_override_font_sizes/font_size = 30
+text = "CHECKOUT"
+horizontal_alignment = 1
+
+[node name="Table" type="Label" parent="Results/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.94, 0.97, 1)
+theme_override_fonts/font = SubResource("SystemFont_mono")
+theme_override_font_sizes/font_size = 20
+text = "1st  You      $123.45  14 items"
+
+[node name="Hint" type="Label" parent="Results/Rows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5411765, 0.5764706, 0.6509804, 1)
+theme_override_font_sizes/font_size = 15
+text = "Open the console (~) and type sweep to go again"
+horizontal_alignment = 1
