@@ -29,6 +29,7 @@ and open http://localhost:8000 (or upload the `mobile/` folder as an HTML5 game 
 | `levels/<key>.glb` + `.json` | Each fast-travel level: meshes and materials; collision shapes with friction, loose props, CartSpawn, spare carts, sky, sun, lamps, 3D labels | `godot --headless -s res://tools/export_mobile_levels_cli.gd` (from `shopping-cart/`) |
 | `levels/cart.json` | The cart rig (bodies, masses, shapes, hinges and limits) and its materials | same |
 | `models/cart.glb` | Phone-weight cart model (85k faces, 10 meshes) from the Godot one | `blender -b --python tools/export_mobile_model.py` |
+| `audio/roll_*.wav` | The cart's rolling loops (asphalt, tile, concrete), played by `game/sound.js` as in `scripts/cart/cart_rolling_sound.gd` | `python3 tools/audio/make_cart_rolling_loops.py` |
 | `vendor/` | three.js 0.170 and Rapier 0.14 (so it runs without a CDN) | copied from npm |
 
 Change levels and the cart in Godot, then run both export tools. `tests/tuning_sync_test.gd` and
