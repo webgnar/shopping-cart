@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="1_solid"]
+[ext_resource type="PackedScene" path="res://assets/models/sf_hill/fire_hydrant/fire_hydrant.glb" id="2_model"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_0"]
+height = 0.75
+radius = 0.16
+
+[node name="FireHydrant" type="StaticBody3D" groups=["sf_hydrant"]]
+physics_material_override = ExtResource("1_solid")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+
+[node name="BodyShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.375, 0)
+shape = SubResource("CylinderShape3D_0")

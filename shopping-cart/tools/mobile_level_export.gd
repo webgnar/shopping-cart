@@ -9,7 +9,8 @@ extends RefCounted
 ##    can move them with their physics body.
 ##  - mobile/levels/<key>.json: what you touch and how it's lit: every collision shape with its friction, the
 ##    loose props (mass, shapes), CartSpawn, the spare carts, the bot carts and the navigation mesh they drive on,
-##    sky/fog/ambient, the sun, lamps and 3D labels; for the endless sandbox, the chunk grid ("stream").
+##    sky/fog/ambient, the sun, lamps and 3D labels, the lanes of moving traffic (TrafficLane: speed, length, each
+##    car's place and shapes; cars are kin_<n>), and for the endless sandbox, the chunk grid ("stream").
 ##  - mobile/levels/chunks/<name>.glb and .json: each chunk the sandbox streams (scenes/sandbox/chunks/), the same way.
 ## And once for the cart (scenes/cart/cart.tscn): mobile/levels/cart.json with the rig (bodies, masses, shapes,
 ## hinges and their limits), the cart's shared materials (assets/materials/cart/*.tres) and the bot's settings
@@ -24,8 +25,9 @@ const SPARE_CART_SCENE := "res://scenes/cart/spare_cart.tscn"
 const BOT_CART_SCENE := "res://scenes/cart/bot_cart.tscn"
 const CART_MATERIALS_DIR := "res://assets/materials/cart/"
 const OUT_DIR := "../mobile/levels"
-const NAMES := {"sandbox": "Sandbox", "plot": "Parking lot", "garage": "Parking garage", "market": "Supermarket"}
-const ORDER := ["sandbox", "plot", "garage", "market"]
+const NAMES := {"sandbox": "Sandbox", "plot": "Parking lot", "garage": "Parking garage", "market": "Supermarket",
+	"hill": "San Francisco hill"}
+const ORDER := ["sandbox", "plot", "garage", "market", "hill"]
 
 
 static func out_path(file: String) -> String:
@@ -89,8 +91,10 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 	var out := {
 		"key": key, "name": NAMES.get(key, key), "scene": scene_path, "source": source_hash(scene_path),
 		"spawn": null, "spare_carts": [], "bot_carts": [], "navmesh": null, "environment": {}, "sun": null, "lights": [], "labels": [],
-		"statics": [], "bodies": [],
+		"statics": [], "bodies": [], "traffic": [],
 	}
+	if level.has_meta("mobile_merge_cell"):   # a long level can merge its meshes in bigger cells (fewer draws)
+		out["merge_cell"] = float(level.get_meta("mobile_merge_cell"))
 	var spawn := level.get_node_or_null("CartSpawn") as Node3D
 	out.spawn = {"pos": _v(spawn.global_position if spawn else Vector3(2, 0, 0)), "yaw": spawn.global_rotation.y if spawn else 0.0}
 
@@ -135,11 +139,33 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 		elif n is NavigationRegion3D and n.navigation_mesh and out.navmesh == null:
 			out.navmesh = _navmesh(n)
 
+	# Moving traffic: each lane's place, speed and length, and its cars (kin_<n>) with their shapes and their
+	# places in the queue. The phone drives them the same way (TrafficLane).
+	var moving := {}
+	for lane in level.find_children("*", "Node3D", true, false):
+		if not lane is TrafficLane:
+			continue
+		var entry := {"xf": _xf(lane.global_transform), "speed": lane.speed, "length": lane.length, "cars": []}
+		var cars: Array = lane.get("_cars")
+		for i in cars.size():
+			var car: AnimatableBody3D = cars[i]
+			var id := "kin_%d" % moving.size()
+			moving[car] = true
+			car.name = id
+			var shapes := []   # in the car's own frame
+			for s in car.get_children():
+				if s is CollisionShape3D and not s.disabled and s.shape:
+					var sh := _shape(s.shape, s.transform)
+					if not sh.is_empty():
+						shapes.append(sh)
+			entry.cars.append({"node": id, "offset": lane.distance(i, 0.0), "friction": _friction(car), "shapes": shapes})
+		out.traffic.append(entry)
+
 	# Collision: static shapes go in one list, loose props keep their shapes per body.
 	var dyn_count := 0
 	for n in level.find_children("*", "CollisionObject3D", true, false):
 		var body := n as CollisionObject3D
-		if body is Area3D:
+		if body is Area3D or moving.has(body):
 			continue
 		var shapes := []
 		for s in body.find_children("*", "CollisionShape3D", true, false):
@@ -190,9 +216,9 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 	f.close()
 	level.queue_free()
 	await tree.process_frame
-	print("MOBILE LEVEL %s: %d static shapes, %d loose props, %d spare carts, %d bot carts, %d nav polygons, %d lamps, %d labels" % [
+	print("MOBILE LEVEL %s: %d static shapes, %d loose props, %d spare carts, %d bot carts, %d nav polygons, %d lamps, %d labels, %d traffic lanes" % [
 		key, out.statics.size(), out.bodies.size(), out.spare_carts.size(), out.bot_carts.size(),
-		out.navmesh.polygons.size() if out.navmesh else 0, out.lights.size(), out.labels.size()])
+		out.navmesh.polygons.size() if out.navmesh else 0, out.lights.size(), out.labels.size(), out.traffic.size()])
 	return out
 
 

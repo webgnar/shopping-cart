@@ -8,7 +8,7 @@ import { v3, add, sub, clamp, rot, color, widenMask } from './util.js';
 import { Cart, SIDES } from './cart.js';
 import { Bot } from './bot.js';
 import { NavMesh } from './nav.js';
-import { fetchLevel, buildLevel, layerPairs, applyEnvironment, ambientFor, makeSkyDome, disposeTree } from './level.js';
+import { fetchLevel, buildLevel, layerPairs, applyEnvironment, ambientFor, makeSkyDome, disposeTree, stepTraffic, syncTraffic } from './level.js';
 import { RollingSound, unlockAudio, updateListener, loadedLoops } from './sound.js';
 import { ChunkStreamer } from './stream.js';
 
@@ -132,8 +132,10 @@ function spawn(pos, yaw) {
 /** R: a fresh cart where this one is, on whatever floor is under it. */
 function respawn() {
   const p = cart.origin(), h = cart.heading();
-  const hit = world.castRay(new RAPIER.Ray(v3(p.x, p.y + 1.2, p.z), v3(0, -1, 0)), 50, true, undefined, (1 << 16) | 1);
-  spawn(v3(p.x, hit ? p.y + 1.2 - hit.timeOfImpact + 0.05 : p.y + 0.05, p.z), h);
+  const hit = world.castRayAndGetNormal(new RAPIER.Ray(v3(p.x, p.y + 1.2, p.z), v3(0, -1, 0)), 50, true, undefined, (1 << 16) | 1);
+  // On a slope, high enough that the wheels (the front ones a metre from the handle) clear the uphill side.
+  const lift = hit ? 0.05 + Math.sqrt(Math.max(0, 1 - hit.normal.y ** 2)) / Math.max(hit.normal.y, 0.2) : 0.05;
+  spawn(v3(p.x, hit ? p.y + 1.2 - hit.timeOfImpact + lift : p.y + 0.05, p.z), h);
 }
 
 // ---------------------------------------------------------------- input
@@ -312,6 +314,7 @@ function physicsStep(inp) {
   cart.step(inp, STEP);
   for (const s of spares) s.step(null, STEP);
   for (const b of bots) b.cart.step(b.update(STEP), STEP);
+  stepTraffic(level, STEP);
   world.step(eventQueue);
   cart.capWheelSpin(); for (const s of others()) if (!s.pinned) s.capWheelSpin();
   eventQueue.drainCollisionEvents((h1, h2, began) => {
@@ -339,6 +342,7 @@ function frame(now) {
   }
   if (streamer) streamer.update(cart.origin(), 1);
   for (const pr of level.props) if (pr.node && !pr.body.isSleeping()) { const t = pr.body.translation(), r = pr.body.rotation(); pr.node.position.set(t.x, t.y, t.z); pr.node.quaternion.set(r.x, r.y, r.z, r.w); }
+  syncTraffic(level);
   // Off the edge of the world: a fresh cart back at the start (the Godot levels are walled in, the sandbox isn't).
   if (cart.origin().y < level.spawn.pos[1] - 30) spawn(v3(...level.spawn.pos), level.spawn.yaw);
   cart.sync(); for (const s of others()) s.sync();
@@ -459,6 +463,6 @@ window.__cart = {
     }
     paused = false;
   },
-  renderOnce(dt = 1 / 60) { cart.sync(); for (const s of others()) s.sync(); for (const pr of level.props) if (pr.node) { const t = pr.body.translation(), r = pr.body.rotation(); pr.node.position.set(t.x, t.y, t.z); pr.node.quaternion.set(r.x, r.y, r.z, r.w); } updateCamera(dt); const c = cart.comWorld(); level.lights.update(new THREE.Vector3(c.x, c.y, c.z), 1); if (sun.visible) { const d = sun.userData.dir; sun.position.set(c.x - d.x * 30, c.y - d.y * 30, c.z - d.z * 30); sun.target.position.set(c.x, c.y, c.z); } skyDome.position.copy(camera.position); hud(); renderer.render(scene, camera); },
+  renderOnce(dt = 1 / 60) { cart.sync(); for (const s of others()) s.sync(); for (const pr of level.props) if (pr.node) { const t = pr.body.translation(), r = pr.body.rotation(); pr.node.position.set(t.x, t.y, t.z); pr.node.quaternion.set(r.x, r.y, r.z, r.w); } syncTraffic(level); updateCamera(dt); const c = cart.comWorld(); level.lights.update(new THREE.Vector3(c.x, c.y, c.z), 1); if (sun.visible) { const d = sun.userData.dir; sun.position.set(c.x - d.x * 30, c.y - d.y * 30, c.z - d.z * 30); sun.target.position.set(c.x, c.y, c.z); } skyDome.position.copy(camera.position); hud(); renderer.render(scene, camera); },
   stats() { return { drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, meshes: level.drawn, fps }; },
 };

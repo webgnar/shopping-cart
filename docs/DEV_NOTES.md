@@ -3,6 +3,96 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: San Francisco hill level
+
+`scenes/levels/sf_hill.tscn` (root script `main.gd`, console `hill`): a San Francisco street that runs 445 m
+downhill to the bay, after zack's skate-rogue references (its Chicago-as-SF hill floors: painted ladies stepping
+down the hill, flat crests with cross streets, the steepest SF grade about 0.3, fog). You start on a flat block at
+the top (y = 47.8 m) facing down the hill (+X). Then five flat crossings with four blocks of hill between them,
+steeper each time: 10 %, 17 %, 24 % and 31 % (Filbert Street's 31.5 % is the steepest in SF). The last crossing
+opens onto a flat block that runs into the Embarcadero seawall with the bay behind it.
+
+- **Cross traffic:** every cross street has a lane each way (`CrossTraffic/*`, `scripts/props/traffic_lane.gd`).
+  The cars are `traffic_car.tscn` instances (an AnimatableBody3D with the parking lot sedan) placed along the lane
+  in the scene; each keeps its place and drives at the lane's speed, 8 m/s at the top crossing up to 13 m/s at the
+  bottom one, with 3 to 5 cars a lane on a 190 m loop. They don't stop: time the crossing, or get knocked flying.
+  Cars jump back to the start of the lane out in the fog at the far end.
+- **Street:** `hill_block.tscn` (60 m along the slope) and `intersection.tscn` are built flat; the level tilts each
+  block to its grade. 12 m curb to curb (two travel lanes and two parking lanes), 3 m sidewalks, 0.15 m curbs, a
+  double yellow line, ladder crosswalks, storm drains, manholes and tree grates. The yards beside the street follow
+  the slope out to 130 m so nothing shows the void.
+- **Houses:** 203 row houses (`house_victorian.tscn`, `house_stucco.tscn`), 8 a side on every block, 5 a side on
+  each corner of every cross street and 7 across the top. Each is painted in the inspector from shared paints in
+  `assets/sf_hill/materials/` (Walls, Trim, Accent; `scripts/props/painted_house.gd`), so houses that share a paint
+  share a material. They stand at the sidewalk height of their middle, on a 6 m foundation, so on the steep blocks
+  they step down the hill with their foundations showing, the SF look.
+- **Street furniture:** 12 street lights, 48 London plane trees, 6 hydrants (SF's white and blue high-pressure
+  ones), 10 stop signs (the hill street stops, the cross street doesn't), 36 cars parked at the curb on the slope,
+  nose downhill on the right.
+- **Lighting:** afternoon sun from the west behind you, sky and SF fog (exponential, density 0.0045).
+
+**Models** (`tools/sf_hill_models.py`, Blender primitives, `assets/models/sf_hill/<name>/<name>.glb`, reusing the
+parking lot's `Model` builder and z-fighting scan). Materials link by name to the parking lot's `.tres` where it has
+one (asphalt, concrete, curb, sidewalk, metals, paint white, roof tile, LED lens) and to `assets/sf_hill/materials/`
+for the rest (`python3 tools/sf_hill_models.py --link-materials`).
+
+| Model | Tris | KB | Size chosen | Notes |
+| --- | --- | --- | --- | --- |
+| hill_block | 1940 | 104 | 60 m along the slope, 18 m between lot lines | Road, gutters, curbs, scored sidewalk slabs (1 cm joints), double yellow, drains, manholes, tree grates, sloped yards |
+| intersection | 3828 | 207 | 18 x 18 m crossing, cross street 100 m each way | Ladder crosswalks on four sides, cross street double yellow, yards past the ends |
+| house_victorian | 1420 | 79 | 7 m wide, 15 m lot, 10.2 m to the cornice | Italianate painted lady: three-sided bay over the garage, stoop of 6 x 19 cm risers, belt courses, cornice with modillions and dentils |
+| house_stucco | 1718 | 85 | 7 m wide, 10.4 m tall | Edwardian stucco: round-topped windows, iron balcony, red tile pent roof, parapet |
+| street_lamp | 240 | 12 | 9.2 m pole, 2 m arm | Tapered pole, base, cobra head with lens (no light: daytime) |
+| street_tree | 840 | 26 | 7.5 m | Trunk, three leaders, six leaf clumps (two-sided) |
+| fire_hydrant | 644 | 21 | 0.8 m | White body, blue bonnet and caps, three outlets |
+| stop_sign | 68 | 6 | 2.45 m post, 75 cm octagon | Red face 2 mm proud of the white border; STOP is a Label3D |
+| seawall | 668 | 33 | 40 m long, 1.05 m over the street, railing to 2.1 m | Two placed end to end across the bottom of the street |
+
+Judgment calls:
+- The hill blocks are 60 m (shorter than real SF blocks, about 125 m) so the four grades fit in one run.
+- The cross streets are flat (real ones slope too) so the crossings stay flat for the traffic.
+- Houses are 7 m wide (a 25 ft lot less side gaps); the gaps between them are 16 to 50 cm.
+- Corner houses show a blank side wall to the cross street.
+- Wheel spin cap raised (zack's call): Jolt caps every body's spin at `max_angular_velocity`, 47 rad/s by
+  default, so the cart's 6.35 cm wheels skidded above 3 m/s and a cart on the 31 % block never beat 3.5 m/s.
+  `project.godot` now sets `physics/jolt_physics_3d/limits/max_angular_velocity = 120` (wheels free up to about
+  7.6 m/s; it cannot be set per level). Measured top speeds over 12 s: 5.7 m/s on the 10 % block, 6.1 on the
+  24 %, 6.3 on the 31 %. Higher caps were tried: 200 gives 7.5 to 8 m/s on the steep blocks, but with main's
+  endless sandbox the cart rolling off the sandbox hill at 6.4 m/s nose-dives and flips at the chunk seam
+  (`sandbox_test`), and every cap from 135 to 250 failed that or a garage ramp roll (`garage_test`, the cart
+  drifting into the wall); 120 passes every test. 300 to 600 pitch hard at speed and often flip.
+  The tuning export writes the cap as `max_angular_velocity` and the browser cart reads it.
+- That skid drag had been holding the cart's wheelies down and its flat-floor speed back, so the cart is retuned
+  to keep the old feel on flat floors: `wrist_lever` 0.4 -> 0.3 (ends lift at about the same hold times as
+  before), the wrists now also damp the cart's pitch while a hand is held (half of `tilt_kd` each, so a wheelie
+  grows steadily instead of flipping the moment an end lifts), `sprint_speed` 8 -> 5 m/s (pushing tops out at
+  about 5 m/s; it was about 6 m/s, limited by skidding) and `brake_max` 110 -> 120 N. Every drive test case
+  passes unchanged.
+- Cars use the parking lot sedan (`parked_car.glb`) so the two levels share it.
+
+Behaviour changes that came with it:
+- `ShoppingCart.wheel_on_ground()`: a wheel counts as down when a short ray under it hits something (it used to be
+  y < wheel radius, so on raised floors the HUD said 0/4 and rolling resistance switched off). The browser cart
+  already did this.
+- `settle_max_slope` (0.04): on anything steeper the cart left alone never settles or pins, it rolls away. Slope
+  is read from the ground under the wheels. A pinned cart is also released by traffic (AnimatableBody3D) now.
+- R puts the fresh cart on the floor under you (it used to drop it at y = 0), lifted to clear a slope.
+- `drive_test.gd` "hard pull, held 4 s": the long pull now starts facing west. Facing east it ran off the
+  sandbox's edge and fell; it only passed before because a falling wheel is below y = 0.12.
+- Browser version: the export writes each `TrafficLane` (speed, length, the cars' places and shapes) and the phone
+  drives kinematic cars the same way; the cart's guard sees kinematic bodies; settle and R match Godot.
+
+Left out: power poles and overhead wires, cable cars, Muni buses, crossing lights, stairs on the steepest sidewalks,
+building interiors.
+
+Z-fighting: the builder scan reports 0 on all nine models (it first found hits on the corner boards under the
+cornices, the balcony rail joints and the stop sign face, fixed). Placed objects: `tests/sf_hill_test.gd` checks no
+two houses overlap and none stands in the street. The tree grates are part of the street so they lie on the slope.
+
+Tests: `godot --headless --fixed-fps 120 -s res://tests/sf_hill_test.gd` (props, houses clear, spawn, rolling down
+the 10 % and 31 % blocks, R on a slope, traffic driving and knocking the cart). Renders:
+`xvfb-run godot -s res://tests/sf_hill_screenshot.gd -- <prefix>`. The camera test covers the level.
+
 ## 2026-11-21: online multiplayer by join code (phase 1)
 
 Players can now host with a join code and join by code or from a game list, over WebRTC. The rendezvous service
