@@ -5,7 +5,8 @@ extends SceneTree
 ##    with no scrub, knocks or landings on a straight push, and every sound stops once the cart is at rest;
 ##  - a wheelie: the wheels in the air go quiet while the others roll;
 ##  - a spin on the spot: the wheels slide sideways and scrub;
-##  - a wheelie set down and a drop: the wheels land with the drop recording.
+##  - landings, by each wheel's speed into the ground: a wheelie set down slams, a 5 cm drop taps, a 30 cm drop
+##    slams, a cart set down gently is silent.
 ## Run from the Godot project folder:
 ##   godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd
 
@@ -148,11 +149,11 @@ func _run() -> void:
 				n.rear += 1)
 	_report(n.up > 20 and n.quiet > 10 and n.rear > 10, "wheelie",
 		"front wheels up %d ticks: front quiet %d, rear rolling %d" % [n.up, n.quiet, n.rear])
-	# Setting the front wheels down again: they land with the drop sound.
-	var l0: int = ws.FL.landings + ws.FR.landings
+	# Setting the front wheels down again: they come down hard enough to slam.
+	var l0: int = ws.FL.slams + ws.FR.slams
 	await _wait(1.0)
-	_report(ws.FL.landings + ws.FR.landings > l0, "front wheels land", "%d landings as the front came down" % [
-		ws.FL.landings + ws.FR.landings - l0])
+	_report(ws.FL.slams + ws.FR.slams >= 2, "front wheels slam down", "%d slams as the front came down at %.2f m/s" % [
+		ws.FL.slams + ws.FR.slams - l0, maxf(ws.FL.last_impact, ws.FR.last_impact)])
 	await _brake_to_rest(level)
 
 	# A straight push rolls without scrubbing (checked per level above). Shoved sideways, the wheels can't roll
@@ -172,16 +173,23 @@ func _run() -> void:
 	_report(m.scrub > 10, "sideways slide scrubs", "slid up to %.2f m/s, a wheel scrubbing for %d ticks" % [m.slide, m.scrub])
 	await _brake_to_rest(level)
 
-	# Drop from 30 cm: the wheels knock as they land.
-	level.spawn_cart(spawn.global_position + Vector3(0, 0.3, 0), spawn.global_rotation.y)
-	cart = level.cart
-	await process_frame
-	ws = sounds(cart)
-	await _wait(1.0)
-	var landed := 0
-	for k in ws:
-		landed += ws[k].landings
-	_report(landed >= 2, "dropped cart lands", "%d wheel landings from a 30 cm drop" % landed)
+	# Drops: each wheel's speed into the ground as it touches picks silent, tap or slam, and the volume.
+	for d in [[0.0, "silent"], [0.05, "tap"], [0.3, "slam"]]:
+		level.spawn_cart(spawn.global_position + Vector3(0, d[0], 0), spawn.global_rotation.y)
+		cart = level.cart
+		await process_frame
+		ws = sounds(cart)
+		await _wait(1.0)
+		var heard := 0
+		var slammed := 0
+		var impact := 0.0
+		for k in ws:
+			heard += ws[k].landings
+			slammed += ws[k].slams
+			impact = maxf(impact, ws[k].last_impact)
+		var got := "silent" if heard == 0 else ("slam" if slammed >= 4 else ("tap" if slammed == 0 else "mixed"))
+		_report(got == d[1], "drop %d cm" % roundi(d[0] * 100), "%s (want %s): %d landings, %d slams, hit at %.2f m/s" % [
+			got, d[1], heard, slammed, impact])
 
 	print("ROLLING SOUND: %s" % ("all passed" if failures == 0 else "%d FAILED" % failures))
 	quit(1 if failures else 0)

@@ -368,7 +368,7 @@ const SCENARIOS = [
       c.setInput({ L: 1, R: 1, press: true });
       c.simulate(0.7, () => { if (!sw.FL.grounded && !sw.FR.grounded) { up++; if (sw.FL.roll.gain === 0 && sw.FR.roll.gain === 0 && sw.RL.roll.gain > 0.5) quiet++; } });
       c.setInput({}); c.simulate(1.0);
-      Object.assign(rolling, { up, quiet, landed: sw.FL.landings + sw.FR.landings - l0 });
+      Object.assign(rolling, { up, quiet, landed: sw.FL.landings + sw.FR.landings - l0, impact: Math.max(sw.FL.lastImpact, sw.FR.lastImpact), slammed: sw.FL.slams + sw.FR.slams });
       sound.update(0.1);
       // Traffic (TrafficLane / TrafficRoute): every car drives on at its lane's speed (0.5 s, so none loops round).
       const cars = c.level.traffic || [], t0 = cars.map(k => ({ ...k.body.translation() }));
@@ -380,8 +380,8 @@ const SCENARIOS = [
     const want = { plot: 'asphalt', garage: 'concrete', market: 'tile' }[lv];
     const rs = r.rolling;
     report(rs.floors.length === 1 && (!want || rs.floors[0] === want) && rs.gain > 0.9 && rs.maxScrub < 0.2 && rs.atRest.length === 0
-      && rs.loaded.length === 10 && rs.up > 20 && rs.quiet > 10 && rs.landed > 0, `sound ${lv}`,
-      `every wheel on ${rs.floors}${want ? ' (expected ' + want + ')' : ''} at ${rs.speed.toFixed(1)} m/s, quietest gain ${rs.gain.toFixed(2)}, scrub ${rs.maxScrub.toFixed(2)}, at rest playing [${rs.atRest}]; wheelie: front up ${rs.up} ticks, quiet ${rs.quiet}, landings ${rs.landed}; sounds loaded ${rs.loaded.length}/10`);
+      && rs.loaded.length === 12 && rs.up > 20 && rs.quiet > 10 && rs.landed > 0, `sound ${lv}`,
+      `every wheel on ${rs.floors}${want ? ' (expected ' + want + ')' : ''} at ${rs.speed.toFixed(1)} m/s, quietest gain ${rs.gain.toFixed(2)}, scrub ${rs.maxScrub.toFixed(2)}, at rest playing [${rs.atRest}]; wheelie: front up ${rs.up} ticks, quiet ${rs.quiet}, landings ${rs.landed} (${rs.slammed} slams) at ${rs.impact.toFixed(2)} m/s; sounds loaded ${rs.loaded.length}/12`);
     report(Math.abs(r.spawnDrop) < 0.1 && r.wheels === 4 && r.pinned && !r.fell && r.moved > 1 && r.inside === 0, `level ${lv}`,
       `spawned on 4 wheels and came to rest: ${r.wheels === 4 && r.pinned}, drove ${r.moved.toFixed(1)} m, camera never inside walls (closest ${r.minGap.toFixed(2)} m), ${r.spares} spare carts (${r.sparesPinned} at rest), ${r.meshes} meshes, ${r.drawCalls} draws, ${Math.round(r.triangles / 1000)}k triangles`);
     if (r.traffic.length) {

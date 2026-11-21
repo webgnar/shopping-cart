@@ -12,7 +12,7 @@ const buffers = {};        // file -> AudioBuffer
 const _fwd = new THREE.Vector3();
 
 function files(ws) {
-  return [...new Set([...ws.floors.flatMap(f => [f.roll, f.scrub]), ...ws.knock.files, ...ws.land.files])];
+  return [...new Set([...ws.floors.flatMap(f => [f.roll, f.scrub]), ...ws.knock.files, ...ws.land_tap.files, ...ws.land_slam.files])];
 }
 
 /** Call from a tap or click: creates (or resumes) the audio and loads the sounds. */
@@ -108,8 +108,8 @@ class Wheel {
     this.ws = ws; this.body = body;
     this.roll = new Loop(ws); this.scrub = new Loop(ws);
     this.grounded = false; this.floor = null; this.rollSpeed = 0; this.slide = 0;
-    this.knocks = 0; this.landings = 0;
-    this.prevVy = 0; this.sinceKnock = 1; this.airTime = 0; this.fallSpeed = 0;
+    this.knocks = 0; this.landings = 0; this.slams = 0; this.lastImpact = 0;
+    this.prevVy = 0; this.sinceKnock = 1; this.airTime = 0; this.airVel = v3(0, 0, 0);
   }
 }
 
@@ -148,12 +148,18 @@ export class WheelSounds {
       w.sinceKnock += dt;
       const jolt = v.y - w.prevVy; w.prevVy = v.y;
       const at = b.translation();
-      if (!w.grounded) { w.airTime += dt; w.fallSpeed = -v.y; }
+      if (!w.grounded) { w.airTime += dt; w.airVel = v; }
       else {
         if (w.airTime >= ws.land_air_time) {
-          if (w.fallSpeed > ws.land_start && w.sinceKnock >= ws.knock_gap) {
+          // Speed into the ground as it touches: the last tick in the air, or this one if it is still closing in.
+          const n = hit.normal;
+          w.lastImpact = Math.max(0, -dot(w.airVel, n), -dot(v, n));
+          if (w.lastImpact > ws.land_start && w.sinceKnock >= ws.knock_gap) {
             w.sinceKnock = 0; w.landings++;
-            if (!this.muted) oneShot(ws, ws.land, ws.land_db + 20 * Math.log10(clamp((w.fallSpeed - ws.land_start) / (ws.land_full - ws.land_start), 0.15, 1)), at);
+            const slam = w.lastImpact >= ws.land_slam_speed;
+            if (slam) w.slams++;
+            const g = Math.pow(clamp((w.lastImpact - ws.land_start) / (ws.land_full - ws.land_start), 0, 1), ws.land_curve);
+            if (!this.muted) oneShot(ws, slam ? ws.land_slam : ws.land_tap, ws.land_db + 20 * Math.log10(Math.max(g, 0.02)), at);
           }
         } else if (jolt > ws.knock_start && w.sinceKnock >= ws.knock_gap) {
           w.sinceKnock = 0; w.knocks++;
