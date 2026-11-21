@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "pack_pink"
+albedo_color = Color(0.8980, 0.6039, 0.5725, 1)
+roughness = 0.50

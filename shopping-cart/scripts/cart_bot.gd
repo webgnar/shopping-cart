@@ -50,6 +50,9 @@ enum State { PAUSE, DRIVE, BACK_OFF, GET_UP }
 var state := State.PAUSE
 ## In a race: lined up at the start (holding still), then driving to the finish (race_to).
 var racing := false
+## On an errand (a supermarket sweep, scripts/sweep/sweep.gd): it drives where it's sent (drive_to) and then holds
+## still there until it's sent somewhere else, instead of wandering.
+var errand := false
 var _path_distance := -1.0          ## the agent's own path_desired_distance, while racing changes it
 var _route: Array[Vector3] = []     ## racing: the waypoints still ahead, the finish last
 var _passed := Vector3.INF          ## racing: the last waypoint it got past (where it's put back if wedged)
@@ -145,6 +148,32 @@ func _next_waypoint() -> void:
 		_backoffs = 0
 
 
+## Errand: drive to `p` (at cruising pace, slowing to a stop there) and hold still on arrival until the next
+## drive_to or stop_errand. at_errand() says when it's standing there.
+func drive_to(p: Vector3) -> void:
+	errand = true
+	agent.target_position = p
+	if state != State.GET_UP:
+		state = State.DRIVE
+	_trip_time = 0.0
+	_trip_limit = give_up_slack + 3.0 * p.distance_to(cart.cart_origin()) / cruise_speed
+	_stuck = 0.0
+	_backoffs = 0
+
+
+## Errand: standing still where it was sent (or where it gave up getting there).
+func at_errand() -> bool:
+	return errand and state == State.PAUSE and not cart.fallen
+
+
+## Errand over: back to wandering after a short rest.
+func stop_errand() -> void:
+	errand = false
+	if state != State.GET_UP:
+		state = State.PAUSE
+	_timer = _rng.randf_range(pause_min, pause_max)
+
+
 ## Race over: back to wandering after a short rest.
 func stop_racing() -> void:
 	racing = false
@@ -174,8 +203,8 @@ func _physics_process(delta: float) -> void:
 		return
 	if state == State.GET_UP:
 		state = State.PAUSE
-		_timer = INF if racing else 1.0
-		if racing and not _route.is_empty() and not agent.is_navigation_finished():
+		_timer = INF if racing or errand else 1.0
+		if (errand or racing and not _route.is_empty()) and not agent.is_navigation_finished():
 			state = State.DRIVE   # back on its wheels mid-race: carry on
 			agent.target_position = agent.target_position
 	match state:
@@ -200,7 +229,7 @@ func _physics_process(delta: float) -> void:
 			if agent.is_navigation_finished() or _trip_time > _trip_limit or _backoffs >= max_back_offs:
 				stats["trips" if agent.is_navigation_finished() else "gave_up"] += 1
 				state = State.PAUSE
-				_timer = INF if racing else _rng.randf_range(pause_min, pause_max)
+				_timer = INF if racing or errand else _rng.randf_range(pause_min, pause_max)
 			else:
 				c = _drive(delta)
 		State.BACK_OFF:

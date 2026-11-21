@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "pack_yellow"
+albedo_color = Color(0.9490, 0.7569, 0.1804, 1)
+roughness = 0.60
