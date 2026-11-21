@@ -354,13 +354,13 @@ const SCENARIOS = [
   const music = await page.evaluate(async () => {
     const c = window.__cart;
     await c.loadLevel('plot');
-    for (let i = 0; i < 100 && !(c.musicState().playing && c.musicState().passes >= 2); i++) await new Promise(r => setTimeout(r, 200));
+    for (let i = 0; i < 100 && !(c.musicState().playing && c.musicState().passes >= 1); i++) await new Promise(r => setTimeout(r, 200));
     const plot = c.musicState();
     await c.loadLevel('garage');
     return { plot, garage: c.musicState() };
   });
-  report(music.plot.playing && music.plot.loaded && music.plot.passes >= 2 && music.plot.volumeDb < -6 && !music.garage.playing && !music.garage.file,
-    'background music', `parking lot: ${music.plot.file} playing ${music.plot.playing} at ${music.plot.volumeDb} dB, ${music.plot.passes} passes queued; garage: playing ${music.garage.playing}`);
+  report(music.plot.playing && music.plot.loaded && music.plot.passes >= 1 && music.plot.nextIn > 400 && music.plot.volumeDb < -6 && !music.garage.playing && !music.garage.file,
+    'background music', `parking lot: ${music.plot.file} playing ${music.plot.playing} at ${music.plot.volumeDb} dB, ${music.plot.passes} pass playing, next in ${Math.round(music.plot.nextIn)} s; garage: playing ${music.garage.playing}`);
 
   // Endless sandbox: the same chunk layout as Godot (its exported check table), chunks around the cart, and after a
   // jump far away the ground is there under a 4 m grid around the cart (shopping-cart/tests/sandbox_test.gd in Godot).
