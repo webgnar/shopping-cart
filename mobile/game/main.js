@@ -116,7 +116,7 @@ function respawn() {
 }
 
 // ---------------------------------------------------------------- input
-// Keys: the Godot game's (main.gd). Q/A left push/pull, E/D right push/pull, W/S lean back/front up, R reset.
+// Keys: the Godot game's (main.gd). Q/A left push/pull, E/D right push/pull, W/S lean back/front up, P reset.
 const keys = new Set();
 const KEYS = { push_left: 'KeyQ', pull_left: 'KeyA', push_right: 'KeyE', pull_right: 'KeyD', lift: 'KeyW', press: 'KeyS' };
 const touchHand = { L: 0, R: 0 }, touchLean = { lift: false, press: false };
@@ -134,14 +134,14 @@ function readInput() {
   };
 }
 
-const GAME_KEYS = new Set([...Object.values(KEYS), 'KeyR']);
+const GAME_KEYS = new Set([...Object.values(KEYS), 'KeyP']);
 addEventListener('keydown', e => {
   if (consoleOpen()) return;
   if (e.code === 'Backquote') { e.preventDefault(); openConsole(); return; }
   if (!started) return;
   if (GAME_KEYS.has(e.code)) { e.preventDefault(); setMode('desk'); }
   keys.add(e.code);
-  if (e.code === 'KeyR' && !e.repeat) respawn();
+  if (e.code === 'KeyP' && !e.repeat) respawn();
   if (e.code === 'F11' || (e.code === 'KeyF' && !e.repeat)) { if (e.code === 'F11') e.preventDefault(); toggleFullscreen(); }
 });
 addEventListener('keyup', e => keys.delete(e.code));

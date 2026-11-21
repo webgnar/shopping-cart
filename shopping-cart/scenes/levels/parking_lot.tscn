@@ -171,8 +171,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3, 0, 14.65)
 [node name="Corral2B" type="StaticBody3D" parent="CartCorrals" unique_id=339653393 instance=ExtResource("7_cqmwp")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.3, 0, 20.35)
 
-[node name="CorralSidewalk" type="StaticBody3D" parent="CartCorrals" unique_id=265291452 instance=ExtResource("7_cqmwp")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 7.65, 0.15, -14.6)
+[node name="Corral1East" type="StaticBody3D" parent="CartCorrals" unique_id=265291452 instance=ExtResource("7_cqmwp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.45, 0, -3.4)
 
 [node name="Streetlights" type="Node3D" parent="." unique_id=1051813243]
 

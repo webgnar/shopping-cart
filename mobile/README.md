@@ -16,7 +16,7 @@ and open http://localhost:8000 (or upload the `mobile/` folder as an HTML5 game 
   Drag near the top of the screen to look around. **Level** fast-travels, **Tilt** cycles on / flipped / off,
   **Set level** re-zeroes the tilt.
 - **Computers** (mouse and keyboard detected): the Godot keys. Q/A left hand push/pull, E/D right, W/S lean the
-  back/front up, R a fresh cart where you are, click to look around (Esc to let go), wheel to zoom,
+  back/front up, P a fresh cart where you are, click to look around (Esc to let go), wheel to zoom,
   ` opens the console (`help`, `where`, `plot`, `garage`, `market`, `sandbox`), F full screen. Touching the screen
   switches to the phone controls and a game key switches back.
 

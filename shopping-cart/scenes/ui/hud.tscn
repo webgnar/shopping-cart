@@ -426,4 +426,4 @@ Right hand: —"
 modulate = Color(1, 1, 1, 0.6)
 layout_mode = 2
 theme_override_font_sizes/font_size = 11
-text = "R reset  ·  F11 full screen  ·  click to look, Esc to release, scroll to zoom"
+text = "P reset  ·  F11 full screen  ·  click to look, Esc to release, scroll to zoom"
