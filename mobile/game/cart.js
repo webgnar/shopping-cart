@@ -22,7 +22,7 @@ export function shapeDesc(RAPIER, s) {
   let d;
   switch (s.type) {
     case 'box': d = RAPIER.ColliderDesc.cuboid(s.size[0] / 2, s.size[1] / 2, s.size[2] / 2); break;
-    case 'plane': d = RAPIER.ColliderDesc.halfspace({ x: 0, y: 1, z: 0 }); break;   // a world boundary: endless floor
+    case 'plane': d = new RAPIER.ColliderDesc(new RAPIER.HalfSpace({ x: 0, y: 1, z: 0 })); break;   // a world boundary: endless floor (Rapier 0.14 has no ColliderDesc.halfspace)
     case 'sphere': d = RAPIER.ColliderDesc.ball(s.radius); break;
     case 'cylinder': d = RAPIER.ColliderDesc.cylinder(s.height / 2, s.radius); break;
     case 'capsule': d = RAPIER.ColliderDesc.capsule(Math.max(0.001, s.height / 2 - s.radius), s.radius); break;

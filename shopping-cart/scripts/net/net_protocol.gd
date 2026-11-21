@@ -12,7 +12,8 @@ extends RefCounted
 ##                                        the host only sends snapshots to guests that have loaded its level
 ##   RESET     guest -> host  reliable    (nothing: put my cart back on its wheels where it is)
 ##   SNAPSHOT  host -> guests unreliable  u8 level serial, u32 tick, u8 carts, then per cart:
-##                                          u32 player id, i16 left hand N, i16 right hand N, u8 flags (1 = fallen),
+##                                          u32 player id, i16 left hand N, i16 right hand N, u8 flags (bit 0 fallen, bits 1-3
+##                                          the player's slot: host 0, guests 1-7, picks the flag colour),
 ##                                          3 x f32 frame velocity, f32 turn rate, u8 bodies, a pose per body
 ##                                          (ShoppingCart.net_bodies() order);
 ##                                        then u16 level bodies, per body: u16 index, pose (index into the level's
@@ -27,7 +28,7 @@ extends RefCounted
 ##                                          f32 finish time (< 0: not over the line), str name
 ## A snapshot too big for one packet is sent as several, each a complete SNAPSHOT for the same tick.
 
-const VERSION := 3
+const VERSION := 4
 ## Bump VERSION whenever a message changes, so old and new builds refuse each other cleanly.
 
 enum Msg { HELLO = 1, WELCOME, REJECT, LEVEL, INPUT, RESET, SNAPSHOT, LEFT, RACE }

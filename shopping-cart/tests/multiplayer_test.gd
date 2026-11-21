@@ -92,6 +92,14 @@ func _run() -> void:
 	var host_cart: ShoppingCart = current_scene.cart
 	var guest_cart: ShoppingCart = net.carts[gid]
 	_check("guest cart is a remote-held cart", not guest_cart.player_controlled and guest_cart.driver == net, guest_cart.name)
+	var host_flag := host_cart.get_node("Frame/Flag") as CartFlag
+	var guest_flag := guest_cart.get_node("Frame/Flag") as CartFlag
+	_check("both carts fly flags in different colours", host_flag.visible and guest_flag.visible
+		and host_flag.color == 0 and guest_flag.color == net._guests[gid].slot and guest_flag.color != 0,
+		"host %s %d, guest %s %d" % [host_flag.visible, host_flag.color, guest_flag.visible, guest_flag.color])
+	_check("flags are only for looks", host_flag.find_children("*", "CollisionObject3D", true, false).is_empty()
+		and host_flag.find_children("*", "CollisionShape3D", true, false).is_empty()
+		and host_cart.frame.center_of_mass_mode == RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM, "")
 	var host_start := host_cart.cart_origin()
 	var guest_start := guest_cart.cart_origin()
 	# The guest starts pushing once it sees snapshots; push the host's cart too.
@@ -130,6 +138,8 @@ func _run() -> void:
 		_check("guest saw the host's cart move", _vec(p.host_end).distance_to(_vec(p.host_start)) > 1.0,
 			"%.1f m, %d snapshots" % [_vec(p.host_end).distance_to(_vec(p.host_start)), p.snapshots])
 		_check("guest's own cart stays frozen there", p.own_frozen, "")
+		_check("guest sees both flags, in the host's colours", p.flags[0][0] and int(p.flags[0][1]) == guest_flag.color
+			and p.flags[1][0] and int(p.flags[1][1]) == 0, str(p.flags))
 	# Endless sandbox: the guest drives off on its own (its cart is moved 320 m out, onto a flat chunk seam). The
 	# host must stream ground around it too, and the guest must see the chunks and their loose bodies there.
 	var streamer: ChunkStreamer = current_scene.get_node("Chunks")

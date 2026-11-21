@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" path="res://scenes/cart/wheel_sound.tscn" id="3_wsnd"]
 [ext_resource type="Script" path="res://scripts/cart/cart_nest_mouth.gd" id="12_mouth"]
 [ext_resource type="PackedScene" path="res://scenes/cart/nest_joint.tscn" id="13_nest"]
+[ext_resource type="PackedScene" path="res://scenes/cart/flag.tscn" id="14_flag"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_i6241"]
 friction = 0.5
@@ -173,6 +174,10 @@ nest_scene = ExtResource("13_nest")
 [node name="Zone" type="CollisionShape3D" parent="Frame/NestMouth"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.06, 0.7, 0)
 shape = SubResource("BoxShape3D_mouth")
+
+[node name="Flag" parent="Frame" instance=ExtResource("14_flag")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0.14, 0.5, -0.33)
+visible = false
 
 [node name="Gate" type="RigidBody3D" parent="." unique_id=354311188]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.068, 0.985, 0)
