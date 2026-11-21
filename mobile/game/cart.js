@@ -16,13 +16,16 @@ const PIVOTS = { Frame: 'Frame', Gate: 'Gate_Hinge', ChildSeat: 'ChildSeat_Hinge
   Fork_FL: 'Caster_FL_Swivel', Fork_FR: 'Caster_FR_Swivel', Wheel_FL: 'Wheel_FL_Axle', Wheel_FR: 'Wheel_FR_Axle',
   Wheel_RL: 'Wheel_RL_Axle', Wheel_RR: 'Wheel_RR_Axle' };
 export const SIDES = [['L', -1], ['R', 1]];
+const PLANE_HALF = 2000;
 
 /** Rapier collider description for an exported shape (local transform kept). */
 export function shapeDesc(RAPIER, s) {
   let d;
   switch (s.type) {
     case 'box': d = RAPIER.ColliderDesc.cuboid(s.size[0] / 2, s.size[1] / 2, s.size[2] / 2); break;
-    case 'plane': d = RAPIER.ColliderDesc.halfspace({ x: 0, y: 1, z: 0 }); break;   // a world boundary: endless floor
+    // A world boundary (endless floor). This Rapier build has no half-space collider, so a slab 4 km wide and
+    // 2 m deep stands in, its top face on the plane.
+    case 'plane': d = RAPIER.ColliderDesc.cuboid(PLANE_HALF, 1, PLANE_HALF); break;
     case 'sphere': d = RAPIER.ColliderDesc.ball(s.radius); break;
     case 'cylinder': d = RAPIER.ColliderDesc.cylinder(s.height / 2, s.radius); break;
     case 'capsule': d = RAPIER.ColliderDesc.capsule(Math.max(0.001, s.height / 2 - s.radius), s.radius); break;
@@ -35,6 +38,10 @@ export function shapeDesc(RAPIER, s) {
   }
   if (!d) return null;
   const { p, q } = xfPose(xfMatrix(s.xf));
+  if (s.type === 'plane') {   // the slab's top face on the plane
+    const down = new THREE.Vector3(0, -1, 0).applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w));
+    return d.setTranslation(p.x + down.x, p.y + down.y, p.z + down.z).setRotation(q);
+  }
   return d.setTranslation(p.x, p.y, p.z).setRotation(q);
 }
 
