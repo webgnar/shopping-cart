@@ -61,6 +61,29 @@ near and freed once it's well behind.
 - **Left out**: roads don't line up from chunk to chunk (each chunk is turned at random); no bot carts in the
   sandbox yet (they need a navigation mesh per chunk); no lamps at night.
 
+## 2026-11-21: multiplayer prototype (phase 0)
+
+First step toward player-hosted multiplayer; the full plan (Cloudflare join codes, WebRTC, the browser) is in
+`docs/MULTIPLAYER.md`.
+
+- **Host-authoritative:** only the host simulates. Guests send their six keys; the host puts them in the guest
+  cart's `controls` (the bot-cart hook) and sends 30 snapshots a second of every moving body. Guests freeze the
+  whole level and move each body between snapshots, 100 ms behind the newest.
+- **Scenes:** `scenes/net/net_session.tscn` is the `Net` autoload (settings as exports: port 24601, 7 guests,
+  snapshot and input rates, interpolation delay, guest spacing) with its status label as a node. No new models.
+- **Cart:** `ShoppingCart.puppet` (frozen, moved by the network, does nothing itself), `net_bodies()` (the sync
+  order), `frame_velocity()` / `frame_spin()` (the HUD and rolling sound use these so a guest sees the host's
+  speed). Not ported to `mobile/game/cart.js`: puppets are network-only, and the browser has no networking yet.
+- **Console:** `host`, `join`, `leave`, `net` (Net adds them through the console's now-public `add_command`);
+  fast travel is host-only while joined. While the console is open on the host the game pauses for everyone.
+- **Judgment calls:** our own byte protocol over a polled `MultiplayerPeer` instead of Godot RPCs or
+  `MultiplayerSynchronizer`, so the JavaScript game can speak it later. ENet is turned off throttling unreliable
+  packets to a guest (it throttled snapshots for seconds after a guest paused to load a level), and the host only
+  sends snapshots to guests that report they've loaded the current level.
+- **Left out:** WebRTC, join codes and Cloudflare (phases 1-2), browser play (phase 3), prediction, player spawn
+  markers (guests line up 1.2 m apart to the right of `CartSpawn`; in the supermarket that faces the second cart
+  into a box display).
+
 ## 2026-11-21: bot carts (first pass)
 
 Unmanned carts that drive themselves around the supermarket, parking lot and garage, three per level, as a first
