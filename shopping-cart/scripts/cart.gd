@@ -317,7 +317,7 @@ func rig_mass() -> float:
 
 
 ## Lets this cart and `other` pass through each other (one is tucked inside the other): their bodies stop
-## colliding, and neither's ground rays or floor probe see the other.
+## colliding, and neither's ground rays (wheels on the ground, wheel sounds) see the other.
 func ghost(other: ShoppingCart) -> void:
 	if other == self or ghosts.has(other):
 		return
@@ -328,10 +328,8 @@ func ghost(other: ShoppingCart) -> void:
 			a.add_collision_exception_with(b)
 	for b in other.bodies():
 		_own_rids.append(b.get_rid())
-		$Frame/RollingSound/FloorProbe.add_exception(b)
 	for b in bodies():
 		other._own_rids.append(b.get_rid())
-		other.get_node("Frame/RollingSound/FloorProbe").add_exception(b)
 
 
 ## Undoes ghost(): the two carts collide again.
@@ -347,10 +345,8 @@ func unghost(other: ShoppingCart) -> void:
 			a.remove_collision_exception_with(b)
 	for b in other.bodies():
 		_own_rids.erase(b.get_rid())
-		$Frame/RollingSound/FloorProbe.remove_exception(b)
 	for b in bodies():
 		other._own_rids.erase(b.get_rid())
-		other.get_node("Frame/RollingSound/FloorProbe").remove_exception(b)
 
 
 ## Carts that came apart from this one collide again once their baskets are clear of each other: the basket
@@ -606,9 +602,14 @@ func wheel_on_ground(w: RigidBody3D) -> bool:
 	return not _ground_hit(w).is_empty()
 
 
-func _ground_hit(w: RigidBody3D) -> Dictionary:
+## What's right under a wheel (`gap` m of air at most): the ray hit (collider, position, normal), or empty.
+func ground_hit(w: RigidBody3D, gap := 0.02) -> Dictionary:
+	return _ground_hit(w, gap)
+
+
+func _ground_hit(w: RigidBody3D, gap := 0.02) -> Dictionary:
 	var q := PhysicsRayQueryParameters3D.create(w.global_position,
-		w.global_position + Vector3.DOWN * (wheel_radius + 0.02), 0x000f, _own_rids)
+		w.global_position + Vector3.DOWN * (wheel_radius + gap), 0x000f, _own_rids)
 	return w.get_world_3d().direct_space_state.intersect_ray(q)
 
 

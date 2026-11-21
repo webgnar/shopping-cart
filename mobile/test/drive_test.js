@@ -331,20 +331,29 @@ const SCENARIOS = [
         minGap = Math.min(minGap, gap); if (gap < 0.05) inside++;
       }
       c.cam.yaw = 0; c.renderOnce();
-      // Rolling sound: a fresh cart at the spawn is quiet at rest, then pushed plays the loop for this floor.
+      // Wheel sounds: a fresh cart at the spawn is quiet at rest; pushed, every wheel rolls on this floor without
+      // scrubbing; then a wheelie (S) lifts the front wheels quiet, and setting them down lands them.
       c.spawn(c.v3(...s.pos), s.yaw); c.setInput({}); c.simulate(3);
-      const sound = c.cart.sound;
-      sound.update(1);
-      const rolling = { atRest: sound.playing(), loaded: c.loadedLoops() };
-      c.setInput({ L: 1, R: 1 }); c.simulate(1.5); sound.update(1); c.setInput({});
-      Object.assign(rolling, { surface: sound.surface && sound.surface.name, gain: sound.surface ? sound.surface.gain : 0, speed: sound.speed });
+      const sound = c.cart.sound, sw = sound.wheels;
+      const rolling = { atRest: sound.playing(), loaded: c.loadedLoops(), maxScrub: 0 };
+      c.setInput({ L: 1, R: 1 }); c.simulate(1.5, () => { for (const w of Object.values(sw)) rolling.maxScrub = Math.max(rolling.maxScrub, w.scrub.gain); });
+      rolling.floors = [...new Set(Object.values(sw).map(w => w.floor ? w.floor.name : 'air'))];
+      rolling.gain = Math.min(...Object.values(sw).map(w => w.roll.gain));
+      rolling.speed = sw.RL.rollSpeed;
+      let up = 0, quiet = 0; const l0 = sw.FL.landings + sw.FR.landings;
+      c.setInput({ L: 1, R: 1, press: true });
+      c.simulate(0.7, () => { if (!sw.FL.grounded && !sw.FR.grounded) { up++; if (sw.FL.roll.gain === 0 && sw.FR.roll.gain === 0 && sw.RL.roll.gain > 0.5) quiet++; } });
+      c.setInput({}); c.simulate(1.0);
+      Object.assign(rolling, { up, quiet, landed: sw.FL.landings + sw.FR.landings - l0 });
+      sound.update(0.1);
       return { spawnDrop: s.pos[1] - p.y, wheels, pinned, spares, sparesPinned, fell: p2.y < s.pos[1] - 1,
         moved: Math.hypot(p2.x - p.x, p2.z - p.z), inside, minGap, rolling, ...c.stats() };
     }, lv);
-    const want = { plot: 'Asphalt', garage: 'Concrete', market: 'Tile' }[lv];
+    const want = { plot: 'asphalt', garage: 'concrete', market: 'tile' }[lv];
     const rs = r.rolling;
-    report(rs.surface && (!want || rs.surface === want) && rs.gain > 0.9 && rs.atRest.length === 0 && rs.loaded.length === 3, `sound ${lv}`,
-      `rolling at ${rs.speed.toFixed(1)} m/s: ${rs.surface}${want ? ' (expected ' + want + ')' : ''} at gain ${rs.gain.toFixed(2)}, at rest playing [${rs.atRest}], loops loaded ${rs.loaded.length}/3`);
+    report(rs.floors.length === 1 && (!want || rs.floors[0] === want) && rs.gain > 0.9 && rs.maxScrub < 0.2 && rs.atRest.length === 0
+      && rs.loaded.length === 10 && rs.up > 20 && rs.quiet > 10 && rs.landed > 0, `sound ${lv}`,
+      `every wheel on ${rs.floors}${want ? ' (expected ' + want + ')' : ''} at ${rs.speed.toFixed(1)} m/s, quietest gain ${rs.gain.toFixed(2)}, scrub ${rs.maxScrub.toFixed(2)}, at rest playing [${rs.atRest}]; wheelie: front up ${rs.up} ticks, quiet ${rs.quiet}, landings ${rs.landed}; sounds loaded ${rs.loaded.length}/10`);
     report(Math.abs(r.spawnDrop) < 0.1 && r.wheels === 4 && r.pinned && !r.fell && r.moved > 1 && r.inside === 0, `level ${lv}`,
       `spawned on 4 wheels and came to rest: ${r.wheels === 4 && r.pinned}, drove ${r.moved.toFixed(1)} m, camera never inside walls (closest ${r.minGap.toFixed(2)} m), ${r.spares} spare carts (${r.sparesPinned} at rest), ${r.meshes} meshes, ${r.drawCalls} draws, ${Math.round(r.triangles / 1000)}k triangles`);
     if (shots) await page.screenshot({ path: path.join(shots, `level_${lv}.png`), timeout: 180000 });

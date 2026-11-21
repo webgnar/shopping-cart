@@ -1,0 +1,14 @@
+[gd_resource type="AudioStreamRandomizer" format=3]
+
+[ext_resource type="AudioStream" uid="uid://cy53brtl3cpmy" path="res://assets/audio/cart/knock_1.wav" id="1_k"]
+[ext_resource type="AudioStream" uid="uid://dlfju0g1j27ii" path="res://assets/audio/cart/knock_2.wav" id="2_k"]
+[ext_resource type="AudioStream" uid="uid://guw6mexdv2r7" path="res://assets/audio/cart/knock_3.wav" id="3_k"]
+[ext_resource type="AudioStream" uid="uid://412ireleogan" path="res://assets/audio/cart/knock_4.wav" id="4_k"]
+
+[resource]
+random_pitch = 1.12
+streams_count = 4
+stream_0/stream = ExtResource("1_k")
+stream_1/stream = ExtResource("2_k")
+stream_2/stream = ExtResource("3_k")
+stream_3/stream = ExtResource("4_k")
