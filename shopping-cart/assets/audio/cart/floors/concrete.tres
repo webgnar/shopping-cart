@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CartFloorSound" format=3]
+
+[ext_resource type="Script" uid="uid://28v0wq5iecy6" path="res://scripts/cart/cart_floor_sound.gd" id="1_s"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="2_a"]
+[ext_resource type="AudioStream" uid="uid://bsjr2sg0cjnxu" path="res://assets/audio/cart/roll_concrete.ogg" id="3_roll"]
+[ext_resource type="AudioStream" uid="uid://ddnmnpc8c3vs8" path="res://assets/audio/cart/scrub_rough.ogg" id="4_scrub"]
+
+[resource]
+script = ExtResource("1_s")
+floors = Array[PhysicsMaterial]([ExtResource("2_a")])
+roll = ExtResource("3_roll")
+roll_db = -2.0
+scrub = ExtResource("4_scrub")
+scrub_db = -3.0
