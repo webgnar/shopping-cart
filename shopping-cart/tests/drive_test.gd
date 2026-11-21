@@ -180,7 +180,8 @@ func _run() -> void:
 	# pulling hard and the rear wheels lift until it goes over. Let go as soon as an end lifts
 	# and it drops back onto four wheels.
 	for tip in [["push", 4.0, true], ["pull", 4.0, true], ["push", 0.0, false], ["pull", 0.0, false]]:   # [keys, hold after lift, falls]
-		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
+		# A long pull runs backwards well over 30 m: face that one west so it runs into the far wall, not off the edge.
+		main.spawn_cart(Vector3(-10, 0, -3), PI if tip[0] == "pull" and tip[1] > 0.0 else 0.0)
 		await _wait(1.0)
 		var tc: ShoppingCart = main.cart
 		var keys: Array = [tip[0] + "_left", tip[0] + "_right"]
@@ -207,9 +208,9 @@ func _run() -> void:
 		var tip_ok: bool = lifted > 0.0 and (fell == tip[2] or tip[1] > 0.0) and (fell or tc.wheels_down() == 4)
 		if not tip_ok:
 			failures += 1
-		print("%-5s %-18s %s end lifted after %.1f s, let go %.1f s later: %s (up %.2f, nose pitch %+d deg, wheels down %d)" % [
+		print("%-5s %-18s %s end lifted after %.1f s, let go %.1f s later: %s (up %.2f, nose pitch %+d deg, wheels down %d, at %s)" % [
 			"PASS" if tip_ok else "FAIL", "hard " + tip[0], "front" if tip[0] == "push" else "rear", lifted, tip[1],
-			"fell over" if fell else "back on its wheels", tb.y.y, pitch, tc.wheels_down()])
+			"fell over" if fell else "back on its wheels", tb.y.y, pitch, tc.wheels_down(), str(tc.cart_origin().snapped(Vector3.ONE * 0.01))])
 	# Holding W or S keeps tipping the cart until it falls over (W onto its nose, S back onto the handle); a short
 	# hold only leans it and it drops back onto four wheels. Then, let go and hold the same key: it hauls the cart
 	# back up.

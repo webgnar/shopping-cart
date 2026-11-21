@@ -26,12 +26,12 @@ extends Node3D
 @export var power_base := 25.0      ## N per hand the moment a key goes down
 @export var power_ramp := 120.0     ## N per second the hand's power grows while its key stays held
 @export var power_relax := 400.0    ## N per second the bar falls back to zero once the key is let go
-@export var sprint_speed := 8.0     ## m/s: a running player can't push (or pull) the cart faster than this
+@export var sprint_speed := 5.0     ## m/s: a running player can't push (or pull) the cart faster than this
 ## m: the wrists' lever on the bar. Each hand twists the cart about its axle line by its power times this, whether
 ## or not the cart can speed up (a strained arm levers just as hard at a run). Push: nose up. Pull: nose down.
 ## The bigger it is, the less power it takes to lift an end. The push and pull themselves act at the height of
 ## the centre of mass, so they don't tilt the cart on their own.
-@export var wrist_lever := 0.4
+@export var wrist_lever := 0.3
 ## true: the keyboard holds the bar. false: a spare cart nobody is holding, unless a driver (a bot, later a networked
 ## player) holds it through `controls`, pressing the same six keys a player does.
 @export var player_controlled := true
@@ -42,6 +42,11 @@ extends Node3D
 var driver: Node = null
 ## The keys the driver is holding (action name -> true), set by the driver every physics step.
 var controls := {}
+## true: this cart only shows a cart simulated on another machine (a multiplayer guest's view, see
+## scripts/net/net_session.gd). Its bodies stay frozen and the network moves them; nothing here pushes it.
+var puppet := false
+var puppet_velocity := Vector3.ZERO   ## a puppet's frame velocity on the host (for the HUD and the rolling sound)
+var puppet_spin := 0.0                ## a puppet's turn rate on the host, rad/s
 var hand_power := {"L": 0.0, "R": 0.0}   ## N each hand is putting into the bar: + push, - pull
 @export_group("Lean keys")
 ## W tips the back up, S tips the front up, at any speed, toward a lean held by the wrists (capped torque). Keep
@@ -79,7 +84,7 @@ var _rest_time := 0.0
 @export var arm_reach := 0.3        ## m each arm can straighten while the body is planted
 @export var brake_spring := 350.0   ## N per m of arm extension, per hand: arms stiffen as they straighten
 @export var brake_damping := 25.0   ## N per m/s, per hand
-@export var brake_max := 110.0      ## N per hand: leaning back with full body weight
+@export var brake_max := 120.0      ## N per hand: leaning back with full body weight
 var arm_extension := {"L": 0.0, "R": 0.0}   ## m each arm is currently stretched past its relaxed bend
 @export_group("Hands")
 @export var hand_position := Vector3(0.0, 1.0, 0.2)   ## where the right hand grips the bar (cart local); the left is mirrored
@@ -87,6 +92,7 @@ var arm_extension := {"L": 0.0, "R": 0.0}   ## m each arm is currently stretched
 @export_group("Coming to rest")
 @export var settle_brake := 40.0    ## how hard the cart brakes itself below settle_speed (per kg, and N*m per rad/s)
 @export var stop_delay := 0.25      ## s of creeping below stop_speed before the cart stops dead
+@export var settle_max_slope := 0.04   ## rise per run: on anything steeper the cart never settles, it rolls away
 @export_group("")
 
 const LAYER_WORLD := 1
@@ -111,6 +117,7 @@ var _tilt_dir := 0                  ## +1 S, -1 W, 0 neither
 var _let_go := false                ## the hands slipped off on this W/S hold; it does nothing more until let go
 
 var _links := []           ## [visual node, body, offset] kept in step every frame
+var _own_rids: Array[RID] = []   ## this cart's bodies, which its wheel-on-the-ground rays look past
 
 
 func _ready() -> void:
@@ -125,6 +132,8 @@ func _ready() -> void:
 		for b in parts:
 			if a != b:
 				a.add_collision_exception_with(b)
+	for b in parts + groceries:
+		_own_rids.append(b.get_rid())
 	# Each rig pivot of the visual model follows its physics body.
 	_link(_model, frame)
 	_link(_model.find_child("Gate_Hinge"), gate)
@@ -143,7 +152,8 @@ const TUNING_KEYS := ["power_base", "power_ramp", "power_relax", "sprint_speed",
 	"fallen_upright", "fallen_still", "stood_upright",
 	"rolling_resistance", "grip_yaw_damping", "spin_grip", "spin_grip_min",
 	"settle_speed", "settle_spin", "stop_speed", "stop_spin",
-	"arm_reach", "brake_spring", "brake_damping", "brake_max", "arm_relax_rate", "settle_brake", "stop_delay"]
+	"arm_reach", "brake_spring", "brake_damping", "brake_max", "arm_relax_rate", "settle_brake", "stop_delay",
+	"settle_max_slope"]
 
 
 func tuning() -> Dictionary:
@@ -166,12 +176,18 @@ func _process(_delta: float) -> void:
 const ACTIONS := ["push_left", "pull_left", "push_right", "pull_right", "lift", "press"]
 
 
-## Whether a key is held: the player's keyboard, or the driver's `controls` for any other cart.
+## Whether a key is held: the player's keyboard (not while typing in a text box), or the driver's `controls` for
+## any other cart.
 func held(action: String) -> bool:
-	return Input.is_action_pressed(action) if player_controlled else controls.get(action, false)
+	if not player_controlled:
+		return controls.get(action, false)
+	var focus := get_viewport().gui_get_focus_owner()
+	return Input.is_action_pressed(action) and not (focus is LineEdit or focus is TextEdit)
 
 
 func _physics_process(delta: float) -> void:
+	if puppet:
+		return
 	var any_input := false
 	for a in ACTIONS:
 		if held(a):
@@ -193,6 +209,10 @@ func _physics_process(delta: float) -> void:
 ## gently and let the bodies fall asleep. Any key wakes them.
 func _settle(delta: float) -> void:
 	if frame.freeze:
+		return
+	# On a hill a cart left alone on its wheels rolls away, as a real one does: no braking, no pinning.
+	if ground_slope() > settle_max_slope:
+		_rest_time = 0.0
 		return
 	var v := frame.linear_velocity
 	var w := frame.angular_velocity
@@ -220,11 +240,14 @@ func _stop() -> void:
 ## A loose object or another cart (not this cart's own parts or groceries) is about to hit the pinned cart:
 ## let physics take it again.
 func _on_frame_hit(body: Node) -> void:
-	if frame.freeze and body is RigidBody3D and not groceries.has(body) and body.get_parent() != self:
+	var mover := (body is RigidBody3D and not groceries.has(body)) or body is AnimatableBody3D   # props, carts, traffic
+	if frame.freeze and mover and body.get_parent() != self:
 		_wake()
 
 
 func _wake() -> void:
+	if puppet:
+		return
 	frame.freeze = false
 	_rest_time = 0.0
 	for b in [frame, gate, child_seat, seat_flap] + wheels.values() + forks.values():
@@ -239,7 +262,7 @@ func _apply_rolling_resistance(delta: float) -> void:
 	var max_torque := rolling_resistance * total_mass * 9.81 / 4.0 * wheel_radius
 	for k in wheels:
 		var w: RigidBody3D = wheels[k]
-		if w.global_position.y > wheel_radius + 0.02:
+		if not wheel_on_ground(w):
 			continue   # off the ground
 		var axle := w.global_transform.basis.z.normalized()
 		var spin := w.angular_velocity.dot(axle)
@@ -348,8 +371,12 @@ func _apply_hands(delta: float) -> void:
 			elif _wait_release:
 				st = "let go, then hold to haul it up"
 		elif dir != 0:
-			# The wrists lever the bar by the hand's full power: a push raises the nose, a pull drops it.
-			frame.apply_torque(xf.basis.z.normalized() * dir * strength * wrist_lever)
+			# The wrists lever the bar by the hand's full power: a push raises the nose, a pull drops it. Each wrist
+			# also damps the cart's pitching (tilt_kd, split between the hands), so a wheelie grows steadily
+			# instead of flipping the cart the moment an end lifts.
+			var pitch_axis := xf.basis.z.normalized()
+			var pitch_rate := frame.angular_velocity.dot(pitch_axis)
+			frame.apply_torque(pitch_axis * (dir * strength * wrist_lever - 0.5 * tilt_kd * pitch_rate))
 		hand_state[side] = st
 
 	# Grip: with both hands moving the same way the player resists the cart twisting (keeps it tracking when
@@ -408,12 +435,65 @@ func heading() -> float:
 	return atan2(-n.z, n.x)
 
 
+## The frame's velocity: from physics, or for a puppet the host's.
+func frame_velocity() -> Vector3:
+	return puppet_velocity if puppet else frame.linear_velocity
+
+
+## The frame's turn rate (rad/s about up): from physics, or for a puppet the host's.
+func frame_spin() -> float:
+	return puppet_spin if puppet else frame.angular_velocity.y
+
+
+## Every body of the rig, groceries last, in the order the network sends them.
+func net_bodies() -> Array[RigidBody3D]:
+	var list: Array[RigidBody3D] = [frame, gate, child_seat, seat_flap, forks.FL, forks.FR,
+		wheels.FL, wheels.FR, wheels.RL, wheels.RR]
+	list.append_array(groceries)
+	return list
+
+
+## Turns this cart into a puppet: frozen, moved only by the network.
+func make_puppet() -> void:
+	puppet = true
+	driver = null
+	player_controlled = false
+	for b in net_bodies():
+		b.freeze = true
+
+
 func wheels_down() -> int:
 	var n := 0
 	for k in wheels:
-		if wheels[k].global_position.y < wheel_radius + 0.02:
+		if wheel_on_ground(wheels[k]):
 			n += 1
 	return n
+
+
+## A wheel is on the ground when something solid is right under it (2 cm of air at most), on any floor or slope.
+func wheel_on_ground(w: RigidBody3D) -> bool:
+	return not _ground_hit(w).is_empty()
+
+
+func _ground_hit(w: RigidBody3D) -> Dictionary:
+	var q := PhysicsRayQueryParameters3D.create(w.global_position,
+		w.global_position + Vector3.DOWN * (wheel_radius + 0.02), 0x000f, _own_rids)
+	return w.get_world_3d().direct_space_state.intersect_ray(q)
+
+
+## Rise per run of the ground the cart stands on, from under its wheels (0 unless at least three are down).
+func ground_slope() -> float:
+	var n := Vector3.ZERO
+	var down := 0
+	for k in wheels:
+		var hit := _ground_hit(wheels[k])
+		if not hit.is_empty():
+			n += hit.normal
+			down += 1
+	if down < 3:
+		return 0.0
+	n = n.normalized()
+	return sqrt(maxf(0.0, 1.0 - n.y * n.y)) / maxf(n.y, 0.01)
 
 
 func groceries_in_basket() -> int:

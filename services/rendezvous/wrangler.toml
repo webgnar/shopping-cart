@@ -1,0 +1,50 @@
+# Shopping cart multiplayer rendezvous: join codes, the public game list and WebRTC signaling.
+# Gameplay never passes through here: players connect to the host directly (or through TURN).
+# Local: `npm run dev` (no Cloudflare account needed). Deploying needs zack's account: see README.md.
+name = "shopping-cart-rendezvous"
+main = "src/index.js"
+compatibility_date = "2026-08-06"
+workers_dev = true
+
+[vars]
+# STUN servers handed to players (comma separated). Free, no key needed.
+STUN_URLS = "stun:stun.cloudflare.com:3478"
+# Cloudflare Realtime TURN key id (public). Empty: no TURN relay, STUN only. Its API token is a secret:
+#   npx wrangler secret put TURN_API_TOKEN
+TURN_KEY_ID = ""
+TURN_TTL_SECONDS = "86400"
+# Global daily setup budgets (SetupBudget). They don't cap relay traffic or billing.
+MAX_HOST_REGISTRATIONS_PER_DAY = "2000"
+MAX_TURN_SESSIONS_PER_DAY = "1000"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+[[durable_objects.bindings]]
+name = "DIRECTORY"
+class_name = "Directory"
+
+[[durable_objects.bindings]]
+name = "BUDGET"
+class_name = "SetupBudget"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room", "Directory", "SetupBudget"]
+
+# Per IP, per Cloudflare location. Namespace ids must be unused in the account.
+[[ratelimits]]
+name = "HOST_LIMIT"
+namespace_id = "2701"
+simple = { limit = 10, period = 60 }
+
+[[ratelimits]]
+name = "JOIN_LIMIT"
+namespace_id = "2702"
+simple = { limit = 20, period = 60 }
+
+[[ratelimits]]
+name = "BROWSE_LIMIT"
+namespace_id = "2703"
+simple = { limit = 30, period = 60 }

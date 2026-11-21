@@ -9,10 +9,9 @@ extends RefCounted
 ##    can move them with their physics body.
 ##  - mobile/levels/<key>.json: what you touch and how it's lit: every collision shape with its friction, the
 ##    loose props (mass, shapes), CartSpawn, the spare carts, the bot carts and the navigation mesh they drive on,
-##    sky/fog/ambient, the sun, lamps and 3D labels.
-##    An endless grid (EndlessTiles, the sandbox lot) goes out once: its first block is drawn in the .glb as
-##    tiles_<n> and its shapes are listed under "tiles" with the grid's block positions and span, so the phone
-##    repeats that one block and moves the copies along as the Godot game does.
+##    sky/fog/ambient, the sun, lamps and 3D labels, the lanes of moving traffic (TrafficLane: speed, length, each
+##    car's place and shapes; cars are kin_<n>), and for the endless sandbox, the chunk grid ("stream").
+##  - mobile/levels/chunks/<name>.glb and .json: each chunk the sandbox streams (scenes/sandbox/chunks/), the same way.
 ## And once for the cart (scenes/cart/cart.tscn): mobile/levels/cart.json with the rig (bodies, masses, shapes,
 ## hinges and their limits), the cart's shared materials (assets/materials/cart/*.tres) and the bot's settings
 ## (scenes/cart/bot_cart.tscn: the CartBot exports and its NavigationAgent3D).
@@ -26,8 +25,9 @@ const SPARE_CART_SCENE := "res://scenes/cart/spare_cart.tscn"
 const BOT_CART_SCENE := "res://scenes/cart/bot_cart.tscn"
 const CART_MATERIALS_DIR := "res://assets/materials/cart/"
 const OUT_DIR := "../mobile/levels"
-const NAMES := {"sandbox": "Sandbox", "plot": "Parking lot", "garage": "Parking garage", "market": "Supermarket"}
-const ORDER := ["sandbox", "plot", "garage", "market"]
+const NAMES := {"sandbox": "Sandbox", "plot": "Parking lot", "garage": "Parking garage", "market": "Supermarket",
+	"hill": "San Francisco hill"}
+const ORDER := ["sandbox", "plot", "garage", "market", "hill"]
 
 
 static func out_path(file: String) -> String:
@@ -91,10 +91,19 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 	var out := {
 		"key": key, "name": NAMES.get(key, key), "scene": scene_path, "source": source_hash(scene_path),
 		"spawn": null, "spare_carts": [], "bot_carts": [], "navmesh": null, "environment": {}, "sun": null, "lights": [], "labels": [],
-		"statics": [], "bodies": [], "tiles": [],
+		"statics": [], "bodies": [], "traffic": [],
 	}
+	if level.has_meta("mobile_merge_cell"):   # a long level can merge its meshes in bigger cells (fewer draws)
+		out["merge_cell"] = float(level.get_meta("mobile_merge_cell"))
 	var spawn := level.get_node_or_null("CartSpawn") as Node3D
 	out.spawn = {"pos": _v(spawn.global_position if spawn else Vector3(2, 0, 0)), "yaw": spawn.global_rotation.y if spawn else 0.0}
+
+	# An endless level (ChunkStreamer): its settings go in the JSON and each chunk is exported on its own
+	# (export_chunk); the chunks it has loaded around the cart and its far ground are left out of the level.
+	for st in level.find_children("*", "ChunkStreamer", true, false):
+		out["stream"] = _stream(st)
+		st.get_parent().remove_child(st)
+		st.free()
 
 	# Things the phone builds itself: the player's cart, spare carts, camera, HUD, UI.
 	var drop: Array[Node] = []
@@ -111,25 +120,6 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 		if is_instance_valid(n) and n.get_parent():
 			n.get_parent().remove_child(n)
 			n.free()
-
-	# Endless grids: keep the first block as the one the phone repeats, note where every block sits.
-	var templates := {}   # template block -> its entry in out.tiles
-	for t in level.find_children("*", "EndlessTiles", true, false):
-		var blocks: Array = t.get_children().filter(func(c): return c is Node3D)
-		if blocks.is_empty():
-			continue
-		var first: Node3D = blocks[0]
-		var entry := {"node": "tiles_%d" % out.tiles.size(), "span": [t.span.x, t.span.y],
-			"origins": blocks.map(func(b): return _v(b.global_position)), "statics": []}
-		for b in blocks:
-			if not b.global_basis.is_equal_approx(Basis.IDENTITY):
-				push_warning("Mobile export: %s is turned; the phone repeats its blocks unturned" % b.get_path())
-			if b != first:
-				b.get_parent().remove_child(b)
-				b.free()
-		first.name = entry.node
-		templates[first] = entry
-		out.tiles.append(entry)
 
 	for n in level.find_children("*", "", true, false):
 		if n is WorldEnvironment:
@@ -149,11 +139,33 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 		elif n is NavigationRegion3D and n.navigation_mesh and out.navmesh == null:
 			out.navmesh = _navmesh(n)
 
+	# Moving traffic: each lane's place, speed and length, and its cars (kin_<n>) with their shapes and their
+	# places in the queue. The phone drives them the same way (TrafficLane).
+	var moving := {}
+	for lane in level.find_children("*", "Node3D", true, false):
+		if not lane is TrafficLane:
+			continue
+		var entry := {"xf": _xf(lane.global_transform), "speed": lane.speed, "length": lane.length, "cars": []}
+		var cars: Array = lane.get("_cars")
+		for i in cars.size():
+			var car: AnimatableBody3D = cars[i]
+			var id := "kin_%d" % moving.size()
+			moving[car] = true
+			car.name = id
+			var shapes := []   # in the car's own frame
+			for s in car.get_children():
+				if s is CollisionShape3D and not s.disabled and s.shape:
+					var sh := _shape(s.shape, s.transform)
+					if not sh.is_empty():
+						shapes.append(sh)
+			entry.cars.append({"node": id, "offset": lane.distance(i, 0.0), "friction": _friction(car), "shapes": shapes})
+		out.traffic.append(entry)
+
 	# Collision: static shapes go in one list, loose props keep their shapes per body.
 	var dyn_count := 0
 	for n in level.find_children("*", "CollisionObject3D", true, false):
 		var body := n as CollisionObject3D
-		if body is Area3D:
+		if body is Area3D or moving.has(body):
 			continue
 		var shapes := []
 		for s in body.find_children("*", "CollisionShape3D", true, false):
@@ -178,15 +190,11 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 			out.bodies.append(entry)
 		else:
 			var surface := _surface(body)
-			var tile := _template_of(body, templates)
 			for sh in shapes:
 				sh["friction"] = friction
 				if surface:
 					sh["surface"] = surface
-				if tile:
-					tile.entry.statics.append(_local_shape(sh, tile.node.global_transform))
-				else:
-					out.statics.append(sh)
+				out.statics.append(sh)
 
 	# What's left that the phone draws: meshes only (lights, labels and physics are in the JSON).
 	for n in level.find_children("*", "", true, false):
@@ -208,10 +216,35 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 	f.close()
 	level.queue_free()
 	await tree.process_frame
-	print("MOBILE LEVEL %s: %d static shapes, %d loose props, %d spare carts, %d bot carts, %d nav polygons, %d lamps, %d labels, %d endless grids" % [
+	print("MOBILE LEVEL %s: %d static shapes, %d loose props, %d spare carts, %d bot carts, %d nav polygons, %d lamps, %d labels, %d traffic lanes" % [
 		key, out.statics.size(), out.bodies.size(), out.spare_carts.size(), out.bot_carts.size(),
-		out.navmesh.polygons.size() if out.navmesh else 0, out.lights.size(), out.labels.size(), out.tiles.size()])
+		out.navmesh.polygons.size() if out.navmesh else 0, out.lights.size(), out.labels.size(), out.traffic.size()])
 	return out
+
+
+## A ChunkStreamer's settings for mobile/game/stream.js: the grid, the chunks (exported to levels/chunks/<name>),
+## their weights, the far ground, and a table of picks the browser checks its own hash against.
+static func _stream(st: ChunkStreamer) -> Dictionary:
+	var d := {"origin": _v(st.global_position), "chunk_size": st.chunk_size, "seed": st.world_seed, "turns": st.turns,
+		"load_distance": st.load_distance, "unload_distance": st.unload_distance,
+		"home_cells": st.home_cells.map(func(c): return [c.x, c.y]), "weights": Array(st.weights),
+		"chunks": st.chunks.map(func(c): return {"key": chunk_key(c.resource_path), "scene": c.resource_path}),
+		"far_ground": null, "check": []}
+	var fg := st.far_ground as MeshInstance3D
+	if fg and fg.mesh is PlaneMesh:
+		var m := fg.mesh.surface_get_material(0) as StandardMaterial3D
+		d.far_ground = {"y": fg.position.y, "size": (fg.mesh as PlaneMesh).size.x,
+			"color": _c(m.albedo_color if m else Color.GRAY)}
+	for i in range(-6, 7, 3):
+		for j in range(-6, 7, 2):
+			var p := st.pick(Vector2i(i * 7 - 3, j * 13 + 5))
+			d.check.append([i * 7 - 3, j * 13 + 5, p[0], p[1]])
+	return d
+
+
+## Where a chunk scene's export goes, under mobile/levels/: chunks/<scene name>.
+static func chunk_key(scene_path: String) -> String:
+	return "chunks/" + scene_path.get_file().get_basename()
 
 
 ## Phones get each texture once, at most MAX_TEXTURE px: every material that uses the same texture shares one
@@ -258,16 +291,6 @@ static func _shrink_textures(level: Node) -> void:
 				m.set(slot, cache[key])
 
 
-## The endless-grid block (and its out.tiles entry) that `n` belongs to, or {} when it isn't in one.
-static func _template_of(n: Node, templates: Dictionary) -> Dictionary:
-	var p := n
-	while p:
-		if templates.has(p):
-			return {"node": p, "entry": templates[p]}
-		p = p.get_parent()
-	return {}
-
-
 static func _owner_body(n: Node) -> Node:
 	var p := n.get_parent()
 	while p and not p is CollisionObject3D:
@@ -312,10 +335,12 @@ static func _shape(shape: Shape3D, xf: Transform3D) -> Dictionary:
 		d.type = "mesh"
 		d.faces = _flat(Array(shape.get_faces()).map(func(p): return p * sc))
 	elif shape is WorldBoundaryShape3D:
-		d.type = "box"
+		# An endless floor: the phone uses Rapier's half-space (a box tens of km wide costs contact precision).
+		# xf: a point on the plane, local +Y along its normal.
+		d.type = "plane"
 		var plane: Plane = shape.plane
-		d.xf = _xf(Transform3D(Basis.IDENTITY, xf * (plane.normal * plane.d - plane.normal * 0.5)))
-		d.size = [4000, 1, 4000]   # as good as endless on a phone: a fresh cart comes back long before the edge
+		var normal := (xf.basis * plane.normal).normalized()
+		d.xf = _xf(Transform3D(Basis(Quaternion(Vector3.UP, normal)), xf * (plane.normal * plane.d)))
 	else:
 		push_warning("Mobile export: %s isn't supported, skipped" % shape.get_class())
 		return {}
@@ -524,10 +549,18 @@ static func export_all(tree: SceneTree, only: Array = []) -> void:
 	DirAccess.make_dir_recursive_absolute(out_path(""))
 	export_cart()
 	var list := []
+	var chunks := {}
 	for d in destinations():
 		list.append(d)
 		if only.is_empty() or only.has(d.key):
-			await export_level(tree, d.key, d.scene)
+			var out: Dictionary = await export_level(tree, d.key, d.scene)
+			if out.has("stream"):
+				for c in out.stream.chunks:
+					chunks[c.key] = c.scene
+	# The endless level's chunks, each like a small level of its own (centred on its square, unturned).
+	DirAccess.make_dir_recursive_absolute(out_path("chunks"))
+	for k in chunks:
+		await export_level(tree, k, chunks[k])
 	var f := FileAccess.open(out_path("levels.json"), FileAccess.WRITE)
 	f.store_string(JSON.stringify(list, "  ", false) + "\n")
 	f.close()

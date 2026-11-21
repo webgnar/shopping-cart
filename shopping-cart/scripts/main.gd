@@ -53,6 +53,10 @@ func _ready() -> void:
 		add_child(camera)
 	camera.current = true
 	_build_hud()
+	# Multiplayer: the host spawns guests' carts; a guest freezes the level and shows the host's world.
+	var net := get_node_or_null("/root/Net") as NetSession
+	if net:
+		net.level_ready(self)
 
 
 func _setup_input() -> void:
@@ -95,8 +99,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED if fs else DisplayServer.WINDOW_MODE_FULLSCREEN)
 	elif event.is_action_pressed("reset"):
+		var net := get_node_or_null("/root/Net") as NetSession
+		if net and net.is_guest():
+			net.request_reset()   # the host owns this cart
+			return
 		var p := cart.cart_origin()
-		spawn_cart(Vector3(p.x, 0.05, p.z), cart.heading())
+		spawn_cart(floor_under(p), cart.heading())
 
 
 func _process(delta: float) -> void:
@@ -110,6 +118,20 @@ func _process(delta: float) -> void:
 	# The camera rises over (or pulls in from) walls, shelves and ceilings in the way; see cart_camera.gd.
 	camera.follow(cam_target, wanted, delta)
 	hud.show_cart(cart)
+
+
+## Where a fresh cart goes for R: on the level's floor under `p` (looking down from 3 m over it), 5 cm up, and
+## on a slope high enough that its wheels (the front ones are a metre from the handle) clear the uphill side.
+## Falls back to y = 0.05 where there's nothing under you.
+func floor_under(p: Vector3) -> Vector3:
+	var q := PhysicsRayQueryParameters3D.create(p + Vector3(0, 3, 0), p + Vector3(0, -50, 0), 1)
+	if cart:
+		q.exclude = cart._own_rids
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	if hit.is_empty():
+		return Vector3(p.x, 0.05, p.z)
+	var n: Vector3 = hit.normal
+	return hit.position + Vector3(0, 0.05 + sqrt(maxf(0.0, 1.0 - n.y * n.y)) / maxf(n.y, 0.2), 0)
 
 
 # ---------------------------------------------------------------- world

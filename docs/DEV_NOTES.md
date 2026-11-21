@@ -3,60 +3,263 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
-## 2026-11-21: sandbox is now an endless parking lot; Q and E push keys swapped
+## 2026-11-21: sandbox is an endless parking lot (lot-only chunks); Q and E push keys swapped
 
-The sandbox (`scenes/main.tscn`) was a 60 x 40 m slab, half store tile and half asphalt. It is now an endless
-open parking lot, so the cart's physics can be worked on with room to run. Reference: the aerial photos in
-`Level Reference Images/` (big, mostly empty lots, double rows of painted stalls, light poles on the stall heads,
-planter islands with trees at the row ends).
+The sandbox (`scenes/main.tscn`) is now an open daytime parking lot that never ends, so the cart's physics can be
+worked on with room to run. Reference: the aerial photos in `Level Reference Images/` (big, mostly empty lots,
+double rows of painted stalls, light poles on the stall heads, planter islands with trees at the row ends).
 
-- **How it never ends.** The ground is a `WorldBoundaryShape3D` (infinite, asphalt physics material). On top, the
-  `Lot` node (`scripts/levels/endless_tiles.gd`, class `EndlessTiles`) holds a 5 x 7 grid of `LotBlock` instances.
-  Each physics step, a block more than half the grid (`span`, 390 x 259 m) from the camera jumps a whole span
-  ahead, so the grid stays centred on the player. Blocks always land on the same world grid, so the test strip
-  and loose boxes stay between the same stalls. The camera always sees at least 111 m of lot ahead; depth fog
-  (40 to 115 m, the sky's horizon colour, with the lower sky set to the same colour) hides the edge. Checked by
-  rendering from 2 km out (`tests/sandbox_screenshot.gd`, "far"): it looks the same as at the start.
-- **Block** (`scenes/props/parking_lot/lot_block.tscn`): 78 x 37 m. Two double rows of 24 stalls (2.7 x 5.5 m,
-  as the parking lot level) along X, a 7.5 m drive aisle down the middle (the spawn aisle, z = 0) and half an
-  aisle on each Z edge, so the blocks meet in a full aisle. Each double row ends at +X in a planter island
-  (2.4 x 11 m, streetlight and two palms, as `planter_island.tscn`) followed by a 7.8 m cross aisle; a second
-  streetlight stands on the stall heads in the middle of the row. Collision: one `StaticBody3D` (solid) with
-  the island curbs, pole bases, poles and palm trunks (18 shapes), the same shapes as the separate prop scenes.
-- **Model** (`assets/models/parking_lot/lot_block/lot_block.glb`, `tools/parking_lot_models.py lot_block`):
-  the existing hand-built props (stall markings, planter island, streetlight, palm tree) placed into one model
-  and merged into one object per material, plus one 78 x 37 m asphalt face. 14,690 triangles, 558 KB,
-  12 objects / materials, all shared `.tres` by name. `Model` got a `by_material` mode and `at()` placement
-  for this; the four prop builders take an optional model to build into (their own .glb output is unchanged).
-  Why merged: 35 blocks of separate prop instances would be about 1,400 draw calls; merged, the whole sandbox is
-  355 draws / 406k triangles at 1080p (1.6 ms GPU on an RTX 2080; the parking lot level is 2,772 draws).
-  CPU: 0.56 ms per frame (`tests/perf_probe.gd`). No lamp lights in the sandbox: it is daytime.
-- **Z-fighting:** 0 hits. The scan is now a sorted sweep (fast enough for a whole block) and also measures the
-  real gap between two faces; the old plane-offset test flagged two pairs of palm trunk faces about 2 degrees
-  apart only because their offsets happened to match at the palm's spot in the block.
-- **Test strip** down the spawn aisle (+X), world-fixed so it doesn't wrap: speed bumps at x = 14 and 18
-  (0.35 x 0.05 x 6 m, as before), a 15 cm curb at x = 24, a 6.8 degree ramp (the old angle) at x = 28.4 to 31.6
-  up onto a 0.38 m ledge that ends in a drop at x = 33.6, then two stacks of three cardboard boxes in the cross
-  aisle at x = 39. `CartSpawn` is at the origin, facing +X down the aisle.
-- **Sky:** clear day, own `WorldEnvironment` (blue procedural sky, the default sun, shadows to 40 m).
-- **Browser game:** `tools/mobile_level_export.gd` exports an `EndlessTiles` grid once: the first block is drawn
-  in the .glb as `tiles_0`, its shapes and the grid's positions and span go under `"tiles"` in the level JSON.
-  `mobile/game/level.js` (`EndlessTiles`) repeats that block and moves copies and their colliders along with the
-  camera, as Godot does. Sandbox: 1.4 MB .glb, 209 draws. The exporter also passes depth fog (`fog_mode`,
-  `fog_depth_begin/end`; three.js `Fog`) and makes a world boundary a 4 km box (was 400 m).
-- **Left out:** the store tile half (the supermarket level has tile floors; the drive test's "tile push" and the
-  rolling sound test's "sandbox tile" case are gone, the supermarket case still checks the tile sound), parked
-  cars, wheel stops and cart corrals (kept open for driving), bots (no navigation mesh in an endless lot).
+- **Built on the chunk streamer.** This started as a separate endless grid (78 x 37 m blocks following the
+  camera); main meanwhile got `ChunkStreamer` and multiplayer on top of it, so the lot was rebuilt as a 40 m
+  chunk instead. The sandbox's `Chunks` node now streams only `scenes/sandbox/chunks/open_lot.tscn`, with the new
+  `turns` export off so every chunk faces the same way and the rows read as one big lot (the browser's
+  `stream.js` honours it too). Load distance 96 m, unload 120 m (main's other chunk sets used 64 / 88): at most
+  33 chunks at once in `tests/sandbox_test.gd`. The store floor, old asphalt slab and yard (the home squares) are
+  gone; there are no home squares now. The old lot, street, market, garage and hill chunks are untouched, ready
+  to mix back in through `chunks` and `weights`; their browser exports were removed from `mobile/levels/chunks/`
+  (the exporter writes them again when they're listed).
+- **No seams: one ground plane.** Each chunk used to carry its own 40 x 40 m ground box, and a cart crossing
+  from one box to the next at speed trips on the joint: the drive test's hard pull (backing across x = -20 at
+  about 6 m/s) flipped there every time, and main's notes saw the same at the hill. The open lot has no ground
+  of its own; the sandbox's `Ground` is one `WorldBoundaryShape3D` (asphalt) and the hard pull now lands on its
+  wheels. Jolt makes a world boundary a square `world_boundary_shape_size` wide (2 km by default, so the ground
+  ended 1 km out); `project.godot` sets it to 20 km, and the browser export uses the same size. Mixing chunks
+  that bring their own ground back in would bring their seams back too.
+- **Open-lot chunk:** 40 x 40 m. Two double rows of 11 stalls (2.7 x 5.5 m, as the parking lot level) along X,
+  a 9 m drive aisle down the middle (z = 0, the spawn aisle) and a 4.5 m half aisle along each Z edge, so chunks
+  meet in a full aisle. Each double row ends at +X in a planter island (2.4 x 11 m, streetlight and two palms,
+  as `planter_island.tscn`) and a 7.3 m cross aisle runs on to the +X edge; a second streetlight stands on the
+  stall heads at x = -6.2. Only 2 mm paint comes within 0.3 m of an edge. Collision: the chunk's 40 x 40 m
+  ground box (asphalt) and one solid body with the island curbs, pole bases, poles and palm trunks (18 shapes).
+- **Model** (`assets/models/parking_lot/open_lot/open_lot.glb`, `tools/parking_lot_models.py open_lot`): the
+  existing hand-built props (stall markings, planter island, streetlight, palm tree) placed into one model and
+  merged into one object per material, plus the 40 x 40 m asphalt face. 12,922 triangles, 483 KB, 12 objects /
+  materials, all shared `.tres` by name. `Model` got a `by_material` mode and `at()` placement for this; the
+  prop builders take an optional model to build into, and `stall_markings` a stall count (their own .glb output
+  is unchanged). Merged so a chunk draws in about ten calls.
+- **Z-fighting:** 0 hits. The scan is now a sorted sweep (fast enough for a whole chunk) and also measures the
+  real gap between two faces; the old plane-offset test flagged palm trunk faces about 2 degrees apart only
+  because their offsets happened to match at the palm's spot in the chunk.
+- **Test strip** down the spawn aisle (+X), fixed in the world: speed bumps at x = 14 and 18 (0.35 x 0.05 x 6 m,
+  as before), a 15 cm curb at x = 24, a 6.8 degree ramp (the old angle) at x = 28.4 to 31.6 up onto a 0.38 m
+  ledge that drops off at x = 33.6, then two stacks of three cardboard boxes at x = 39. `CartSpawn` is at the
+  origin facing +X; the `Chunks` grid starts at (-20, 0, -20), so the spawn is the middle of a chunk's aisle.
+- **Sky:** clear day: blue procedural sky, the default sun, depth fog from 35 to 95 m in the horizon colour (the
+  lower sky is the same colour, so the edge of the loaded chunks melts into it). The browser exporter now passes
+  `fog_mode` and the depth range, and the browser uses three.js `Fog` for depth fog.
+- **Left out:** the store tile floor (the supermarket has tile; the drive test's "tile push" and the rolling
+  sound test's "sandbox tile" case are gone, the supermarket case still checks the tile sound), parked cars,
+  wheel stops and cart corrals in the open lot (kept open for driving), bots (no navigation mesh).
 - **Keys:** the two push keys swapped: **Q** is now the right hand's push and **E** the left hand's, so both
   left-side keys (Q push right, A pull left) turn the cart left and both right-side keys (E, D) turn it right.
   A and D are unchanged. `main.gd`, the HUD keycaps (each keeps its letter: Q reads RIGHT PUSH, E reads LEFT
   PUSH; the LEFT and RIGHT power bars still show the hands), the browser game's keys and keycaps, and the test
   labels.
-- **Tests:** drive test all pass on the new floor. `camera_test.gd` sandbox spots moved next to a light pole
-  (the default orbit passes through it with avoidance off: 8 frames, 0 with it on), the ramp and an island.
-  The browser drive test (`node mobile/test/drive_test.js`) passes in full, including every level, the bots
-  and the keyboard check; Playwright is installed at the repo root with `npm install --no-save playwright` and
-  `npx playwright install chromium` (`node_modules/` is git-ignored).
+- **Tests:** `drive_test` (Godot and browser) "coast then rest" now waits 30 s, not 12: with the retuned cart a
+  coast from a 1 s push rolls about 15 m and is still at 0.5 m/s after 12 s on open ground; it only passed
+  before because the cart ran into the old sandbox ramp. `multiplayer_test` expects chunk body poses only when
+  the host's chunks have loose bodies (the open lot has none); the browser's stream check wants as many chunk
+  kinds as the sandbox has, up to three. `sandbox_test.gd` adds the open lot's floor, scales its chunk limit with the unload distance and
+  skips the hill when the sandbox has none. `camera_test.gd` sandbox spots sit next to a light pole (the default
+  orbit passes through it with avoidance off), the ramp and an island. Playwright is installed at the repo root
+  (`npm install --no-save playwright`, `npx playwright install chromium`; `node_modules/` is git-ignored), so
+  the browser drive test runs here too.
+
+## 2026-11-21: San Francisco hill level
+
+`scenes/levels/sf_hill.tscn` (root script `main.gd`, console `hill`): a San Francisco street that runs 445 m
+downhill to the bay, after zack's skate-rogue references (its Chicago-as-SF hill floors: painted ladies stepping
+down the hill, flat crests with cross streets, the steepest SF grade about 0.3, fog). You start on a flat block at
+the top (y = 47.8 m) facing down the hill (+X). Then five flat crossings with four blocks of hill between them,
+steeper each time: 10 %, 17 %, 24 % and 31 % (Filbert Street's 31.5 % is the steepest in SF). The last crossing
+opens onto a flat block that runs into the Embarcadero seawall with the bay behind it.
+
+- **Cross traffic:** every cross street has a lane each way (`CrossTraffic/*`, `scripts/props/traffic_lane.gd`).
+  The cars are `traffic_car.tscn` instances (an AnimatableBody3D with the parking lot sedan) placed along the lane
+  in the scene; each keeps its place and drives at the lane's speed, 8 m/s at the top crossing up to 13 m/s at the
+  bottom one, with 3 to 5 cars a lane on a 190 m loop. They don't stop: time the crossing, or get knocked flying.
+  Cars jump back to the start of the lane out in the fog at the far end.
+- **Street:** `hill_block.tscn` (60 m along the slope) and `intersection.tscn` are built flat; the level tilts each
+  block to its grade. 12 m curb to curb (two travel lanes and two parking lanes), 3 m sidewalks, 0.15 m curbs, a
+  double yellow line, ladder crosswalks, storm drains, manholes and tree grates. The yards beside the street follow
+  the slope out to 130 m so nothing shows the void.
+- **Houses:** 203 row houses (`house_victorian.tscn`, `house_stucco.tscn`), 8 a side on every block, 5 a side on
+  each corner of every cross street and 7 across the top. Each is painted in the inspector from shared paints in
+  `assets/sf_hill/materials/` (Walls, Trim, Accent; `scripts/props/painted_house.gd`), so houses that share a paint
+  share a material. They stand at the sidewalk height of their middle, on a 6 m foundation, so on the steep blocks
+  they step down the hill with their foundations showing, the SF look.
+- **Street furniture:** 12 street lights, 48 London plane trees, 6 hydrants (SF's white and blue high-pressure
+  ones), 10 stop signs (the hill street stops, the cross street doesn't), 36 cars parked at the curb on the slope,
+  nose downhill on the right.
+- **Lighting:** afternoon sun from the west behind you, sky and SF fog (exponential, density 0.0045).
+
+**Models** (`tools/sf_hill_models.py`, Blender primitives, `assets/models/sf_hill/<name>/<name>.glb`, reusing the
+parking lot's `Model` builder and z-fighting scan). Materials link by name to the parking lot's `.tres` where it has
+one (asphalt, concrete, curb, sidewalk, metals, paint white, roof tile, LED lens) and to `assets/sf_hill/materials/`
+for the rest (`python3 tools/sf_hill_models.py --link-materials`).
+
+| Model | Tris | KB | Size chosen | Notes |
+| --- | --- | --- | --- | --- |
+| hill_block | 1940 | 104 | 60 m along the slope, 18 m between lot lines | Road, gutters, curbs, scored sidewalk slabs (1 cm joints), double yellow, drains, manholes, tree grates, sloped yards |
+| intersection | 3828 | 207 | 18 x 18 m crossing, cross street 100 m each way | Ladder crosswalks on four sides, cross street double yellow, yards past the ends |
+| house_victorian | 1420 | 79 | 7 m wide, 15 m lot, 10.2 m to the cornice | Italianate painted lady: three-sided bay over the garage, stoop of 6 x 19 cm risers, belt courses, cornice with modillions and dentils |
+| house_stucco | 1718 | 85 | 7 m wide, 10.4 m tall | Edwardian stucco: round-topped windows, iron balcony, red tile pent roof, parapet |
+| street_lamp | 240 | 12 | 9.2 m pole, 2 m arm | Tapered pole, base, cobra head with lens (no light: daytime) |
+| street_tree | 840 | 26 | 7.5 m | Trunk, three leaders, six leaf clumps (two-sided) |
+| fire_hydrant | 644 | 21 | 0.8 m | White body, blue bonnet and caps, three outlets |
+| stop_sign | 68 | 6 | 2.45 m post, 75 cm octagon | Red face 2 mm proud of the white border; STOP is a Label3D |
+| seawall | 668 | 33 | 40 m long, 1.05 m over the street, railing to 2.1 m | Two placed end to end across the bottom of the street |
+
+Judgment calls:
+- The hill blocks are 60 m (shorter than real SF blocks, about 125 m) so the four grades fit in one run.
+- The cross streets are flat (real ones slope too) so the crossings stay flat for the traffic.
+- Houses are 7 m wide (a 25 ft lot less side gaps); the gaps between them are 16 to 50 cm.
+- Corner houses show a blank side wall to the cross street.
+- Wheel spin cap raised (zack's call): Jolt caps every body's spin at `max_angular_velocity`, 47 rad/s by
+  default, so the cart's 6.35 cm wheels skidded above 3 m/s and a cart on the 31 % block never beat 3.5 m/s.
+  `project.godot` now sets `physics/jolt_physics_3d/limits/max_angular_velocity = 120` (wheels free up to about
+  7.6 m/s; it cannot be set per level). Measured top speeds over 12 s: 5.7 m/s on the 10 % block, 6.1 on the
+  24 %, 6.3 on the 31 %. Higher caps were tried: 200 gives 7.5 to 8 m/s on the steep blocks, but with main's
+  endless sandbox the cart rolling off the sandbox hill at 6.4 m/s nose-dives and flips at the chunk seam
+  (`sandbox_test`), and every cap from 135 to 250 failed that or a garage ramp roll (`garage_test`, the cart
+  drifting into the wall); 120 passes every test. 300 to 600 pitch hard at speed and often flip.
+  The tuning export writes the cap as `max_angular_velocity` and the browser cart reads it.
+- That skid drag had been holding the cart's wheelies down and its flat-floor speed back, so the cart is retuned
+  to keep the old feel on flat floors: `wrist_lever` 0.4 -> 0.3 (ends lift at about the same hold times as
+  before), the wrists now also damp the cart's pitch while a hand is held (half of `tilt_kd` each, so a wheelie
+  grows steadily instead of flipping the moment an end lifts), `sprint_speed` 8 -> 5 m/s (pushing tops out at
+  about 5 m/s; it was about 6 m/s, limited by skidding) and `brake_max` 110 -> 120 N. Every drive test case
+  passes unchanged.
+- Cars use the parking lot sedan (`parked_car.glb`) so the two levels share it.
+
+Behaviour changes that came with it:
+- `ShoppingCart.wheel_on_ground()`: a wheel counts as down when a short ray under it hits something (it used to be
+  y < wheel radius, so on raised floors the HUD said 0/4 and rolling resistance switched off). The browser cart
+  already did this.
+- `settle_max_slope` (0.04): on anything steeper the cart left alone never settles or pins, it rolls away. Slope
+  is read from the ground under the wheels. A pinned cart is also released by traffic (AnimatableBody3D) now.
+- R puts the fresh cart on the floor under you (it used to drop it at y = 0), lifted to clear a slope.
+- `drive_test.gd` "hard pull, held 4 s": the long pull now starts facing west. Facing east it ran off the
+  sandbox's edge and fell; it only passed before because a falling wheel is below y = 0.12.
+- Browser version: the export writes each `TrafficLane` (speed, length, the cars' places and shapes) and the phone
+  drives kinematic cars the same way; the cart's guard sees kinematic bodies; settle and R match Godot.
+
+Left out: power poles and overhead wires, cable cars, Muni buses, crossing lights, stairs on the steepest sidewalks,
+building interiors.
+
+Z-fighting: the builder scan reports 0 on all nine models (it first found hits on the corner boards under the
+cornices, the balcony rail joints and the stop sign face, fixed). Placed objects: `tests/sf_hill_test.gd` checks no
+two houses overlap and none stands in the street. The tree grates are part of the street so they lie on the slope.
+
+Tests: `godot --headless --fixed-fps 120 -s res://tests/sf_hill_test.gd` (props, houses clear, spawn, rolling down
+the 10 % and 31 % blocks, R on a slope, traffic driving and knocking the cart). Renders:
+`xvfb-run godot -s res://tests/sf_hill_screenshot.gd -- <prefix>`. The camera test covers the level.
+
+## 2026-11-21: online multiplayer by join code (phase 1)
+
+Players can now host with a join code and join by code or from a game list, over WebRTC. The rendezvous service
+runs locally for now; deploying it is phase 2. Details in `docs/MULTIPLAYER.md`.
+
+- **Service:** `services/rendezvous/` is a Cloudflare Worker with `Room`, `Directory` and `SetupBudget` Durable
+  Objects, following zack's design doc. Hosts register with `POST /host` and get a code and a private token. Hosts
+  and guests then talk over room WebSockets, and the service only relays offers, answers and ICE candidates.
+  Local: `npm run dev`. Tests: `npm test`, `npm run test:godot`.
+- **Transport:** `scripts/net/webrtc_link.gd` is a `MultiplayerPeerExtension` over one WebRTC connection per
+  guest, with negotiated channels 1 (reliable) and 2 (unordered, no resends). NetSession uses it the same way it
+  uses ENet. Desktop WebRTC comes from `addons/webrtc` (webrtc-native 1.1.0-stable, MIT). Only the Windows/Linux
+  x86_64 and macOS libraries are kept (28 MB of the 98 MB release).
+- **Menu:** `scenes/ui/multiplayer_menu.tscn` is instanced in the Net scene and opened with M. All of its layout
+  and signal connections are in the scene. The game keeps running while it's open. Cart keys are ignored while a
+  text box has focus (`ShoppingCart.held`), so typing a code doesn't push the cart.
+- **Judgment calls:** the host makes the WebRTC offer for each guest the service announces. Guests keep their
+  signaling socket open so the service can count players and tell them when the host leaves. The host sends a
+  heartbeat every 30 s to keep a public listing alive. With no TURN key the service hands out STUN only.
+- **Endless sandbox in multiplayer:** `ChunkStreamer` now loads squares around every player's cart (the Net
+  autoload's `carts`) and frees one only once it's far from all of them, so a guest who drives off alone still has
+  ground under them on the host. Loose bodies in chunks are sent by square and index (protocol version 2). Guests
+  freeze each chunk's bodies as it loads (`chunk_loaded` signal). The multiplayer test moves the guest's cart 320 m
+  out and checks for ground on both machines.
+- **Left out:** deploying (needs zack's Cloudflare account), TURN, and browser play (phase 3).
+## 2026-11-21: endless sandbox
+
+zack asked for the sandbox to be "more infinite, with the various elements we have so far as far as terrain is
+concerned". The sandbox (`scenes/main.tscn`) now never ends: its hand-built store floor and parking lot stay at the
+start, and every other 40 m square of ground around the cart is filled with a terrain chunk, built as the cart gets
+near and freed once it's well behind.
+
+- **Chunks** (`scenes/sandbox/chunks/`, each 40 x 40 m, centred on its origin, flat at height 0 along all four
+  edges, so any chunk meets any other flush in any of four turns):
+  - `lot.tscn`: asphalt, a double row of stalls (two `parking_row` instances, 16 stalls of 2.7 x 5.5 m) with
+    planter islands at the ends, four parked cars, a cart corral in a stall, two 6 cm speed bumps.
+  - `street.tscn`: a 10 m two-lane road with a crosswalk and centre dashes, 15 cm curbs and 2.8 m raised
+    sidewalks with 2 m curb-cut ramps at the crosswalk and at both ends (the last 1.5 m to each edge is flat), 3 m
+    grass parkways with palms, concrete plazas beyond (water machine, cart corral), two streetlights.
+  - `market.tscn`: supermarket floor (tile) with three rows of gondolas, four fridge cases, produce tables, a
+    display stack, four checkouts and a stack of cardboard boxes: the store without its walls.
+  - `garage.tscn`: garage concrete with a raised deck 12 x 14 m, 2 m up (rooftop parking: two parked cars,
+    yellow stall lines, 1 m parapets), 12 m ramps (1:6, 9.5 degrees) on and off at both ends, 7 m wide, pillars,
+    floor arrows and oil drums around it.
+  - `hill.tscn`: a street over a hill, crest 2.6 m, cosine profile over 17 m each side (steepest grade 24 %, 13.5
+    degrees: an SF street is up to 31 %), 8 m road, 2.5 m flush sidewalks, grass banks easing down to the flat by
+    18 m from the centre, palms on the flat ends. The SF hill level being built in another thread hadn't landed,
+    so this is its own hill; its slopes can become another chunk once it has.
+- **Hill model**: `tools/sandbox_models.py` (bpy) builds `assets/models/sandbox/hill/hill.glb` as height-field
+  surfaces on a 0.5 m grid: road, sidewalk, lawn and centre line, one material each (asphalt, sidewalk, new shared
+  `assets/materials/sandbox/grass.tres`, paint_white). 11,580 triangles, 474 KB. The collision is the same
+  surface: `tools/make_sandbox_shapes_cli.gd` saves each mesh's trimesh as `<mesh>_shape.res`, one StaticBody3D per
+  floor so each has its own physics material (and rolling sound).
+- **Streaming** (`scripts/sandbox/chunk_streamer.gd`, on the `Chunks` node; its position is the grid's corner):
+  squares within 64 m of the cart are loaded (nearest first, one per frame while driving, all at once at the
+  start or after a jump), squares beyond 88 m are freed. 14 to 16 chunks are loaded at a time. Which chunk and which
+  turn comes from a 32-bit hash of the square and `world_seed` (weights: lot 3, street 3, market 2, garage 2, hill
+  2), so a square always gets the same chunk, though anything knocked over is put back when it reloads. The two
+  home squares (the original 60 x 40 m plus a new 20 x 40 m concrete yard behind the store's back wall, to fill
+  the second 40 m square) are left out.
+- **Horizon**: the sandbox now has its own environment (the default one plus exponential fog, density 0.014, in
+  the sky's horizon colour, not on the sky), and `Chunks/FarGround` (a 1.2 km plane 25 cm below the floors)
+  follows the cart, so past the loaded chunks there is hazy ground rather than an edge.
+- **Rolling sound**: new `assets/physics/grass.tres` (friction 0.8), listed under the cart's asphalt rumble
+  (there's no grass recording). Street sidewalks and plazas and the garage are concrete, the market floor tile.
+- **Day props**: the sandbox is lit by the sun, so `scenes/sandbox/props/streetlight_day.tscn` and
+  `planter_island_day.tscn` inherit the parking lot's streetlight and planter island with their two shadowed spot
+  lights hidden. A loaded sandbox has no lamps, which keeps it cheap.
+- **Performance** (cloud, software GPU, so counts over milliseconds): sandbox at the start 417 draw calls, 201k
+  triangles (the supermarket level is 1,162 and 676k); CPU 0.9 ms per frame (parking lot level 1.25 ms).
+- **Browser version**: the level export writes the grid into `levels/sandbox.json` (`stream`, with a table of
+  picks to check against) and each chunk to `levels/chunks/<name>.glb/.json`; `mobile/game/stream.js` streams them
+  with the same hash (desktop at full reach, phones at 80 %), sharing the level's lamps, loose props and floor
+  sounds. `tests/mobile_levels_sync_test.gd` checks the chunks too.
+- **Checks**: `tests/sandbox_test.gd` (chunks load and unload, no holes under a 2 m grid within 40 m after four
+  jumps, every chunk flat at 0 along its edges, each chunk's floor sound, and a cart walked up the hill street
+  crests it and rolls down the far side). Overlap check: no collision shapes of different props overlap in any
+  chunk (only inside the planter island prop, by design). No z-fighting: slabs, curbs, sidewalks and ramps sink
+  1 to 5 cm into the floor below rather than sharing a face, painted lines are 4 mm boxes sunk 1 mm, the hill's
+  centre line sits 4 mm above the road.
+- **Left out**: roads don't line up from chunk to chunk (each chunk is turned at random); no bot carts in the
+  sandbox yet (they need a navigation mesh per chunk); no lamps at night.
+
+## 2026-11-21: multiplayer prototype (phase 0)
+
+First step toward player-hosted multiplayer; the full plan (Cloudflare join codes, WebRTC, the browser) is in
+`docs/MULTIPLAYER.md`.
+
+- **Host-authoritative:** only the host simulates. Guests send their six keys; the host puts them in the guest
+  cart's `controls` (the bot-cart hook) and sends 30 snapshots a second of every moving body. Guests freeze the
+  whole level and move each body between snapshots, 100 ms behind the newest.
+- **Scenes:** `scenes/net/net_session.tscn` is the `Net` autoload (settings as exports: port 24601, 7 guests,
+  snapshot and input rates, interpolation delay, guest spacing) with its status label as a node. No new models.
+- **Cart:** `ShoppingCart.puppet` (frozen, moved by the network, does nothing itself), `net_bodies()` (the sync
+  order), `frame_velocity()` / `frame_spin()` (the HUD and rolling sound use these so a guest sees the host's
+  speed). Not ported to `mobile/game/cart.js`: puppets are network-only, and the browser has no networking yet.
+- **Console:** `host`, `join`, `leave`, `net` (Net adds them through the console's now-public `add_command`);
+  fast travel is host-only while joined. While the console is open on the host the game pauses for everyone.
+- **Judgment calls:** our own byte protocol over a polled `MultiplayerPeer` instead of Godot RPCs or
+  `MultiplayerSynchronizer`, so the JavaScript game can speak it later. ENet is turned off throttling unreliable
+  packets to a guest (it throttled snapshots for seconds after a guest paused to load a level), and the host only
+  sends snapshots to guests that report they've loaded the current level.
+- **Left out:** WebRTC, join codes and Cloudflare (phases 1-2), browser play (phase 3), prediction, player spawn
+  markers (guests line up 1.2 m apart to the right of `CartSpawn`; in the supermarket that faces the second cart
+  into a box display).
 
 ## 2026-11-21: bot carts (first pass)
 
@@ -660,3 +863,13 @@ the builder. The SpotLight shadows show some shadow acne on the store fascia in 
   coloured boxes. No new models; no z-fighting check needed.
 - Left as it is: the cart still faces +X with its origin under the handle, because the rig,
   physics and mobile game all use that frame.
+
+## Multiplayer guest spawns (2026-11-21)
+
+- A level can have a `PlayerSpawns` node with `Spawn1`..`Spawn7` Marker3Ds; guest slot N starts at SpawnN (wrapping if
+  there are fewer). Levels without it keep the old row beside `CartSpawn`.
+- Supermarket: the old row put the first guest at (-14, 0, 1.2) facing a box display 2 m ahead. The seven markers
+  are in the open aisle on the host's left, at x = -14 / -11.5 / -9 / -6.5 and z = -1.2 / -2.4, all facing +X like
+  `CartSpawn`. Each was checked with a shape query (cart footprint plus 0.3 m margin): nothing overlaps, and the
+  aisle ahead is clear to about x = -6.
+- `tests/multiplayer_test.gd` checks the guest starts at Spawn1 where a level has markers.

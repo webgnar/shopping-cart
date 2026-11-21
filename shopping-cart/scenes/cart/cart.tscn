@@ -10,6 +10,7 @@
 [ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="8_pasph"]
 [ext_resource type="PhysicsMaterial" path="res://assets/physics/tile.tres" id="9_ptile"]
 [ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="10_pconc"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/grass.tres" id="11_pgrass"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_i6241"]
 friction = 0.5
@@ -175,7 +176,7 @@ target_position = Vector3(0, -0.6, 0)
 [node name="Asphalt" type="AudioStreamPlayer3D" parent="Frame/RollingSound"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.46, 0.1, 0)
 script = ExtResource("4_rsurf")
-floors = Array[PhysicsMaterial]([ExtResource("8_pasph")])
+floors = Array[PhysicsMaterial]([ExtResource("8_pasph"), ExtResource("11_pgrass")])
 stream = ExtResource("5_rasph")
 unit_size = 4.0
 max_distance = 40.0

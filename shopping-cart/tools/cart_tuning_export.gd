@@ -25,6 +25,8 @@ static func current() -> Dictionary:
 	for k in FLOORS:
 		floors[k] = (load(FLOORS[k]) as PhysicsMaterial).friction
 	t["floor_friction"] = floors
+	# Jolt's cap on every body's spin (project setting): the cart's wheels skid above it, and the browser cart copies it.
+	t["max_angular_velocity"] = ProjectSettings.get_setting("physics/jolt_physics_3d/limits/max_angular_velocity", 0.25 * PI * 60.0)
 	for k in t:
 		out[k] = _tidy(t[k])
 	# Drop settings the cart no longer has (and their notes), so the mobile game never reads stale ones.
