@@ -16,6 +16,7 @@ const CASES := [
 	["parking lot", "res://scenes/levels/parking_lot.tscn", null, "asphalt"],
 	["parking garage", "res://scenes/levels/parking_garage.tscn", null, "concrete"],
 	["supermarket", "res://scenes/levels/supermarket.tscn", null, "tile"],
+	["coast highway", "res://scenes/levels/coast_highway.tscn", null, "asphalt"],
 ]
 
 var failures := 0
