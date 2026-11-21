@@ -94,6 +94,11 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   its painted line and `BotGoal`, a `Route` of Marker3Ds the racing bots follow, and the countdown/results HUD
   (`scenes/ui/race_hud.tscn`). The parking garage has one (roof to street exit). The console's `race` (or
   `race nobots`) loads the garage and starts it; in multiplayer the host starts it and guests follow (RACE message).
+- `scenes/sweep/sweep.tscn` — a supermarket sweep (`scripts/sweep/sweep.gd`): a `Grid` of start slots, and the level
+  puts `ProductDisplay`s (sale tables with a stack of `scenes/sweep/products/*.tscn`, each with its name and price
+  exported) under `Displays`, giant `Inflatable`s under `Bonuses` and `BonusStation`s under `Stations`; HUD
+  `scenes/ui/sweep_hud.tscn`. The supermarket has one. Console `sweep` (`sweep nobots`, `sweep 60`) loads it and
+  starts; in multiplayer the host runs it (SWEEP message). Rebuild its models with `tools/supermarket_models.py`.
 - `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun.
   `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
   (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera (`scripts/cart_camera.gd` lifts it over walls, see its exports).
@@ -124,6 +129,8 @@ From `shopping-cart/`:
 - Rendezvous service, and online play by join code over WebRTC (from `services/rendezvous`, after `npm install`):
   `npm test` and `npm run test:godot`
 - Garage race (console `race`, count, lock until GO, finish, bots race all ten floors): `godot --headless --fixed-fps 120 -s res://tests/race_test.gd`
+- Supermarket sweep (console `sweep`, count, grab, limit, spills, bonuses, bots shop, results): `godot --headless --fixed-fps 120 -s res://tests/sweep_test.gd`
+- Sweep screenshots: `xvfb-run godot --rendering-method gl_compatibility -s res://tests/sweep_screenshot.gd -- <out dir>`
 - Race screenshots: `xvfb-run godot --rendering-method gl_compatibility -s res://tests/race_screenshot.gd -- <out dir>`
 - Bot carts drive themselves in every level: `godot --headless --fixed-fps 120 -s res://tests/bot_test.gd`
 - Endless sandbox (chunks load, no holes, flush edges, floors, hill): `godot --headless --fixed-fps 120 -s res://tests/sandbox_test.gd`

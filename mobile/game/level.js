@@ -71,13 +71,15 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
       if (d) world.createCollider(d.setDensity(0).setFriction(b.friction).setFrictionCombineRule(MIN).setCollisionGroups(g), body);
     }
     body.sleep();   // loose props start at rest, as in Godot, until something touches them
+    // A sweep's product sits frozen on its display (Godot's freeze) until someone takes it (sweep.js).
+    if (b.frozen) body.setBodyType(RAPIER.RigidBodyType.Fixed, false);
     const node = scene.getObjectByName(b.node);
     if (node) {
       propRoot.attach(node);
       node.position.set(p.x, p.y, p.z); node.quaternion.set(q.x, q.y, q.z, q.w);
       node.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
     }
-    props.push({ body, node });
+    props.push({ body, node, id: b.node });
   }
   // Moving traffic (Godot's TrafficLane): kinematic cars driving along each lane's -Z and coming back round to its
   // start, placed by time exactly as Godot does. Their meshes (kin_<n>) follow their bodies.
@@ -130,17 +132,7 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
     const key = JSON.stringify([l.text, l.font_size, l.color, l.outline_color, l.outline_size, l.double_sided, l.h_align]);
     let tex = labelCache.get(key);
     if (!tex) { tex = labelTexture(l); labelCache.set(key, tex); }
-    const w = tex.userData.w * l.pixel_size, h = tex.userData.h * l.pixel_size;
-    let obj;
-    if (l.billboard) {
-      obj = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.05, depthWrite: false }));
-      obj.scale.set(w, h, 1);
-      obj.position.copy(new THREE.Vector3().setFromMatrixPosition(xfMatrix(l.xf)));
-    } else {
-      obj = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.05,
-        depthWrite: false, side: l.double_sided ? THREE.DoubleSide : THREE.FrontSide, polygonOffset: true, polygonOffsetFactor: -2 }));
-      obj.applyMatrix4(xfMatrix(l.xf));
-    }
+    const obj = labelObject(l, tex);
     obj.renderOrder = 1;
     obj.userData.ownMaterial = true;
     root.add(obj);
@@ -192,7 +184,23 @@ export function syncTraffic(level) {
 }
 
 /** Draws a Label3D's text the way Godot does: font_size px per line, pixel_size m per px, centred. */
-function labelTexture(l) {
+/** A Label3D as the phone draws it: a textured plane (or a sprite for a billboard) placed at the label's transform. */
+export function labelObject(l, tex = labelTexture(l)) {
+  const w = tex.userData.w * l.pixel_size, h = tex.userData.h * l.pixel_size;
+  let obj;
+  if (l.billboard) {
+    obj = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.05, depthWrite: false }));
+    obj.scale.set(w, h, 1);
+    obj.position.copy(new THREE.Vector3().setFromMatrixPosition(xfMatrix(l.xf)));
+  } else {
+    obj = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.05,
+      depthWrite: false, side: l.double_sided ? THREE.DoubleSide : THREE.FrontSide, polygonOffset: true, polygonOffsetFactor: -2 }));
+    obj.applyMatrix4(xfMatrix(l.xf));
+  }
+  return obj;
+}
+
+export function labelTexture(l) {
   const S = 2;   // drawn at twice the size so it stays sharp up close
   const lines = String(l.text).split('\n');
   const font = `600 ${l.font_size * S}px "Barlow Condensed", "Arial Narrow", Arial, sans-serif`;

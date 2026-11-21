@@ -1,6 +1,6 @@
 // Headless test for the browser version: the same drive checks as the Godot drive test
 // (shopping-cart/tests/drive_test.gd), plus every level, spare carts, bot carts, cart-to-cart hits, the follow camera,
-// the race down the garage, the phone's touch rockers, the keyboard and the console.
+// the race down the garage, the supermarket sweep, the phone's touch rockers, the keyboard and the console.
 //   node mobile/test/drive_test.js [screenshot-dir]
 // Serves mobile/ on a local port (the game fetches its levels, so it can't run from file://).
 const { chromium, devices } = require('playwright');
@@ -438,6 +438,71 @@ const SCENARIOS = [
   report(rc.done && rc.bots.filter(t => t > 0).length >= 2 && !!rc.results, 'race: bots finish',
     `bots ${JSON.stringify(rc.bots && rc.bots.map(t => +t.toFixed(1)))} s (put back ${JSON.stringify(rc.puts)}), ${((rc.ms || 0) / 1000).toFixed(0)} s to simulate; results:\n${rc.results}`);
   if (shots) await page.screenshot({ path: path.join(shots, 'race_results.png'), timeout: 180000 });
+
+  // Supermarket sweep (sweep.js, as shopping-cart/tests/sweep_test.gd): `sweep 40` goes to the supermarket and lines
+  // you and the bots up at the entrance with empty baskets; nobody moves during 3, 2, 1. Parked by the coffee, five
+  // cans drop in and no more; rolling over spills some; bumping the giant soup and holding still at the deli counter
+  // earn their bonuses; the bots shop; `sweep nobots` restocks.
+  const sw = await page.evaluate(async () => {
+    const c = window.__cart;
+    await c.loadLevel('sandbox');
+    c.runCommand('sweep 40');
+    for (let i = 0; i < 300 && !(c.levelKey === 'market' && c.sweep && c.sweep.phase === 2); i++) await new Promise(r => setTimeout(r, 100));
+    const sweep = c.sweep, out = { level: c.levelKey, phase: sweep && sweep.phase, shoppers: sweep ? sweep.shoppers.length : 0 };
+    if (!sweep) return out;
+    out.round = sweep.roundTime; out.products = sweep.products.length; out.displays = sweep.displays.length;
+    out.slotOff = Math.max(...sweep.shoppers.map((s, i) => { const p = sweep.cartOf(s).origin(), q = sweep.D.slots[i].pos; return Math.hypot(p.x - q[0], p.z - q[2]); }));
+    const p0 = { ...c.cart.origin() };
+    c.setInput({ L: 1, R: 1 }); c.simulate(2.9);
+    out.groceries = c.cart.groceries.length;
+    out.heldMoved = Math.hypot(c.cart.origin().x - p0.x, c.cart.origin().z - p0.z);
+    out.countShown = !document.getElementById('sweepCount').hidden;
+    c.setInput({}); c.simulate(0.4);
+    out.phaseAfter = sweep.phase;
+    const me = sweep.shoppers[0];
+    const coffee = sweep.displays.find(d => d.name === 'Coffee');
+    c.spawn(c.v3(coffee.stop[0] - 0.55, 0, coffee.stop[2]), 0); c.simulate(4);
+    out.coffee = sweep.countOf(c.cart, 'Coffee'); out.cents = me.cents; out.left = sweep.left(coffee);
+    c.simulate(2); out.leftLater = sweep.left(coffee);
+    c.renderOnce();
+    out.toast = document.getElementById('sweepToasts').textContent;
+    const before = me.cents, q = c.cart.frame.rotation();
+    const nose = { x: 1 - 2 * (q.y * q.y + q.z * q.z), y: 2 * (q.x * q.y + q.w * q.z), z: 2 * (q.x * q.z - q.w * q.y) };
+    c.cart.wake(); c.cart.frame.setAngvel({ x: -7 * nose.x, y: -7 * nose.y, z: -7 * nose.z }, true); c.cart.frame.setLinvel({ x: 0, y: 2, z: 0 }, true);
+    c.simulate(3);
+    out.spilled = [before, me.cents];
+    const soup = sweep.bonuses.find(b => b.name === 'Giant soup');
+    c.spawn(c.v3(soup.rest.p.x - 2.2, 0, soup.rest.p.z), 0); c.simulate(0.2);
+    c.setInput({ L: 1, R: 1 }); c.simulate(2.5); c.setInput({});
+    out.soup = [soup.claimed, me.bonus];
+    const deli = sweep.stations.find(s => s.title === 'DELI COUNTER');
+    c.spawn(c.v3(deli.zone.inv.clone().invert().elements[12] - 0.5, 0, deli.zone.inv.clone().invert().elements[14]), 0);
+    c.simulate(4); out.deli = me.bonus; c.simulate(3); out.deliAgain = me.bonus;
+    const t0 = performance.now();
+    for (let s = 0; s < 60 && sweep.phase !== 4; s += 5) c.simulate(5);
+    out.ms = performance.now() - t0;
+    out.done = sweep.phase === 4;
+    out.bots = sweep.shoppers.slice(1).map(s => [s.items, s.cents, JSON.stringify(s.bot.stats)]);
+    c.renderOnce();
+    out.results = !document.getElementById('sweepResults').hidden && document.getElementById('sweepTable').textContent;
+    c.runCommand('sweep nobots');
+    for (let i = 0; i < 50 && sweep.phase !== 2; i++) await new Promise(r => setTimeout(r, 100));
+    out.again = [sweep.phase, sweep.shoppers.length, sweep.left(coffee), soup.claimed, sweep.roundTime];
+    return out;
+  });
+  report(sw.level === 'market' && sw.phase === 2 && sw.shoppers === 4 && sw.slotOff < 0.15 && sw.round === 40, 'sweep: line-up',
+    `sweep took us to ${sw.level}, counting down a ${sw.round} s round, ${sw.shoppers} shoppers within ${(sw.slotOff ?? 9).toFixed(2)} m of their slots, ${sw.displays} displays, ${sw.products} products`);
+  report(sw.groceries === 0 && sw.heldMoved < 0.3 && sw.countShown && sw.phaseAfter === 3, 'sweep: 3 2 1 GO',
+    `empty basket (${sw.groceries} groceries), moved ${(sw.heldMoved ?? 9).toFixed(3)} m during the count, then sweeping`);
+  report(sw.coffee === 5 && sw.cents === 4495 && sw.left === 5 && sw.leftLater === 5 && /Coffee/.test(sw.toast || ''), 'sweep: grab and limit',
+    `${sw.coffee} coffee in the basket, ${sw.cents} cents, ${sw.left} then ${sw.leftLater} left on the table, pop-up "${(sw.toast || '').split('\n')[0]}"`);
+  report(sw.spilled && sw.spilled[1] < sw.spilled[0], 'sweep: spill', `rolled over: ${JSON.stringify(sw.spilled)} cents`);
+  report(sw.soup && sw.soup[0] && sw.soup[1] === 10000 && sw.deli === 15000 && sw.deliAgain === 15000, 'sweep: bonuses',
+    `giant soup ${JSON.stringify(sw.soup)}, then the deli counter: bonus ${sw.deli}, ${sw.deliAgain} after waiting more`);
+  report(sw.done && sw.bots.reduce((n, b) => n + b[0], 0) >= 3 && !!sw.results, 'sweep: bots and checkout',
+    `bots ${JSON.stringify(sw.bots)}, ${((sw.ms || 0) / 1000).toFixed(0)} s to simulate; results:\n${sw.results}`);
+  report(sw.again && sw.again[0] === 2 && sw.again[1] === 1 && sw.again[2] === 10 && !sw.again[3] && sw.again[4] === 90, 'sweep: again', `sweep nobots: ${JSON.stringify(sw.again)}`);
+  if (shots) await page.screenshot({ path: path.join(shots, 'sweep_results.png'), timeout: 180000 });
 
   // Cart-to-cart: roll the player's cart into a spare cart in the supermarket; the spare moves.
   const hit = await page.evaluate(async () => {

@@ -97,9 +97,20 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 		out["merge_cell"] = float(level.get_meta("mobile_merge_cell"))
 	var spawn := level.get_node_or_null("CartSpawn") as Node3D
 	out.spawn = {"pos": _v(spawn.global_position if spawn else Vector3(2, 0, 0)), "yaw": spawn.global_rotation.y if spawn else 0.0}
+	var sweep: Sweep = null
 	for n in level.find_children("*", "", true, false):
 		if n is Race:
 			out["race"] = _race(n)
+		elif n is Sweep:
+			sweep = n
+	# A sweep's labels that change (a display's "8 left") or move (an inflatable's price) go with the sweep's data.
+	var sweep_labels := {}
+	if sweep:
+		for d in sweep.display_list():
+			sweep_labels[d.left_label] = true
+		for b in sweep.inflatable_list():
+			for l in b.find_children("*", "Label3D", true, false):
+				sweep_labels[l] = true
 
 	# An endless level (ChunkStreamer): its settings go in the JSON and each chunk is exported on its own
 	# (export_chunk); the chunks it has loaded around the cart and its far ground are left out of the level.
@@ -137,7 +148,7 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 			out.lights.append({"type": "spot", "pos": _v(n.global_position), "dir": _v(-n.global_basis.z),
 				"color": _c(n.light_color), "energy": n.light_energy, "range": n.spot_range,
 				"angle": deg_to_rad(n.spot_angle), "attenuation": n.spot_attenuation})
-		elif n is Label3D and n.is_visible_in_tree():
+		elif n is Label3D and n.is_visible_in_tree() and not sweep_labels.has(n):
 			out.labels.append(_label(n))
 		elif n is NavigationRegion3D and n.navigation_mesh and out.navmesh == null:
 			out.navmesh = _navmesh(n)
@@ -166,6 +177,7 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 
 	# Collision: static shapes go in one list, loose props keep their shapes per body.
 	var dyn_count := 0
+	var dyn_ids := {}   # body -> its dyn_<n> name
 	for n in level.find_children("*", "CollisionObject3D", true, false):
 		var body := n as CollisionObject3D
 		if body is Area3D or moving.has(body):
@@ -180,16 +192,20 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 		if shapes.is_empty():
 			continue
 		var friction := _friction(body)
-		if body is RigidBody3D and not body.freeze:
+		if body is RigidBody3D and (not body.freeze or body is Product):
+			# Loose props, and a sweep's products, which sit frozen on their displays until someone takes them.
 			var rb := body as RigidBody3D
 			var id := "dyn_%d" % dyn_count
 			dyn_count += 1
+			dyn_ids[rb] = id
 			rb.name = id
 			var entry := {"node": id, "xf": _xf(rb.global_transform), "mass": rb.mass, "friction": friction,
 				"layer": rb.collision_layer, "mask": rb.collision_mask, "can_sleep": rb.can_sleep,
 				"shapes": shapes.map(func(sh): return _local_shape(sh, rb.global_transform))}
 			if rb.center_of_mass_mode == RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM:
 				entry["com"] = _v(rb.center_of_mass)
+			if rb.freeze:
+				entry["frozen"] = true
 			out.bodies.append(entry)
 		else:
 			var surface := _surface(body)
@@ -198,6 +214,9 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 				if surface:
 					sh["surface"] = surface
 				out.statics.append(sh)
+
+	if sweep:
+		out["sweep"] = _sweep(sweep, dyn_ids, sweep_labels)
 
 	# What's left that the phone draws: meshes only (lights, labels and physics are in the JSON).
 	for n in level.find_children("*", "", true, false):
@@ -472,6 +491,36 @@ static func _race(r: Race) -> Dictionary:
 		"finish": {"xf": _xf(shape.global_transform), "size": _v((shape.shape as BoxShape3D).size)},
 		"route": way, "bot_goal": _v(r.bot_goal.global_position),
 	}
+
+
+## A level's supermarket sweep (scripts/sweep/sweep.gd) for mobile/game/sweep.js: its settings, the starting slots,
+## each display (its product, price, the items on it by their dyn_<n> body, where a bot stops, its grab zone and its
+## "left" label), the inflatables (body, bonus, label) and the bonus stations (box, bonus, hold time).
+static func _sweep(sw: Sweep, ids: Dictionary, labels: Dictionary) -> Dictionary:
+	var box := func(area: Area3D) -> Dictionary:
+		var shape: CollisionShape3D = area.find_children("*", "CollisionShape3D", true, false)[0]
+		return {"xf": _xf(shape.global_transform), "size": _v((shape.shape as BoxShape3D).size)}
+	var out := {
+		"duration": sw.duration, "countdown": sw.countdown, "go_hold": sw.go_hold, "item_limit": sw.item_limit,
+		"grab_speed": sw.grab_speed, "grab_interval": sw.grab_interval, "bots_shop": sw.bots_shop,
+		"bot_linger": sw.bot_linger,
+		"slots": sw.slots().map(func(m): return {"pos": _v(m.global_position), "yaw": m.global_basis.get_euler().y}),
+		"displays": [], "bonuses": [], "stations": [],
+	}
+	for d in sw.display_list():
+		var items := d.items()
+		out.displays.append({"name": d.product_name(), "price": d.price(), "stop": _v(d.stop.global_position),
+			"zone": box.call(d.zone), "items": items.map(func(p): return ids[p]),
+			"left_label": _label(d.left_label)})
+	for b in sw.inflatable_list():
+		var l: Array = b.find_children("*", "Label3D", true, false)
+		out.bonuses.append({"node": ids[b], "name": b.bonus_name, "bonus": b.bonus, "stash": _v(b.stash_offset),
+			"label": _label(l[0]) if not l.is_empty() else null,
+			"label_offset": _v(b.global_transform.affine_inverse() * l[0].global_position) if not l.is_empty() else null})
+	for st in sw.station_list():
+		out.stations.append({"title": st.title, "bonus": st.bonus, "hold_time": st.hold_time,
+			"still_speed": st.still_speed, "zone": box.call(st)})
+	return out
 
 
 ## The bot's settings from scenes/cart/bot_cart.tscn: every CartBot export, plus where its NavigationAgent3D sits on
