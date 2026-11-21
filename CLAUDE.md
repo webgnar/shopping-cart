@@ -7,6 +7,17 @@ source of truth: `shopping-cart/tools/export_cart_tuning.gd` copies the cart's s
 every fast-travel level and the cart rig (`mobile/levels/`). Never read those files from the Godot game. After
 changing the cart or a level, run both exports (the sync tests below fail until you do).
 
+## Commits
+
+zack wants every commit to show their GitHub name and profile picture, and Claude only once:
+
+- Claude stays the commit author. End every commit message with zack as co-author, using their GitHub
+  noreply address so the avatar links:
+  `Co-authored-by: webgnar <124617425+webgnar@users.noreply.github.com>`
+- Do not add a `Co-Authored-By: Claude ...` trailer: Claude is already the author, and a second Claude line
+  shows two Claude avatars. The `Claude-Session:` link line may stay.
+- Keep merging pull requests with a normal merge (not squash).
+
 ## How we build: scenes first
 
 This is a Godot project, so everything is built as scenes (`.tscn`) made of Godot nodes that can be
