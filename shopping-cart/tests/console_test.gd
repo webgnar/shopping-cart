@@ -52,10 +52,10 @@ func _run() -> void:
 	console.open()
 	console.run_command("help")
 	var text: String = console.get_node("%Output").get_parsed_text()
-	_check("help lists travel", text.contains("plot") and text.contains("garage") and text.contains("market") and text.contains("hill"), "")
+	_check("help lists travel", text.contains("plot") and text.contains("garage") and text.contains("market") and text.contains("hill") and text.contains("coast"), "")
 	_check("unknown command", not console.run_command("fly"), "")
 
-	for place in [["plot", "res://scenes/levels/parking_lot.tscn"], ["garage", "res://scenes/levels/parking_garage.tscn"], ["hill", "res://scenes/levels/sf_hill.tscn"], ["sandbox", "res://scenes/main.tscn"]]:
+	for place in [["plot", "res://scenes/levels/parking_lot.tscn"], ["garage", "res://scenes/levels/parking_garage.tscn"], ["hill", "res://scenes/levels/sf_hill.tscn"], ["coast", "res://scenes/levels/coast_highway.tscn"], ["sandbox", "res://scenes/main.tscn"]]:
 		console.open()
 		console.run_command(place[0])
 		await _frames(10)

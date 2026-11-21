@@ -1,0 +1,50 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/models/coast/segment_09/segment_09.glb" id="1_model"]
+[ext_resource type="MultiMesh" path="res://assets/models/coast/trees/segment_09_pine.tres" id="2_pine"]
+[ext_resource type="MultiMesh" path="res://assets/models/coast/trees/segment_09_cypress.tres" id="3_cypress"]
+[ext_resource type="MultiMesh" path="res://assets/models/coast/trees/segment_09_shrub.tres" id="4_shrub"]
+[ext_resource type="MultiMesh" path="res://assets/models/coast/trees/segment_09_far_pine.tres" id="5_far_pine"]
+[ext_resource type="MultiMesh" path="res://assets/models/coast/trees/segment_09_far_cypress.tres" id="6_far_cypress"]
+[ext_resource type="Shape3D" path="res://assets/models/coast/collision/Terrain_09.res" id="7_terrain"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/grass.tres" id="8_grass"]
+
+[node name="Segment09" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+
+[node name="Pines" type="MultiMeshInstance3D" parent="."]
+visibility_range_end = 360
+visibility_range_end_margin = 20.0
+multimesh = ExtResource("2_pine")
+
+[node name="Cypresses" type="MultiMeshInstance3D" parent="."]
+visibility_range_end = 360
+visibility_range_end_margin = 20.0
+multimesh = ExtResource("3_cypress")
+
+[node name="Shrubs" type="MultiMeshInstance3D" parent="."]
+cast_shadow = 0
+visibility_range_end = 140
+visibility_range_end_margin = 20.0
+multimesh = ExtResource("4_shrub")
+
+[node name="FarPines" type="MultiMeshInstance3D" parent="."]
+cast_shadow = 0
+visibility_range_end = 800
+visibility_range_end_margin = 20.0
+multimesh = ExtResource("5_far_pine")
+metadata/mobile_skip = true
+
+[node name="FarCypresses" type="MultiMeshInstance3D" parent="."]
+cast_shadow = 0
+visibility_range_end = 800
+visibility_range_end_margin = 20.0
+multimesh = ExtResource("6_far_cypress")
+metadata/mobile_skip = true
+
+[node name="Terrain" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("8_grass")
+
+[node name="Shape" type="CollisionShape3D" parent="Terrain"]
+shape = ExtResource("7_terrain")

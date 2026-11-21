@@ -338,8 +338,12 @@ const SCENARIOS = [
       const rolling = { atRest: sound.playing(), loaded: c.loadedLoops() };
       c.setInput({ L: 1, R: 1 }); c.simulate(1.5); sound.update(1); c.setInput({});
       Object.assign(rolling, { surface: sound.surface && sound.surface.name, gain: sound.surface ? sound.surface.gain : 0, speed: sound.speed });
+      // Traffic (TrafficLane / TrafficRoute): every car drives on at its lane's speed (0.5 s, so none loops round).
+      const cars = c.level.traffic || [], t0 = cars.map(k => ({ ...k.body.translation() }));
+      c.simulate(0.5);
+      const traffic = cars.map((k, i) => { const t = k.body.translation(); return Math.hypot(t.x - t0[i].x, t.y - t0[i].y, t.z - t0[i].z) / 0.5 / k.speed; });
       return { spawnDrop: s.pos[1] - p.y, wheels, pinned, spares, sparesPinned, fell: p2.y < s.pos[1] - 1,
-        moved: Math.hypot(p2.x - p.x, p2.z - p.z), inside, minGap, rolling, ...c.stats() };
+        moved: Math.hypot(p2.x - p.x, p2.z - p.z), inside, minGap, rolling, traffic, ...c.stats() };
     }, lv);
     const want = { plot: 'Asphalt', garage: 'Concrete', market: 'Tile' }[lv];
     const rs = r.rolling;
@@ -347,6 +351,10 @@ const SCENARIOS = [
       `rolling at ${rs.speed.toFixed(1)} m/s: ${rs.surface}${want ? ' (expected ' + want + ')' : ''} at gain ${rs.gain.toFixed(2)}, at rest playing [${rs.atRest}], loops loaded ${rs.loaded.length}/3`);
     report(Math.abs(r.spawnDrop) < 0.1 && r.wheels === 4 && r.pinned && !r.fell && r.moved > 1 && r.inside === 0, `level ${lv}`,
       `spawned on 4 wheels and came to rest: ${r.wheels === 4 && r.pinned}, drove ${r.moved.toFixed(1)} m, camera never inside walls (closest ${r.minGap.toFixed(2)} m), ${r.spares} spare carts (${r.sparesPinned} at rest), ${r.meshes} meshes, ${r.drawCalls} draws, ${Math.round(r.triangles / 1000)}k triangles`);
+    if (r.traffic.length) {
+      const ok = r.traffic.filter(f => f > 0.9 && f < 1.1).length;
+      report(ok >= r.traffic.length - 2, `traffic ${lv}`, `${ok} of ${r.traffic.length} cars drove at their lane's speed`);
+    }
     if (shots) await page.screenshot({ path: path.join(shots, `level_${lv}.png`), timeout: 180000 });
   }
 

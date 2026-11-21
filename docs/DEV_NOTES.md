@@ -3,6 +3,76 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: Coast highway level (prototype)
+
+`scenes/levels/coast_highway.tscn` (root script `main.gd`, console `coast`): a first playable pass at a long, winding
+two-lane mountain road down the coast, after California's Highway 1 at Big Sur. 1.5 km of road from a tunnel at the
+top (y = 106.5 m) to a tunnel at the bottom (6 m over the sea), 100 m of drop. Ocean cliffs and a steel guardrail on
+the right going down, a road cut and a hillside of Monterey pines, cypresses and coyote brush on the left, and
+mountains behind. You start on the right shoulder just below the top tunnel, facing down.
+
+- **Road plan** (`tools/coast_models.py`, `PIECES` and `GRADES`): 17 pieces of straight and curve (radius 86 m and
+  up, curvature eased over 40 m so there are no kinks), heading in and out of coves and round headlands. Grade 0 at
+  both tunnels, 8 % then 10 %, 7 %, 10 % and 8 %, eased between, so there are no seams to flip the cart. The road is
+  one continuous surface: the deck's collision is one trimesh for the whole length (no seams between bodies).
+- **Cross-section**: two 3.6 m lanes with a double yellow line and white edge lines, a 1.8 m paved shoulder and
+  1.4 m of gravel on the cliff side, a 1.4 m shoulder and a gravel ditch on the hill side. W-beam guardrail (rail
+  top 79 cm, 15 cm blockouts, 15 x 20 cm wood posts every 1.9 m, the California standard). Road cut at about 42
+  degrees to 5.5 m, then the hillside up to about 32 m, 60 m out. The cliff drops from a 2 m scrub verge at about
+  62 degrees into the sea, with bulges along it.
+- **Traffic**: a lane each way (`Traffic/Downhill` 11 m/s with 12 cars, `Traffic/Uphill` 10 m/s with 12 cars). New
+  `TrafficRoute` (`scripts/props/traffic_route.gd`): `TrafficLane` for a curve. A Path3D whose child cars (the SF
+  hill's `traffic_car.tscn`) each keep their place along the curve, facing along it, so they lean into the grade.
+  Each route runs from tunnel to tunnel and the cars come back round inside the dark tunnels, out of sight. They
+  don't stop for carts: the shoulder is the safe place.
+- **Performance** (zack's laptop ran hot): the road is cut into ten 150 m segments (`scenes/coast/segment_NN.tscn`:
+  the segment's model, its trees, its terrain collision). The whole road is about 76k triangles, so it stays
+  loaded (less than the SF hill). The trees are what costs, so they are MultiMeshes (`MultiMeshInstance3D`, one
+  per segment and kind, about 2,700 instances) with visibility ranges: pines and cypresses 360 m, shrubs 140 m,
+  the trees on the far mountains 800 m. Tree meshes have LODs. The mountains are one 29k-triangle backdrop with no
+  collision. Shadows only reach 90 m (two splits), no SSAO, and light fog (0.0012) hides the far ends.
+  Streaming the segments in and out like the sandbox's chunks wasn't needed at this size. If the road grows a lot
+  longer, the segments are ready to be streamed.
+- **How it's built**: `tools/coast_models.py` (Blender primitives) lays out the road and writes the segment,
+  collision, backdrop, headland and tree models and `assets/models/coast/coast_plan.json`.
+  `tools/make_coast_resources_cli.gd` turns that into trimesh shapes, tree meshes and the MultiMeshes, and
+  `tools/coast_scenes.py` writes the scenes. After that the scenes can be edited in Godot. Re-running the tools
+  overwrites them, so re-run them only to change the road itself. Materials are in `assets/coast/materials/`, and
+  the parking lot's and SF hill's are reused (asphalt, paint, rail metal, concrete, bark).
+- **Browser version**: the export writes each `TrafficRoute` as points every 2 m and the phone drives the cars
+  along them. Nodes with `metadata/mobile_skip` (the far-mountain trees) are left out for phones. The phone gets
+  the near trees as plain meshes, merged per 100 m cell.
+
+| Model | Tris | KB | Size chosen | Notes |
+| --- | --- | --- | --- | --- |
+| segment_01 .. 10 | 6,100 - 7,800 | 190 - 245 | 150 m of road each | Asphalt, gravel, lines (3 mm proud), guardrail rail, posts, blockouts, road cut, hillside, verge, cliff |
+| collision | 18,026 | 341 | 4 m between cross-sections | Deck, rail face, terrain per segment, headlands, tunnels (made into trimesh shapes) |
+| backdrop | 29,394 | 540 | 12 m grid, out to about 800 m, up to 460 m high | Hidden under the hillside near the road, under the sea on the ocean side |
+| headland_top / bottom | 670 | 20 | 110 m deep, 200 m wide, 15 m rock face over the portal | Rock, a concrete portal (11.8 m opening, arch from 3.2 m) and a 38 m dark tube |
+| pine | 272 | 12 | 15 m | Monterey pine: tall trunk, two limbs, six crown clumps |
+| cypress | 282 | 12 | 9 m, 12 m wide | Monterey cypress: short trunk, three leaning leaders, flat windswept top |
+| shrub | 78 | 4 | 1.4 m | Coyote brush |
+
+Judgment calls:
+- The tree models are two objects (trunk, crown), one material each. The resources tool merges them into one
+  two-surface mesh for the MultiMesh.
+- The guardrail, posts and road paint are built into each segment model, not about 750 instanced post scenes.
+- PCH's ocean stays on one side, so the road winds along the coast instead of switchbacking. There are no hairpins:
+  at 6 m/s a hairpin would end in the guardrail. The curve radius doesn't go under 86 m.
+- No collision on trees (they're off the road). The far trees and the backdrop have no collision.
+
+Left out for now: bridges (Bixby Creek!), turnouts and vista points, road signs, cars slowing for carts, oncoming
+cars swerving, bots, and the lighthouse.
+
+Z-fighting: the builder's scan (bucketed by plane and 30 m cell for these big models, overlaps over 1 % of a face)
+reports 0 on every model. It found the tunnel lining inside the portal's opening, which was fixed (the lining now
+starts behind the portal). Lines sit 3 mm over the asphalt. `tests/coast_test.gd` checks the road surface is under
+every lane point.
+
+Tests: `godot --headless --fixed-fps 120 -s res://tests/coast_test.gd` (built, spawn, road everywhere, rolling on
+10 %, guardrail holds, traffic both ways). Renders: `xvfb-run godot -s res://tests/coast_screenshot.gd -- <prefix>`.
+The camera, console and rolling sound tests cover the level.
+
 ## 2026-11-21: San Francisco hill level
 
 `scenes/levels/sf_hill.tscn` (root script `main.gd`, console `hill`): a San Francisco street that runs 445 m

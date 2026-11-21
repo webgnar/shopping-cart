@@ -10,7 +10,8 @@ extends RefCounted
 ##  - mobile/levels/<key>.json: what you touch and how it's lit: every collision shape with its friction, the
 ##    loose props (mass, shapes), CartSpawn, the spare carts, the bot carts and the navigation mesh they drive on,
 ##    sky/fog/ambient, the sun, lamps and 3D labels, the lanes of moving traffic (TrafficLane: speed, length, each
-##    car's place and shapes; cars are kin_<n>), and for the endless sandbox, the chunk grid ("stream").
+##    car's place and shapes; cars are kin_<n>; a TrafficRoute also has its points), and for the endless sandbox,
+##    the chunk grid ("stream"). Nodes with metadata/mobile_skip (the coast's far trees) are left out.
 ##  - mobile/levels/chunks/<name>.glb and .json: each chunk the sandbox streams (scenes/sandbox/chunks/), the same way.
 ## And once for the cart (scenes/cart/cart.tscn): mobile/levels/cart.json with the rig (bodies, masses, shapes,
 ## hinges and their limits), the cart's shared materials (assets/materials/cart/*.tres) and the bot's settings
@@ -26,8 +27,9 @@ const BOT_CART_SCENE := "res://scenes/cart/bot_cart.tscn"
 const CART_MATERIALS_DIR := "res://assets/materials/cart/"
 const OUT_DIR := "../mobile/levels"
 const NAMES := {"sandbox": "Sandbox", "plot": "Parking lot", "garage": "Parking garage", "market": "Supermarket",
-	"hill": "San Francisco hill"}
-const ORDER := ["sandbox", "plot", "garage", "market", "hill"]
+	"hill": "San Francisco hill", "coast": "Coast highway"}
+const ORDER := ["sandbox", "plot", "garage", "market", "hill", "coast"]
+const ROUTE_STEP := 2.0   ## m between the points of an exported TrafficRoute
 
 
 static func out_path(file: String) -> String:
@@ -160,6 +162,36 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 						shapes.append(sh)
 			entry.cars.append({"node": id, "offset": lane.distance(i, 0.0), "friction": _friction(car), "shapes": shapes})
 		out.traffic.append(entry)
+	# Traffic along a winding road (TrafficRoute): the route as points every ROUTE_STEP m from its start, and the
+	# cars' places along it. The phone samples the points the way Godot samples the curve.
+	for route in level.find_children("*", "Path3D", true, false):
+		if not route is TrafficRoute:
+			continue
+		var pts := []
+		var n := int(ceil(route.length / ROUTE_STEP))
+		for k in n + 1:
+			pts.append(route.global_transform * route.curve.sample_baked(minf(k * ROUTE_STEP, route.length)))
+		var entry := {"route": _flat(pts), "step": ROUTE_STEP, "speed": route.speed, "length": route.length, "cars": []}
+		var cars: Array = route.get("_cars")
+		for i in cars.size():
+			var car: AnimatableBody3D = cars[i]
+			var id := "kin_%d" % moving.size()
+			moving[car] = true
+			car.name = id
+			var shapes := []
+			for s in car.get_children():
+				if s is CollisionShape3D and not s.disabled and s.shape:
+					var sh := _shape(s.shape, s.transform)
+					if not sh.is_empty():
+						shapes.append(sh)
+			entry.cars.append({"node": id, "offset": route.distance(i, 0.0), "friction": _friction(car), "shapes": shapes})
+		out.traffic.append(entry)
+
+	# Things a level marks as too much for a phone (metadata/mobile_skip): left out of the export.
+	for n in level.find_children("*", "", true, false):
+		if is_instance_valid(n) and n.get_meta("mobile_skip", false):
+			n.get_parent().remove_child(n)
+			n.free()
 
 	# Collision: static shapes go in one list, loose props keep their shapes per body.
 	var dyn_count := 0

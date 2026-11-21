@@ -12,6 +12,7 @@ const LEVELS := [
 	["res://scenes/levels/parking_lot.tscn", [[Vector3(-12, 0, -9.5), 0.0], [Vector3(-14.85, 0, -4.2), -PI / 2], [Vector3(-1.3, 0, -9.5), -PI / 2]]],
 	["res://scenes/levels/supermarket.tscn", [[Vector3(-14, 0, 0), 0.0], [Vector3(-1.5, 0, 0), 0.0], [Vector3(9.5, 0, -11.2), PI], [Vector3(-9.0, 0, 0.0), PI]]],
 	["res://scenes/levels/sf_hill.tscn", [[Vector3(48, 47.8, 1.9), 0.0], [Vector3(4, 47.8, -4), PI], [Vector3(420, 0, 1.5), 0.0], [Vector3(442, 0, -1.5), 0.0]]],
+	["res://scenes/levels/coast_highway.tscn", [[Vector3(80, 106.5, 4.4), 0.0], [Vector3(263.3, 95.9, -87.4), 0.946], [Vector3(976.7, 25.6, -163.7), -0.708], [Vector3(1298.6, 6.0, -176.5), 0.087]]],
 	["res://scenes/levels/parking_garage.tscn", [[Vector3(5, 16, -3), 0.0], [Vector3(13, 12.75, -3), 0.0], [Vector3(55, 4.75, -3), 0.0], [Vector3(83, 3.15, -14.4), PI], [Vector3(55, 1.55, -3), 0.0]]],
 ]
 ## [cam_dist, cam_pitch] pairs swept at every spot.
@@ -75,6 +76,8 @@ func _sweep(path: String, spots: Array, avoid: bool, costs: Array[int]) -> Dicti
 					await process_frame
 					r.frames += 1
 					probe.transform = Transform3D(Basis.IDENTITY, cam.global_position)
+					# Moving traffic isn't level geometry: a car can drive through the camera's spot between frames.
+					probe.exclude = get_nodes_in_group("traffic_car").map(func(c): return c.get_rid())
 					if not space.intersect_shape(probe, 1).is_empty():
 						r.clipped += 1
 					if avoid:
