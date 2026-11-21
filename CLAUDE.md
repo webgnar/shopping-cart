@@ -84,7 +84,8 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   place instances under a level's `BotCarts` node. Bots need the level's `Navigation` region: re-bake it with
   `godot --headless -s res://tools/bake_navigation_cli.gd` after moving anything solid.
 - `scenes/net/net_session.tscn` — the `Net` autoload: host-authoritative multiplayer (`scripts/net/`). Guests'
-  carts are driven through `controls` like bot carts; guests only show the host's snapshots. Plan and wire format:
+  carts are driven through `controls` like bot carts and start at the level's `PlayerSpawns` Marker3Ds (one per guest
+  slot) or beside `CartSpawn`; guests only show the host's snapshots. Plan and wire format:
   `docs/MULTIPLAYER.md` (bump `NetProtocol.VERSION` when a message changes). Online play uses WebRTC
   (`scripts/net/webrtc_link.gd`, desktop plugin in `addons/webrtc/`) introduced by the rendezvous service in
   `services/rendezvous/` (Cloudflare Worker; `npm run dev` there runs it locally). M opens the Multiplayer menu

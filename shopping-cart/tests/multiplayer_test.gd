@@ -167,6 +167,10 @@ func _run() -> void:
 			continue
 		var up := guest_cart.frame.global_transform.basis.y.y
 		_check(name + ": guest's cart spawns upright", up > 0.95 and not guest_cart.fallen, "up %.2f" % up)
+		var mark := net.level.get_node_or_null("PlayerSpawns/Spawn1") as Node3D
+		if mark:
+			var off := (guest_cart.global_position - mark.global_position) * Vector3(1, 0, 1)
+			_check(name + ": guest starts at its spawn marker", off.length() < 0.5, "%.2f m off" % off.length())
 		deadline = Time.get_ticks_msec() + 30000
 		r = _guest_result()
 		while not r.get("levels", {}).has(path) and Time.get_ticks_msec() < deadline:

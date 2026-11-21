@@ -801,3 +801,13 @@ the builder. The SpotLight shadows show some shadow acne on the store fascia in 
   coloured boxes. No new models; no z-fighting check needed.
 - Left as it is: the cart still faces +X with its origin under the handle, because the rig,
   physics and mobile game all use that frame.
+
+## Multiplayer guest spawns (2026-11-21)
+
+- A level can have a `PlayerSpawns` node with `Spawn1`..`Spawn7` Marker3Ds; guest slot N starts at SpawnN (wrapping if
+  there are fewer). Levels without it keep the old row beside `CartSpawn`.
+- Supermarket: the old row put the first guest at (-14, 0, 1.2) facing a box display 2 m ahead. The seven markers
+  are in the open aisle on the host's left, at x = -14 / -11.5 / -9 / -6.5 and z = -1.2 / -2.4, all facing +X like
+  `CartSpawn`. Each was checked with a shape query (cart footprint plus 0.3 m margin): nothing overlaps, and the
+  aisle ahead is clear to about x = -6.
+- `tests/multiplayer_test.gd` checks the guest starts at Spawn1 where a level has markers.
