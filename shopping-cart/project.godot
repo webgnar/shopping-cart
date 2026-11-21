@@ -19,6 +19,7 @@ config/icon="uid://d0rbvnae1syfi"
 [autoload]
 
 Console="*res://scenes/ui/console.tscn"
+Net="*res://scenes/net/net_session.tscn"
 
 [display]
 

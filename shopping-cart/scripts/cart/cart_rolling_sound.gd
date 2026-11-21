@@ -46,7 +46,12 @@ func _physics_process(delta: float) -> void:
 				surface = s
 				break
 		var up := probe.get_collision_normal()
-		var v := Vector3.ZERO if _frame.freeze else _frame.linear_velocity
+		var cart := _frame.get_parent() as ShoppingCart
+		var v := Vector3.ZERO
+		if cart and cart.puppet:
+			v = cart.puppet_velocity   # a multiplayer guest's view: the host's speed
+		elif not _frame.freeze:
+			v = _frame.linear_velocity
 		speed = (v - up * v.dot(up)).length()
 	var target := 0.0
 	if speed > silent_speed:

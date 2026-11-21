@@ -51,6 +51,10 @@ func _ready() -> void:
 		add_child(camera)
 	camera.current = true
 	_build_hud()
+	# Multiplayer: the host spawns guests' carts; a guest freezes the level and shows the host's world.
+	var net := get_node_or_null("/root/Net") as NetSession
+	if net:
+		net.level_ready(self)
 
 
 func _setup_input() -> void:
@@ -93,6 +97,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED if fs else DisplayServer.WINDOW_MODE_FULLSCREEN)
 	elif event.is_action_pressed("reset"):
+		var net := get_node_or_null("/root/Net") as NetSession
+		if net and net.is_guest():
+			net.request_reset()   # the host owns this cart
+			return
 		var p := cart.cart_origin()
 		spawn_cart(Vector3(p.x, 0.05, p.z), cart.heading())
 

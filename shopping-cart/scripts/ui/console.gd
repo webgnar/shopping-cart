@@ -21,15 +21,16 @@ var _mouse_mode := Input.MOUSE_MODE_VISIBLE
 
 
 func _ready() -> void:
-	_add_command("help", _cmd_help, "list the commands")
-	_add_command("clear", func(_a): _output.clear(), "clear this window")
-	_add_command("where", _cmd_where, "show which level is loaded")
+	add_command("help", _cmd_help, "list the commands")
+	add_command("clear", func(_a): _output.clear(), "clear this window")
+	add_command("where", _cmd_where, "show which level is loaded")
 	for place in destinations:
-		_add_command(place, _travel.bind(place), "fast travel to %s" % destinations[place].get_file())
+		add_command(place, _travel.bind(place), "fast travel to %s" % destinations[place].get_file())
 	log_line("[color=#8a93a6]Console ready. Type [b]help[/b] for commands.[/color]")
 
 
-func _add_command(name: String, run: Callable, help: String) -> void:
+## Adds a console command (other autoloads add theirs, e.g. Net's host/join).
+func add_command(name: String, run: Callable, help: String) -> void:
 	_commands[name] = {"run": run, "help": help}
 
 
@@ -128,6 +129,10 @@ func _cmd_where(_args: PackedStringArray) -> void:
 
 func _travel(_args: PackedStringArray, place: String) -> void:
 	var path: String = destinations[place]
+	var net := get_node_or_null("/root/Net")
+	if net and net.is_guest():
+		log_line("[color=#ffc66d]The host picks the level. Type leave to play on your own.[/color]")
+		return
 	if not ResourceLoader.exists(path):
 		log_line("[color=#ffc66d]Can't travel to %s yet: %s isn't in the project.[/color]" % [place, path])
 		return

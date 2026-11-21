@@ -42,6 +42,11 @@ extends Node3D
 var driver: Node = null
 ## The keys the driver is holding (action name -> true), set by the driver every physics step.
 var controls := {}
+## true: this cart only shows a cart simulated on another machine (a multiplayer guest's view, see
+## scripts/net/net_session.gd). Its bodies stay frozen and the network moves them; nothing here pushes it.
+var puppet := false
+var puppet_velocity := Vector3.ZERO   ## a puppet's frame velocity on the host (for the HUD and the rolling sound)
+var puppet_spin := 0.0                ## a puppet's turn rate on the host, rad/s
 var hand_power := {"L": 0.0, "R": 0.0}   ## N each hand is putting into the bar: + push, - pull
 @export_group("Lean keys")
 ## W tips the back up, S tips the front up, at any speed, toward a lean held by the wrists (capped torque). Keep
@@ -172,6 +177,8 @@ func held(action: String) -> bool:
 
 
 func _physics_process(delta: float) -> void:
+	if puppet:
+		return
 	var any_input := false
 	for a in ACTIONS:
 		if held(a):
@@ -225,6 +232,8 @@ func _on_frame_hit(body: Node) -> void:
 
 
 func _wake() -> void:
+	if puppet:
+		return
 	frame.freeze = false
 	_rest_time = 0.0
 	for b in [frame, gate, child_seat, seat_flap] + wheels.values() + forks.values():
@@ -406,6 +415,33 @@ func cart_origin() -> Vector3:
 func heading() -> float:
 	var n := frame.global_transform.basis.x
 	return atan2(-n.z, n.x)
+
+
+## The frame's velocity: from physics, or for a puppet the host's.
+func frame_velocity() -> Vector3:
+	return puppet_velocity if puppet else frame.linear_velocity
+
+
+## The frame's turn rate (rad/s about up): from physics, or for a puppet the host's.
+func frame_spin() -> float:
+	return puppet_spin if puppet else frame.angular_velocity.y
+
+
+## Every body of the rig, groceries last, in the order the network sends them.
+func net_bodies() -> Array[RigidBody3D]:
+	var list: Array[RigidBody3D] = [frame, gate, child_seat, seat_flap, forks.FL, forks.FR,
+		wheels.FL, wheels.FR, wheels.RL, wheels.RR]
+	list.append_array(groceries)
+	return list
+
+
+## Turns this cart into a puppet: frozen, moved only by the network.
+func make_puppet() -> void:
+	puppet = true
+	driver = null
+	player_controlled = false
+	for b in net_bodies():
+		b.freeze = true
 
 
 func wheels_down() -> int:
