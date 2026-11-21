@@ -19,6 +19,7 @@ run/max_fps=60
 [autoload]
 
 Console="*res://scenes/ui/console.tscn"
+Net="*res://scenes/net/net_session.tscn"
 
 [display]
 
