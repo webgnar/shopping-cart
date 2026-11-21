@@ -1011,3 +1011,7 @@ the builder. The SpotLight shadows show some shadow acne on the store fascia in 
 - **Judgment calls.** The spot (Bryant Park: about the size of the level's 170 x 90 m slab, open sky over it);
   ground level -52.5 in tile coordinates (the lawn's lowest points); 250 m as the near/far split; panorama eye
   8 m (halfway up the garage), so from the roof or the street the far skyline is up to ~2 degrees off.
+
+- Browser fix found while testing: main's `mobile/game/cart.js` built the sandbox's endless floor with
+  `RAPIER.ColliderDesc.halfspace`, which Rapier 0.14 doesn't have, so the browser game crashed on load. The
+  floor is now a 20 km cuboid slab whose top face sits on the plane.

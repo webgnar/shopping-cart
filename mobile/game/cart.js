@@ -22,7 +22,9 @@ export function shapeDesc(RAPIER, s) {
   let d;
   switch (s.type) {
     case 'box': d = RAPIER.ColliderDesc.cuboid(s.size[0] / 2, s.size[1] / 2, s.size[2] / 2); break;
-    case 'plane': d = RAPIER.ColliderDesc.halfspace({ x: 0, y: 1, z: 0 }); break;   // a world boundary: endless floor
+    // A world boundary (endless floor). Rapier 0.14 has no half-space, so it's a slab 20 km across with its top
+    // face on the plane (the slab's centre sits 1 m below it, along the plane's up).
+    case 'plane': d = RAPIER.ColliderDesc.cuboid(10000, 1, 10000); break;
     case 'sphere': d = RAPIER.ColliderDesc.ball(s.radius); break;
     case 'cylinder': d = RAPIER.ColliderDesc.cylinder(s.height / 2, s.radius); break;
     case 'capsule': d = RAPIER.ColliderDesc.capsule(Math.max(0.001, s.height / 2 - s.radius), s.radius); break;
@@ -35,6 +37,7 @@ export function shapeDesc(RAPIER, s) {
   }
   if (!d) return null;
   const { p, q } = xfPose(xfMatrix(s.xf));
+  if (s.type === 'plane') { const up = rot(q, { x: 0, y: 1, z: 0 }); p.x -= up.x; p.y -= up.y; p.z -= up.z; }
   return d.setTranslation(p.x, p.y, p.z).setRotation(q);
 }
 
