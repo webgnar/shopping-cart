@@ -42,8 +42,9 @@ const CART_SCENE := preload("res://scenes/cart/cart.tscn")
 @export var max_packet := 1100            ## bytes: snapshots are split to stay under one network packet
 @export var connect_timeout := 20.0       ## s a guest waits to reach the host (WebRTC needs a few round trips)
 @export_group("Online")
-## The rendezvous service (services/rendezvous). Local: `npm run dev` there serves http://127.0.0.1:8787.
-@export var rendezvous_url := "http://127.0.0.1:8787"
+## The rendezvous service (services/rendezvous), deployed on zack's Cloudflare account. For a local one
+## (`npm run dev` there): --rendezvous=http://127.0.0.1:8787 on the command line.
+@export var rendezvous_url := "https://shopping-cart-rendezvous.shopping-cart-rendezvous.workers.dev"
 @export var game_name := "Shopping cart"   ## shown in the game list
 @export var listed := true                 ## public games appear in the game list; unlisted ones only by code
 @export var heartbeat_interval := 30.0     ## s between "still here" messages that keep a listing alive

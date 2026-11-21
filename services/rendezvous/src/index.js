@@ -186,17 +186,20 @@ export class Room extends DurableObject {
     const state = await this.ctx.storage.get("room");
     const tags = this.ctx.getTags(ws);
     if (tags.includes("host")) {
-      // The game ends with its host: tell the guests' signaling, drop the listing, retire the code.
+      // The game ends with its host: retire the code first (so the guests disconnecting below can't put the
+      // listing back), then tell the guests' signaling and drop the listing.
+      await this.ctx.storage.delete("room");
       for (const g of this.ctx.getWebSockets("guest")) {
         g.send(JSON.stringify({ type: "closed", reason: "The host has stopped hosting." }));
         g.close(1000, "Host left.");
       }
       if (state) await this.publish(state, true);
-      await this.ctx.storage.delete("room");
     } else if (tags.includes("guest")) {
       const id = Number(tags.find((t) => t.startsWith("g:")).slice(2));
       this.toHost({ type: "leave", id });
-      if (state) await this.publish(state);
+      // Only while the game still runs: a guest leaving because the host did mustn't re-list a finished game.
+      const live = await this.ctx.storage.get("room");
+      if (live && this.ctx.getWebSockets("host").length > 0) await this.publish(live);
     }
   }
 }
