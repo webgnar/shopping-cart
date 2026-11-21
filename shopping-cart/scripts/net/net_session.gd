@@ -61,7 +61,7 @@ var level_bodies: Array[RigidBody3D] = []   ## the level's loose bodies, in the 
 ## Player id -> ShoppingCart. Host: guests' carts. Guest: every player's cart as shown here, its own included.
 var carts := {}
 ## What has gone through, for the status line and tests.
-var stats := {"snapshots_sent": 0, "snapshots_received": 0, "inputs_received": 0, "packets_in": 0}
+var stats := {"snapshots_sent": 0, "snapshots_received": 0, "inputs_received": 0, "packets_in": 0, "chunk_poses": 0}
 
 @onready var _overlay: CanvasLayer = $Overlay
 @onready var _status: Label = %Status
@@ -75,6 +75,8 @@ var _guests := {}            ## id -> {"keys": int, "slot": int} for guests that
 var _tick := 0
 var _snap_clock := 0.0
 var _refresh_cursor := 0
+var _chunk_cursor := 0
+var _streamers: Array = []   ## the level's ChunkStreamers (the endless sandbox has one)
 # guest
 var _samples := {}           ## RigidBody3D -> [t0, pos0, rot0, t1, pos1, rot1]
 var _newest := -1.0          ## host time (s) of the newest snapshot
@@ -304,15 +306,25 @@ func level_ready(new_level: Node) -> void:
 	if not level.tree_exiting.is_connected(_on_level_exiting):
 		level.tree_exiting.connect(_on_level_exiting.bind(level))
 	var own: Node = level.get("cart")
+	# Streamed terrain (the endless sandbox): its chunks come and go, so their loose bodies are sent by square.
+	_streamers.clear()
+	for n in level.find_children("*", "", true, false):
+		if n is ChunkStreamer:
+			_streamers.append(n)
+			if role == Role.GUEST and not n.chunk_loaded.is_connected(_on_chunk_loaded):
+				n.chunk_loaded.connect(_on_chunk_loaded)
 	level_bodies.clear()
 	for n in level.find_children("*", "RigidBody3D", true, false):
 		if n.is_queued_for_deletion() or (own and own.is_ancestor_of(n)):
+			continue
+		if _streamers.any(func(st): return st.is_ancestor_of(n)):
 			continue
 		level_bodies.append(n)
 	level_bodies.sort_custom(func(a, b): return str(level.get_path_to(a)) < str(level.get_path_to(b)))
 	carts.clear()
 	_samples.clear()
 	_refresh_cursor = 0
+	_chunk_cursor = 0
 	if role == Role.HOST:
 		level_serial = (level_serial + 1) % 256
 		for id in _guests:
@@ -328,14 +340,38 @@ func level_ready(new_level: Node) -> void:
 			_log("[color=#ff8a7a]This level doesn't match the host's (%d loose bodies here, %d there): different builds?[/color]" % [level_bodies.size(), _expected_bodies])
 		for b in level_bodies:
 			b.freeze = true
-		for c in level.find_children("*", "", true, false):
-			if c is ShoppingCart:
-				c.make_puppet()
-			elif c is CartBot:
-				c.process_mode = Node.PROCESS_MODE_DISABLED
+		_freeze_all(level)
+		for st in _streamers:
+			for cell in st.loaded:
+				_freeze_all(st.loaded[cell])
 		if own:
 			carts[my_id] = own
 	_update_status()
+
+
+## Guest: everything under `root` only shows the host's world: bodies frozen, carts puppets, bots off.
+func _freeze_all(root: Node) -> void:
+	for c in root.find_children("*", "", true, false):
+		if c is ShoppingCart:
+			c.make_puppet()
+		elif c is CartBot:
+			c.process_mode = Node.PROCESS_MODE_DISABLED
+		elif c is RigidBody3D:
+			c.freeze = true
+
+
+func _on_chunk_loaded(_cell: Vector2i, chunk: Node3D) -> void:
+	if role == Role.GUEST:
+		_freeze_all(chunk)
+
+
+## A chunk's loose bodies, in the same order on every machine.
+func _chunk_bodies(chunk: Node) -> Array:
+	if not chunk.has_meta("net_bodies"):
+		var list := chunk.find_children("*", "RigidBody3D", true, false).filter(func(b): return not b.is_queued_for_deletion())
+		list.sort_custom(func(a, b): return str(chunk.get_path_to(a)) < str(chunk.get_path_to(b)))
+		chunk.set_meta("net_bodies", list)
+	return chunk.get_meta("net_bodies")
 
 
 func _on_level_exiting(old: Node) -> void:
@@ -541,30 +577,56 @@ func _build_snapshot() -> Array[PackedByteArray]:
 		b.put_u16(i)
 		NetProtocol.put_pose(b, level_bodies[i].global_transform)
 		body_blocks.append(b.data_array)
-	# Pack greedily: carts first, then bodies; every packet is a complete SNAPSHOT.
+	# Loose bodies in streamed chunks, by square: the same rule (moving, plus some resting ones in turn).
+	var chunk_entries := []   # [cell, index, body]
+	for st in _streamers:
+		for cell in st.loaded:
+			var list := _chunk_bodies(st.loaded[cell])
+			for i in list.size():
+				chunk_entries.append([cell, i, list[i]])
+	var chunk_picked := {}
+	for k in chunk_entries.size():
+		var body: RigidBody3D = chunk_entries[k][2]
+		if is_instance_valid(body) and not body.sleeping and not body.freeze:
+			chunk_picked[k] = true
+	for k in mini(refresh_per_snapshot, chunk_entries.size()):
+		_chunk_cursor = (_chunk_cursor + 1) % chunk_entries.size()
+		chunk_picked[_chunk_cursor] = true
+	var chunk_blocks: Array[PackedByteArray] = []
+	for k in chunk_picked:
+		var e: Array = chunk_entries[k]
+		if not is_instance_valid(e[2]):
+			continue
+		var b := StreamPeerBuffer.new()
+		b.put_16(e[0].x)
+		b.put_16(e[0].y)
+		b.put_u16(e[1])
+		NetProtocol.put_pose(b, (e[2] as RigidBody3D).global_transform)
+		chunk_blocks.append(b.data_array)
+	# Pack greedily: carts, then level bodies, then chunk bodies; every packet is a complete SNAPSHOT.
 	var packets: Array[PackedByteArray] = []
-	var ci := 0
-	var bi := 0
-	while ci < cart_blocks.size() or bi < body_blocks.size() or packets.is_empty():
-		var size := 1 + 1 + 4 + 1 + 2
-		var carts_in: Array[PackedByteArray] = []
-		while ci < cart_blocks.size() and (carts_in.is_empty() or size + cart_blocks[ci].size() <= max_packet):
-			size += cart_blocks[ci].size()
-			carts_in.append(cart_blocks[ci])
-			ci += 1
-		var bodies_in: Array[PackedByteArray] = []
-		while bi < body_blocks.size() and size + body_blocks[bi].size() <= max_packet:
-			size += body_blocks[bi].size()
-			bodies_in.append(body_blocks[bi])
-			bi += 1
+	var lists := [cart_blocks, body_blocks, chunk_blocks]
+	var at := [0, 0, 0]
+	while at[0] < cart_blocks.size() or at[1] < body_blocks.size() or at[2] < chunk_blocks.size() or packets.is_empty():
+		var size := 1 + 1 + 4 + 1 + 2 + 2
+		var taken := [[], [], []]
+		for l in 3:
+			var blocks: Array[PackedByteArray] = lists[l]
+			while at[l] < blocks.size() and (size + blocks[at[l]].size() <= max_packet or (l == 0 and taken[0].is_empty())):
+				size += blocks[at[l]].size()
+				taken[l].append(blocks[at[l]])
+				at[l] += 1
 		var p := NetProtocol.writer(NetProtocol.Msg.SNAPSHOT)
 		p.put_u8(level_serial)
 		p.put_u32(_tick)
-		p.put_u8(carts_in.size())
-		for c in carts_in:
+		p.put_u8(taken[0].size())
+		for c in taken[0]:
 			p.put_data(c)
-		p.put_u16(bodies_in.size())
-		for c in bodies_in:
+		p.put_u16(taken[1].size())
+		for c in taken[1]:
+			p.put_data(c)
+		p.put_u16(taken[2].size())
+		for c in taken[2]:
 			p.put_data(c)
 		packets.append(p.data_array)
 	return packets
@@ -639,6 +701,17 @@ func _read_snapshot(b: StreamPeerBuffer) -> void:
 		var pose := NetProtocol.get_pose(b)
 		if i < level_bodies.size() and is_instance_valid(level_bodies[i]):
 			_add_sample(level_bodies[i], t, pose)
+	for k in b.get_u16():
+		var cell := Vector2i(b.get_16(), b.get_16())
+		var i := b.get_u16()
+		var pose := NetProtocol.get_pose(b)
+		for st in _streamers:
+			var chunk: Node = st.loaded.get(cell)
+			if chunk and is_instance_valid(chunk):   # not loaded here (yet): skip, the next one will do
+				var list := _chunk_bodies(chunk)
+				if i < list.size() and is_instance_valid(list[i]):
+					_add_sample(list[i], t, pose)
+					stats.chunk_poses += 1
 
 
 ## The cart shown for player `id`, made on first sight.
@@ -703,8 +776,9 @@ func _guest_tick(delta: float) -> void:
 		_render_time = target
 	else:
 		_render_time = lerpf(_render_time, target, 0.05)
-	for body in _samples:
+	for body in _samples.keys():
 		if not is_instance_valid(body):
+			_samples.erase(body)   # its chunk was freed
 			continue
 		var s: Array = _samples[body]
 		var w := 1.0

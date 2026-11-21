@@ -22,6 +22,11 @@ runs locally for now; deploying it is phase 2. Details in `docs/MULTIPLAYER.md`.
 - **Judgment calls:** the host makes the WebRTC offer for each guest the service announces. Guests keep their
   signaling socket open so the service can count players and tell them when the host leaves. The host sends a
   heartbeat every 30 s to keep a public listing alive. With no TURN key the service hands out STUN only.
+- **Endless sandbox in multiplayer:** `ChunkStreamer` now loads squares around every player's cart (the Net
+  autoload's `carts`) and frees one only once it's far from all of them, so a guest who drives off alone still has
+  ground under them on the host. Loose bodies in chunks are sent by square and index (protocol version 2). Guests
+  freeze each chunk's bodies as it loads (`chunk_loaded` signal). The multiplayer test moves the guest's cart 320 m
+  out and checks for ground on both machines.
 - **Left out:** deploying (needs zack's Cloudflare account), TURN, and browser play (phase 3).
 ## 2026-11-21: endless sandbox
 

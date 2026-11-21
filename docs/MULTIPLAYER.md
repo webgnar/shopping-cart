@@ -71,6 +71,10 @@ each complete on its own. Rough load per guest: the supermarket with two players
 a snapshot, so ~2 KB x 30 Hz = 60 KB/s (0.5 Mbit/s). Fine on any connection and cheap on TURN; quantising poses
 (16-bit positions near the cart, smallest-three quaternions) would cut it to about a third if relay costs matter.
 
+In the endless sandbox, terrain chunks load around every player's cart on every machine (the layout is a hash of
+the square, so it's the same everywhere). The loose bodies in a chunk are sent by square and index in the
+snapshot's third section.
+
 Loose bodies are matched by order: every machine lists the level's `RigidBody3D`s (outside the local player's
 cart) sorted by node path. The host sends the count in WELCOME/LEVEL and a guest warns if its build differs. For
 the browser, `export_mobile_levels_cli.gd` will write the same ordered list into each level's JSON.
