@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/cart/cart_nest.gd" id="1_nest"]
+
+[node name="NestJoint" type="Generic6DOFJoint3D"]
+script = ExtResource("1_nest")
+linear_limit_x/upper_distance = 0.0
+linear_limit_x/lower_distance = -0.8
+linear_motor_x/enabled = true
+linear_motor_x/force_limit = 80.0
+angular_limit_x/upper_angle = 0.03
+angular_limit_x/lower_angle = -0.03
+angular_limit_y/upper_angle = 0.12
+angular_limit_y/lower_angle = -0.12
+angular_limit_z/upper_angle = 0.05
+angular_limit_z/lower_angle = -0.05
+angular_spring_y/enabled = true
+angular_spring_y/stiffness = 40.0
+angular_spring_y/damping = 6.0
