@@ -9,7 +9,8 @@ extends RefCounted
 ##    can move them with their physics body.
 ##  - mobile/levels/<key>.json: what you touch and how it's lit: every collision shape with its friction, the
 ##    loose props (mass, shapes), CartSpawn, the spare carts, the bot carts and the navigation mesh they drive on,
-##    sky/fog/ambient, the sun, lamps and 3D labels.
+##    sky/fog/ambient, the sun, lamps and 3D labels; for the endless sandbox, the chunk grid ("stream").
+##  - mobile/levels/chunks/<name>.glb and .json: each chunk the sandbox streams (scenes/sandbox/chunks/), the same way.
 ## And once for the cart (scenes/cart/cart.tscn): mobile/levels/cart.json with the rig (bodies, masses, shapes,
 ## hinges and their limits), the cart's shared materials (assets/materials/cart/*.tres) and the bot's settings
 ## (scenes/cart/bot_cart.tscn: the CartBot exports and its NavigationAgent3D).
@@ -92,6 +93,13 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 	}
 	var spawn := level.get_node_or_null("CartSpawn") as Node3D
 	out.spawn = {"pos": _v(spawn.global_position if spawn else Vector3(2, 0, 0)), "yaw": spawn.global_rotation.y if spawn else 0.0}
+
+	# An endless level (ChunkStreamer): its settings go in the JSON and each chunk is exported on its own
+	# (export_chunk); the chunks it has loaded around the cart and its far ground are left out of the level.
+	for st in level.find_children("*", "ChunkStreamer", true, false):
+		out["stream"] = _stream(st)
+		st.get_parent().remove_child(st)
+		st.free()
 
 	# Things the phone builds itself: the player's cart, spare carts, camera, HUD, UI.
 	var drop: Array[Node] = []
@@ -186,6 +194,31 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 		key, out.statics.size(), out.bodies.size(), out.spare_carts.size(), out.bot_carts.size(),
 		out.navmesh.polygons.size() if out.navmesh else 0, out.lights.size(), out.labels.size()])
 	return out
+
+
+## A ChunkStreamer's settings for mobile/game/stream.js: the grid, the chunks (exported to levels/chunks/<name>),
+## their weights, the far ground, and a table of picks the browser checks its own hash against.
+static func _stream(st: ChunkStreamer) -> Dictionary:
+	var d := {"origin": _v(st.global_position), "chunk_size": st.chunk_size, "seed": st.world_seed,
+		"load_distance": st.load_distance, "unload_distance": st.unload_distance,
+		"home_cells": st.home_cells.map(func(c): return [c.x, c.y]), "weights": Array(st.weights),
+		"chunks": st.chunks.map(func(c): return {"key": chunk_key(c.resource_path), "scene": c.resource_path}),
+		"far_ground": null, "check": []}
+	var fg := st.far_ground as MeshInstance3D
+	if fg and fg.mesh is PlaneMesh:
+		var m := fg.mesh.surface_get_material(0) as StandardMaterial3D
+		d.far_ground = {"y": fg.position.y, "size": (fg.mesh as PlaneMesh).size.x,
+			"color": _c(m.albedo_color if m else Color.GRAY)}
+	for i in range(-6, 7, 3):
+		for j in range(-6, 7, 2):
+			var p := st.pick(Vector2i(i * 7 - 3, j * 13 + 5))
+			d.check.append([i * 7 - 3, j * 13 + 5, p[0], p[1]])
+	return d
+
+
+## Where a chunk scene's export goes, under mobile/levels/: chunks/<scene name>.
+static func chunk_key(scene_path: String) -> String:
+	return "chunks/" + scene_path.get_file().get_basename()
 
 
 ## Phones get each texture once, at most MAX_TEXTURE px: every material that uses the same texture shares one
@@ -486,10 +519,18 @@ static func export_all(tree: SceneTree, only: Array = []) -> void:
 	DirAccess.make_dir_recursive_absolute(out_path(""))
 	export_cart()
 	var list := []
+	var chunks := {}
 	for d in destinations():
 		list.append(d)
 		if only.is_empty() or only.has(d.key):
-			await export_level(tree, d.key, d.scene)
+			var out: Dictionary = await export_level(tree, d.key, d.scene)
+			if out.has("stream"):
+				for c in out.stream.chunks:
+					chunks[c.key] = c.scene
+	# The endless level's chunks, each like a small level of its own (centred on its square, unturned).
+	DirAccess.make_dir_recursive_absolute(out_path("chunks"))
+	for k in chunks:
+		await export_level(tree, k, chunks[k])
 	var f := FileAccess.open(out_path("levels.json"), FileAccess.WRITE)
 	f.store_string(JSON.stringify(list, "  ", false) + "\n")
 	f.close()

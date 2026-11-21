@@ -1,0 +1,68 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/models/sandbox/hill/hill.glb" id="1_hill"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="2_asphalt"]
+[ext_resource type="Shape3D" path="res://assets/models/sandbox/hill/road_shape.res" id="3_road_shape"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="4_concrete"]
+[ext_resource type="Shape3D" path="res://assets/models/sandbox/hill/sidewalk_shape.res" id="5_sidewalk_s"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/grass.tres" id="6_grass"]
+[ext_resource type="Shape3D" path="res://assets/models/sandbox/hill/lawn_shape.res" id="7_lawn_shape"]
+[ext_resource type="PackedScene" path="res://scenes/sandbox/props/streetlight_day.tscn" id="8_streetligh"]
+[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/palm_tree.tscn" id="9_palm_tree"]
+
+
+[node name="HillChunk" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_hill")]
+
+[node name="Road" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("2_asphalt")
+
+[node name="Shape" type="CollisionShape3D" parent="Road"]
+shape = ExtResource("3_road_shape")
+
+[node name="Sidewalks" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("4_concrete")
+
+[node name="Shape" type="CollisionShape3D" parent="Sidewalks"]
+shape = ExtResource("5_sidewalk_s")
+
+[node name="Lawn" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("6_grass")
+
+[node name="Shape" type="CollisionShape3D" parent="Lawn"]
+shape = ExtResource("7_lawn_shape")
+
+[node name="Streetlights" type="Node3D" parent="."]
+
+[node name="Light1" parent="Streetlights" instance=ExtResource("8_streetligh")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -3.0, 2.355, -5.8)
+
+[node name="Light2" parent="Streetlights" instance=ExtResource("8_streetligh")]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, 3.0, 2.355, 5.8)
+
+[node name="PalmTrees" type="Node3D" parent="."]
+
+[node name="Palm1" parent="PalmTrees" instance=ExtResource("9_palm_tree")]
+transform = Transform3D(0.601815, 0, -0.798636, 0, 1, 0, 0.798636, 0, 0.601815, -18.6, 0.0, -15.0)
+
+[node name="Palm2" parent="PalmTrees" instance=ExtResource("9_palm_tree")]
+transform = Transform3D(-0.275637, 0, -0.961262, 0, 1, 0, 0.961262, 0, -0.275637, -18.6, 0.0, -9.0)
+
+[node name="Palm3" parent="PalmTrees" instance=ExtResource("9_palm_tree")]
+transform = Transform3D(-0.93358, 0, -0.358368, 0, 1, 0, 0.358368, 0, -0.93358, -18.6, 0.0, 9.0)
+
+[node name="Palm4" parent="PalmTrees" instance=ExtResource("9_palm_tree")]
+transform = Transform3D(-0.848048, 0, 0.529919, 0, 1, 0, -0.529919, 0, -0.848048, -18.6, 0.0, 15.0)
+
+[node name="Palm5" parent="PalmTrees" instance=ExtResource("9_palm_tree")]
+transform = Transform3D(-0.087156, 0, 0.996195, 0, 1, 0, -0.996195, 0, -0.087156, 18.6, 0.0, -15.0)
+
+[node name="Palm6" parent="PalmTrees" instance=ExtResource("9_palm_tree")]
+transform = Transform3D(0.743145, 0, 0.669131, 0, 1, 0, -0.669131, 0, 0.743145, 18.6, 0.0, -9.0)
+
+[node name="Palm7" parent="PalmTrees" instance=ExtResource("9_palm_tree")]
+transform = Transform3D(0.981627, 0, -0.190809, 0, 1, 0, 0.190809, 0, 0.981627, 18.6, 0.0, 9.0)
+
+[node name="Palm8" parent="PalmTrees" instance=ExtResource("9_palm_tree")]
+transform = Transform3D(0.438371, 0, -0.898794, 0, 1, 0, 0.898794, 0, 0.438371, 18.6, 0.0, 15.0)

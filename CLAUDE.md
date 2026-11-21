@@ -57,7 +57,12 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
 
 ## Layout
 
-- `scenes/main.tscn` — the sandbox level (store floor, parking lot, boxes, `CartSpawn`).
+- `scenes/main.tscn` — the sandbox level (store floor, parking lot, boxes, `CartSpawn`). It is endless: its
+  `Chunks` node (`scripts/sandbox/chunk_streamer.gd`) fills a 40 m grid around the cart with terrain chunks from
+  `scenes/sandbox/chunks/` (parking lot, street, supermarket floor, garage deck, hill street), picked by a hash of
+  the square so the layout never changes. Every chunk is 40 x 40 m, centred on its origin, and flat at height 0
+  along its edges so any chunk meets any other in any turn. Add a chunk by adding it to the `Chunks` node's
+  `chunks` and `weights`. `tools/sandbox_models.py` builds the hill (then `tools/make_sandbox_shapes_cli.gd`).
 - `scenes/levels/<name>.tscn` — further levels. Their root script extends `res://scripts/main.gd`,
   which supplies cart spawning, the follow camera, input and the HUD. A level scene places its own
   `CartSpawn` marker; if it has no `WorldEnvironment`, `Camera` or `HUD` node, `main.gd` adds the
@@ -94,3 +99,4 @@ From `shopping-cart/`:
 - Rolling sound (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
 - Bot carts drive themselves in every level: `godot --headless --fixed-fps 120 -s res://tests/bot_test.gd`
+- Endless sandbox (chunks load, no holes, flush edges, floors, hill): `godot --headless --fixed-fps 120 -s res://tests/sandbox_test.gd`

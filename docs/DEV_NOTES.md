@@ -3,6 +3,64 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: endless sandbox
+
+zack asked for the sandbox to be "more infinite, with the various elements we have so far as far as terrain is
+concerned". The sandbox (`scenes/main.tscn`) now never ends: its hand-built store floor and parking lot stay at the
+start, and every other 40 m square of ground around the cart is filled with a terrain chunk, built as the cart gets
+near and freed once it's well behind.
+
+- **Chunks** (`scenes/sandbox/chunks/`, each 40 x 40 m, centred on its origin, flat at height 0 along all four
+  edges, so any chunk meets any other flush in any of four turns):
+  - `lot.tscn`: asphalt, a double row of stalls (two `parking_row` instances, 16 stalls of 2.7 x 5.5 m) with
+    planter islands at the ends, four parked cars, a cart corral in a stall, two 6 cm speed bumps.
+  - `street.tscn`: a 10 m two-lane road with a crosswalk and centre dashes, 15 cm curbs and 2.8 m raised
+    sidewalks with 2 m curb-cut ramps at the crosswalk and at both ends (the last 1.5 m to each edge is flat), 3 m
+    grass parkways with palms, concrete plazas beyond (water machine, cart corral), two streetlights.
+  - `market.tscn`: supermarket floor (tile) with three rows of gondolas, four fridge cases, produce tables, a
+    display stack, four checkouts and a stack of cardboard boxes: the store without its walls.
+  - `garage.tscn`: garage concrete with a raised deck 12 x 14 m, 2 m up (rooftop parking: two parked cars,
+    yellow stall lines, 1 m parapets), 12 m ramps (1:6, 9.5 degrees) on and off at both ends, 7 m wide, pillars,
+    floor arrows and oil drums around it.
+  - `hill.tscn`: a street over a hill, crest 2.6 m, cosine profile over 17 m each side (steepest grade 24 %, 13.5
+    degrees: an SF street is up to 31 %), 8 m road, 2.5 m flush sidewalks, grass banks easing down to the flat by
+    18 m from the centre, palms on the flat ends. The SF hill level being built in another thread hadn't landed,
+    so this is its own hill; its slopes can become another chunk once it has.
+- **Hill model**: `tools/sandbox_models.py` (bpy) builds `assets/models/sandbox/hill/hill.glb` as height-field
+  surfaces on a 0.5 m grid: road, sidewalk, lawn and centre line, one material each (asphalt, sidewalk, new shared
+  `assets/materials/sandbox/grass.tres`, paint_white). 11,580 triangles, 474 KB. The collision is the same
+  surface: `tools/make_sandbox_shapes_cli.gd` saves each mesh's trimesh as `<mesh>_shape.res`, one StaticBody3D per
+  floor so each has its own physics material (and rolling sound).
+- **Streaming** (`scripts/sandbox/chunk_streamer.gd`, on the `Chunks` node; its position is the grid's corner):
+  squares within 64 m of the cart are loaded (nearest first, one per frame while driving, all at once at the
+  start or after a jump), squares beyond 88 m are freed. 14 to 16 chunks are loaded at a time. Which chunk and which
+  turn comes from a 32-bit hash of the square and `world_seed` (weights: lot 3, street 3, market 2, garage 2, hill
+  2), so a square always gets the same chunk, though anything knocked over is put back when it reloads. The two
+  home squares (the original 60 x 40 m plus a new 20 x 40 m concrete yard behind the store's back wall, to fill
+  the second 40 m square) are left out.
+- **Horizon**: the sandbox now has its own environment (the default one plus exponential fog, density 0.014, in
+  the sky's horizon colour, not on the sky), and `Chunks/FarGround` (a 1.2 km plane 25 cm below the floors)
+  follows the cart, so past the loaded chunks there is hazy ground rather than an edge.
+- **Rolling sound**: new `assets/physics/grass.tres` (friction 0.8), listed under the cart's asphalt rumble
+  (there's no grass recording). Street sidewalks and plazas and the garage are concrete, the market floor tile.
+- **Day props**: the sandbox is lit by the sun, so `scenes/sandbox/props/streetlight_day.tscn` and
+  `planter_island_day.tscn` inherit the parking lot's streetlight and planter island with their two shadowed spot
+  lights hidden. A loaded sandbox has no lamps, which keeps it cheap.
+- **Performance** (cloud, software GPU, so counts over milliseconds): sandbox at the start 417 draw calls, 201k
+  triangles (the supermarket level is 1,162 and 676k); CPU 0.9 ms per frame (parking lot level 1.25 ms).
+- **Browser version**: the level export writes the grid into `levels/sandbox.json` (`stream`, with a table of
+  picks to check against) and each chunk to `levels/chunks/<name>.glb/.json`; `mobile/game/stream.js` streams them
+  with the same hash (desktop at full reach, phones at 80 %), sharing the level's lamps, loose props and floor
+  sounds. `tests/mobile_levels_sync_test.gd` checks the chunks too.
+- **Checks**: `tests/sandbox_test.gd` (chunks load and unload, no holes under a 2 m grid within 40 m after four
+  jumps, every chunk flat at 0 along its edges, each chunk's floor sound, and a cart walked up the hill street
+  crests it and rolls down the far side). Overlap check: no collision shapes of different props overlap in any
+  chunk (only inside the planter island prop, by design). No z-fighting: slabs, curbs, sidewalks and ramps sink
+  1 to 5 cm into the floor below rather than sharing a face, painted lines are 4 mm boxes sunk 1 mm, the hill's
+  centre line sits 4 mm above the road.
+- **Left out**: roads don't line up from chunk to chunk (each chunk is turned at random); no bot carts in the
+  sandbox yet (they need a navigation mesh per chunk); no lamps at night.
+
 ## 2026-11-21: bot carts (first pass)
 
 Unmanned carts that drive themselves around the supermarket, parking lot and garage, three per level, as a first

@@ -1,0 +1,114 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/tile.tres" id="1_tile"]
+[ext_resource type="Material" path="res://assets/materials/supermarket/concrete_polished.tres" id="2_concrete_p"]
+[ext_resource type="PackedScene" path="res://scenes/props/supermarket/gondola.tscn" id="3_gondola"]
+[ext_resource type="PackedScene" path="res://scenes/props/supermarket/fridge_case.tscn" id="4_fridge_cas"]
+[ext_resource type="PackedScene" path="res://scenes/props/supermarket/produce_table.tscn" id="5_produce_ta"]
+[ext_resource type="PackedScene" path="res://scenes/props/supermarket/display_stack.tscn" id="6_display_st"]
+[ext_resource type="PackedScene" path="res://scenes/props/supermarket/checkout_counter.tscn" id="7_checkout_c"]
+[ext_resource type="PackedScene" path="res://scenes/props/cardboard_box.tscn" id="8_cardboard_"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(40.0, 1.0, 40.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_2"]
+material = ExtResource("2_concrete_p")
+size = Vector3(40.0, 1.0, 40.0)
+
+[node name="MarketChunk" type="Node3D"]
+
+[node name="Floor" type="StaticBody3D" parent="."]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, -0.5, 0.0)
+physics_material_override = ExtResource("1_tile")
+
+[node name="Shape" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("BoxShape3D_1")
+
+[node name="Mesh" type="MeshInstance3D" parent="Floor"]
+mesh = SubResource("BoxMesh_2")
+
+[node name="Gondolas" type="Node3D" parent="."]
+
+[node name="Gondola1" parent="Gondolas" instance=ExtResource("3_gondola")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -7.2, 0.0, -14.0)
+
+[node name="Gondola2" parent="Gondolas" instance=ExtResource("3_gondola")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 7.2, 0.0, -14.0)
+
+[node name="Gondola3" parent="Gondolas" instance=ExtResource("3_gondola")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -7.2, 0.0, -9.5)
+
+[node name="Gondola4" parent="Gondolas" instance=ExtResource("3_gondola")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 7.2, 0.0, -9.5)
+
+[node name="Gondola5" parent="Gondolas" instance=ExtResource("3_gondola")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -7.2, 0.0, -5.0)
+
+[node name="Gondola6" parent="Gondolas" instance=ExtResource("3_gondola")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 7.2, 0.0, -5.0)
+
+[node name="FridgeCases" type="Node3D" parent="."]
+
+[node name="Fridge1" parent="FridgeCases" instance=ExtResource("4_fridge_cas")]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, -6.0, 0.0, -18.4)
+
+[node name="Fridge2" parent="FridgeCases" instance=ExtResource("4_fridge_cas")]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, -2.0, 0.0, -18.4)
+
+[node name="Fridge3" parent="FridgeCases" instance=ExtResource("4_fridge_cas")]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, 2.0, 0.0, -18.4)
+
+[node name="Fridge4" parent="FridgeCases" instance=ExtResource("4_fridge_cas")]
+transform = Transform3D(-1.0, 0, -0.0, 0, 1, 0, 0.0, 0, -1.0, 6.0, 0.0, -18.4)
+
+[node name="ProduceTables" type="Node3D" parent="."]
+
+[node name="Produce1" parent="ProduceTables" instance=ExtResource("5_produce_ta")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -11.0, 0.0, 2.5)
+
+[node name="Produce2" parent="ProduceTables" instance=ExtResource("5_produce_ta")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, -7.0, 0.0, 2.5)
+
+[node name="Produce3" parent="ProduceTables" instance=ExtResource("5_produce_ta")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 7.0, 0.0, 2.5)
+
+[node name="Produce4" parent="ProduceTables" instance=ExtResource("5_produce_ta")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 11.0, 0.0, 2.5)
+
+[node name="DisplayStack" parent="." instance=ExtResource("6_display_st")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 0.0, 0.0, 2.5)
+
+[node name="Checkouts" type="Node3D" parent="."]
+
+[node name="Checkout1" parent="Checkouts" instance=ExtResource("7_checkout_c")]
+transform = Transform3D(0.0, 0, -1.0, 0, 1, 0, 1.0, 0, 0.0, -9.0, 0.0, 11.0)
+
+[node name="Checkout2" parent="Checkouts" instance=ExtResource("7_checkout_c")]
+transform = Transform3D(0.0, 0, -1.0, 0, 1, 0, 1.0, 0, 0.0, -4.5, 0.0, 11.0)
+
+[node name="Checkout3" parent="Checkouts" instance=ExtResource("7_checkout_c")]
+transform = Transform3D(0.0, 0, -1.0, 0, 1, 0, 1.0, 0, 0.0, 4.5, 0.0, 11.0)
+
+[node name="Checkout4" parent="Checkouts" instance=ExtResource("7_checkout_c")]
+transform = Transform3D(0.0, 0, -1.0, 0, 1, 0, 1.0, 0, 0.0, 9.0, 0.0, 11.0)
+
+[node name="Boxes" type="Node3D" parent="."]
+
+[node name="CardboardBox1" parent="Boxes" instance=ExtResource("8_cardboard_")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 15.0, 0.175, 14.0)
+
+[node name="CardboardBox2" parent="Boxes" instance=ExtResource("8_cardboard_")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 15.0, 0.525, 14.0)
+
+[node name="CardboardBox3" parent="Boxes" instance=ExtResource("8_cardboard_")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 15.0, 0.875, 14.0)
+
+[node name="CardboardBox4" parent="Boxes" instance=ExtResource("8_cardboard_")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 15.4, 0.175, 14.0)
+
+[node name="CardboardBox5" parent="Boxes" instance=ExtResource("8_cardboard_")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 15.4, 0.525, 14.0)
+
+[node name="CardboardBox6" parent="Boxes" instance=ExtResource("8_cardboard_")]
+transform = Transform3D(1.0, 0, -0.0, 0, 1, 0, 0.0, 0, 1.0, 15.4, 0.875, 14.0)

@@ -24,9 +24,10 @@ and open http://localhost:8000 (or upload the `mobile/` folder as an HTML5 game 
 
 | Path | What it is | How it's made |
 | --- | --- | --- |
-| `index.html`, `game/*.js` | The game: `cart.js` is a line-for-line port of `scripts/cart.gd`, `bot.js` of `scripts/cart_bot.gd` (bot carts), `nav.js` stands in for Godot's navigation server and NavigationAgent3D, `level.js` builds an exported level, `main.js` is input, camera (`cart_camera.gd`), HUD, console and the loop | Hand-written |
+| `index.html`, `game/*.js` | The game: `cart.js` is a line-for-line port of `scripts/cart.gd`, `bot.js` of `scripts/cart_bot.gd` (bot carts), `nav.js` stands in for Godot's navigation server and NavigationAgent3D, `level.js` builds an exported level, `stream.js` streams the endless sandbox's chunks around the cart (as `scripts/sandbox/chunk_streamer.gd`, same hash so the same layout), `main.js` is input, camera (`cart_camera.gd`), HUD, console and the loop | Hand-written |
 | `cart_tuning.js` | Cart feel (every Cart export and body mass) | `shopping-cart/tools/export_cart_tuning.gd` |
 | `levels/<key>.glb` + `.json` | Each fast-travel level: meshes and materials; collision shapes with friction, loose props, CartSpawn, spare carts, bot carts and their navigation mesh, sky, sun, lamps, 3D labels | `godot --headless -s res://tools/export_mobile_levels_cli.gd` (from `shopping-cart/`) |
+| `levels/chunks/<name>.glb` + `.json` | The endless sandbox's terrain chunks (`scenes/sandbox/chunks/`), each exported like a level; `levels/sandbox.json` has the grid (`stream`) | same |
 | `levels/cart.json` | The cart rig (bodies, masses, shapes, hinges and limits), its materials and the bot's settings | same |
 | `models/cart.glb` | Phone-weight cart model (85k faces, 10 meshes) from the Godot one | `blender -b --python tools/export_mobile_model.py` |
 | `audio/roll_*.wav` | The cart's rolling loops (asphalt, tile, concrete), played by `game/sound.js` as in `scripts/cart/cart_rolling_sound.gd` | `python3 tools/audio/make_cart_rolling_loops.py` |
