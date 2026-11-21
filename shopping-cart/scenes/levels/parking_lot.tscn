@@ -10,6 +10,8 @@
 [ext_resource type="PackedScene" path="res://scenes/props/parking_lot/streetlight.tscn" id="8_tyw8w"]
 [ext_resource type="PackedScene" path="res://scenes/props/parking_lot/planter_island.tscn" id="9_l4cx4"]
 [ext_resource type="PackedScene" path="res://scenes/props/parking_lot/parked_car.tscn" id="10_4ealt"]
+[ext_resource type="NavigationMesh" path="res://assets/navigation/parking_lot.tres" id="nav_mesh"]
+[ext_resource type="PackedScene" path="res://scenes/cart/bot_cart.tscn" id="bot_cart"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_14lfg"]
 sky_top_color = Color(0.023529412, 0.03529412, 0.07058824, 1)
@@ -66,7 +68,7 @@ size = Vector3(0.3, 0.15, 43)
 [sub_resource type="BoxShape3D" id="BoxShape3D_k1fgf"]
 size = Vector3(60.6, 0.15, 0.3)
 
-[node name="ParkingLot" type="Node3D" unique_id=512916911]
+[node name="ParkingLot" type="Node3D" unique_id=512916911 groups=["navigation_geometry"]]
 script = ExtResource("1_ias6e")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1513882350]
@@ -268,3 +270,17 @@ paint = Color(0.7254902, 0.74509805, 0.7764706, 1)
 
 [node name="CartSpawn" type="Marker3D" parent="." unique_id=754083861]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -9.5)
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+navigation_mesh = ExtResource("nav_mesh")
+
+[node name="BotCarts" type="Node3D" parent="."]
+
+[node name="BotCart1" parent="BotCarts" instance=ExtResource("bot_cart")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.005, 8)
+
+[node name="BotCart2" parent="BotCarts" instance=ExtResource("bot_cart")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 10, 0.005, -9.5)
+
+[node name="BotCart3" parent="BotCarts" instance=ExtResource("bot_cart")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.005, 25)
