@@ -3,6 +3,27 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: online multiplayer by join code (phase 1)
+
+Players can now host with a join code and join by code or from a game list, over WebRTC. The rendezvous service
+runs locally for now; deploying it is phase 2. Details in `docs/MULTIPLAYER.md`.
+
+- **Service:** `services/rendezvous/` is a Cloudflare Worker with `Room`, `Directory` and `SetupBudget` Durable
+  Objects, following zack's design doc. Hosts register with `POST /host` and get a code and a private token. Hosts
+  and guests then talk over room WebSockets, and the service only relays offers, answers and ICE candidates.
+  Local: `npm run dev`. Tests: `npm test`, `npm run test:godot`.
+- **Transport:** `scripts/net/webrtc_link.gd` is a `MultiplayerPeerExtension` over one WebRTC connection per
+  guest, with negotiated channels 1 (reliable) and 2 (unordered, no resends). NetSession uses it the same way it
+  uses ENet. Desktop WebRTC comes from `addons/webrtc` (webrtc-native 1.1.0-stable, MIT). Only the Windows/Linux
+  x86_64 and macOS libraries are kept (28 MB of the 98 MB release).
+- **Menu:** `scenes/ui/multiplayer_menu.tscn` is instanced in the Net scene and opened with M. All of its layout
+  and signal connections are in the scene. The game keeps running while it's open. Cart keys are ignored while a
+  text box has focus (`ShoppingCart.held`), so typing a code doesn't push the cart.
+- **Judgment calls:** the host makes the WebRTC offer for each guest the service announces. Guests keep their
+  signaling socket open so the service can count players and tell them when the host leaves. The host sends a
+  heartbeat every 30 s to keep a public listing alive. With no TURN key the service hands out STUN only.
+- **Left out:** deploying (needs zack's Cloudflare account), TURN, and browser play (phase 3).
+
 ## 2026-11-21: multiplayer prototype (phase 0)
 
 First step toward player-hosted multiplayer; the full plan (Cloudflare join codes, WebRTC, the browser) is in

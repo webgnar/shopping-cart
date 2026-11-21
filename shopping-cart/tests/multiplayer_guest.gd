@@ -1,7 +1,7 @@
 extends SceneTree
 ## The guest half of tests/multiplayer_test.gd, started by it as a second Godot process:
-##   godot --headless --path . -s res://tests/multiplayer_guest.gd -- <port> <result file>
-## Joins 127.0.0.1, pushes its cart for a moment, waits for every cart to stop, then follows the host through its
+##   godot --headless --path . -s res://tests/multiplayer_guest.gd -- <port or join code> <result file> [--rendezvous=<url>]
+## Joins 127.0.0.1 (or the game with that join code), pushes its cart for a moment, waits for every cart to stop, then follows the host through its
 ## levels. After each step it rewrites <result file> (JSON) with what it saw, for the host test to check.
 
 var net: NetSession
@@ -31,12 +31,15 @@ func _wait(seconds: float) -> void:
 
 func _run() -> void:
 	var args := OS.get_cmdline_user_args()
-	var port := int(args[0])
+	var where: String = args[0]
 	out = args[1]
 	net = root.get_node("Net")
 	change_scene_to_file("res://scenes/main.tscn")
 	await _wait(0.5)
-	net.join("127.0.0.1", port)
+	if NetSession.is_join_code(where):
+		net.join_online(where)
+	else:
+		net.join("127.0.0.1", int(where))
 	var deadline := Time.get_ticks_msec() + 30000
 	while not (net.level and net.carts.has(1) and net.stats.snapshots_received > 10):
 		if Time.get_ticks_msec() > deadline:

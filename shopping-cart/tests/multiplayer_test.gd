@@ -2,6 +2,9 @@ extends SceneTree
 ## Two players on one machine: this process hosts, and starts a second Godot as the guest
 ## (tests/multiplayer_guest.gd) that joins over 127.0.0.1. Runs in real time (no --fixed-fps), about a minute:
 ##   godot --headless -s res://tests/multiplayer_test.gd
+## Online (WebRTC, join code) against a rendezvous service, e.g. `npm run dev` in services/rendezvous:
+##   godot --headless -s res://tests/multiplayer_test.gd -- --online --rendezvous=http://127.0.0.1:8787
+## (services/rendezvous/test/godot_online_test.mjs starts the service and runs this for you.)
 ## Checks: the guest joins and gets a cart; both carts are pushed and both move on the host; once everything
 ## stops the guest sees both carts where the host has them; then the host travels through every level and the
 ## guest follows, with matching loose bodies, everything frozen on its side, its bots off and its cart upright.
@@ -49,12 +52,31 @@ func _run() -> void:
 	net = root.get_node("Net")
 	out = ProjectSettings.globalize_path("user://multiplayer_guest_result.json")
 	DirAccess.remove_absolute(out)
+	var online := "--online" in OS.get_cmdline_user_args()
 	var port := 24700 + randi() % 200
 	change_scene_to_file(LEVELS[0])
 	await _wait(0.3)
-	_check("hosts", net.host(port), "port %d" % port)
-	var pid := OS.create_process(OS.get_executable_path(), ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-		"-s", "res://tests/multiplayer_guest.gd", "--", str(port), out])
+	var where := str(port)
+	if online:
+		net.game_name = "multiplayer test"
+		where = await net.host_online()
+		_check("hosts online", where != "", "code %s via %s" % [where, net.rendezvous_url])
+		var t0 := Time.get_ticks_msec()
+		while net.peer and net.peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED and Time.get_ticks_msec() - t0 < 10000:
+			await physics_frame
+		_check("host connected to the service", net.peer != null and net.peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED, net.status_text())
+		var games := await net.list_games()
+		_check("listed in the game list", games.any(func(g): return g.code == where), "%d games" % games.size())
+		if where == "":
+			_finish()
+			return
+	else:
+		_check("hosts", net.host(port), "port %d" % port)
+	var guest_args := ["--headless", "--path", ProjectSettings.globalize_path("res://"),
+		"-s", "res://tests/multiplayer_guest.gd", "--", where, out]
+	if online:
+		guest_args.append("--rendezvous=" + net.rendezvous_url)
+	var pid := OS.create_process(OS.get_executable_path(), guest_args)
 	_check("guest process starts", pid > 0, "pid %d" % pid)
 	var deadline := Time.get_ticks_msec() + 40000
 	while net._guests.is_empty() and Time.get_ticks_msec() < deadline:

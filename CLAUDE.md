@@ -69,7 +69,10 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   `godot --headless -s res://tools/bake_navigation_cli.gd` after moving anything solid.
 - `scenes/net/net_session.tscn` — the `Net` autoload: host-authoritative multiplayer (`scripts/net/`). Guests'
   carts are driven through `controls` like bot carts; guests only show the host's snapshots. Plan and wire format:
-  `docs/MULTIPLAYER.md` (bump `NetProtocol.VERSION` when a message changes).
+  `docs/MULTIPLAYER.md` (bump `NetProtocol.VERSION` when a message changes). Online play uses WebRTC
+  (`scripts/net/webrtc_link.gd`, desktop plugin in `addons/webrtc/`) introduced by the rendezvous service in
+  `services/rendezvous/` (Cloudflare Worker; `npm run dev` there runs it locally). M opens the Multiplayer menu
+  (`scenes/ui/multiplayer_menu.tscn`). Don't deploy the Worker or create Cloudflare resources without asking zack.
 - `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun.
   `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
   (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera (`scripts/cart_camera.gd` lifts it over walls, see its exports).
@@ -97,4 +100,6 @@ From `shopping-cart/`:
 - Rolling sound (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
 - Multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/multiplayer_test.gd`
+- Rendezvous service, and online play by join code over WebRTC (from `services/rendezvous`, after `npm install`):
+  `npm test` and `npm run test:godot`
 - Bot carts drive themselves in every level: `godot --headless --fixed-fps 120 -s res://tests/bot_test.gd`
