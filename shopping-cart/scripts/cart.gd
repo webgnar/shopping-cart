@@ -26,12 +26,12 @@ extends Node3D
 @export var power_base := 25.0      ## N per hand the moment a key goes down
 @export var power_ramp := 120.0     ## N per second the hand's power grows while its key stays held
 @export var power_relax := 400.0    ## N per second the bar falls back to zero once the key is let go
-@export var sprint_speed := 8.0     ## m/s: a running player can't push (or pull) the cart faster than this
+@export var sprint_speed := 5.0     ## m/s: a running player can't push (or pull) the cart faster than this
 ## m: the wrists' lever on the bar. Each hand twists the cart about its axle line by its power times this, whether
 ## or not the cart can speed up (a strained arm levers just as hard at a run). Push: nose up. Pull: nose down.
 ## The bigger it is, the less power it takes to lift an end. The push and pull themselves act at the height of
 ## the centre of mass, so they don't tilt the cart on their own.
-@export var wrist_lever := 0.4
+@export var wrist_lever := 0.3
 ## false: a spare cart nobody is holding. It ignores the keys and only moves when something hits it.
 @export var player_controlled := true
 ## true: the groceries are taken out (spare carts in a level start empty).
@@ -73,7 +73,7 @@ var _rest_time := 0.0
 @export var arm_reach := 0.3        ## m each arm can straighten while the body is planted
 @export var brake_spring := 350.0   ## N per m of arm extension, per hand: arms stiffen as they straighten
 @export var brake_damping := 25.0   ## N per m/s, per hand
-@export var brake_max := 110.0      ## N per hand: leaning back with full body weight
+@export var brake_max := 120.0      ## N per hand: leaning back with full body weight
 var arm_extension := {"L": 0.0, "R": 0.0}   ## m each arm is currently stretched past its relaxed bend
 @export_group("Hands")
 @export var hand_position := Vector3(0.0, 1.0, 0.2)   ## where the right hand grips the bar (cart local); the left is mirrored
@@ -348,8 +348,12 @@ func _apply_hands(delta: float) -> void:
 			elif _wait_release:
 				st = "let go, then hold to haul it up"
 		elif dir != 0:
-			# The wrists lever the bar by the hand's full power: a push raises the nose, a pull drops it.
-			frame.apply_torque(xf.basis.z.normalized() * dir * strength * wrist_lever)
+			# The wrists lever the bar by the hand's full power: a push raises the nose, a pull drops it. Each wrist
+			# also damps the cart's pitching (tilt_kd, split between the hands), so a wheelie grows steadily
+			# instead of flipping the cart the moment an end lifts.
+			var pitch_axis := xf.basis.z.normalized()
+			var pitch_rate := frame.angular_velocity.dot(pitch_axis)
+			frame.apply_torque(pitch_axis * (dir * strength * wrist_lever - 0.5 * tilt_kd * pitch_rate))
 		hand_state[side] = st
 
 	# Grip: with both hands moving the same way the player resists the cart twisting (keeps it tracking when

@@ -53,11 +53,18 @@ Judgment calls:
 - The cross streets are flat (real ones slope too) so the crossings stay flat for the traffic.
 - Houses are 7 m wide (a 25 ft lot less side gaps); the gaps between them are 16 to 50 cm.
 - Corner houses show a blank side wall to the cross street.
-- The cart's own roll-down speed is limited by Jolt's wheel spin cap (`max_angular_velocity`, 47 rad/s, see the
-  2026-11-16 entry): about 2.4 m/s after 3 s on the 10 % block and 3.4 m/s on the 31 % block. Raising the cap to
-  200 or 600 rad/s lets it reach 8 to 12 m/s downhill, but it is project-wide (it cannot be set per level or at
-  runtime) and four drive test cases then fail (short push, hard push, hard pull, 1.8 s push-pull), so it is left
-  at the default until zack decides.
+- Wheel spin cap raised (zack's call): Jolt caps every body's spin at `max_angular_velocity`, 47 rad/s by
+  default, so the cart's 6.35 cm wheels skidded above 3 m/s and a cart on the 31 % block never beat 3.5 m/s.
+  `project.godot` now sets `physics/jolt_physics_3d/limits/max_angular_velocity = 200` (wheels free up to about
+  12.7 m/s; it cannot be set per level). Measured top speeds over 12 s: 6.3 m/s on the 10 % block, 7.5 on the
+  24 %, 8.1 on the 31 %. 300 and 600 were tried too: past 200 the cart pitches hard at speed and often flips.
+  The tuning export writes the cap as `max_angular_velocity` and the browser cart reads it.
+- That skid drag had been holding the cart's wheelies down and its flat-floor speed back, so the cart is retuned
+  to keep the old feel on flat floors: `wrist_lever` 0.4 -> 0.3 (ends lift at about the same hold times as
+  before), the wrists now also damp the cart's pitch while a hand is held (half of `tilt_kd` each, so a wheelie
+  grows steadily instead of flipping the moment an end lifts), `sprint_speed` 8 -> 5 m/s (pushing tops out at
+  about 5 m/s; it was about 6 m/s, limited by skidding) and `brake_max` 110 -> 120 N. Every drive test case
+  passes unchanged.
 - Cars use the parking lot sedan (`parked_car.glb`) so the two levels share it.
 
 Behaviour changes that came with it:

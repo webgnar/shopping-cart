@@ -7,11 +7,10 @@ import { v3, add, sub, scale, dot, cross, len, norm, clamp, moveToward, arr, rot
 
 // Cart settings Godot keeps as exports but the tuning file may not have yet (defaults = the Godot defaults).
 const DEFAULTS = { arm_relax_rate: 1.0, settle_brake: 40.0, stop_delay: 0.25, power_base: 25, power_ramp: 120,
-  power_relax: 400, sprint_speed: 8, wrist_lever: 0.4, lift_pitch: -0.2, press_pitch: 0.3, side_roll: 0.22,
+  power_relax: 400, sprint_speed: 5, wrist_lever: 0.3, lift_pitch: -0.2, press_pitch: 0.3, side_roll: 0.22,
   tilt_kp: 1400, tilt_kd: 80, tilt_max: 200, tip_delay: 0.6, tip_rate: 0.7, let_go_pitch: 0.95, fallen_upright: 0.3, fallen_still: 1.0, stood_upright: 0.95,
-  settle_max_slope: 0.04 };
+  settle_max_slope: 0.04, max_angular_velocity: 0.25 * Math.PI * 60 };
 const PROJECT_LINEAR_DAMP = 0.02, PROJECT_ANGULAR_DAMP = 0.05;   // Godot project settings
-const MAX_ANGULAR_VELOCITY = 0.25 * Math.PI * 60;                 // Jolt's default cap, rad/s (see capWheelSpin)
 // Visual model pivots (mobile/models/cart.glb, same names as the Godot model) for each physics body.
 const PIVOTS = { Frame: 'Frame', Gate: 'Gate_Hinge', ChildSeat: 'ChildSeat_Hinge', SeatFlap: 'SeatFlap_Hinge',
   Fork_FL: 'Caster_FL_Swivel', Fork_FR: 'Caster_FR_Swivel', Wheel_FL: 'Wheel_FL_Axle', Wheel_FR: 'Wheel_FR_Axle',
@@ -310,8 +309,10 @@ export class Cart {
           st = 'hauling it upright';
         } else if (this.waitRelease) st = 'let go, then hold to haul it up';
       } else if (dir !== 0) {
-        // The wrists lever the bar by the hand's full power: a push raises the nose, a pull drops it.
-        f.addTorque(scale(sideAxis, dir * strength * T.wrist_lever), true);
+        // The wrists lever the bar by the hand's full power: a push raises the nose, a pull drops it. Each wrist
+        // also damps the pitching (half of tilt_kd), so a wheelie grows steadily instead of flipping the cart.
+        const pAxis = norm(sideAxis);
+        f.addTorque(scale(pAxis, dir * strength * T.wrist_lever - 0.5 * T.tilt_kd * dot(ang, pAxis)), true);
       }
       this.handState[h] = st;
     }
@@ -384,14 +385,15 @@ export class Cart {
   }
 
   /**
-   * Jolt (the Godot game's physics) caps every body's spin at 47 rad/s (its max_angular_velocity, 0.25 * pi * 60).
-   * A 6.35 cm wheel hits that at 3 m/s, so above a fast walk the Godot cart's wheels skid and drag. The Godot cart
-   * is tuned with that drag, so the same cap applies here, after each physics step.
+   * Jolt (the Godot game's physics) caps every body's spin at its max_angular_velocity project setting (exported
+   * as T.max_angular_velocity, 200 rad/s: a 6.35 cm wheel reaches it at about 12.7 m/s). Above that the Godot
+   * cart's wheels skid and drag, so the same cap applies here, after each physics step.
    */
   capWheelSpin() {
+    const cap = this.T.max_angular_velocity;
     for (const w of Object.values(this.wheels)) {
       const a = w.angvel(), l = len(a);
-      if (l > MAX_ANGULAR_VELOCITY) w.setAngvel(scale(a, MAX_ANGULAR_VELOCITY / l), false);
+      if (l > cap) w.setAngvel(scale(a, cap / l), false);
     }
   }
 
