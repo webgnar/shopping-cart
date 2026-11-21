@@ -7,8 +7,11 @@ extends Node3D
 ##  - Front casters: a fork that swivels 360 degrees on a vertical hinge, wheel trailing 3.8 cm behind.
 ##  - Rear wheels: fixed, spin on their axles.
 ##  - Gate: hinged at the top rail, swings into the basket 0 to 70 degrees.
-##  - ChildSeat (backrest) and SeatFlap: hinged on the gate; the backrest folds back 0 to 30 degrees and
-##    the flap folds up 0 to 105 degrees, both resting on their stops under gravity.
+##  - ChildSeat (the wire backrest): hinged on the gate at its bottom bar. It rests folded against the gate's front
+##    (its 0 stop), so when the gate swings up it carries the seat up with it; it opens 35 degrees into the basket.
+##  - SeatFlap (the plastic seat): hinged on the child seat. Folded it hangs between the backrest and the gate,
+##    leaning on the gate (the one pair of the cart's own parts that touch, TOUCHING_PARTS); it opens 74 degrees
+##    to lie level as a seat.
 ##  - Groceries: loose bodies in the basket; add or move them under the Groceries node.
 ##  - Model: the rigged model (assets/models/shopping_cart.glb); its pivots follow the physics bodies.
 ## Cart local axes: nose = +X, up = +Y, left = -Z. Units: metres, kg, newtons.
@@ -144,7 +147,7 @@ func _ready() -> void:
 	var parts: Array = [frame, gate, child_seat, seat_flap] + wheels.values() + forks.values()
 	for a in parts:
 		for b in parts:
-			if a != b:
+			if a != b and not _touching(a, b):
 				a.add_collision_exception_with(b)
 	for b in parts + groceries:
 		_own_rids.append(b.get_rid())
@@ -159,6 +162,10 @@ func _ready() -> void:
 		_link(_model.find_child("Wheel_F%s_Axle" % side), wheels["F" + side])
 		_link(_model.find_child("Wheel_R%s_Axle" % side), wheels["R" + side])
 
+
+## The cart's own bodies never collide with each other (the hinges hold them together), except these pairs: the
+## folded seat flap hangs against the gate. The browser game gets them through the cart rig export.
+const TOUCHING_PARTS := [["Gate", "SeatFlap"]]
 
 ## Cart feel as the shared tuning dictionary (same keys as tuning/cart_tuning.json). The values come from this
 ## scene: the exports above and the bodies' masses. tools/export_cart_tuning.gd writes them out for the mobile game.
@@ -635,6 +642,14 @@ func groceries_in_basket() -> int:
 		if p.x > 0.05 and p.x < 1.0 and absf(p.z) < 0.33 and p.y > 0.4 and p.y < 1.2:
 			n += 1
 	return n
+
+
+## Whether two of the cart's own bodies touch each other (TOUCHING_PARTS) instead of passing through.
+static func _touching(a: Node, b: Node) -> bool:
+	for pair in TOUCHING_PARTS:
+		if (a.name == pair[0] and b.name == pair[1]) or (a.name == pair[1] and b.name == pair[0]):
+			return true
+	return false
 
 
 func _link(node: Node3D, body: RigidBody3D) -> void:

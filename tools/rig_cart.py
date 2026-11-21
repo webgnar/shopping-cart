@@ -19,14 +19,26 @@ Godot imports as node metadata) and as Limit Rotation constraints for posing
 in Blender. Angles in degrees; 0 = the pose the model was built in.
 """
 import bpy, math, os
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ---- Pivot positions measured from the base model (metres, Blender Z-up, cart nose = +X)
 GATE_HINGE = (0.068, 0.0, 0.985)   # top edge of the gate, under the handle bar
-FLAP_HINGE = (0.138, 0.0, 0.775)   # back edge of the seat flap, where it meets the gate
-SEAT_HINGE = (0.207, 0.0, 0.569)   # bottom of the child seat backrest, where it meets the gate
+# The base model has the child seat set up for a toddler: backrest leaning 16.4 degrees forward into the basket
+# from its bottom bar on the gate, seat flap level between the gate and the backrest. The rig folds it away
+# (how a cart stands in a lot) and that folded pose is the model's rest pose; the open seat is the far end of
+# each hinge. Gate -> child seat -> seat flap, each hinged on its parent:
+#  - Child seat (backrest): hinged on the gate at its bottom bar, on a bracket SEAT_GAP in front of the gate.
+#    Folded, it lies along the gate's front face (the gate is its stop), so a gate swinging up lifts it with it.
+#  - Seat flap: hinged on the backrest at the flap's front edge, FLAP_GAP behind the backrest. Folded, it hangs
+#    down between the backrest and the gate.
+GATE_LEAN = 18.2      # degrees: the gate's top leans back (toward the handle) from vertical
+SEAT_LEAN = -16.4     # degrees: the backrest as built, top leaning forward into the basket
+SEAT_BAR = (0.207, 0.569)   # x, z: the backrest's bottom bar, where the base model has it touch the gate
+FLAP_EDGE = (0.242, 0.776)  # x, z: on the flap's mid-plane, FLAP_GAP behind the backrest at the flap's front
+FLAP_GAP = 0.025      # m: flap mid-plane to backrest centre line (wire 1.3 cm + flap 1.0 cm + clearance)
+SEAT_GAP = 0.045      # m: backrest centre line to gate centre line, folded (flap and wires sandwiched between)
 FRONT_SWIVEL_X, FRONT_Y = 0.887, 0.1545   # caster kingpin
 FRONT_AXLE = (0.849, 0.063)               # x, z
 REAR_AXLE = (0.0685, 0.062)
@@ -149,14 +161,38 @@ for o in bpy.data.objects:
 root = empty("ShoppingCart", (0, 0, 0), size=0.2)
 frame = empty("Frame", (0, 0, 0), root, size=0.1)
 
-# Basket back: gate hangs from the top rail and swings forward into the basket.
-# The child seat backrest and seat flap are mounted on the gate, so they ride along.
+# ---- Fold the child seat away (see the notes at the top). Angles are as seen from the cart's right side
+# (Blender -Y, Godot +Z) with the nose to the right: counter-clockwise is positive.
+def turn(deg, about):
+    """Rotation by deg (counter-clockwise seen from the cart's right side, nose to the right) about point (x, z)."""
+    r = Matrix.Rotation(math.radians(-deg), 4, "Y")
+    p = Vector((about[0], 0.0, about[1]))
+    return Matrix.Translation(p) @ r @ Matrix.Translation(-p)
+
+
+gate_front = Vector((math.cos(math.radians(GATE_LEAN)), 0.0, math.sin(math.radians(GATE_LEAN))))
+seat_front = Vector((math.cos(math.radians(SEAT_LEAN)), 0.0, math.sin(math.radians(SEAT_LEAN))))
+# Flap: from level (free edge toward the gate) down along the back of the backrest.
+flap_fold = turn(90.0 + SEAT_LEAN, FLAP_EDGE)
+# Backrest (flap riding on it): back onto the gate, then out onto its bracket.
+seat_fold = Matrix.Translation(gate_front * SEAT_GAP) @ turn(GATE_LEAN - SEAT_LEAN, SEAT_BAR)
+for n in FLAP:
+    bpy.data.objects[n].matrix_world = seat_fold @ flap_fold @ bpy.data.objects[n].matrix_world
+for n in SEAT:
+    bpy.data.objects[n].matrix_world = seat_fold @ bpy.data.objects[n].matrix_world
+bpy.context.view_layer.update()
+seat_pivot = seat_fold @ Vector((SEAT_BAR[0], 0.0, SEAT_BAR[1]))
+flap_pivot = seat_fold @ Vector((FLAP_EDGE[0], 0.0, FLAP_EDGE[1]))
+print("CHILD SEAT HINGE", tuple(round(v, 4) for v in seat_pivot), "FLAP HINGE", tuple(round(v, 4) for v in flap_pivot))
+
+# Basket back: gate hangs from the top rail and swings forward into the basket. The child seat hangs on the
+# gate, and the seat flap on the child seat. Limits in degrees, same sign as Godot's hinge angle.
 gate = empty("Gate_Hinge", GATE_HINGE, frame)
 joint(gate, "hinge", "Y", -70, 0)   # about level at -70
-seat = empty("ChildSeat_Hinge", SEAT_HINGE, gate)
-joint(seat, "hinge", "Y", -30, 0)      # backrest folds back flat against the gate
-flap = empty("SeatFlap_Hinge", FLAP_HINGE, gate)
-joint(flap, "hinge", "Y", -105, 0)     # flap folds up flat against the gate
+seat = empty("ChildSeat_Hinge", tuple(seat_pivot), gate)
+joint(seat, "hinge", "Y", 0, round(GATE_LEAN - SEAT_LEAN, 1))   # 0 folded on the gate .. open for a toddler
+flap = empty("SeatFlap_Hinge", tuple(flap_pivot), seat)
+joint(flap, "hinge", "Y", 0, round(90.0 + SEAT_LEAN, 1))       # 0 hanging folded .. level as a seat
 attach(GATE, gate)
 attach(SEAT, seat)
 attach(FLAP, flap)

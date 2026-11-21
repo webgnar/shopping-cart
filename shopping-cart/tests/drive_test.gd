@@ -307,38 +307,69 @@ func _run() -> void:
 	if not gate_ok:
 		failures += 1
 	print("%-5s %-18s swung %.0f deg when shoved, back to %.0f deg after" % ["PASS" if gate_ok else "FAIL", "gate", swing, settle])
-	# Child seat: the flap lifts when pushed and drops back onto its stop. The backrest folds back flat against the
-	# gate and stays there (it leans back once folded), until it is pushed forward again.
-	for part in [["seat flap", "seat_flap", Vector3(0.13, 0, 0), Vector3.UP, 6.0, 20.0, 110.0],
-			["seat backrest", "child_seat", Vector3(0.13, 0.47, 0), Vector3.LEFT, 10.0, 5.0, 33.0]]:
-		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
-		await _wait(0.5)
-		cart = main.cart
-		var body: RigidBody3D = cart.get(part[1])
-		var rest: Basis = cart.gate.global_transform.basis.inverse() * body.global_transform.basis
-		var start: float = rad_to_deg(Basis.IDENTITY.get_rotation_quaternion().angle_to(rest.get_rotation_quaternion()))
-		var b0: Vector3 = body.global_transform.basis.y
-		var max_swing := 0.0
-		for i in 30:
-			var dir: Vector3 = cart.frame.global_transform.basis * part[3]
-			body.apply_force(dir * part[4], body.global_transform.basis * part[2])
-			await physics_frame
-			max_swing = maxf(max_swing, rad_to_deg(b0.angle_to(body.global_transform.basis.y)))
-		await _wait(2.0)
-		var stays: float = rad_to_deg(b0.angle_to(body.global_transform.basis.y))
-		if part[1] == "child_seat":
-			for i in 30:
-				body.apply_force(cart.frame.global_transform.basis.x * part[4], body.global_transform.basis * part[2])
-				await physics_frame
-			await _wait(2.0)
-		var back: float = rad_to_deg(b0.angle_to(body.global_transform.basis.y))
-		var ok: bool = start < 2.0 and max_swing > part[5] and max_swing < part[6] and back < 3.0
-		if part[1] == "child_seat":
-			ok = ok and stays > 25.0
-		if not ok:
-			failures += 1
-		print("%-5s %-18s at rest %.1f deg off its stop, swung %.0f deg when pushed, settled at %.0f deg, back to %.1f deg after" % [
-			"PASS" if ok else "FAIL", part[0], start, max_swing, stays, back])
+	# Child seat: at rest the backrest lies folded on the gate and the flap hangs folded between them. The gate swinging
+	# up carries both up with it (the backrest lies on the gate's front, which is its stop).
+	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
+	await _wait(1.0)
+	cart = main.cart
+	var seat_rest := _rel_deg(cart.gate, cart.child_seat)
+	var flap_rest := _rel_deg(cart.child_seat, cart.seat_flap)
+	var seat_up := 0.0
+	var flap_up := 0.0
+	var gate_up := 0.0
+	var g_rest := cart.gate.global_transform.basis.y
+	var s_rest := cart.child_seat.global_transform.basis.y
+	for i in 120:
+		cart.gate.apply_force(cart.frame.global_transform.basis.x * 60.0, cart.gate.global_transform.basis * Vector3(0.17, -0.5, 0))
+		await physics_frame
+		if i > 60:
+			seat_up = maxf(seat_up, _rel_deg(cart.gate, cart.child_seat))
+			flap_up = maxf(flap_up, _rel_deg(cart.child_seat, cart.seat_flap))
+	gate_up = rad_to_deg(g_rest.angle_to(cart.gate.global_transform.basis.y))
+	var seat_lift := rad_to_deg(s_rest.angle_to(cart.child_seat.global_transform.basis.y))
+	await _wait(2.0)
+	var seat_back := _rel_deg(cart.gate, cart.child_seat)
+	var folded_ok := seat_rest < 2.0 and flap_rest < 3.0 and gate_up > 45.0 and absf(seat_lift - gate_up) < 5.0 \
+		and seat_up < 10.0 and flap_up < 10.0 and seat_back < 2.0
+	if not folded_ok:
+		failures += 1
+	print("%-5s %-18s folded at rest: backrest %.1f deg off the gate, flap %.1f off the backrest; gate up %.0f deg lifts the backrest %.0f deg (stays within %.1f deg of the gate, flap within %.1f)" % [
+		"PASS" if folded_ok else "FAIL", "gate lifts seat", seat_rest, flap_rest, gate_up, seat_lift, seat_up, flap_up])
+	# The backrest pulls open into the basket and stays there (it leans forward once open) until it is pushed back.
+	# Then the flap, with the backrest open, lifts when pushed and drops back onto its stop.
+	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
+	await _wait(0.5)
+	cart = main.cart
+	var seat_max := 0.0
+	for i in 40:
+		cart.child_seat.apply_force(cart.frame.global_transform.basis.x * 10.0, cart.child_seat.global_transform.basis * Vector3(-0.15, 0.45, 0))
+		await physics_frame
+		seat_max = maxf(seat_max, _rel_deg(cart.gate, cart.child_seat))
+	await _wait(2.0)
+	var seat_stays := _rel_deg(cart.gate, cart.child_seat)
+	var flap0 := _rel_deg(cart.child_seat, cart.seat_flap)
+	var flap_max := 0.0
+	for i in 30:
+		cart.seat_flap.apply_force(-cart.frame.global_transform.basis.x * 6.0, cart.seat_flap.global_transform.basis * Vector3(0.03, -0.1, 0))
+		await physics_frame
+		flap_max = maxf(flap_max, _rel_deg(cart.child_seat, cart.seat_flap))
+	await _wait(2.0)
+	var flap_back := _rel_deg(cart.child_seat, cart.seat_flap)
+	for i in 40:
+		cart.child_seat.apply_force(-cart.frame.global_transform.basis.x * 10.0, cart.child_seat.global_transform.basis * Vector3(-0.15, 0.45, 0))
+		await physics_frame
+	await _wait(2.0)
+	var seat_folded := _rel_deg(cart.gate, cart.child_seat)
+	var open_ok := seat_max > 25.0 and seat_max < 38.0 and seat_stays > 25.0 and seat_folded < 2.0
+	if not open_ok:
+		failures += 1
+	print("%-5s %-18s pulled open %.0f deg, stayed open at %.0f deg, pushed back to %.1f deg" % [
+		"PASS" if open_ok else "FAIL", "seat backrest", seat_max, seat_stays, seat_folded])
+	var flap_ok := flap0 < 3.0 and flap_max > 20.0 and flap_max < 80.0 and flap_back < 3.0
+	if not flap_ok:
+		failures += 1
+	print("%-5s %-18s at rest %.1f deg off its stop, swung %.0f deg when pushed, back to %.1f deg after" % [
+		"PASS" if flap_ok else "FAIL", "seat flap", flap0, flap_max, flap_back])
 	# A pinned cart still gets knocked when something hits it.
 	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 	await _wait(2.0)
@@ -364,3 +395,9 @@ func _run() -> void:
 	print("%-5s %-18s pinned at rest: %s, moved %.2f m when a box hit it" % ["PASS" if hit_ok else "FAIL", "knocked when pinned", pinned, knocked])
 	print("RESULT: %s (%d failing)" % ["ALL PASS" if failures == 0 else "FAILURES", failures])
 	quit(1 if failures else 0)
+
+
+## Degrees a hinged body has turned from its rest pose, relative to the body it hangs on.
+func _rel_deg(parent: RigidBody3D, body: RigidBody3D) -> float:
+	var rel := parent.global_transform.basis.inverse() * body.global_transform.basis
+	return rad_to_deg(rel.get_rotation_quaternion().get_angle())

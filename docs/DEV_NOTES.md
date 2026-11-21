@@ -3,6 +3,41 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: Cart gate, child seat and seat flap as a chain of hinged parts
+
+zack: the rig wasn't finished. The child seat and the plastic seat flap should be separate parts with their own
+physics, gate -> child seat -> flap, and a gate swinging up should push the child seat up with it.
+
+- **Before:** the child seat (wire backrest) and the flap both hung on the gate, side by side. The model's built pose
+  is the seat set up for a toddler, so the backrest stood leaning 16 degrees forward into the basket from its
+  bottom bar, crossing the gate in an X and poking above the rim (zack's screenshot), and nothing ever folded it.
+  The gate's collision box was also mirrored (its top 17 cm in front of the hinge, its bottom under it).
+- **Now (tools/rig_cart.py, scenes/cart/cart.tscn):** the rig folds the seat away and that is the rest pose.
+  - ChildSeat hangs on the gate (ChildSeatHinge, node_a Gate) at its bottom bar, on a bracket 4.5 cm in front of
+    the gate. Folded it lies along the gate's front face, which is its 0 stop, so the gate swinging up (a cart
+    nesting in behind) lifts it with it. It opens 34.6 degrees into the basket (the original built pose) and stays
+    open, since it then leans forward, until pushed back.
+  - SeatFlap hangs on the child seat (SeatFlapHinge, node_a ChildSeat) at its front edge, 2.5 cm behind the
+    backrest. Folded it hangs between the backrest and the gate; it opens 73.6 degrees to lie level as a seat.
+  - Model hierarchy matches: Gate_Hinge > ChildSeat_Hinge > SeatFlap_Hinge. The scene's bodies stay side by side
+    under Cart: a RigidBody3D under another RigidBody3D gets teleported with its parent node, which breaks the hinge.
+  - The flap leans on the gate under gravity, so Gate and SeatFlap are the one pair of the cart's own bodies that
+    collide (ShoppingCart.TOUCHING_PARTS; the browser gives just those two the cart's own collision bit).
+  - Hinge friction: ChildSeat and SeatFlap have angular_damp 4. Without it the flap rattled on a raised gate in a
+    stack and the stack never froze (cart_stack_test "stacks stand still").
+  - Gate collision box un-mirrored to follow the gate wires.
+- **Sizes:** gate leans 18.2 degrees back, backrest 0.495 m tall, flap 14 x 48 cm (plastic 25 cm wide).
+  Clearances folded: backrest wire (+-1.3 cm) to flap (+-1.0 cm) 2 mm, flap to gate wire (+-0.8 cm) 2 mm, so no
+  coplanar faces and no z-fighting. The backrest's top loops end 3.5 cm above the gate's top rail, clear of the
+  handlebar.
+- **Model:** same meshes, re-posed only (shopping_cart.glb 14.3 MB, mobile cart.glb 2.5 MB, 84.7k faces).
+  Re-exported with bpy 5.0 (cloud).
+- **Checks:** drive_test (new "gate lifts seat", "seat backrest", "seat flap"), cart_stack_test, all other suites
+  pass; garage_test "floor 10" fails as it did before this change (the cart creeps down the ramp, less now).
+  Renders: tests/cart_rig_screenshot.gd (`-- <prefix> tint` colours gate red, seat green, flap blue).
+- **Left out:** nothing opens the seat in play (no toddler); the open flap doesn't reach the gate (the bracket moves
+  the seat 4.5 cm forward), so a flap lifted level drops back.
+
 ## 2026-11-21: Stacked carts (nesting)
 
 zack wants carts that nest into one another and move as a herd with very different physics (reference: a photo of a
