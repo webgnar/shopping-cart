@@ -21,13 +21,22 @@
 [ext_resource type="Material" path="res://assets/materials/garage/concrete_pillar.tres" id="19_2y8b3"]
 [ext_resource type="NavigationMesh" path="res://assets/navigation/parking_garage.tres" id="nav_mesh"]
 [ext_resource type="PackedScene" path="res://scenes/cart/bot_cart.tscn" id="bot_cart"]
+[ext_resource type="Shader" path="res://scenes/environment/skyline_sky.gdshader" id="skyline_sky"]
+[ext_resource type="Script" path="res://scripts/levels/optional_backdrop.gd" id="optional_backdrop"]
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_m5xhd"]
-sky_top_color = Color(0.16470589, 0.21176471, 0.3372549, 1)
-sky_horizon_color = Color(0.8509804, 0.60784316, 0.45490196, 1)
-ground_bottom_color = Color(0.17254902, 0.16470589, 0.16470589, 1)
-ground_horizon_color = Color(0.5411765, 0.47843137, 0.4392157, 1)
-sun_angle_max = 20.0
+[sub_resource type="ShaderMaterial" id="ProceduralSkyMaterial_m5xhd"]
+shader = ExtResource("skyline_sky")
+shader_parameter/sky_top_color = Color(0.16470589, 0.21176471, 0.3372549, 1)
+shader_parameter/sky_horizon_color = Color(0.8509804, 0.60784316, 0.45490196, 1)
+shader_parameter/sky_curve = 0.15
+shader_parameter/sky_energy = 1.0
+shader_parameter/ground_bottom_color = Color(0.17254902, 0.16470589, 0.16470589, 1)
+shader_parameter/ground_horizon_color = Color(0.5411765, 0.47843137, 0.4392157, 1)
+shader_parameter/ground_curve = 0.02
+shader_parameter/sun_angle_max_degrees = 20.0
+shader_parameter/sun_curve = 0.15
+shader_parameter/skyline_yaw_degrees = 0.0
+shader_parameter/skyline_tint = Color(1, 1, 1, 1)
 
 [sub_resource type="Sky" id="Sky_hfnt7"]
 sky_material = SubResource("ProceduralSkyMaterial_m5xhd")
@@ -972,6 +981,12 @@ light_color = Color(1, 0.8235294, 0.6313726, 1)
 light_energy = 1.1
 shadow_enabled = true
 directional_shadow_max_distance = 80.0
+
+[node name="Skyline" type="Node3D" parent="." unique_id=1730522941 node_paths=PackedStringArray("world_environment") groups=["mobile_export_skip"]]
+script = ExtResource("optional_backdrop")
+scene_path = "res://assets/manhattan_skyline/manhattan_skyline.tscn"
+panorama_path = "res://assets/manhattan_skyline/far_panorama.webp"
+world_environment = NodePath("../WorldEnvironment")
 
 [node name="CartSpawn" type="Marker3D" parent="." unique_id=1189111192]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 16, -3)
