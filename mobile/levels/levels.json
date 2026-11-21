@@ -23,5 +23,10 @@
     "key": "hill",
     "name": "San Francisco hill",
     "scene": "res://scenes/levels/sf_hill.tscn"
+  },
+  {
+    "key": "coast",
+    "name": "Coast highway",
+    "scene": "res://scenes/levels/coast_highway.tscn"
   }
 ]

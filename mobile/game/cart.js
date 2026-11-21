@@ -28,9 +28,12 @@ export function shapeDesc(RAPIER, s) {
     case 'capsule': d = RAPIER.ColliderDesc.capsule(Math.max(0.001, s.height / 2 - s.radius), s.radius); break;
     case 'convex': d = RAPIER.ColliderDesc.convexHull(new Float32Array(s.points)); break;
     case 'mesh': {
+      // Godot's faces wind clockwise; Rapier's counter-clockwise. With them turned round, Rapier can fix internal edges:
+      // without that, a wheel rolling over the edge between two triangles (every 4 m on the coast highway's deck) can
+      // catch on it and hop. Jolt doesn't.
       const v = new Float32Array(s.faces), idx = new Uint32Array(v.length / 3);
-      for (let i = 0; i < idx.length; i++) idx[i] = i;
-      d = RAPIER.ColliderDesc.trimesh(v, idx); break;
+      for (let i = 0; i < idx.length; i += 3) { idx[i] = i; idx[i + 1] = i + 2; idx[i + 2] = i + 1; }
+      d = RAPIER.ColliderDesc.trimesh(v, idx, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES); break;
     }
   }
   if (!d) return null;

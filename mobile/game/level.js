@@ -85,7 +85,8 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
   // start, placed by time exactly as Godot does. Their meshes (kin_<n>) follow their bodies.
   const traffic = [];
   for (const lane of json.traffic || []) {
-    const L = xfMatrix(lane.xf);
+    const L = lane.route ? null : xfMatrix(lane.xf);
+    const route = lane.route ? { pts: lane.route, step: lane.step } : null;
     for (const c of lane.cars) {
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased());
       for (const s of c.shapes) {
@@ -94,7 +95,7 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
       }
       const node = scene.getObjectByName(c.node);
       if (node) { root.attach(node); node.traverse(o => { if (o.isMesh) { o.castShadow = !opts.noShadows; o.receiveShadow = true; } }); }
-      const car = { lane: L, speed: lane.speed, length: lane.length, offset: c.offset, body, node, d: c.offset };
+      const car = { lane: L, route, speed: lane.speed, length: lane.length, offset: c.offset, body, node, d: c.offset };
       placeCar(car, 0, true);
       traffic.push(car);
     }
@@ -157,12 +158,25 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
 }
 
 const _m = new THREE.Matrix4(), _t = new THREE.Matrix4();
-/** Puts a traffic car where its lane has it at lane time t (TrafficLane.distance). */
+const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0), _o = new THREE.Vector3();
+/** A point d m along an exported TrafficRoute (points every `step` m), into `out`. */
+function routePoint(route, d, length, out) {
+  const n = route.pts.length / 3 - 1, u = Math.min(Math.max(d, 0), length) / route.step;
+  const i = Math.min(n - 1, Math.floor(u)), f = u - i, p = route.pts;
+  return out.set(p[3 * i] + (p[3 * i + 3] - p[3 * i]) * f, p[3 * i + 1] + (p[3 * i + 4] - p[3 * i + 1]) * f,
+    p[3 * i + 2] + (p[3 * i + 5] - p[3 * i + 2]) * f);
+}
+/** Puts a traffic car where its lane has it at lane time t (TrafficLane.distance / TrafficRoute.distance). */
 function placeCar(car, t, teleport) {
   const d = ((car.offset + car.speed * t) % car.length + car.length) % car.length;
   const jump = teleport || Math.abs(d - car.d) > car.length * 0.5;   // came back round to the start
   car.d = d;
-  _m.copy(car.lane).multiply(_t.makeTranslation(0, 0, -d));
+  if (car.route) {   // facing along the route, like Godot's Basis.looking_at(ahead, UP)
+    routePoint(car.route, Math.min(d + 2, car.length), car.length, _a);
+    routePoint(car.route, Math.max(d - 2, 0), car.length, _b);
+    routePoint(car.route, d, car.length, _o);
+    _m.lookAt(_b, _a, _up).setPosition(_o);   // three's lookAt points +Z from target to eye: -Z faces ahead
+  } else _m.copy(car.lane).multiply(_t.makeTranslation(0, 0, -d));
   const { p, q } = xfPose(_m);
   if (jump) { car.body.setTranslation(p, false); car.body.setRotation(q, false); }
   car.body.setNextKinematicTranslation(p); car.body.setNextKinematicRotation(q);

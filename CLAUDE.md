@@ -135,6 +135,8 @@ From `shopping-cart/`:
 - Browser game (from the repo root): `node mobile/test/drive_test.js`
 - Camera never clips into levels (all levels): `godot --headless --fixed-fps 120 -s res://tests/camera_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
+- Coast highway level test: `godot --headless --fixed-fps 120 -s res://tests/coast_test.gd` (the level is generated
+  by `tools/coast_models.py`; its docstring lists the steps to rebuild it)
 - Stacked carts (nest, herd, pull off, knocks): `godot --headless --fixed-fps 120 -s res://tests/cart_stack_test.gd`
 - Wheel sounds (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
 - Sandbox screenshots (spawn, overview, test strip, 2 km out): `xvfb-run godot -s res://tests/sandbox_screenshot.gd -- <out prefix>`
