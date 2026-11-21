@@ -22,19 +22,27 @@ export function shapeDesc(RAPIER, s) {
   let d;
   switch (s.type) {
     case 'box': d = RAPIER.ColliderDesc.cuboid(s.size[0] / 2, s.size[1] / 2, s.size[2] / 2); break;
-    case 'plane': d = RAPIER.ColliderDesc.halfspace({ x: 0, y: 1, z: 0 }); break;   // a world boundary: endless floor
+    // A world boundary: an endless floor. The vendored Rapier (0.14) has no half-space collider, so it is a slab
+    // 40 km across with its top on the plane.
+    case 'plane': d = RAPIER.ColliderDesc.cuboid(20000, 1, 20000); break;
     case 'sphere': d = RAPIER.ColliderDesc.ball(s.radius); break;
     case 'cylinder': d = RAPIER.ColliderDesc.cylinder(s.height / 2, s.radius); break;
     case 'capsule': d = RAPIER.ColliderDesc.capsule(Math.max(0.001, s.height / 2 - s.radius), s.radius); break;
     case 'convex': d = RAPIER.ColliderDesc.convexHull(new Float32Array(s.points)); break;
     case 'mesh': {
+      // Godot's faces wind clockwise; Rapier's counter-clockwise. With them turned round, Rapier can fix internal edges:
+      // without that, a wheel rolling over the edge between two triangles (every 4 m on the coast highway's deck) can
+      // catch on it and hop. Jolt doesn't.
       const v = new Float32Array(s.faces), idx = new Uint32Array(v.length / 3);
-      for (let i = 0; i < idx.length; i++) idx[i] = i;
-      d = RAPIER.ColliderDesc.trimesh(v, idx); break;
+      for (let i = 0; i < idx.length; i += 3) { idx[i] = i; idx[i + 1] = i + 2; idx[i + 2] = i + 1; }
+      d = RAPIER.ColliderDesc.trimesh(v, idx, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES); break;
     }
   }
   if (!d) return null;
   const { p, q } = xfPose(xfMatrix(s.xf));
+  if (s.type === 'plane') {   // sink the slab 1 m along the plane's normal (local +Y)
+    p.x -= 2 * (q.x * q.y - q.w * q.z); p.y -= 1 - 2 * (q.x * q.x + q.z * q.z); p.z -= 2 * (q.y * q.z + q.w * q.x);
+  }
   return d.setTranslation(p.x, p.y, p.z).setRotation(q);
 }
 
