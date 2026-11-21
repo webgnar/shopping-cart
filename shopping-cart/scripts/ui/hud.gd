@@ -25,4 +25,4 @@ func show_cart(cart: ShoppingCart) -> void:
 		(bar[1] as Range).value = maxf(-p, 0.0)
 		(bar[2] as Label).text = "%d N" % roundi(absf(p))
 	var hs := cart.hand_state
-	_hands.text = "Left hand: %s\nRight hand: %s" % [hs.L if hs.L else "—", hs.R if hs.R else "—"]
+	_hands.text = "L  %s\nR  %s" % [hs.L if hs.L else "—", hs.R if hs.R else "—"]
