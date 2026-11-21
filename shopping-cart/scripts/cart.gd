@@ -81,6 +81,7 @@ var arm_extension := {"L": 0.0, "R": 0.0}   ## m each arm is currently stretched
 @export_group("Coming to rest")
 @export var settle_brake := 40.0    ## how hard the cart brakes itself below settle_speed (per kg, and N*m per rad/s)
 @export var stop_delay := 0.25      ## s of creeping below stop_speed before the cart stops dead
+@export var settle_max_slope := 0.04   ## rise per run: on anything steeper the cart never settles, it rolls away
 @export_group("")
 
 const LAYER_WORLD := 1
@@ -105,6 +106,7 @@ var _tilt_dir := 0                  ## +1 S, -1 W, 0 neither
 var _let_go := false                ## the hands slipped off on this W/S hold; it does nothing more until let go
 
 var _links := []           ## [visual node, body, offset] kept in step every frame
+var _own_rids: Array[RID] = []   ## this cart's bodies, which its wheel-on-the-ground rays look past
 
 
 func _ready() -> void:
@@ -119,6 +121,8 @@ func _ready() -> void:
 		for b in parts:
 			if a != b:
 				a.add_collision_exception_with(b)
+	for b in parts + groceries:
+		_own_rids.append(b.get_rid())
 	# Each rig pivot of the visual model follows its physics body.
 	_link(_model, frame)
 	_link(_model.find_child("Gate_Hinge"), gate)
@@ -137,7 +141,8 @@ const TUNING_KEYS := ["power_base", "power_ramp", "power_relax", "sprint_speed",
 	"fallen_upright", "fallen_still", "stood_upright",
 	"rolling_resistance", "grip_yaw_damping", "spin_grip", "spin_grip_min",
 	"settle_speed", "settle_spin", "stop_speed", "stop_spin",
-	"arm_reach", "brake_spring", "brake_damping", "brake_max", "arm_relax_rate", "settle_brake", "stop_delay"]
+	"arm_reach", "brake_spring", "brake_damping", "brake_max", "arm_relax_rate", "settle_brake", "stop_delay",
+	"settle_max_slope"]
 
 
 func tuning() -> Dictionary:
@@ -184,6 +189,10 @@ func _physics_process(delta: float) -> void:
 func _settle(delta: float) -> void:
 	if frame.freeze:
 		return
+	# On a hill a cart left alone on its wheels rolls away, as a real one does: no braking, no pinning.
+	if ground_slope() > settle_max_slope:
+		_rest_time = 0.0
+		return
 	var v := frame.linear_velocity
 	var w := frame.angular_velocity
 	if v.length() < settle_speed and w.length() < settle_spin:
@@ -210,7 +219,8 @@ func _stop() -> void:
 ## A loose object or another cart (not this cart's own parts or groceries) is about to hit the pinned cart:
 ## let physics take it again.
 func _on_frame_hit(body: Node) -> void:
-	if frame.freeze and body is RigidBody3D and not groceries.has(body) and body.get_parent() != self:
+	var mover := (body is RigidBody3D and not groceries.has(body)) or body is AnimatableBody3D   # props, carts, traffic
+	if frame.freeze and mover and body.get_parent() != self:
 		_wake()
 
 
@@ -229,7 +239,7 @@ func _apply_rolling_resistance(delta: float) -> void:
 	var max_torque := rolling_resistance * total_mass * 9.81 / 4.0 * wheel_radius
 	for k in wheels:
 		var w: RigidBody3D = wheels[k]
-		if w.global_position.y > wheel_radius + 0.02:
+		if not wheel_on_ground(w):
 			continue   # off the ground
 		var axle := w.global_transform.basis.z.normalized()
 		var spin := w.angular_velocity.dot(axle)
@@ -401,9 +411,35 @@ func heading() -> float:
 func wheels_down() -> int:
 	var n := 0
 	for k in wheels:
-		if wheels[k].global_position.y < wheel_radius + 0.02:
+		if wheel_on_ground(wheels[k]):
 			n += 1
 	return n
+
+
+## A wheel is on the ground when something solid is right under it (2 cm of air at most), on any floor or slope.
+func wheel_on_ground(w: RigidBody3D) -> bool:
+	return not _ground_hit(w).is_empty()
+
+
+func _ground_hit(w: RigidBody3D) -> Dictionary:
+	var q := PhysicsRayQueryParameters3D.create(w.global_position,
+		w.global_position + Vector3.DOWN * (wheel_radius + 0.02), 0x000f, _own_rids)
+	return w.get_world_3d().direct_space_state.intersect_ray(q)
+
+
+## Rise per run of the ground the cart stands on, from under its wheels (0 unless at least three are down).
+func ground_slope() -> float:
+	var n := Vector3.ZERO
+	var down := 0
+	for k in wheels:
+		var hit := _ground_hit(wheels[k])
+		if not hit.is_empty():
+			n += hit.normal
+			down += 1
+	if down < 3:
+		return 0.0
+	n = n.normalized()
+	return sqrt(maxf(0.0, 1.0 - n.y * n.y)) / maxf(n.y, 0.01)
 
 
 func groceries_in_basket() -> int:

@@ -60,14 +60,32 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
     if (node) { root.attach(node); node.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } }); }
     props.push({ body, node });
   }
+  // Moving traffic (Godot's TrafficLane): kinematic cars driving along each lane's -Z and coming back round to its
+  // start, placed by time exactly as Godot does. Their meshes (kin_<n>) follow their bodies.
+  const traffic = [];
+  for (const lane of json.traffic || []) {
+    const L = xfMatrix(lane.xf);
+    for (const c of lane.cars) {
+      const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased());
+      for (const s of c.shapes) {
+        const d = shapeDesc(RAPIER, s);
+        if (d) world.createCollider(d.setFriction(c.friction).setFrictionCombineRule(MIN).setCollisionGroups(godotGroups(1, 0xffff)), body);
+      }
+      const node = scene.getObjectByName(c.node);
+      if (node) { root.attach(node); node.traverse(o => { if (o.isMesh) { o.castShadow = !opts.noShadows; o.receiveShadow = true; } }); }
+      const car = { lane: L, speed: lane.speed, length: lane.length, offset: c.offset, body, node, d: c.offset };
+      placeCar(car, 0, true);
+      traffic.push(car);
+    }
+  }
   // Everything else never moves: merge it per material (and per cell), so the phone draws a few hundred meshes
   // instead of thousands.
-  const buckets = new Map();
+  const buckets = new Map(), cellSize = json.merge_cell || CELL;
   scene.traverse(o => {
     if (!o.isMesh || !o.geometry) return;
     const g = o.geometry, attrs = Object.keys(g.attributes).sort().join(','), mats = Array.isArray(o.material) ? o.material : [o.material];
     const c = new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3());
-    const cell = `${Math.floor(c.x / CELL)},${Math.floor(c.y / CELL)},${Math.floor(c.z / CELL)}`;
+    const cell = `${Math.floor(c.x / cellSize)},${Math.floor(c.y / cellSize)},${Math.floor(c.z / cellSize)}`;
     // glTF meshes have one material per primitive, and three.js makes each primitive its own mesh.
     const geo = g.clone().applyMatrix4(o.matrixWorld);
     const key = `${mats[0].uuid}|${attrs}|${g.index ? 'i' : 'n'}|${cell}`;
@@ -111,7 +129,35 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
   // ---------------------------------------------------------------- light
   const env = json.environment || {};
   const lights = new LightPool(root, json.lights, opts.lightCount);
-  return { props, lights, drawn, tris, env, sun: json.sun, spawn: json.spawn, spareCarts: json.spare_carts, name: json.name };
+  return { props, traffic, lights, drawn, tris, env, sun: json.sun, spawn: json.spawn, spareCarts: json.spare_carts,
+    name: json.name, clock: 0 };
+}
+
+const _m = new THREE.Matrix4(), _t = new THREE.Matrix4();
+/** Puts a traffic car where its lane has it at lane time t (TrafficLane.distance). */
+function placeCar(car, t, teleport) {
+  const d = ((car.offset + car.speed * t) % car.length + car.length) % car.length;
+  const jump = teleport || Math.abs(d - car.d) > car.length * 0.5;   // came back round to the start
+  car.d = d;
+  _m.copy(car.lane).multiply(_t.makeTranslation(0, 0, -d));
+  const { p, q } = xfPose(_m);
+  if (jump) { car.body.setTranslation(p, false); car.body.setRotation(q, false); }
+  car.body.setNextKinematicTranslation(p); car.body.setNextKinematicRotation(q);
+}
+
+/** Advances the level's traffic by one physics step (before world.step). */
+export function stepTraffic(level, dt) {
+  level.clock += dt;
+  for (const car of level.traffic) placeCar(car, level.clock, false);
+}
+
+/** Moves the traffic meshes onto their bodies. */
+export function syncTraffic(level) {
+  for (const car of level.traffic) {
+    if (!car.node) continue;
+    const t = car.body.translation(), r = car.body.rotation();
+    car.node.position.set(t.x, t.y, t.z); car.node.quaternion.set(r.x, r.y, r.z, r.w);
+  }
 }
 
 /** Draws a Label3D's text the way Godot does: font_size px per line, pixel_size m per px, centred. */

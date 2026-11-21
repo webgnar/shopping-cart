@@ -41,5 +41,6 @@ window.CART_TUNING = {
   "stood_upright": 0.95,
   "arm_relax_rate": 1.0,
   "settle_brake": 40.0,
-  "stop_delay": 0.25
+  "stop_delay": 0.25,
+  "settle_max_slope": 0.04
 };

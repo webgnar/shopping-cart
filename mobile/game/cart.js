@@ -8,7 +8,8 @@ import { v3, add, sub, scale, dot, cross, len, norm, clamp, moveToward, arr, rot
 // Cart settings Godot keeps as exports but the tuning file may not have yet (defaults = the Godot defaults).
 const DEFAULTS = { arm_relax_rate: 1.0, settle_brake: 40.0, stop_delay: 0.25, power_base: 25, power_ramp: 120,
   power_relax: 400, sprint_speed: 8, wrist_lever: 0.4, lift_pitch: -0.2, press_pitch: 0.3, side_roll: 0.22,
-  tilt_kp: 1400, tilt_kd: 80, tilt_max: 200, tip_delay: 0.6, tip_rate: 0.7, let_go_pitch: 0.95, fallen_upright: 0.3, fallen_still: 1.0, stood_upright: 0.95 };
+  tilt_kp: 1400, tilt_kd: 80, tilt_max: 200, tip_delay: 0.6, tip_rate: 0.7, let_go_pitch: 0.95, fallen_upright: 0.3, fallen_still: 1.0, stood_upright: 0.95,
+  settle_max_slope: 0.04 };
 const PROJECT_LINEAR_DAMP = 0.02, PROJECT_ANGULAR_DAMP = 0.05;   // Godot project settings
 const MAX_ANGULAR_VELOCITY = 0.25 * Math.PI * 60;                 // Jolt's default cap, rad/s (see capWheelSpin)
 // Visual model pivots (mobile/models/cart.glb, same names as the Godot model) for each physics body.
@@ -116,7 +117,8 @@ export class Cart {
     if (rig.guard) {
       const d = shapeDesc(RAPIER, rig.guard);
       this.guard = world.createCollider(d.setSensor(true).setDensity(0).setCollisionGroups(godotGroups(2, 3, bit))
-        .setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS), this.frame);
+        .setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS)
+        .setActiveCollisionTypes(RAPIER.ActiveCollisionTypes.DEFAULT | RAPIER.ActiveCollisionTypes.KINEMATIC_KINEMATIC), this.frame);
     }
     this.parts = Object.values(this.b);
     this.partSet = new Set(this.parts.map(p => p.handle));
@@ -196,11 +198,22 @@ export class Cart {
   upright() { return rot(this.frame.rotation(), v3(0, 1, 0)).y; }
 
   /** A wheel touches the floor when something solid is right under it (works on every floor of the garage). */
-  wheelDown(w) {
+  wheelDown(w) { return !!this._groundHit(w); }
+  _groundHit(w) {
     const { RAPIER, world } = this.ctx, p = w.translation(), r = this.wheelRadius;
-    const hit = world.castRay(new RAPIER.Ray(p, { x: 0, y: -1, z: 0 }), r + 0.02, true, undefined,
+    return world.castRayAndGetNormal(new RAPIER.Ray(p, { x: 0, y: -1, z: 0 }), r + 0.02, true, undefined,
       groups(this.bit, 0x000f));   // the cart's own parts carry only its own bit, so they never match
-    return !!hit;
+  }
+  /** Rise per run of the ground under the wheels (0 unless at least three are down), as Cart.ground_slope(). */
+  groundSlope() {
+    let nx = 0, ny = 0, nz = 0, down = 0;
+    for (const w of Object.values(this.wheels)) {
+      const hit = this._groundHit(w);
+      if (hit) { nx += hit.normal.x; ny += hit.normal.y; nz += hit.normal.z; down++; }
+    }
+    if (down < 3) return 0;
+    const l = Math.hypot(nx, ny, nz), y = ny / l;
+    return Math.sqrt(Math.max(0, 1 - y * y)) / Math.max(y, 0.01);
   }
   wheelsDown() { let n = 0; for (const w of Object.values(this.wheels)) if (this.wheelDown(w)) n++; return n; }
 
@@ -349,6 +362,8 @@ export class Cart {
   /** Nearly stopped with no hands on: brake gently, then pin the frame so it can't creep. */
   _settle(dt) {
     const T = this.T, f = this.frame;
+    // On a hill a cart left alone on its wheels rolls away, as a real one does: no braking, no pinning.
+    if (this.groundSlope() > T.settle_max_slope) { this.restTime = 0; this.restAnchor = null; return; }
     const v = len(f.linvel()), w = len(f.angvel());
     if (v < T.settle_speed && w < T.settle_spin) {
       f.addForce(scale(f.linvel(), -this.bodyMass.Frame * T.settle_brake), true);
@@ -396,7 +411,7 @@ export class Cart {
 
   /** Something hit the guard zone of this pinned cart: let physics take it again (not its own parts or groceries). */
   guardHit(otherBody) {
-    if (!this.pinned || !otherBody || !otherBody.isDynamic()) return;
+    if (!this.pinned || !otherBody || !(otherBody.isDynamic() || otherBody.isKinematic())) return;   // props, carts, traffic
     if (this.partSet.has(otherBody.handle) || this.grocerySet.has(otherBody.handle)) return;
     this.wake();
   }
