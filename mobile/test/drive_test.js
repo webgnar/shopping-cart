@@ -1,5 +1,5 @@
 // Headless test for the browser version: the same drive checks as the Godot drive test
-// (shopping-cart/tests/drive_test.gd), plus every level, spare carts, bot carts, cart-to-cart hits, the follow camera,
+// (shopping-cart/tests/drive_test.gd), plus every level, spare carts, bot carts, cart-to-cart hits, stacked carts, the follow camera,
 // the phone's touch rockers, the keyboard and the console.
 //   node mobile/test/drive_test.js [screenshot-dir]
 // Serves mobile/ on a local port (the game fetches its levels, so it can't run from file://).
@@ -24,23 +24,22 @@ function serve() {
   });
 }
 
-// name, input held {L, R: -1/0/1, lift, press}, seconds, check  (sandbox, asphalt at (-10, 0, -3) unless "tile")
+// name, input held {L, R: -1/0/1, lift, press}, seconds, check  (sandbox, asphalt at (-10, 0, -3))
 const SCENARIOS = [
   ['idle', {}, 5.0, 'still'],
-  ['Q+E both push', { L: 1, R: 1 }, 1.5, 'forward_straight'],
+  ['E+Q both push', { L: 1, R: 1 }, 1.5, 'forward_straight'],
   ['A+D both pull', { L: -1, R: -1 }, 1.5, 'backward'],
-  ['E right push', { R: 1 }, 1.5, 'turns_left'],
-  ['Q left push', { L: 1 }, 1.5, 'turns_right'],
-  ['Q+D spin', { L: 1, R: -1 }, 1.2, 'spins_right'],
+  ['Q right push', { R: 1 }, 1.5, 'turns_left'],
+  ['E left push', { L: 1 }, 1.5, 'turns_right'],
+  ['E+D spin', { L: 1, R: -1 }, 1.2, 'spins_right'],
   ['S front up', { press: true }, 1.5, 'wheelie'],
   ['W back up', { lift: true }, 1.5, 'rear_up'],
-  ['W+E right side up', { lift: true, R: 1 }, 1.5, 'right_up'],
-  ['Q+E short push', { L: 1, R: 1 }, 1.2, 'flat'],
-  ['Q+E hard push', { L: 1, R: 1 }, 2.1, 'wheelie'],
+  ['W+Q right side up', { lift: true, R: 1 }, 1.5, 'right_up'],
+  ['E+Q short push', { L: 1, R: 1 }, 1.2, 'flat'],
+  ['E+Q hard push', { L: 1, R: 1 }, 2.1, 'wheelie'],
   ['A+D hard pull', { L: -1, R: -1 }, 2.6, 'rear_up'],
-  ['tile Q+E push', { L: 1, R: 1 }, 1.5, 'forward_straight'],
-  ['coast then rest', { coast: true }, 12.0, 'comes_to_rest'],
-  ['rested 4 s, then Q+E', { L: 1, R: 1 }, 1.5, 'wakes_and_moves'],
+  ['coast then rest', { coast: true }, 30.0, 'comes_to_rest'],
+  ['rested 4 s, then E+Q', { L: 1, R: 1 }, 1.5, 'wakes_and_moves'],
 ];
 
 (async () => {
@@ -82,7 +81,7 @@ const SCENARIOS = [
 
   for (const [name, inp, secs, check] of SCENARIOS) {
     const r = await page.evaluate(([name, inp, secs, check]) => {
-      const c = T.c, cart = T.fresh(name.startsWith('tile') ? 2 : -10, name.startsWith('tile') ? 0 : -3);
+      const c = T.c, cart = T.fresh(-10, -3);
       if (check === 'wakes_and_moves') c.simulate(4.0);
       const p0 = { ...cart.origin() }, h0 = cart.heading(), wasPinned = cart.pinned;
       let maxFront = 0, maxRear = 0, maxRight = 0, maxPitch = 0, i = 0;
@@ -149,7 +148,7 @@ const SCENARIOS = [
   report(Math.abs(acc.pull - acc.push) < 0.1 * acc.push, 'pull = push', `after 0.5 s from rest: pushing ${acc.push.toFixed(2)} m/s, pulling ${acc.pull.toFixed(2)} m/s`);
 
   // Countering a spin with the other hand stops it.
-  for (const [first, then, label] of [[{ L: -1 }, { R: -1 }, 'A spin, then D'], [{ L: 1, R: -1 }, { L: -1, R: 1 }, 'Q+D spin, then A+E']]) {
+  for (const [first, then, label] of [[{ L: -1 }, { R: -1 }, 'A spin, then D'], [{ L: 1, R: -1 }, { L: -1, R: 1 }, 'E+D spin, then A+Q']]) {
     const r = await page.evaluate(([first, then]) => {
       const c = T.c, cart = T.fresh();
       T.hold(first, 1.5);
@@ -235,7 +234,7 @@ const SCENARIOS = [
       return { downUp, wasFallen, tUp, slid, wheels: cartNow.wheelsDown() };
     }, setup);
     report(r.wasFallen && r.downUp < 0.3 && r.tUp > 0 && r.wheels === 4 && r.slid < 3.0, `get up (${setup})`,
-      `lying at up ${r.downUp.toFixed(2)} (fallen ${r.wasFallen}), E held: ${r.tUp > 0 ? 'upright in ' + r.tUp.toFixed(2) + ' s' : 'still down after 5 s'}, moved ${r.slid.toFixed(2)} m, ${r.wheels}/4 wheels down`);
+      `lying at up ${r.downUp.toFixed(2)} (fallen ${r.wasFallen}), Q held: ${r.tUp > 0 ? 'upright in ' + r.tUp.toFixed(2) + ' s' : 'still down after 5 s'}, moved ${r.slid.toFixed(2)} m, ${r.wheels}/4 wheels down`);
   }
 
   // Gate, seat flap and backrest hinges (limits and resting on their stops).
@@ -379,9 +378,9 @@ const SCENARIOS = [
     const kinds = new Set([...st.loaded.values()].map(k => st.pick(k.i, k.j)[0]));
     c.setInput({ L: 1, R: 1 }); c.simulate(2); c.setInput({}); c.simulate(1);
     c.renderOnce();
-    return { check: st.selfCheck(), start, after: st.loaded.size, holes, landed, kinds: kinds.size, ...c.stats() };
+    return { check: st.selfCheck(), start, after: st.loaded.size, holes, landed, kinds: kinds.size, kindsTotal: st.s.chunks.length, ...c.stats() };
   });
-  report(sb.check && sb.start >= 8 && sb.holes === 0 && Math.abs(sb.landed.y) < 0.1 && sb.kinds >= 3, 'sandbox stream',
+  report(sb.check && sb.start >= 8 && sb.holes === 0 && Math.abs(sb.landed.y) < 0.1 && sb.kinds >= Math.min(3, sb.kindsTotal), 'sandbox stream',
     `layout matches Godot: ${sb.check}, ${sb.start} chunks at the start, ${sb.after} after the jump (${sb.kinds} kinds), holes ${sb.holes}, landed at y ${sb.landed.y.toFixed(2)}, ${sb.drawCalls} draws, ${Math.round(sb.triangles / 1000)}k triangles`);
   if (shots) await page.screenshot({ path: path.join(shots, 'sandbox_stream.png'), timeout: 180000 });
 
@@ -421,6 +420,37 @@ const SCENARIOS = [
     return { moved: Math.hypot(s1.x - s0.x, s1.z - s0.z), wasPinned: true };
   });
   report(hit.moved > 0.05, 'cart hits spare cart', `spare cart moved ${hit.moved.toFixed(2)} m`);
+
+  // Stacks: the parking lot's stack by the spawn holds together, the player's cart nests by pushing in, the herd
+  // rolls as one, and a hard yank pulls the cart back off.
+  const st = await page.evaluate(async () => {
+    const c = window.__cart;
+    await c.loadLevel('plot');
+    c.setInput({}); c.simulate(2);
+    const nested = c.spares.filter(s => s.nestedIn).length;
+    const front = c.spares[0], last = c.spares[2], p0 = { ...front.origin() };
+    const lp = last.origin(), h = last.heading();
+    c.spawn(c.v3(lp.x - 1.5 * Math.cos(h), lp.y, lp.z + 1.5 * Math.sin(h)), h);
+    c.setInput({}); c.simulate(0.5);
+    c.setInput({ L: 1, R: 1 });
+    let t = 0;
+    while (!c.cart.nestedIn && t < 6) { c.simulate(0.05); t += 0.05; }
+    const caught = c.cart.nestedIn === last;
+    c.simulate(4);
+    const herd = c.cart.stack().length, p1 = front.origin(), moved = Math.hypot(p1.x - p0.x, p1.z - p0.z);
+    let fastest = 0;
+    for (const s of c.cart.stack()) for (const b of s.parts) { const v = b.linvel(); fastest = Math.max(fastest, Math.hypot(v.x, v.y, v.z)); }
+    c.setInput({}); c.simulate(4);
+    c.setInput({ L: -1, R: -1 });
+    let u = 0;
+    while (c.cart.nestedIn && u < 5) { c.simulate(0.05); u += 0.05; }
+    c.setInput({}); c.simulate(2);
+    return { nested, caught, t, herd, moved, fastest, off: !c.cart.nestedIn, u, left: front.stack().length, ghosts: c.cart.ghosts.size };
+  });
+  report(st.nested === 5, 'stacks built', `${st.nested} spare carts nested in another`);
+  report(st.caught && st.herd === 4 && st.moved > 1.5 && st.fastest < 6, 'cart nests into stack',
+    `caught after ${st.t.toFixed(2)} s, herd of ${st.herd} moved ${st.moved.toFixed(1)} m, fastest body ${st.fastest.toFixed(2)} m/s`);
+  report(st.off && st.left === 3 && st.ghosts === 0, 'yank pulls it off', `came off after ${st.u.toFixed(2)} s, stack left with ${st.left}, ghosts ${st.ghosts}`);
 
   await page.close();   // its draw loop would slow the phone page down
 

@@ -54,7 +54,7 @@ export class ChunkStreamer {
     const h = cellHash(i, j, this.s.seed);
     let r = (h % 10000) / 10000 * this.total, idx = 0;
     for (let k = 0; k < this.s.weights.length; k++) { r -= this.s.weights[k]; idx = k; if (r < 0) break; }
-    return [idx, (h >>> 20) & 3];
+    return [idx, this.s.turns === false ? 0 : (h >>> 20) & 3];
   }
 
   /** Same as Godot for every square of the exported check table. */
