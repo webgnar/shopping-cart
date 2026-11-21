@@ -74,6 +74,8 @@ KNOCKS = [0.64, 1.61, 3.15, 4.85]
 # wheels coming down: a hard hit at 0.86 s, a bounce at 1.18 s and a settle at 1.56 s. The landing sound is that
 # second part, from just before the hit until the settle has died away.
 LAND = (0.83, 1.85)
+# A soft landing is just a tap: the bounce (1.18 s) and the settle (1.56 s) of the same recording, each on its own.
+TAPS = [(1.165, 1.50), (1.545, 1.85)]
 rng = np.random.default_rng(7)   # fixed seed: the builder makes the same files every run
 
 
@@ -179,6 +181,15 @@ def extras() -> None:
     for path in [os.path.join(GODOT_OUT, "land.wav"), os.path.join(WEB_OUT, "land.wav")]:
         write(land, path, ["-ar", str(WEB_RATE), "-c:a", "pcm_s16le"])
     print("land        %.2f-%.2f s of cart_drop.flac" % LAND)
+    for i, (a, b) in enumerate(TAPS):
+        tap = drop[int(a * RATE):int(b * RATE)].copy()
+        tap -= tap.mean()
+        tap[:int(0.003 * RATE)] *= np.linspace(0, 1, int(0.003 * RATE))
+        tap *= np.exp(-np.arange(len(tap)) / (0.08 * RATE))
+        tap *= 0.85 / np.abs(tap).max()
+        for path in [os.path.join(GODOT_OUT, "land_tap_%d.wav" % (i + 1)), os.path.join(WEB_OUT, "land_tap_%d.wav" % (i + 1))]:
+            write(tap, path, ["-ar", str(WEB_RATE), "-c:a", "pcm_s16le"])
+        print("land_tap_%d  %.2f-%.2f s of cart_drop.flac" % (i + 1, a, b))
     for i, at in enumerate(KNOCKS):
         k = knock(sidewalk, at)
         for path in [os.path.join(GODOT_OUT, "knock_%d.wav" % (i + 1)), os.path.join(WEB_OUT, "knock_%d.wav" % (i + 1))]:

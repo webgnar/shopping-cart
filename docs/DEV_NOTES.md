@@ -3,6 +3,26 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: wheel landings by impact speed; garage test without bots
+
+zack asked for the slam to follow how fast each wheel hits the ground.
+
+- **Impact speed:** each WheelSound takes the wheel's velocity into the ground along the floor's normal as it
+  touches down (its last tick in the air, or the touching tick if it is still closing in), after at least 0.03 s
+  off the ground. Under 0.3 m/s it touches down silently; 0.3 to 1.0 m/s is a tap; 1.0 m/s and up (about a 5 cm
+  drop) is the full slam. Volume = ((impact - 0.3) / (3.0 - 0.3))^0.8, full at 3 m/s (a 45 cm drop), -1 dB at full.
+- **Measured** (supermarket floor): S wheelie set down from standing 2.3 m/s, W back-up set down 1.7, a rolling
+  wheelie 1.9, a hard-push wheelie 1.8; drops of 5 / 10 / 30 / 60 cm hit at 0.9 / 1.3 / 2.3 / 3.4 m/s, and the
+  small rebounds after a drop at 0.2 to 0.4. So wheelies and drops slam, rebounds and small hops tap or stay quiet.
+- **Sounds:** the slam is the drop recording's main hit with its bounces (`land.wav`, as before); the taps are the
+  bounce (1.165 to 1.5 s) and the settle (1.545 to 1.85 s) of the same recording cut on their own and decayed
+  (`land_tap_1/2.wav`, `land_taps.tres`, random pitch 1.1). Exports on WheelSound: `land_tap`, `land_slam`,
+  `land_start`, `land_slam_speed`, `land_full`, `land_curve`, `land_db`. Ported to the browser.
+- **Garage test:** `garage_test` failed now and then at floor 10 ("rolled 12 m downhill") before and after the
+  wheel sounds. The cause is the level's three bot carts: they wander on unseeded random routes from near the roof
+  and sometimes cross the test cart's aisle. The test now takes them out of the level before it starts; with them
+  out it rolls the same 29.7 m on every run.
+
 ## 2026-11-21: wheel sounds driven by each wheel's physics
 
 zack wanted the cart sound to come from the wheels themselves. The one cart-wide RollingSound (a ray under the

@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://28v0wq5iecy6" path="res://scripts/cart/cart_floor_sound.gd" id="6_fs"]
 [ext_resource type="AudioStreamRandomizer" path="res://assets/audio/cart/knocks.tres" id="5_knock"]
 [ext_resource type="AudioStreamRandomizer" path="res://assets/audio/cart/lands.tres" id="7_land"]
+[ext_resource type="AudioStreamRandomizer" path="res://assets/audio/cart/land_taps.tres" id="8_tap"]
 
 [node name="WheelSound" type="Node3D" node_paths=PackedStringArray("roll_player", "scrub_player", "knock_player", "land_player")]
 script = ExtResource("1_ws")
@@ -16,6 +17,8 @@ knock_player = NodePath("Knock")
 land_player = NodePath("Land")
 floor_sounds = Array[ExtResource("6_fs")]([ExtResource("2_asph"), ExtResource("3_tile"), ExtResource("4_conc")])
 fallback = ExtResource("4_conc")
+land_tap = ExtResource("8_tap")
+land_slam = ExtResource("7_land")
 
 [node name="Roll" type="AudioStreamPlayer3D" parent="."]
 volume_db = -80.0

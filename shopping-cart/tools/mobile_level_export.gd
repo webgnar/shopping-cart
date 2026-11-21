@@ -479,19 +479,19 @@ static func _wheel_sound(ws: WheelSound) -> Dictionary:
 	var floor_dict := func(f: CartFloorSound) -> Dictionary: return {"name": f.resource_path.get_file().get_basename(),
 		"floors": f.floors.map(func(m): return m.resource_path.get_file().get_basename()),
 		"roll": wav.call(f.roll), "roll_db": f.roll_db, "scrub": wav.call(f.scrub), "scrub_db": f.scrub_db}
-	var shots := func(p: AudioStreamPlayer3D) -> Dictionary:
-		var r := p.stream as AudioStreamRandomizer
+	var shots := func(source: Variant) -> Dictionary:
+		var r := (source.stream if source is AudioStreamPlayer3D else source) as AudioStreamRandomizer
 		var files := []
 		for i in r.streams_count:
 			files.append(wav.call(r.get_stream(i)))
 		return {"files": files, "random_pitch": r.random_pitch}
 	var out := {"floors": ws.floor_sounds.map(floor_dict), "fallback": ws.fallback.resource_path.get_file().get_basename(),
-		"knock": shots.call(ws.knock_player), "land": shots.call(ws.land_player),
+		"knock": shots.call(ws.knock_player), "land_tap": shots.call(ws.land_tap), "land_slam": shots.call(ws.land_slam),
 		"unit_size": ws.roll_player.unit_size, "max_distance": ws.roll_player.max_distance}
 	for key in ["contact_gap", "wheel_db", "silent_speed", "full_volume_speed", "volume_curve", "recorded_speed",
 			"min_pitch", "max_pitch", "pitch_per_speed", "fade_time", "scrub_start", "scrub_full", "skid_tolerance", "scrub_pitch_low",
 			"scrub_pitch_per_speed", "scrub_max_pitch", "knock_start", "knock_full", "knock_db", "knock_gap",
-			"land_air_time", "land_start", "land_full", "land_db"]:
+			"land_air_time", "land_start", "land_slam_speed", "land_full", "land_curve", "land_db"]:
 		out[key] = ws.get(key)
 	return out
 

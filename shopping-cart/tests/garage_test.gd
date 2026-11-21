@@ -23,6 +23,12 @@ var failures := 0
 
 func _initialize() -> void:
 	main = load("res://scenes/levels/parking_garage.tscn").instantiate()
+	# The level's bot carts wander on random routes (unseeded) and sometimes cross the test cart's aisle on the
+	# roof, stopping it short; this test is about the decks, so they stay out.
+	var bots := main.get_node_or_null("BotCarts")
+	if bots:
+		main.remove_child(bots)
+		bots.free()
 	root.add_child(main)
 	_run.call_deferred()
 
