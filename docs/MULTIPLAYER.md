@@ -30,7 +30,7 @@ Connection setup (phase 1-2):
 Gameplay:
   Guest <======== WebRTC data channels (direct UDP, or Cloudflare TURN) ========> Host
           "state": unordered, no retransmits   -> INPUT (guest), SNAPSHOT (host)
-          "control": reliable, ordered          -> HELLO / WELCOME / LEVEL / RESET / LEFT
+          "control": reliable, ordered          -> HELLO / WELCOME / LEVEL / RESET / LEFT / RACE
 ```
 
 | Design doc piece | Here |
@@ -62,9 +62,10 @@ it). Version 1:
 | Data | Direction | How often | Size |
 | --- | --- | --- | --- |
 | Keys held (6 bits) + the level the guest has loaded | guest -> host | on change and 30 times a second, unreliable | 3 bytes |
-| Each player cart: hand power L/R, fallen flag, frame velocity and turn rate (for the HUD and rolling sound), and the pose of all 15 bodies (frame, gate, child seat, seat flap, 2 forks, 4 wheels, 5 groceries) | host -> guests | 30 Hz, unreliable | about 450 bytes |
+| Each player cart: hand power L/R, a flags byte (fallen, and the player's slot, which colours the cart's pennant flag), frame velocity and turn rate (for the HUD and rolling sound), and the pose of all 15 bodies (frame, gate, child seat, seat flap, 2 forks, 4 wheels, 5 groceries) | host -> guests | 30 Hz, unreliable | about 450 bytes |
 | Level loose bodies (boxes, product cases, oil drums, spare and bot carts): every body that is awake, plus 24 resting ones in turn so a lost packet can't leave one stale | host -> guests | 30 Hz, unreliable | 30 bytes each |
 | Joins, level changes, leaving, reset requests | both | when they happen, reliable | small |
+| A race (`scripts/race/race.gd`, protocol version 3): phase, clock, each racer's id, name and finish time | host -> guests | on every change and twice a second, reliable | ~20 bytes a racer |
 
 A pose is position + quaternion as float32 (28 bytes). Snapshots are split into packets of at most 1,100 bytes,
 each complete on its own. Rough load per guest: the supermarket with two players and its bot carts is about 60 bodies
@@ -83,6 +84,13 @@ the browser, `export_mobile_levels_cli.gd` will write the same ordered list into
 is smooth through jitter and a lost packet. The cost is latency: the guest's own cart responds after the round trip
 plus ~130 ms. The hand power ramps up over a second anyway, so this should be playable for a first version; if it
 isn't, phase 4 adds prediction for the guest's own cart.
+
+**Races.** The host runs a race (the console's `race`; the garage has one) and guests only show it. The host lines
+every player up on the race's grid (each guest gets a fresh cart in its slot), waits until every guest has loaded
+the level (up to 10 s), then counts 3, 2, 1, GO. Through the count every racer's cart is `locked`, so a guest's keys
+are ignored on the host just like the host's own. Guests run the clock between RACE messages, so everyone sees the
+same count within a round trip. Finishes are decided on the host (the Finish area) and sent to everyone; a guest
+who joins mid-count gets a slot, one who joins mid-race watches.
 
 ## Phases
 

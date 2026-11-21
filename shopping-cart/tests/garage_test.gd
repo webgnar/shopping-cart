@@ -23,6 +23,8 @@ var failures := 0
 
 func _initialize() -> void:
 	main = load("res://scenes/levels/parking_garage.tscn").instantiate()
+	# The bot carts wander the floors and get in the way of the roll checks (floor 10 starts beside one).
+	main.get_node("BotCarts").free()
 	root.add_child(main)
 	_run.call_deferred()
 

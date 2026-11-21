@@ -9,9 +9,10 @@ extends RefCounted
 ##    can move them with their physics body.
 ##  - mobile/levels/<key>.json: what you touch and how it's lit: every collision shape with its friction, the
 ##    loose props (mass, shapes), CartSpawn, the spare carts, the bot carts and the navigation mesh they drive on,
-##    sky/fog/ambient, the sun, lamps and 3D labels, the lanes of moving traffic (TrafficLane: speed, length, each
-##    car's place and shapes; cars are kin_<n>; a TrafficRoute also has its points), and for the endless sandbox,
-##    the chunk grid ("stream"). Nodes with metadata/mobile_skip (the coast's far trees) are left out.
+##    sky/fog/ambient, the sun, lamps and 3D labels, the race (grid, finish box, bots' route), the lanes of moving
+##    traffic (TrafficLane: speed, length, each car's place and shapes; cars are kin_<n>; a TrafficRoute also has its
+##    points), the background loop ("music"), and for the endless sandbox, the chunk grid ("stream"). Nodes with
+##    metadata/mobile_skip (the coast's far trees) are left out.
 ##  - mobile/levels/chunks/<name>.glb and .json: each chunk the sandbox streams (scenes/sandbox/chunks/), the same way.
 ## And once for the cart (scenes/cart/cart.tscn): mobile/levels/cart.json with the rig (bodies, masses, shapes,
 ## hinges and their limits), the cart's shared materials (assets/materials/cart/*.tres) and the bot's settings
@@ -100,6 +101,9 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 		out["merge_cell"] = float(level.get_meta("mobile_merge_cell"))
 	var spawn := level.get_node_or_null("CartSpawn") as Node3D
 	out.spawn = {"pos": _v(spawn.global_position if spawn else Vector3(2, 0, 0)), "yaw": spawn.global_rotation.y if spawn else 0.0}
+	for n in level.find_children("*", "", true, false):
+		if n is Race:
+			out["race"] = _race(n)
 
 	# An endless level (ChunkStreamer): its settings go in the JSON and each chunk is exported on its own
 	# (export_chunk); the chunks it has loaded around the cart and its far ground are left out of the level.
@@ -151,6 +155,8 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 			out.labels.append(_label(n))
 		elif n is NavigationRegion3D and n.navigation_mesh and out.navmesh == null:
 			out.navmesh = _navmesh(n)
+		elif n is AudioStreamPlayer and n.autoplay and n.stream:
+			out["music"] = _music(n)
 
 	# Moving traffic: each lane's place, speed and length, and its cars (kin_<n>) with their shapes and their
 	# places in the queue. The phone drives them the same way (TrafficLane).
@@ -532,6 +538,23 @@ static func _navmesh(region: NavigationRegion3D) -> Dictionary:
 	return {"vertices": _flat(verts), "polygons": polys}
 
 
+## A level's race (scripts/race/race.gd) for mobile/game/race.js: its settings, the grid's slots, the finish box
+## (centre transform and size), the bots' route and the spot past the line they drive to.
+static func _race(r: Race) -> Dictionary:
+	var shape: CollisionShape3D = r.finish.find_children("*", "CollisionShape3D", true, false)[0]
+	var way := []
+	if r.route:
+		for m in r.route.get_children():
+			if m is Marker3D:
+				way.append(_v(m.global_position))
+	return {
+		"countdown": r.countdown, "go_hold": r.go_hold, "bots_race": r.bots_race, "finish_grace": r.finish_grace,
+		"slots": r.slots().map(func(m): return {"pos": _v(m.global_position), "yaw": m.global_basis.get_euler().y}),
+		"finish": {"xf": _xf(shape.global_transform), "size": _v((shape.shape as BoxShape3D).size)},
+		"route": way, "bot_goal": _v(r.bot_goal.global_position),
+	}
+
+
 ## The bot's settings from scenes/cart/bot_cart.tscn: every CartBot export, plus where its NavigationAgent3D sits on
 ## the frame and how close it gets to a path point or the target.
 static func _bot_settings() -> Dictionary:
@@ -547,6 +570,15 @@ static func _bot_settings() -> Dictionary:
 	out["target_desired_distance"] = agent.target_desired_distance
 	cart.free()
 	return out
+
+
+## A level's background loop (an autoplaying AudioStreamPlayer, e.g. the parking lot's BackgroundMusic). The phone
+## plays mobile/audio/<name>.mp3, cut by the same script as the .ogg (tools/audio/make_ambience_loops.py): the loop
+## plus a few seconds of what follows it, which mobile/game/music.js crossfades into the next pass.
+static func _music(p: AudioStreamPlayer) -> Dictionary:
+	var bus := AudioServer.get_bus_index(p.bus)
+	return {"file": "audio/%s.mp3" % p.stream.resource_path.get_file().get_basename(), "loop_length": p.stream.get_length(),
+		"volume_db": p.volume_db + (AudioServer.get_bus_volume_db(bus) if bus >= 0 else 0.0), "bus": String(p.bus)}
 
 
 ## The wheel sound (scenes/cart/wheel_sound.tscn, the same under every wheel): its settings, each floor's roll and

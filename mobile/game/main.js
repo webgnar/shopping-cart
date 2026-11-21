@@ -12,6 +12,8 @@ import { NavMesh } from './nav.js';
 import { fetchLevel, buildLevel, layerPairs, applyEnvironment, ambientFor, makeSkyDome, disposeTree, stepTraffic, syncTraffic } from './level.js';
 import { WheelSounds, unlockAudio, updateListener, loadedLoops } from './sound.js';
 import { ChunkStreamer } from './stream.js';
+import { Race, IDLE as RACE_IDLE } from './race.js';
+import { setMusic, startMusic, musicState } from './music.js';
 
 await RAPIER.init();
 const STEP = 1 / 120;                // Godot physics ticks at 120 Hz
@@ -60,6 +62,9 @@ let world = null, eventQueue = null, level = null, levelRoot = null, ambient = n
 const others = () => spares.concat(bots.map(b => b.cart));
 let levelKey = null, loading = false;
 let streamer = null;   // the endless sandbox's chunks (stream.js), else null
+let race = null;       // the level's race (race.js), if it has one
+const RACE_LEVEL = 'garage';   // the race command's level (console.gd race_level)
+const raceEl = { root: $('race'), clock: $('raceClock'), status: $('raceStatus'), count: $('raceCount'), results: $('raceResults'), table: $('raceTable') };
 
 async function loadLevel(key) {
   const entry = levelList.find(l => l.key === key) || levelList[0];
@@ -71,6 +76,7 @@ async function loadLevel(key) {
     if (levelRoot) { scene.remove(levelRoot); disposeTree(levelRoot); }
     if (ambient) scene.remove(ambient);
     for (const c of [cart, ...others()]) if (c && c.sound) c.sound.remove();
+    setMusic(null);
     for (const c of [cart, ...others()]) if (c && c.root) scene.remove(c.root);
     for (const c of [cart, ...others()]) if (c) for (const [, g] of c.meshes) scene.remove(g);
     if (streamer) { streamer.dispose(); streamer = null; }
@@ -115,6 +121,9 @@ async function loadLevel(key) {
       await streamer.prime(new THREE.Vector3(...level.spawn.pos));
     }
     levelKey = entry.key;
+    race = level.race ? new Race(level.race, { cart: () => cart, bots: () => bots, spawn }, raceEl) : null;
+    raceEl.root.hidden = true;
+    setMusic(data.json.music);   // the level's background loop (parking lot), if it has one
     spawn(v3(...level.spawn.pos), level.spawn.yaw);
     world.step(eventQueue);   // settle the query structures before the first raycast
     localStorage.setItem('cart-level', levelKey);
@@ -320,6 +329,7 @@ let lastInput = { L: 0, R: 0, lift: false, press: false };
 
 // ---------------------------------------------------------------- loop
 function physicsStep(inp) {
+  if (race) race.step(STEP);
   const all = [cart, ...others()];
   if (rig.nest) {
     regroup(all, rig.nest);
@@ -377,6 +387,7 @@ function frame(now) {
   skyDome.position.copy(camera.position);
   level.lights.update(new THREE.Vector3(c.x, c.y, c.z), dt);
   hud();
+  if (race) race.draw();
   renderer.render(scene, camera);
 }
 
@@ -395,13 +406,14 @@ function buildLevelButtons(container, onPick) {
 const markLevel = el => el.querySelectorAll('.lvl').forEach(b => b.classList.toggle('on', b.dataset.key === levelKey));
 buildLevelButtons($('startLevels'), async key => { if (key !== levelKey) await loadLevel(key); markLevel($('startLevels')); });
 buildLevelButtons($('menuLevels'), key => { closeMenu(); travel(key); });
+$('raceBtn').addEventListener('click', () => { closeMenu(); startRace(true); });
 
 go.addEventListener('click', async () => {
   // iOS asks permission for motion sensors; it has to come from this tap.
   try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) await DeviceOrientationEvent.requestPermission(); } catch (e) { /* tilt stays off; the lean buttons still work */ }
   $('start').hidden = true;
   started = true;
-  unlockAudio(rig.wheel_sound);
+  unlockAudio(rig.wheel_sound); startMusic();
   if (mode === 'touch' && document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation?.lock?.('landscape')).catch(() => {});
   }
@@ -411,9 +423,14 @@ function toggleFullscreen() {
   if (document.fullscreenElement) document.exitFullscreen?.(); else document.documentElement.requestFullscreen?.().catch(() => {});
 }
 async function travel(key) { releaseTouches(); keys.clear(); await loadLevel(key); }
+/** The race command: to the race level if we're not there, then everyone lines up and the count starts. */
+async function startRace(withBots) {
+  if (levelKey !== RACE_LEVEL || !race) { logLine(`Travelling to ${RACE_LEVEL}...`); await travel(RACE_LEVEL); }
+  if (race) race.start(withBots); else logLine('<span class="bad">This level has no race.</span>');
+}
 
 // Browsers only allow sound after a tap, click or key; Safari sometimes wants another after the Start tap.
-for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => { if (started) unlockAudio(rig.wheel_sound); }, { passive: true });
+for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => { if (started) { unlockAudio(rig.wheel_sound); startMusic(); } }, { passive: true });
 
 $('resetBtn').addEventListener('click', () => respawn());
 $('levelBtn').addEventListener('click', () => { markLevel($('menuLevels')); $('menu').hidden = false; paused = true; });
@@ -438,6 +455,11 @@ const COMMANDS = {
   clear: ['clear this window', () => { conOut.innerHTML = ''; }],
   where: ['show which level is loaded', () => logLine('Loaded: ' + (levelList.find(l => l.key === levelKey)?.scene || 'nothing'))],
 };
+COMMANDS.race = ['race to the bottom of the parking garage: 3, 2, 1, go! (race nobots: just you)', async args => {
+  const withBots = !(args.includes('nobots') || args.includes('solo'));
+  closeConsole();
+  await startRace(withBots);
+}];
 for (const l of levelList) COMMANDS[l.key] = [`fast travel to ${l.scene.split('/').pop()}`, async () => { logLine(`Travelling to ${l.key}...`); closeConsole(); await travel(l.key); }];
 function runCommand(line) {
   const words = line.trim().split(/\s+/).filter(Boolean);
@@ -471,8 +493,8 @@ go.disabled = false; go.textContent = mode === 'touch' ? 'Tap to start' : 'Start
 // Test hook: scripted checks press the hands and keys and read the cart (mobile/test/drive_test.js).
 window.__cart = {
   get cart() { return cart; }, get spares() { return spares; }, get bots() { return bots; }, get world() { return world; }, get level() { return level; }, get streamer() { return streamer; },
-  get levelKey() { return levelKey; }, get started() { return started; }, get cam() { return cam; }, camera, renderer,
-  RAPIER, v3, levels: levelList, loadLevel, loadedLoops, spawn, respawn, runCommand, setMode, get mode() { return mode; },
+  get levelKey() { return levelKey; }, get race() { return race; }, startRace, get started() { return started; }, get cam() { return cam; }, camera, renderer,
+  RAPIER, v3, levels: levelList, loadLevel, loadedLoops, musicState, spawn, respawn, runCommand, setMode, get mode() { return mode; },
   /** {L, R: -1/0/1, lift, press} or null to give control back to the keys and screen. */
   setInput(inp) { testInput = inp ? { L: 0, R: 0, lift: false, press: false, ...inp } : null; },
   /** Steps the physics directly (no drawing) for `seconds`, calling sample() after each step. */

@@ -161,7 +161,7 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
   if (lights) ownLamps = lights.add(lamps);
   else lights = new LightPool(root, lamps, opts.lightCount);
   return { props, traffic, lights, ownLamps, drawn, tris, env, sun: json.sun, spawn: json.spawn, spareCarts: json.spare_carts,
-    botCarts: json.bot_carts || [], navmesh: json.navmesh, name: json.name, surfaces, stream: json.stream || null,
+    botCarts: json.bot_carts || [], navmesh: json.navmesh, race: json.race || null, name: json.name, surfaces, stream: json.stream || null,
     fixed, handles, clock: 0 };
 }
 
