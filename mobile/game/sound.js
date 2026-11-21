@@ -29,6 +29,9 @@ export async function unlockAudio(ws) {
   }));
 }
 
+/** The AudioContext, once a tap has allowed sound (else null). music.js plays through it too. */
+export const audioContext = () => audio;
+
 /** The sounds decoded so far (for the test). */
 export const loadedLoops = () => Object.keys(buffers).filter(k => buffers[k] instanceof AudioBuffer);
 

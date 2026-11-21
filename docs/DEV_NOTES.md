@@ -22,6 +22,33 @@ zack asked for the slam to follow how fast each wheel hits the ground.
   wheel sounds. The cause is the level's three bot carts: they wander on unseeded random routes from near the roof
   and sometimes cross the test cart's aisle. The test now takes them out of the level before it starts; with them
   out it rolls the same 29.7 m on every run.
+- **Browser crash:** main's `mobile/game/cart.js` built the sandbox's endless floor with
+  `RAPIER.ColliderDesc.halfspace`, which Rapier 0.14 doesn't have, so the browser game crashed on load. The
+  floor is now a 20 km cuboid slab whose top face sits on the plane.
+
+## 2026-11-21: Parking lot background loop
+
+The parking lot level plays zack's field recording ("parking lot back ground.wav": 9:15, stereo, 24-bit 48 kHz,
+REAPER, 160 MB; kept in the project's shared files, not the repo) as a background loop.
+
+- **Cut:** `tools/audio/make_ambience_loops.py` (numpy + ffmpeg). The recording clips (hits 0 dBFS) at 4 s, 70 s
+  and 323-328 s, the last a loud event right by the mic, so the loop keeps 75-320.5 s and 332-553.5 s (the end of
+  the file is 1.5 s of silence), spliced with a 4 s equal-power crossfade in a quiet stretch, and crossfaded 4 s from
+  its end back into its start. DC removed, levelled to peak at -1 dBFS (RMS -23.8 dBFS). Loop: **459.0 s (7:39)**.
+  The seam was checked by decoding the .ogg: the sample step across it is 0.004, smaller than ordinary steps in
+  the recording, and the level either side is -30 / -29 dBFS.
+- **Files:** `assets/audio/ambience/parking_lot.ogg` (Vorbis q2, 44.1 kHz stereo, 5.3 MB, imported with loop on;
+  Ogg Vorbis loops sample-exact in Godot). Browser: `mobile/audio/parking_lot.mp3` (64 kb/s, 3.5 MB), the loop
+  plus the 4 s that follow it, unfaded: `mobile/game/music.js` starts a copy every 459 s and crossfades the
+  copies over that tail, so MP3 encoder padding can't leave a gap and Safari plays it.
+- **Scene:** `ParkingLot/BackgroundMusic` (AudioStreamPlayer, autoplay, bus `Music`, `volume_db` -12, process mode
+  Always so it keeps going with the console open). The `Music` bus (0 dB, into Master) is new, in
+  `default_bus_layout.tres`. -12 dB is meant to sit under the wheel sounds; tune it on the node.
+  Fast travel changes scene, which frees the level and its player, so it stops (tests/parking_lot_test.gd checks).
+- **Browser:** the level export writes an autoplaying AudioStreamPlayer as the level's `"music"` (file, loop length,
+  player + bus volume); main.js stops it on any level change and starts the new level's.
+- Left as recorded: the low rumble (most of the energy is 20-200 Hz, traffic) and a faint 14 kHz whine from 5:30 on
+  at about -80 dB.
 
 ## 2026-11-21: sandbox is an endless parking lot (lot-only chunks); Q and E push keys swapped
 
@@ -133,6 +160,7 @@ nested row, each cart about 25 to 30 cm behind the one ahead, gates swung up, ev
   if the trays flicker in motion, lift each nested cart's tray a few mm in the model.
 - **Left out**: no stack in the garage, market or hill yet; no way to start a level already pushing a stack (push your
   cart into one); bots don't avoid stacks.
+
 ## 2026-11-21: wheel sounds driven by each wheel's physics
 
 zack wanted the cart sound to come from the wheels themselves. The one cart-wide RollingSound (a ray under the
@@ -1011,7 +1039,3 @@ the builder. The SpotLight shadows show some shadow acne on the store fascia in 
 - **Judgment calls.** The spot (Bryant Park: about the size of the level's 170 x 90 m slab, open sky over it);
   ground level -52.5 in tile coordinates (the lawn's lowest points); 250 m as the near/far split; panorama eye
   8 m (halfway up the garage), so from the roof or the street the far skyline is up to ~2 degrees off.
-
-- Browser fix found while testing: main's `mobile/game/cart.js` built the sandbox's endless floor with
-  `RAPIER.ColliderDesc.halfspace`, which Rapier 0.14 doesn't have, so the browser game crashed on load. The
-  floor is now a 20 km cuboid slab whose top face sits on the plane.
