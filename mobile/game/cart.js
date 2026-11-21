@@ -198,6 +198,14 @@ export class Cart {
     if (this.root) scene.remove(this.root);
   }
 
+  /** Takes the groceries out of play (a supermarket sweep starts every cart empty, as ShoppingCart.show_groceries(false)). */
+  dropGroceries() {
+    const { world, scene } = this.ctx;
+    for (const g of this.groceries) world.removeRigidBody(g);
+    for (const [, grp] of this.meshes) { scene.remove(grp); grp.traverse(o => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } }); }
+    this.groceries = []; this.meshes = []; this.grocerySet = new Set();
+  }
+
   // ---------------------------------------------------------------- state
   heading() { const n = rot(this.frame.rotation(), v3(1, 0, 0)); return Math.atan2(-n.z, n.x); }
   origin() { return this.frame.translation(); }
