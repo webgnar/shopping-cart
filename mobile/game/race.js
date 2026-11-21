@@ -67,7 +67,8 @@ export class Race {
   }
 
   _inFinish(cart) {
-    const t = cart.frame.translation(), p = new THREE.Vector3(t.x, t.y, t.z).applyMatrix4(this.finishInv);
+    // The frame's centre of mass (its origin sits on the floor, a hair under the box's bottom face).
+    const t = cart.comWorld(), p = new THREE.Vector3(t.x, t.y, t.z).applyMatrix4(this.finishInv);
     return Math.abs(p.x) <= this.half.x && Math.abs(p.y) <= this.half.y && Math.abs(p.z) <= this.half.z;
   }
 

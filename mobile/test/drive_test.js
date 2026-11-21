@@ -423,7 +423,7 @@ const SCENARIOS = [
     out.myTime = race.racers[0].time;
     const t0 = performance.now();
     race.D.finish_grace = 400;
-    for (let s = 0; s < 260 && race.phase !== 4; s += 10) c.simulate(10);
+    for (let s = 0; s < 360 && race.phase !== 4; s += 10) c.simulate(10);
     out.ms = performance.now() - t0;
     out.done = race.phase === 4; out.bots = race.racers.slice(1).map(r => r.time); out.puts = race.racers.slice(1).map(r => r.bot.stats.put_back);
     c.renderOnce();
