@@ -850,3 +850,34 @@ the builder. The SpotLight shadows show some shadow acne on the store fascia in 
   `CartSpawn`. Each was checked with a shape query (cart footprint plus 0.3 m margin): nothing overlaps, and the
   aisle ahead is clear to about x = -6.
 - `tests/multiplayer_test.gd` checks the guest starts at Spawn1 where a level has markers.
+
+## 2026-11-21: Manhattan skyline round the parking garage (local only)
+
+- **What.** The parking garage now stands in Bryant Park, midtown Manhattan, built from zack's Google Earth
+  3D tiles (`~/Pictures/blender/MANHATTAN`: 41 OBJ tiles of ~600k triangles, each with its 8K PNG; the
+  "missing" texture of tile 40 is `8fd1b8414f3a_gltf_tile_40.png` beside it, named in its `.mtl`). The lot
+  is lined up with the street grid (turned 30.3 degrees), between 6th Ave and the library, 40th to 42nd St;
+  the park inside the lot is cut out, so the level's street slab is the ground and the park's plane trees
+  stand round its edges.
+- **How.** `tools/manhattan_skyline.sh` (Blender + gltfpack + `tools/manhattan_skyline_scene.py`):
+  buildings within 250 m are real meshes with the tiles' own photo UVs (cut, welded, thinned by gltfpack as
+  far as the UV islands allow: 1.13M -> ~470k triangles, 4K photos), as unshaded, double-sided materials,
+  slightly warm and dim to sit in the evening light, casting no shadows. Everything further out is one 8K
+  panorama rendered at full detail from 8 m up in the middle of the lot, laid over the sky by
+  `scenes/environment/skyline_sky.gdshader` (the old procedural sky, same settings, rewritten as a shader so
+  it can take the panorama). The garage's `Skyline` node (`scripts/levels/optional_backdrop.gd`) instances
+  `assets/manhattan_skyline/manhattan_skyline.tscn` and hands the panorama to the sky if the files exist.
+- **Why local only.** Google's Map Tiles terms don't allow extracting the 3D tiles or using them outside
+  Google Maps, and this repo is public, so the baked skyline stays out of git (`.gitignore`) and out of the
+  browser game (`mobile_export_skip` group on `Skyline`; the exporter also reads the garage's sky shader's
+  colours, so the browser garage's sky is unchanged). Without the files the garage is exactly as before.
+  For a shipped game the skyline needs replacing with our own buildings.
+- **Cost** (roof view, 1600x900, `tests/skyline_screenshot.gd`): 492 -> 494 draws, 467k -> 940k triangles.
+  The panorama is free per frame. No collision on the city: the cart still only has the level's slab.
+- **Tried and dropped.** Decimating the tiles with their photo UVs stalls at ~30-40 % (thousands of tiny
+  UV islands); simplifying the bare shape and re-baking the photo onto new UVs (voxel remesh or gltfpack,
+  then Cycles selected-to-active) smeared the photos, because the simplified walls sit metres off the
+  photogrammetry.
+- **Judgment calls.** The spot (Bryant Park: about the size of the level's 170 x 90 m slab, open sky over it);
+  ground level -52.5 in tile coordinates (the lawn's lowest points); 250 m as the near/far split; panorama eye
+  8 m (halfway up the garage), so from the roof or the street the far skyline is up to ~2 degrees off.
