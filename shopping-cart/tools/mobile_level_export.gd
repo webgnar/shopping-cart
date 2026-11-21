@@ -512,6 +512,7 @@ static func export_cart() -> Dictionary:
 	out["wheel_sound"] = _wheel_sound(cart.get_node("Wheel_RL/WheelSound"))
 	out["wheel_radius"] = cart.get_node("Wheel_FL/Shape").shape.radius
 	out["hand_position"] = _v(cart.hand_position)
+	out["touching"] = ShoppingCart.TOUCHING_PARTS
 	out["nest"] = _nest_settings(cart.get_node("Frame/NestMouth"))
 	cart.free()
 	out["bot"] = _bot_settings()

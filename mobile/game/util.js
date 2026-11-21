@@ -48,9 +48,10 @@ export function widenMask(layer, mask, all) {
   for (const [l, k] of all) if (k & layer) m |= l;
   return m;
 }
-/** Rapier groups for a Godot layer/mask; `own` = the cart's bit for cart parts (layer 2). */
-export function godotGroups(layer, mask, own = 0) {
-  const expand = bits => (bits & 0xd) | ((bits & 2) ? (CART_BITS & ~own) : 0);
+/** Rapier groups for a Godot layer/mask; `own` = the cart's bit for cart parts (layer 2). `touchOwn`: this part
+ *  also collides with the cart's other touchOwn parts (Godot's ShoppingCart.TOUCHING_PARTS). */
+export function godotGroups(layer, mask, own = 0, touchOwn = false) {
+  const expand = bits => (bits & 0xd) | ((bits & 2) ? (touchOwn ? CART_BITS : CART_BITS & ~own) : 0);
   const member = own && (layer & 2) ? own : (layer & 0xd);
   return groups(member, expand(mask));
 }

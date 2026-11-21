@@ -89,6 +89,10 @@ export class Cart {
     const MIN = RAPIER.CoefficientCombineRule.Min;
 
     this.b = {}; this.local = {}; this.bodyMass = {};
+    // The cart's own parts pass through each other, except the pairs Godot lets touch (ShoppingCart.TOUCHING_PARTS:
+    // the folded seat flap leans on the gate). Only those parts keep the cart's own bit in their filter, so with a
+    // single pair, exactly that pair collides.
+    const touching = new Set((rig.touching || []).flat());
     for (const bd of rig.bodies) {
       const lp = v3(bd.xf[9], bd.xf[10], bd.xf[11]), wp = at(lp);
       const { com, inertia } = massProps(bd.mass, bd.shapes, bd.com);
@@ -97,10 +101,11 @@ export class Cart {
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(wp.x, wp.y, wp.z).setRotation(qq)
         .setAdditionalMassProperties(bd.mass, com, inertia, { x: 0, y: 0, z: 0, w: 1 })
         .setCanSleep(!player).setLinearDamping(linDamp).setAngularDamping(angDamp));
-      const g = godotGroups(bd.layer, ctx.widen(bd.layer, bd.mask), bit);
+      const touch = touching.has(bd.name);
+      const g = godotGroups(bd.layer, ctx.widen(bd.layer, bd.mask), bit, touch);
       for (const s of bd.shapes) {
         const d = shapeDesc(RAPIER, s);
-        if (d) this.cartColliders.push([world.createCollider(d.setDensity(0).setFriction(bd.friction).setFrictionCombineRule(MIN).setCollisionGroups(g), body), bd.layer, bd.mask]);
+        if (d) this.cartColliders.push([world.createCollider(d.setDensity(0).setFriction(bd.friction).setFrictionCombineRule(MIN).setCollisionGroups(g), body), bd.layer, bd.mask, touch]);
       }
       this.b[bd.name] = body; this.local[bd.name] = lp; this.bodyMass[bd.name] = bd.mass;
       if (bd.name === 'Frame') this.com = com;
@@ -473,7 +478,7 @@ export class Cart {
   setBit(bit) {
     if (bit === this.bit) return;
     this.bit = bit;
-    for (const [c, layer, mask] of this.cartColliders) c.setCollisionGroups(godotGroups(layer, this.ctx.widen(layer, mask), bit));
+    for (const [c, layer, mask, touch] of this.cartColliders) c.setCollisionGroups(godotGroups(layer, this.ctx.widen(layer, mask), bit, touch));
     if (this.guard) this.guard.setCollisionGroups(godotGroups(2, 3, bit));
   }
 
