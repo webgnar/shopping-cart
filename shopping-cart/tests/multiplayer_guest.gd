@@ -66,7 +66,8 @@ func _run() -> void:
 		still = 0.0 if moving else still + 1.0 / Engine.physics_ticks_per_second
 	await _wait(0.5)
 	result.phase1.merge({"own_end": _v(own.cart_origin()), "host_end": _v(host_cart.cart_origin()),
-		"own_frozen": own.frame.freeze, "snapshots": net.stats.snapshots_received})
+		"own_frozen": own.frame.freeze, "snapshots": net.stats.snapshots_received,
+		"flags": [_flag(own), _flag(host_cart)]})
 	_write()
 	# Follow the host from level to level until it ends the test. In the endless sandbox the host first moves our
 	# cart far away: report the ground we see there.
@@ -141,3 +142,9 @@ func _run() -> void:
 			entry.host = _v(net.carts[1].cart_origin())
 		result.levels[path] = entry
 		_write()
+
+
+## A cart's flag as [shown, colour], for the flag checks.
+func _flag(cart: ShoppingCart) -> Array:
+	var f := cart.get_node("Frame/Flag") as CartFlag
+	return [f.visible, f.color]

@@ -62,7 +62,7 @@ it). Version 1:
 | Data | Direction | How often | Size |
 | --- | --- | --- | --- |
 | Keys held (6 bits) + the level the guest has loaded | guest -> host | on change and 30 times a second, unreliable | 3 bytes |
-| Each player cart: hand power L/R, fallen flag, frame velocity and turn rate (for the HUD and rolling sound), and the pose of all 15 bodies (frame, gate, child seat, seat flap, 2 forks, 4 wheels, 5 groceries) | host -> guests | 30 Hz, unreliable | about 450 bytes |
+| Each player cart: hand power L/R, a flags byte (fallen, and the player's slot, which colours the cart's pennant flag), frame velocity and turn rate (for the HUD and rolling sound), and the pose of all 15 bodies (frame, gate, child seat, seat flap, 2 forks, 4 wheels, 5 groceries) | host -> guests | 30 Hz, unreliable | about 450 bytes |
 | Level loose bodies (boxes, product cases, oil drums, spare and bot carts): every body that is awake, plus 24 resting ones in turn so a lost packet can't leave one stale | host -> guests | 30 Hz, unreliable | 30 bytes each |
 | Joins, level changes, leaving, reset requests | both | when they happen, reliable | small |
 | A race (`scripts/race/race.gd`, protocol version 3): phase, clock, each racer's id, name and finish time | host -> guests | on every change and twice a second, reliable | ~20 bytes a racer |
@@ -95,7 +95,7 @@ who joins mid-count gets a slot, one who joins mid-race watches.
 **Supermarket sweeps.** The same pattern (the console's `sweep`; the supermarket has one): the host restocks the
 store, lines everyone up at the entrance, waits for the guests, counts, and runs all the rules (items dropping into
 baskets, the 5-per-product limit, inflatables, bonus stations, the scores). The products and inflatables are level
-bodies, so the ordinary snapshots move them on every screen. SWEEP (protocol version 4) carries the phase and clock,
+bodies, so the ordinary snapshots move them on every screen. SWEEP (protocol version 5) carries the phase and clock,
 every shopper's score, item count and bonuses, each display's items left (for the signs), and pop-ups for a guest's
 own events ("+$8.99 Coffee", "Limit 5 of Coffee"); it goes out on every change and twice a second. Guests hide every
 cart's own groceries, as the host does.

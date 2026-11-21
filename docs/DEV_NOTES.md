@@ -53,7 +53,7 @@ default is 1:30). In the browser it's the same command, or Level › Supermarket
   distance, cut to 30 % if another bot is already headed there), waits up to 6 s while its items drop in, then moves
   on. They fill $40 to $110 of cart in 45 s, so a decent run beats them.
 - **Multiplayer:** the host runs the sweep; products and inflatables are level bodies, so snapshots move them. SWEEP
-  (protocol version 4) carries scores, items left per display and a guest's own pop-ups (docs/MULTIPLAYER.md).
+  (protocol version 5, after the cart flags took 4) carries scores, items left per display and a guest's own pop-ups (docs/MULTIPLAYER.md).
 - **Browser:** `mobile/game/sweep.js` ports it (no multiplayer there). The level export now writes a sweep's products
   as loose props marked `frozen` (Rapier fixed bodies until taken) and a "sweep" section in `levels/market.json`
   (settings, slots, displays with their items, zones and "left" label, inflatables, stations); the live labels
@@ -66,6 +66,32 @@ default is 1:30). In the browser it's the same command, or Level › Supermarket
   a sweep block in `mobile/test/drive_test.js`. Renders: `tests/sweep_screenshot.gd`.
 - **Left out for now:** a question round to earn extra time, the hidden-product bonus round, carrying the inflatables
   in the cart (touching one claims it), scooping spilled items back up off the floor, sounds for grabs and bonuses.
+
+## 2026-11-21: Pennant flags on player carts in multiplayer
+
+Every cart now carries a pennant flag on a tall pole, like a kids' store cart, hidden until a multiplayer game
+starts; then every player's cart flies it in that player's colour so you can tell whose cart is whose.
+
+- **Model:** `tools/blender/flag_models.py` (reuses the garage builder's `Model` and z-fighting scan) writes
+  `assets/models/flag/flag.glb`: **192 tris, 11.6 KB**, z-fighting: none. Objects: `Pole` (12 mm tube, 1.75 m,
+  `cart_handle` blue, as the coated steel poles on real cart flags), `Fittings` (two 40 mm clip sleeves with a jaw
+  that grips the basket wire, and a top cap; `cart_plastic`) and `Pennant` (a 1.5 mm thick triangle, 0.28 m hoist by
+  0.42 m fly, standing 1.5 mm clear of the tube; `flag_pennant`). Origin at the bottom of the pole.
+- **Sizes:** the pole starts 0.5 m up at the basket's lower wires and its top is 2.25 m off the ground, about a head
+  above the handle (1.0 m), so a flag shows over a shelf (1.8 m) or a parked car (1.4 m) from across the level.
+- **Scene:** `scenes/cart/flag.tscn` (`CartFlag`, `scripts/cart/cart_flag.gd`): `colors` is the pennant palette
+  (`assets/materials/flag/pennant_*.tres`: red, yellow, green, orange, purple, cyan, pink, white) and `color` picks
+  one. It is instanced as `Cart/Frame/Flag` on the rear-left corner of the basket, outside the side wall, turned so
+  the pennant trails behind the cart, with `visible` off. Spare and bot carts inherit it and stay without a flag.
+- **No physics:** it is a plain Node3D with meshes, no body and no collision shape, under the Frame (which already
+  sets its centre of mass by hand), so the cart's mass, centre of mass and tipping don't change; the camera's wall
+  checks and the nest mouth never see it.
+- **Net:** the host shows its own flag (slot 0) as soon as it hosts and each guest's in that guest's slot; the slot
+  rides in the snapshot's per-cart flags byte (bits 1-3), so guests colour every cart the same way.
+  `NetProtocol.VERSION` is 4. Leaving hides the host's flag again.
+- **Browser:** the browser game has no multiplayer yet, so it shows no flag; the cart and level exports were re-run.
+- Checked: `tests/multiplayer_test.gd` (host and guest see both flags, different colours, no collision), renders by
+  `tests/flag_screenshot.gd`.
 
 ## 2026-11-21: Parking garage race
 
