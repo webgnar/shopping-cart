@@ -1,0 +1,39 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/sweep/product.gd" id="1"]
+[ext_resource type="Material" path="res://assets/materials/supermarket/pack_orange.tres" id="2"]
+[ext_resource type="Material" path="res://assets/materials/supermarket/pack_white.tres" id="3"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_1"]
+friction = 0.6
+
+[sub_resource type="BoxShape3D" id="Shape_1"]
+size = Vector3(0.12, 0.17, 0.035)
+
+[sub_resource type="BoxMesh" id="Mesh_body"]
+material = ExtResource("2")
+size = Vector3(0.12, 0.17, 0.035)
+
+[sub_resource type="BoxMesh" id="Mesh_label"]
+material = ExtResource("3")
+size = Vector3(0.122, 0.051, 0.037)
+
+[node name="Batteries" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 0.25
+physics_material_override = SubResource("PhysicsMaterial_1")
+can_sleep = false
+freeze = true
+script = ExtResource("1")
+product_name = "Batteries"
+price = 14.49
+
+[node name="Shape" type="CollisionShape3D" parent="."]
+shape = SubResource("Shape_1")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+mesh = SubResource("Mesh_body")
+
+[node name="Label" type="MeshInstance3D" parent="."]
+mesh = SubResource("Mesh_label")

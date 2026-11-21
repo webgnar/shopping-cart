@@ -720,6 +720,11 @@ func _guest_receive(packet: PackedByteArray) -> void:
 				var race := get_tree().get_first_node_in_group("race")
 				if race and race.has_method("apply_state"):
 					race.apply_state(b)
+		NetProtocol.Msg.SWEEP:
+			if b.get_u8() == level_serial and level and is_instance_valid(level):
+				var sweep := get_tree().get_first_node_in_group("sweep")
+				if sweep and sweep.has_method("apply_state"):
+					sweep.apply_state(b)
 
 
 func _load_level(serial: int, bodies: int, path: String) -> void:

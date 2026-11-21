@@ -11,6 +11,8 @@ extends CanvasLayer
 @export var toggle_key: Key = KEY_QUOTELEFT   ## physical key that opens the console (` / ~)
 ## The `race` command's level: a destinations key whose scene has a Race node (scenes/race/race.tscn).
 @export var race_level := "garage"
+## The `sweep` command's level: a destinations key whose scene has a Sweep node (scenes/sweep/sweep.tscn).
+@export var sweep_level := "market"
 
 @onready var _output: RichTextLabel = %Output
 @onready var _entry: LineEdit = %Input
@@ -26,6 +28,7 @@ func _ready() -> void:
 	add_command("help", _cmd_help, "list the commands")
 	add_command("clear", func(_a): _output.clear(), "clear this window")
 	add_command("where", _cmd_where, "show which level is loaded")
+	add_command("sweep", _cmd_sweep, "supermarket sweep: fill your cart before time's up (sweep nobots: no bots; sweep 60: a 60 s round)")
 	add_command("race", _cmd_race, "race to the bottom of the parking garage: 3, 2, 1, go! (race nobots: just players)")
 	for place in destinations:
 		add_command(place, _travel.bind(place), "fast travel to %s" % destinations[place].get_file())
@@ -146,6 +149,29 @@ func _cmd_race(args: PackedStringArray) -> void:
 	Race.start_on_load = true
 	Race.bots_on_load = with_bots
 	_travel(PackedStringArray(), race_level)
+
+
+func _cmd_sweep(args: PackedStringArray) -> void:
+	var net := get_node_or_null("/root/Net")
+	if net and net.is_guest():
+		log_line("[color=#ffc66d]The host starts sweeps. Type leave to shop on your own.[/color]")
+		return
+	var with_bots := not ("nobots" in args or "solo" in args)
+	var seconds := 0.0
+	for a in args:
+		if a.is_valid_float() and float(a) > 0.0:
+			seconds = float(a)
+	var sweep := get_tree().get_first_node_in_group("sweep") as Sweep
+	var scene := get_tree().current_scene
+	if sweep and scene and scene.scene_file_path == destinations.get(sweep_level, ""):
+		log_line("Lining up for the sweep...")
+		close()
+		sweep.start(with_bots, seconds)
+		return
+	Sweep.start_on_load = true
+	Sweep.bots_on_load = with_bots
+	Sweep.duration_on_load = seconds
+	_travel(PackedStringArray(), sweep_level)
 
 
 func _travel(_args: PackedStringArray, place: String) -> void:

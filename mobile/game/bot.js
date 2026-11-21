@@ -19,6 +19,24 @@ export class Bot {
     this.route = []; this.passed = null;
     this.controls = {};
     this.racing = false;   // in a race: lined up at the start (holding still), then driving to the finish (raceTo)
+    this.errand = false;   // on an errand (a supermarket sweep): drives where it's sent (driveTo), then holds still there
+  }
+
+  /** Errand: drive to p at cruising pace, slowing to a stop there, and hold still until the next driveTo or
+   *  stopErrand (CartBot.drive_to). atErrand() says when it's standing there. */
+  driveTo(p) {
+    this.errand = true;
+    this.agent.setTarget(p);
+    if (this.state !== GET_UP) this.state = DRIVE;
+    this.tripTime = 0;
+    this.tripLimit = this.S.give_up_slack + 3 * dist(p, this.cart.origin()) / this.S.cruise_speed;
+    this.stuck = 0; this.backoffs = 0;
+  }
+  atErrand() { return this.errand && this.state === PAUSE && !this.cart.fallen; }
+  stopErrand() {
+    this.errand = false;
+    if (this.state !== GET_UP) this.state = PAUSE;
+    this.timer = this._range(this.S.pause_min, this.S.pause_max);
   }
 
   /** Race: stand still at the start line until raceTo. */
@@ -84,9 +102,9 @@ export class Bot {
       return this._press(c);
     }
     if (this.state === GET_UP) {
-      this.state = PAUSE; this.timer = this.racing ? Infinity : 1.0;
-      // Back on its wheels mid-race: carry on.
-      if (this.racing && this.route.length && !this.agent.isFinished()) { this.state = DRIVE; this.agent.setTarget(this.agent.target); }
+      this.state = PAUSE; this.timer = this.racing || this.errand ? Infinity : 1.0;
+      // Back on its wheels mid-race (or mid-errand): carry on.
+      if ((this.errand || this.racing && this.route.length) && !this.agent.isFinished()) { this.state = DRIVE; this.agent.setTarget(this.agent.target); }
     }
     if (this.state === PAUSE) {
       // Standing still, as a player would: hold the cart against rolling away (down a ramp, or coasting in).
@@ -106,7 +124,7 @@ export class Bot {
       }
       if (done || this.tripTime > this.tripLimit || this.backoffs >= S.max_back_offs) {
         this.stats[done ? 'trips' : 'gave_up']++;
-        this.state = PAUSE; this.timer = this.racing ? Infinity : this._range(S.pause_min, S.pause_max);
+        this.state = PAUSE; this.timer = this.racing || this.errand ? Infinity : this._range(S.pause_min, S.pause_max);
       } else c = this._drive(dt);
     } else if (this.state === BACK_OFF) {
       this.timer -= dt;

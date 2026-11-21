@@ -30,7 +30,7 @@ Connection setup (phase 1-2):
 Gameplay:
   Guest <======== WebRTC data channels (direct UDP, or Cloudflare TURN) ========> Host
           "state": unordered, no retransmits   -> INPUT (guest), SNAPSHOT (host)
-          "control": reliable, ordered          -> HELLO / WELCOME / LEVEL / RESET / LEFT / RACE
+          "control": reliable, ordered          -> HELLO / WELCOME / LEVEL / RESET / LEFT / RACE / SWEEP
 ```
 
 | Design doc piece | Here |
@@ -91,6 +91,14 @@ the level (up to 10 s), then counts 3, 2, 1, GO. Through the count every racer's
 are ignored on the host just like the host's own. Guests run the clock between RACE messages, so everyone sees the
 same count within a round trip. Finishes are decided on the host (the Finish area) and sent to everyone; a guest
 who joins mid-count gets a slot, one who joins mid-race watches.
+
+**Supermarket sweeps.** The same pattern (the console's `sweep`; the supermarket has one): the host restocks the
+store, lines everyone up at the entrance, waits for the guests, counts, and runs all the rules (items dropping into
+baskets, the 5-per-product limit, inflatables, bonus stations, the scores). The products and inflatables are level
+bodies, so the ordinary snapshots move them on every screen. SWEEP (protocol version 5) carries the phase and clock,
+every shopper's score, item count and bonuses, each display's items left (for the signs), and pop-ups for a guest's
+own events ("+$8.99 Coffee", "Limit 5 of Coffee"); it goes out on every change and twice a second. Guests hide every
+cart's own groceries, as the host does.
 
 ## Phases
 

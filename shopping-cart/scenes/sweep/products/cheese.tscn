@@ -1,0 +1,48 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/sweep/product.gd" id="1"]
+[ext_resource type="Material" path="res://assets/materials/supermarket/pack_gold.tres" id="2"]
+[ext_resource type="Material" path="res://assets/materials/supermarket/pack_red.tres" id="3"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_1"]
+friction = 0.6
+
+[sub_resource type="CylinderShape3D" id="Shape_1"]
+height = 0.08
+radius = 0.11
+
+[sub_resource type="CylinderMesh" id="Mesh_body"]
+material = ExtResource("2")
+top_radius = 0.11
+bottom_radius = 0.11
+height = 0.08
+radial_segments = 20
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_label"]
+material = ExtResource("3")
+top_radius = 0.111
+bottom_radius = 0.111
+height = 0.032
+radial_segments = 20
+rings = 1
+
+[node name="CheeseWheel" type="RigidBody3D"]
+collision_layer = 4
+collision_mask = 7
+mass = 1.5
+physics_material_override = SubResource("PhysicsMaterial_1")
+can_sleep = false
+freeze = true
+script = ExtResource("1")
+product_name = "Cheese wheel"
+price = 11.49
+
+[node name="Shape" type="CollisionShape3D" parent="."]
+shape = SubResource("Shape_1")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+mesh = SubResource("Mesh_body")
+
+[node name="Label" type="MeshInstance3D" parent="."]
+mesh = SubResource("Mesh_label")

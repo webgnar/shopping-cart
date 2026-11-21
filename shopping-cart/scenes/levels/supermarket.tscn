@@ -18,6 +18,24 @@
 [ext_resource type="PackedScene" path="res://scenes/cart/spare_cart.tscn" id="16"]
 [ext_resource type="NavigationMesh" path="res://assets/navigation/supermarket.tres" id="nav_mesh"]
 [ext_resource type="PackedScene" path="res://scenes/cart/bot_cart.tscn" id="bot_cart"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/sweep.tscn" id="sweep"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/product_display.tscn" id="sweep_display"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/bonus_station.tscn" id="sweep_station"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/products/batteries.tscn" id="sweep_p_batteries"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/products/cereal.tscn" id="sweep_p_cereal"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/products/cheese.tscn" id="sweep_p_cheese"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/products/coffee.tscn" id="sweep_p_coffee"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/products/detergent.tscn" id="sweep_p_detergent"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/products/ham.tscn" id="sweep_p_ham"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/products/olive_oil.tscn" id="sweep_p_olive_oil"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/products/paper_towels.tscn" id="sweep_p_paper_towels"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/products/pasta.tscn" id="sweep_p_pasta"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/products/soda_pack.tscn" id="sweep_p_soda_pack"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/products/soup.tscn" id="sweep_p_soup"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/products/steak.tscn" id="sweep_p_steak"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/inflatable_bottle.tscn" id="sweep_inflatable_bottle"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/inflatable_cereal.tscn" id="sweep_inflatable_cereal"]
+[ext_resource type="PackedScene" path="res://scenes/sweep/inflatable_can.tscn" id="sweep_inflatable_can"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -403,3 +421,375 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 8, 0.005, 3.6)
 
 [node name="BotCart3" parent="BotCarts" instance=ExtResource("bot_cart")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0.005, 10)
+
+[node name="Sweep" parent="." instance=ExtResource("sweep")]
+
+[node name="Grid" parent="Sweep" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 0)
+
+[node name="Coffee" parent="Sweep/Displays" instance=ExtResource("sweep_display")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -6.17)
+
+[node name="Item1" parent="Sweep/Displays/Coffee/Stock" instance=ExtResource("sweep_p_coffee")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.29, 0.8015, -0.0725)
+
+[node name="Item2" parent="Sweep/Displays/Coffee/Stock" instance=ExtResource("sweep_p_coffee")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.145, 0.8015, -0.0725)
+
+[node name="Item3" parent="Sweep/Displays/Coffee/Stock" instance=ExtResource("sweep_p_coffee")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8015, -0.0725)
+
+[node name="Item4" parent="Sweep/Displays/Coffee/Stock" instance=ExtResource("sweep_p_coffee")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.145, 0.8015, -0.0725)
+
+[node name="Item5" parent="Sweep/Displays/Coffee/Stock" instance=ExtResource("sweep_p_coffee")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.29, 0.8015, -0.0725)
+
+[node name="Item6" parent="Sweep/Displays/Coffee/Stock" instance=ExtResource("sweep_p_coffee")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.29, 0.8015, 0.0725)
+
+[node name="Item7" parent="Sweep/Displays/Coffee/Stock" instance=ExtResource("sweep_p_coffee")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.145, 0.8015, 0.0725)
+
+[node name="Item8" parent="Sweep/Displays/Coffee/Stock" instance=ExtResource("sweep_p_coffee")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8015, 0.0725)
+
+[node name="Item9" parent="Sweep/Displays/Coffee/Stock" instance=ExtResource("sweep_p_coffee")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.145, 0.8015, 0.0725)
+
+[node name="Item10" parent="Sweep/Displays/Coffee/Stock" instance=ExtResource("sweep_p_coffee")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.29, 0.8015, 0.0725)
+
+[node name="OliveOil" parent="Sweep/Displays" instance=ExtResource("sweep_display")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, -2.57)
+
+[node name="Item1" parent="Sweep/Displays/OliveOil/Stock" instance=ExtResource("sweep_p_olive_oil")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1425, 0.8615, -0.0475)
+
+[node name="Item2" parent="Sweep/Displays/OliveOil/Stock" instance=ExtResource("sweep_p_olive_oil")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0475, 0.8615, -0.0475)
+
+[node name="Item3" parent="Sweep/Displays/OliveOil/Stock" instance=ExtResource("sweep_p_olive_oil")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0475, 0.8615, -0.0475)
+
+[node name="Item4" parent="Sweep/Displays/OliveOil/Stock" instance=ExtResource("sweep_p_olive_oil")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1425, 0.8615, -0.0475)
+
+[node name="Item5" parent="Sweep/Displays/OliveOil/Stock" instance=ExtResource("sweep_p_olive_oil")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1425, 0.8615, 0.0475)
+
+[node name="Item6" parent="Sweep/Displays/OliveOil/Stock" instance=ExtResource("sweep_p_olive_oil")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0475, 0.8615, 0.0475)
+
+[node name="Item7" parent="Sweep/Displays/OliveOil/Stock" instance=ExtResource("sweep_p_olive_oil")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0475, 0.8615, 0.0475)
+
+[node name="Item8" parent="Sweep/Displays/OliveOil/Stock" instance=ExtResource("sweep_p_olive_oil")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1425, 0.8615, 0.0475)
+
+[node name="Cereal" parent="Sweep/Displays" instance=ExtResource("sweep_display")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0, 1.03)
+
+[node name="Item1" parent="Sweep/Displays/Cereal/Stock" instance=ExtResource("sweep_p_cereal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1025, 0.8615, -0.17)
+
+[node name="Item2" parent="Sweep/Displays/Cereal/Stock" instance=ExtResource("sweep_p_cereal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1025, 0.8615, -0.17)
+
+[node name="Item3" parent="Sweep/Displays/Cereal/Stock" instance=ExtResource("sweep_p_cereal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1025, 0.8615, -0.085)
+
+[node name="Item4" parent="Sweep/Displays/Cereal/Stock" instance=ExtResource("sweep_p_cereal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1025, 0.8615, -0.085)
+
+[node name="Item5" parent="Sweep/Displays/Cereal/Stock" instance=ExtResource("sweep_p_cereal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1025, 0.8615, 0)
+
+[node name="Item6" parent="Sweep/Displays/Cereal/Stock" instance=ExtResource("sweep_p_cereal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1025, 0.8615, 0)
+
+[node name="Item7" parent="Sweep/Displays/Cereal/Stock" instance=ExtResource("sweep_p_cereal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1025, 0.8615, 0.085)
+
+[node name="Item8" parent="Sweep/Displays/Cereal/Stock" instance=ExtResource("sweep_p_cereal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1025, 0.8615, 0.085)
+
+[node name="Item9" parent="Sweep/Displays/Cereal/Stock" instance=ExtResource("sweep_p_cereal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1025, 0.8615, 0.17)
+
+[node name="Item10" parent="Sweep/Displays/Cereal/Stock" instance=ExtResource("sweep_p_cereal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1025, 0.8615, 0.17)
+
+[node name="Pasta" parent="Sweep/Displays" instance=ExtResource("sweep_display")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 1, 0, 2.57)
+
+[node name="Item1" parent="Sweep/Displays/Pasta/Stock" instance=ExtResource("sweep_p_pasta")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.215, 0.7515, -0.1575)
+
+[node name="Item2" parent="Sweep/Displays/Pasta/Stock" instance=ExtResource("sweep_p_pasta")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7515, -0.1575)
+
+[node name="Item3" parent="Sweep/Displays/Pasta/Stock" instance=ExtResource("sweep_p_pasta")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.215, 0.7515, -0.1575)
+
+[node name="Item4" parent="Sweep/Displays/Pasta/Stock" instance=ExtResource("sweep_p_pasta")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.215, 0.7515, -0.0525)
+
+[node name="Item5" parent="Sweep/Displays/Pasta/Stock" instance=ExtResource("sweep_p_pasta")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7515, -0.0525)
+
+[node name="Item6" parent="Sweep/Displays/Pasta/Stock" instance=ExtResource("sweep_p_pasta")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.215, 0.7515, -0.0525)
+
+[node name="Item7" parent="Sweep/Displays/Pasta/Stock" instance=ExtResource("sweep_p_pasta")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.215, 0.7515, 0.0525)
+
+[node name="Item8" parent="Sweep/Displays/Pasta/Stock" instance=ExtResource("sweep_p_pasta")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7515, 0.0525)
+
+[node name="Item9" parent="Sweep/Displays/Pasta/Stock" instance=ExtResource("sweep_p_pasta")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.215, 0.7515, 0.0525)
+
+[node name="Item10" parent="Sweep/Displays/Pasta/Stock" instance=ExtResource("sweep_p_pasta")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.215, 0.7515, 0.1575)
+
+[node name="Soup" parent="Sweep/Displays" instance=ExtResource("sweep_display")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 7.5, 0, 6.17)
+
+[node name="Item1" parent="Sweep/Displays/Soup/Stock" instance=ExtResource("sweep_p_soup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.198, 0.7715, -0.0495)
+
+[node name="Item2" parent="Sweep/Displays/Soup/Stock" instance=ExtResource("sweep_p_soup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.099, 0.7715, -0.0495)
+
+[node name="Item3" parent="Sweep/Displays/Soup/Stock" instance=ExtResource("sweep_p_soup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7715, -0.0495)
+
+[node name="Item4" parent="Sweep/Displays/Soup/Stock" instance=ExtResource("sweep_p_soup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.099, 0.7715, -0.0495)
+
+[node name="Item5" parent="Sweep/Displays/Soup/Stock" instance=ExtResource("sweep_p_soup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.198, 0.7715, -0.0495)
+
+[node name="Item6" parent="Sweep/Displays/Soup/Stock" instance=ExtResource("sweep_p_soup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.198, 0.7715, 0.0495)
+
+[node name="Item7" parent="Sweep/Displays/Soup/Stock" instance=ExtResource("sweep_p_soup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.099, 0.7715, 0.0495)
+
+[node name="Item8" parent="Sweep/Displays/Soup/Stock" instance=ExtResource("sweep_p_soup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7715, 0.0495)
+
+[node name="Item9" parent="Sweep/Displays/Soup/Stock" instance=ExtResource("sweep_p_soup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.099, 0.7715, 0.0495)
+
+[node name="Item10" parent="Sweep/Displays/Soup/Stock" instance=ExtResource("sweep_p_soup")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.198, 0.7715, 0.0495)
+
+[node name="Batteries" parent="Sweep/Displays" instance=ExtResource("sweep_display")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 8.5, 0, 9.77)
+
+[node name="Item1" parent="Sweep/Displays/Batteries/Stock" instance=ExtResource("sweep_p_batteries")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0675, 0.8065, -0.075)
+
+[node name="Item2" parent="Sweep/Displays/Batteries/Stock" instance=ExtResource("sweep_p_batteries")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0675, 0.8065, -0.075)
+
+[node name="Item3" parent="Sweep/Displays/Batteries/Stock" instance=ExtResource("sweep_p_batteries")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0675, 0.8065, -0.025)
+
+[node name="Item4" parent="Sweep/Displays/Batteries/Stock" instance=ExtResource("sweep_p_batteries")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0675, 0.8065, -0.025)
+
+[node name="Item5" parent="Sweep/Displays/Batteries/Stock" instance=ExtResource("sweep_p_batteries")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0675, 0.8065, 0.025)
+
+[node name="Item6" parent="Sweep/Displays/Batteries/Stock" instance=ExtResource("sweep_p_batteries")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0675, 0.8065, 0.025)
+
+[node name="Item7" parent="Sweep/Displays/Batteries/Stock" instance=ExtResource("sweep_p_batteries")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0675, 0.8065, 0.075)
+
+[node name="Item8" parent="Sweep/Displays/Batteries/Stock" instance=ExtResource("sweep_p_batteries")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0675, 0.8065, 0.075)
+
+[node name="Steak" parent="Sweep/Displays" instance=ExtResource("sweep_display")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 16.73, 0, -8)
+
+[node name="Item1" parent="Sweep/Displays/Steak/Stock" instance=ExtResource("sweep_p_steak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3525, 0.7465, -0.0825)
+
+[node name="Item2" parent="Sweep/Displays/Steak/Stock" instance=ExtResource("sweep_p_steak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1175, 0.7465, -0.0825)
+
+[node name="Item3" parent="Sweep/Displays/Steak/Stock" instance=ExtResource("sweep_p_steak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1175, 0.7465, -0.0825)
+
+[node name="Item4" parent="Sweep/Displays/Steak/Stock" instance=ExtResource("sweep_p_steak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3525, 0.7465, -0.0825)
+
+[node name="Item5" parent="Sweep/Displays/Steak/Stock" instance=ExtResource("sweep_p_steak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3525, 0.7465, 0.0825)
+
+[node name="Item6" parent="Sweep/Displays/Steak/Stock" instance=ExtResource("sweep_p_steak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1175, 0.7465, 0.0825)
+
+[node name="Item7" parent="Sweep/Displays/Steak/Stock" instance=ExtResource("sweep_p_steak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1175, 0.7465, 0.0825)
+
+[node name="Item8" parent="Sweep/Displays/Steak/Stock" instance=ExtResource("sweep_p_steak")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3525, 0.7465, 0.0825)
+
+[node name="Ham" parent="Sweep/Displays" instance=ExtResource("sweep_display")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 16.73, 0, 8)
+
+[node name="Item1" parent="Sweep/Displays/Ham/Stock" instance=ExtResource("sweep_p_ham")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3525, 0.7865, -0.0825)
+
+[node name="Item2" parent="Sweep/Displays/Ham/Stock" instance=ExtResource("sweep_p_ham")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1175, 0.7865, -0.0825)
+
+[node name="Item3" parent="Sweep/Displays/Ham/Stock" instance=ExtResource("sweep_p_ham")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1175, 0.7865, -0.0825)
+
+[node name="Item4" parent="Sweep/Displays/Ham/Stock" instance=ExtResource("sweep_p_ham")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3525, 0.7865, -0.0825)
+
+[node name="Item5" parent="Sweep/Displays/Ham/Stock" instance=ExtResource("sweep_p_ham")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3525, 0.7865, 0.0825)
+
+[node name="Item6" parent="Sweep/Displays/Ham/Stock" instance=ExtResource("sweep_p_ham")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1175, 0.7865, 0.0825)
+
+[node name="Item7" parent="Sweep/Displays/Ham/Stock" instance=ExtResource("sweep_p_ham")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1175, 0.7865, 0.0825)
+
+[node name="Item8" parent="Sweep/Displays/Ham/Stock" instance=ExtResource("sweep_p_ham")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3525, 0.7865, 0.0825)
+
+[node name="Cheese" parent="Sweep/Displays" instance=ExtResource("sweep_display")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 8, 0, -12.73)
+
+[node name="Item1" parent="Sweep/Displays/Cheese/Stock" instance=ExtResource("sweep_p_cheese")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3525, 0.7615, 0)
+
+[node name="Item2" parent="Sweep/Displays/Cheese/Stock" instance=ExtResource("sweep_p_cheese")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1175, 0.7615, 0)
+
+[node name="Item3" parent="Sweep/Displays/Cheese/Stock" instance=ExtResource("sweep_p_cheese")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1175, 0.7615, 0)
+
+[node name="Item4" parent="Sweep/Displays/Cheese/Stock" instance=ExtResource("sweep_p_cheese")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3525, 0.7615, 0)
+
+[node name="Item5" parent="Sweep/Displays/Cheese/Stock" instance=ExtResource("sweep_p_cheese")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3525, 0.8435, 0)
+
+[node name="Item6" parent="Sweep/Displays/Cheese/Stock" instance=ExtResource("sweep_p_cheese")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1175, 0.8435, 0)
+
+[node name="Item7" parent="Sweep/Displays/Cheese/Stock" instance=ExtResource("sweep_p_cheese")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1175, 0.8435, 0)
+
+[node name="Item8" parent="Sweep/Displays/Cheese/Stock" instance=ExtResource("sweep_p_cheese")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3525, 0.8435, 0)
+
+[node name="Detergent" parent="Sweep/Displays" instance=ExtResource("sweep_display")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -16.5, 0, -11)
+
+[node name="Item1" parent="Sweep/Displays/Detergent/Stock" instance=ExtResource("sweep_p_detergent")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.255, 0.8515, -0.145)
+
+[node name="Item2" parent="Sweep/Displays/Detergent/Stock" instance=ExtResource("sweep_p_detergent")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8515, -0.145)
+
+[node name="Item3" parent="Sweep/Displays/Detergent/Stock" instance=ExtResource("sweep_p_detergent")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.255, 0.8515, -0.145)
+
+[node name="Item4" parent="Sweep/Displays/Detergent/Stock" instance=ExtResource("sweep_p_detergent")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.255, 0.8515, 0)
+
+[node name="Item5" parent="Sweep/Displays/Detergent/Stock" instance=ExtResource("sweep_p_detergent")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8515, 0)
+
+[node name="Item6" parent="Sweep/Displays/Detergent/Stock" instance=ExtResource("sweep_p_detergent")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.255, 0.8515, 0)
+
+[node name="Item7" parent="Sweep/Displays/Detergent/Stock" instance=ExtResource("sweep_p_detergent")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.255, 0.8515, 0.145)
+
+[node name="Item8" parent="Sweep/Displays/Detergent/Stock" instance=ExtResource("sweep_p_detergent")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8515, 0.145)
+
+[node name="Soda" parent="Sweep/Displays" instance=ExtResource("sweep_display")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 12.73)
+
+[node name="Item1" parent="Sweep/Displays/Soda/Stock" instance=ExtResource("sweep_p_soda_pack")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2075, 0.7865, 0)
+
+[node name="Item2" parent="Sweep/Displays/Soda/Stock" instance=ExtResource("sweep_p_soda_pack")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2075, 0.7865, 0)
+
+[node name="Item3" parent="Sweep/Displays/Soda/Stock" instance=ExtResource("sweep_p_soda_pack")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2075, 0.9185, 0)
+
+[node name="Item4" parent="Sweep/Displays/Soda/Stock" instance=ExtResource("sweep_p_soda_pack")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2075, 0.9185, 0)
+
+[node name="Item5" parent="Sweep/Displays/Soda/Stock" instance=ExtResource("sweep_p_soda_pack")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2075, 1.0505, 0)
+
+[node name="Item6" parent="Sweep/Displays/Soda/Stock" instance=ExtResource("sweep_p_soda_pack")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2075, 1.0505, 0)
+
+[node name="Item7" parent="Sweep/Displays/Soda/Stock" instance=ExtResource("sweep_p_soda_pack")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2075, 1.1825, 0)
+
+[node name="Item8" parent="Sweep/Displays/Soda/Stock" instance=ExtResource("sweep_p_soda_pack")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2075, 1.1825, 0)
+
+[node name="PaperTowels" parent="Sweep/Displays" instance=ExtResource("sweep_display")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -6, 0, 8)
+
+[node name="Item1" parent="Sweep/Displays/PaperTowels/Stock" instance=ExtResource("sweep_p_paper_towels")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1575, 0.8615, -0.1075)
+
+[node name="Item2" parent="Sweep/Displays/PaperTowels/Stock" instance=ExtResource("sweep_p_paper_towels")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1575, 0.8615, -0.1075)
+
+[node name="Item3" parent="Sweep/Displays/PaperTowels/Stock" instance=ExtResource("sweep_p_paper_towels")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1575, 0.8615, 0.1075)
+
+[node name="Item4" parent="Sweep/Displays/PaperTowels/Stock" instance=ExtResource("sweep_p_paper_towels")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1575, 0.8615, 0.1075)
+
+[node name="Item5" parent="Sweep/Displays/PaperTowels/Stock" instance=ExtResource("sweep_p_paper_towels")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1575, 1.1435, -0.1075)
+
+[node name="Item6" parent="Sweep/Displays/PaperTowels/Stock" instance=ExtResource("sweep_p_paper_towels")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1575, 1.1435, -0.1075)
+
+[node name="Item7" parent="Sweep/Displays/PaperTowels/Stock" instance=ExtResource("sweep_p_paper_towels")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1575, 1.1435, 0.1075)
+
+[node name="Item8" parent="Sweep/Displays/PaperTowels/Stock" instance=ExtResource("sweep_p_paper_towels")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1575, 1.1435, 0.1075)
+
+[node name="GiantSoda" parent="Sweep/Bonuses" instance=ExtResource("sweep_inflatable_bottle")]
+transform = Transform3D(0.921061, 0, 0.389418, 0, 1, 0, -0.389418, 0, 0.921061, -17, 0.002, 12.8)
+
+[node name="GiantCereal" parent="Sweep/Bonuses" instance=ExtResource("sweep_inflatable_cereal")]
+transform = Transform3D(0.825336, 0, 0.564642, 0, 1, 0, -0.564642, 0, 0.825336, 16.2, 0.002, 12.6)
+
+[node name="GiantSoup" parent="Sweep/Bonuses" instance=ExtResource("sweep_inflatable_can")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.2, 0.002, -12.6)
+
+[node name="DeliCounter" parent="Sweep/Stations" instance=ExtResource("sweep_station")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.8, 0, -9)
+title = "DELI COUNTER"
+bonus = 50.0
+
+[node name="CoffeeGrinder" parent="Sweep/Stations" instance=ExtResource("sweep_station")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.8, 0, 9)
+title = "COFFEE GRINDER"
+bonus = 50.0

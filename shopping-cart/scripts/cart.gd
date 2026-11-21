@@ -653,10 +653,34 @@ func ground_slope() -> float:
 func groceries_in_basket() -> int:
 	var n := 0
 	for g in groceries:
-		var p := frame.global_transform.affine_inverse() * g.global_position
-		if p.x > 0.05 and p.x < 1.0 and absf(p.z) < 0.33 and p.y > 0.4 and p.y < 1.2:
+		if g.visible and in_basket(g.global_position):
 			n += 1
 	return n
+
+
+## Whether a point (world space) is inside the basket, or heaped on top of it up to 1.2 m off the floor.
+func in_basket(p: Vector3) -> bool:
+	var q := frame.global_transform.affine_inverse() * p
+	return q.x > 0.05 and q.x < 1.0 and absf(q.z) < 0.33 and q.y > 0.4 and q.y < 1.2
+
+
+## Where something dropped into the basket starts (cart-local): over the middle of the basket, a little above the
+## rim, spread a bit by `spread` (-1 to 1 in each of x and z) so a run of drops doesn't land on one spot.
+func basket_drop(spread: Vector2) -> Vector3:
+	return Vector3(0.55 + 0.2 * spread.x, 1.08, 0.15 * spread.y)
+
+
+## The cart's own groceries (the five under Groceries): shown and loose in the basket, or taken out of play
+## (hidden, frozen, touching nothing), as for a supermarket sweep, where every cart starts empty.
+func show_groceries(on: bool) -> void:
+	for g in groceries:
+		if g.visible == on:
+			continue
+		g.visible = on
+		g.collision_layer = LAYER_CARGO if on else 0
+		g.collision_mask = LAYER_WORLD | LAYER_CART | LAYER_CARGO if on else 0
+		if not puppet:
+			g.freeze = not on
 
 
 func _link(node: Node3D, body: RigidBody3D) -> void:

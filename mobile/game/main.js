@@ -13,6 +13,7 @@ import { fetchLevel, buildLevel, layerPairs, applyEnvironment, ambientFor, makeS
 import { WheelSounds, unlockAudio, updateListener, loadedLoops } from './sound.js';
 import { ChunkStreamer } from './stream.js';
 import { Race, IDLE as RACE_IDLE } from './race.js';
+import { Sweep } from './sweep.js';
 import { setMusic, startMusic, musicState } from './music.js';
 
 await RAPIER.init();
@@ -65,6 +66,10 @@ let streamer = null;   // the endless sandbox's chunks (stream.js), else null
 let race = null;       // the level's race (race.js), if it has one
 const RACE_LEVEL = 'garage';   // the race command's level (console.gd race_level)
 const raceEl = { root: $('race'), clock: $('raceClock'), status: $('raceStatus'), count: $('raceCount'), results: $('raceResults'), table: $('raceTable') };
+let sweep = null;      // the level's supermarket sweep (sweep.js), if it has one
+const SWEEP_LEVEL = 'market';   // the sweep command's level (console.gd sweep_level)
+const sweepEl = { root: $('sweep'), clock: $('sweepClock'), status: $('sweepStatus'), count: $('sweepCount'), total: $('sweepTotal'),
+  detail: $('sweepDetail'), toasts: $('sweepToasts'), standings: $('sweepStandings'), results: $('sweepResults'), table: $('sweepTable') };
 
 async function loadLevel(key) {
   const entry = levelList.find(l => l.key === key) || levelList[0];
@@ -123,6 +128,8 @@ async function loadLevel(key) {
     levelKey = entry.key;
     race = level.race ? new Race(level.race, { cart: () => cart, bots: () => bots, spawn }, raceEl) : null;
     raceEl.root.hidden = true;
+    sweep = level.sweep ? new Sweep(level.sweep, { cart: () => cart, bots: () => bots, spawn, props: level.props, root: levelRoot, RAPIER, world }, sweepEl) : null;
+    sweepEl.root.hidden = true;
     setMusic(data.json.music);   // the level's background loop (parking lot), if it has one
     spawn(v3(...level.spawn.pos), level.spawn.yaw);
     world.step(eventQueue);   // settle the query structures before the first raycast
@@ -330,6 +337,7 @@ let lastInput = { L: 0, R: 0, lift: false, press: false };
 // ---------------------------------------------------------------- loop
 function physicsStep(inp) {
   if (race) race.step(STEP);
+  if (sweep) sweep.step(STEP);
   const all = [cart, ...others()];
   if (rig.nest) {
     regroup(all, rig.nest);
@@ -388,6 +396,7 @@ function frame(now) {
   level.lights.update(new THREE.Vector3(c.x, c.y, c.z), dt);
   hud();
   if (race) race.draw();
+  if (sweep) sweep.draw(dt);
   renderer.render(scene, camera);
 }
 
@@ -407,6 +416,7 @@ const markLevel = el => el.querySelectorAll('.lvl').forEach(b => b.classList.tog
 buildLevelButtons($('startLevels'), async key => { if (key !== levelKey) await loadLevel(key); markLevel($('startLevels')); });
 buildLevelButtons($('menuLevels'), key => { closeMenu(); travel(key); });
 $('raceBtn').addEventListener('click', () => { closeMenu(); startRace(true); });
+$('sweepBtn').addEventListener('click', () => { closeMenu(); startSweep(true); });
 
 go.addEventListener('click', async () => {
   // iOS asks permission for motion sensors; it has to come from this tap.
@@ -427,6 +437,11 @@ async function travel(key) { releaseTouches(); keys.clear(); await loadLevel(key
 async function startRace(withBots) {
   if (levelKey !== RACE_LEVEL || !race) { logLine(`Travelling to ${RACE_LEVEL}...`); await travel(RACE_LEVEL); }
   if (race) race.start(withBots); else logLine('<span class="bad">This level has no race.</span>');
+}
+/** The sweep command: to the supermarket if we're not there, then everyone lines up and the count starts. */
+async function startSweep(withBots, seconds = 0) {
+  if (levelKey !== SWEEP_LEVEL || !sweep) { logLine(`Travelling to ${SWEEP_LEVEL}...`); await travel(SWEEP_LEVEL); }
+  if (sweep) sweep.start(withBots, seconds); else logLine('<span class="bad">This level has no sweep.</span>');
 }
 
 // Browsers only allow sound after a tap, click or key; Safari sometimes wants another after the Start tap.
@@ -459,6 +474,12 @@ COMMANDS.race = ['race to the bottom of the parking garage: 3, 2, 1, go! (race n
   const withBots = !(args.includes('nobots') || args.includes('solo'));
   closeConsole();
   await startRace(withBots);
+}];
+COMMANDS.sweep = ['supermarket sweep: fill your cart before time\u2019s up (sweep nobots: no bots; sweep 60: a 60 s round)', async args => {
+  const withBots = !(args.includes('nobots') || args.includes('solo'));
+  const secs = args.map(Number).find(n => n > 0) || 0;
+  closeConsole();
+  await startSweep(withBots, secs);
 }];
 for (const l of levelList) COMMANDS[l.key] = [`fast travel to ${l.scene.split('/').pop()}`, async () => { logLine(`Travelling to ${l.key}...`); closeConsole(); await travel(l.key); }];
 function runCommand(line) {
@@ -493,7 +514,7 @@ go.disabled = false; go.textContent = mode === 'touch' ? 'Tap to start' : 'Start
 // Test hook: scripted checks press the hands and keys and read the cart (mobile/test/drive_test.js).
 window.__cart = {
   get cart() { return cart; }, get spares() { return spares; }, get bots() { return bots; }, get world() { return world; }, get level() { return level; }, get streamer() { return streamer; },
-  get levelKey() { return levelKey; }, get race() { return race; }, startRace, get started() { return started; }, get cam() { return cam; }, camera, renderer,
+  get levelKey() { return levelKey; }, get race() { return race; }, startRace, get sweep() { return sweep; }, startSweep, get started() { return started; }, get cam() { return cam; }, camera, renderer,
   RAPIER, v3, levels: levelList, loadLevel, loadedLoops, musicState, spawn, respawn, runCommand, setMode, get mode() { return mode; },
   /** {L, R: -1/0/1, lift, press} or null to give control back to the keys and screen. */
   setInput(inp) { testInput = inp ? { L: 0, R: 0, lift: false, press: false, ...inp } : null; },

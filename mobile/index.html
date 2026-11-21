@@ -114,6 +114,31 @@ body.touch .hands { bottom: auto; top: calc(10px + var(--safe-t)); font-size: 11
 #raceResults h2 { margin: 0 0 10px; font: 800 26px/1 var(--display); letter-spacing: .06em; color: var(--tag); }
 #raceTable { margin: 0 0 10px; text-align: left; font: 500 16px/1.6 var(--mono); white-space: pre; }
 .lvl.race { border-color: var(--tag); }
+/* Supermarket sweep (sweep.js): time left at the top, the basket's worth and pop-ups top left, everyone's totals
+   top right, 3 2 1 GO! in the middle, the checkout table at the end. */
+#sweep { position: fixed; inset: 0; pointer-events: none; z-index: 3; }
+#sweepClock { position: absolute; left: 50%; top: calc(10px + var(--safe-t)); transform: translateX(-50%); font: 800 42px/1 var(--display);
+  font-variant-numeric: tabular-nums; letter-spacing: .02em; text-shadow: 0 2px 6px #000, 0 0 2px #000; }
+#sweepClock.hurry { color: var(--pull); }
+#sweepStatus { position: absolute; left: 50%; top: calc(58px + var(--safe-t)); transform: translateX(-50%); white-space: nowrap;
+  font: 700 16px/1 var(--display); letter-spacing: .04em; text-transform: uppercase; color: var(--push); text-shadow: 0 1px 4px #000; }
+#sweepBasket { position: absolute; left: calc(12px + var(--safe-l)); top: calc(92px + var(--safe-t)); min-width: 150px; padding: 4px 14px 6px;
+  border-bottom: 3px solid var(--push); text-align: center; }
+#sweepBasket .cap { font: 600 10px/1.4 var(--display); letter-spacing: .08em; color: var(--muted); }
+#sweepTotal { font: 800 28px/1.05 var(--display); color: var(--push); font-variant-numeric: tabular-nums; }
+#sweepDetail { font: 500 12px/1.4 var(--mono); }
+#sweepToasts { position: absolute; left: calc(14px + var(--safe-l)); top: calc(170px + var(--safe-t)); white-space: pre; font: 700 20px/1.35 var(--display);
+  color: var(--tag); text-shadow: 0 1px 4px #000, 0 0 2px #000; }
+#sweepStandings { position: absolute; right: calc(14px + var(--safe-r)); top: calc(60px + var(--safe-t)); white-space: pre; text-align: right;
+  font: 600 14px/1.5 var(--mono); text-shadow: 0 1px 4px #000, 0 0 2px #000; }
+#sweepCount { position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%); font: 900 150px/1 var(--display);
+  text-shadow: 0 4px 18px #000, 0 0 4px #000; }
+#sweepCount.go { color: var(--push); }
+#sweepResults { position: absolute; left: 50%; top: 54%; transform: translate(-50%, -50%); padding: 18px 26px; border-top: 3px solid var(--push);
+  text-align: center; pointer-events: auto; }
+#sweepResults h2 { margin: 0 0 10px; font: 800 26px/1 var(--display); letter-spacing: .06em; color: var(--push); }
+#sweepTable { margin: 0 0 10px; text-align: left; font: 500 15px/1.6 var(--mono); white-space: pre; }
+.lvl.sweep { border-color: var(--push); }
 @media (orientation: portrait) and (max-width: 700px) {
   body.touch #rotate { display: block; }
   .how { grid-template-columns: 1fr; }
@@ -153,7 +178,8 @@ body.touch .hands { bottom: auto; top: calc(10px + var(--safe-t)); font-size: 11
   <div class="card">
     <h2>Fast travel</h2>
     <div class="levels" id="menuLevels"></div>
-    <div class="levels"><button class="lvl race" id="raceBtn" type="button">Race down the garage</button></div>
+    <div class="levels"><button class="lvl race" id="raceBtn" type="button">Race down the garage</button>
+      <button class="lvl sweep" id="sweepBtn" type="button">Supermarket sweep</button></div>
     <button class="chip" id="menuClose" type="button">Back to the cart</button>
   </div>
 </div>
@@ -196,6 +222,16 @@ body.touch .hands { bottom: auto; top: calc(10px + var(--safe-t)); font-size: 11
   <div id="raceCount" hidden>3</div>
   <div id="raceResults" class="panel" hidden><h2>Results</h2><pre id="raceTable"></pre>
     <div class="small"><span class="desk-only">Open the console (`) and type race to go again.</span><span class="touch-only">Level &rsaquo; Race down the garage to go again.</span></div></div>
+</div>
+<div id="sweep" hidden>
+  <div id="sweepClock">1:30</div>
+  <div id="sweepStatus"></div>
+  <div id="sweepBasket" class="panel"><div class="cap">IN YOUR CART</div><div id="sweepTotal">$0.00</div><div id="sweepDetail">0 items</div></div>
+  <div id="sweepToasts"></div>
+  <div id="sweepStandings" hidden></div>
+  <div id="sweepCount" hidden>3</div>
+  <div id="sweepResults" class="panel" hidden><h2>Checkout</h2><pre id="sweepTable"></pre>
+    <div class="small"><span class="desk-only">Open the console (`) and type sweep to go again.</span><span class="touch-only">Level &rsaquo; Supermarket sweep to go again.</span></div></div>
 </div>
 <script type="module" src="game/main.js"></script>
 </body>
