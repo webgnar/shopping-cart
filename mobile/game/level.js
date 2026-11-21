@@ -114,7 +114,8 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
   // ---------------------------------------------------------------- light
   const env = json.environment || {};
   const lights = new LightPool(root, json.lights, opts.lightCount);
-  return { props, lights, drawn, tris, env, sun: json.sun, spawn: json.spawn, spareCarts: json.spare_carts, name: json.name, surfaces };
+  return { props, lights, drawn, tris, env, sun: json.sun, spawn: json.spawn, spareCarts: json.spare_carts,
+    botCarts: json.bot_carts || [], navmesh: json.navmesh, name: json.name, surfaces };
 }
 
 /** Draws a Label3D's text the way Godot does: font_size px per line, pixel_size m per px, centred. */

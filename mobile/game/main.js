@@ -6,6 +6,8 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import RAPIER from 'rapier';
 import { v3, add, sub, clamp, rot, color, widenMask } from './util.js';
 import { Cart, SIDES } from './cart.js';
+import { Bot } from './bot.js';
+import { NavMesh } from './nav.js';
 import { fetchLevel, buildLevel, layerPairs, applyEnvironment, ambientFor, makeSkyDome, disposeTree } from './level.js';
 import { RollingSound, unlockAudio, updateListener, loadedLoops } from './sound.js';
 
@@ -51,7 +53,9 @@ const cartModel = cartGltf && cartGltf.scene;
 if (cartModel) cartModel.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.material = cartMats[o.material.name] || o.material; } });
 
 // ---------------------------------------------------------------- the world (rebuilt for each level)
-let world = null, eventQueue = null, level = null, levelRoot = null, ambient = null, cart = null, spares = [], ctx = null;
+let world = null, eventQueue = null, level = null, levelRoot = null, ambient = null, cart = null, spares = [], bots = [], ctx = null;
+// Every cart but the player's: spare carts, then bot carts.
+const others = () => spares.concat(bots.map(b => b.cart));
 let levelKey = null, loading = false;
 
 async function loadLevel(key) {
@@ -63,11 +67,11 @@ async function loadLevel(key) {
     // Tear down the old level.
     if (levelRoot) { scene.remove(levelRoot); disposeTree(levelRoot); }
     if (ambient) scene.remove(ambient);
-    for (const c of [cart, ...spares]) if (c && c.sound) c.sound.remove();
-    for (const c of [cart, ...spares]) if (c && c.root) scene.remove(c.root);
-    for (const c of [cart, ...spares]) if (c) for (const [, g] of c.meshes) scene.remove(g);
+    for (const c of [cart, ...others()]) if (c && c.sound) c.sound.remove();
+    for (const c of [cart, ...others()]) if (c && c.root) scene.remove(c.root);
+    for (const c of [cart, ...others()]) if (c) for (const [, g] of c.meshes) scene.remove(g);
     if (world) world.free();
-    cart = null; spares = [];
+    cart = null; spares = []; bots = [];
     world = new RAPIER.World(v3(0, -9.81, 0));
     world.timestep = STEP;
     world.integrationParameters.numSolverIterations = 8;
@@ -88,6 +92,15 @@ async function loadLevel(key) {
       const spare = new Cart({ ...ctx, model: cartModel ? cartModel.clone() : null }, { pos: v3(...sc.pos), yaw: sc.yaw, player: false, empty: true, bit });
       if (rig.rolling_sound) spare.sound = new RollingSound(spare, rig.rolling_sound, level.surfaces);
       spares.push(spare);
+      bit <<= 1;
+    }
+    // Bot carts: the same cart, driven by a bot pressing the player's keys over the level's navigation mesh.
+    const nav = level.navmesh ? new NavMesh(level.navmesh) : null;
+    for (const bc of nav ? level.botCarts : []) {
+      if (bit > 0x8000) break;
+      const c = new Cart({ ...ctx, model: cartModel ? cartModel.clone() : null }, { pos: v3(...bc.pos), yaw: bc.yaw, player: false, empty: true, bit });
+      if (rig.rolling_sound) c.sound = new RollingSound(c, rig.rolling_sound, level.surfaces);
+      bots.push(new Bot(c, nav, rig.bot));
       bit <<= 1;
     }
     levelKey = entry.key;
@@ -290,11 +303,12 @@ let lastInput = { L: 0, R: 0, lift: false, press: false };
 function physicsStep(inp) {
   cart.step(inp, STEP);
   for (const s of spares) s.step(null, STEP);
+  for (const b of bots) b.cart.step(b.update(STEP), STEP);
   world.step(eventQueue);
-  cart.capWheelSpin(); for (const s of spares) if (!s.pinned) s.capWheelSpin();
+  cart.capWheelSpin(); for (const s of others()) if (!s.pinned) s.capWheelSpin();
   eventQueue.drainCollisionEvents((h1, h2, began) => {
     if (!began) return;
-    for (const c of [cart, ...spares]) {
+    for (const c of [cart, ...others()]) {
       if (!c.guard) continue;
       const other = h1 === c.guard.handle ? h2 : h2 === c.guard.handle ? h1 : null;
       if (other !== null) c.guardHit(world.getCollider(other)?.parent());
@@ -318,10 +332,10 @@ function frame(now) {
   for (const pr of level.props) if (pr.node && !pr.body.isSleeping()) { const t = pr.body.translation(), r = pr.body.rotation(); pr.node.position.set(t.x, t.y, t.z); pr.node.quaternion.set(r.x, r.y, r.z, r.w); }
   // Off the edge of the world: a fresh cart back at the start (the Godot levels are walled in, the sandbox isn't).
   if (cart.origin().y < level.spawn.pos[1] - 30) spawn(v3(...level.spawn.pos), level.spawn.yaw);
-  cart.sync(); for (const s of spares) s.sync();
+  cart.sync(); for (const s of others()) s.sync();
   updateCamera(dt);
   // Rolling sound: silent while paused (menu, console) or before Start.
-  for (const k of [cart, ...spares]) if (k.sound) k.sound.update(dt, paused || !started);
+  for (const k of [cart, ...others()]) if (k.sound) k.sound.update(dt, paused || !started);
   updateListener(camera);
   const c = cart.comWorld();
   if (sun.visible) { const d = sun.userData.dir; sun.position.set(c.x - d.x * 30, c.y - d.y * 30, c.z - d.z * 30); sun.target.position.set(c.x, c.y, c.z); }
@@ -421,7 +435,7 @@ go.disabled = false; go.textContent = mode === 'touch' ? 'Tap to start' : 'Start
 
 // Test hook: scripted checks press the hands and keys and read the cart (mobile/test/drive_test.js).
 window.__cart = {
-  get cart() { return cart; }, get spares() { return spares; }, get world() { return world; }, get level() { return level; },
+  get cart() { return cart; }, get spares() { return spares; }, get bots() { return bots; }, get world() { return world; }, get level() { return level; },
   get levelKey() { return levelKey; }, get started() { return started; }, get cam() { return cam; }, camera, renderer,
   RAPIER, v3, levels: levelList, loadLevel, loadedLoops, spawn, respawn, runCommand, setMode, get mode() { return mode; },
   /** {L, R: -1/0/1, lift, press} or null to give control back to the keys and screen. */
@@ -433,6 +447,6 @@ window.__cart = {
     for (let i = 0; i < n; i++) { onStep && onStep(i * STEP); physicsStep(readInput()); sample && sample(); }
     paused = false;
   },
-  renderOnce(dt = 1 / 60) { cart.sync(); for (const s of spares) s.sync(); for (const pr of level.props) if (pr.node) { const t = pr.body.translation(), r = pr.body.rotation(); pr.node.position.set(t.x, t.y, t.z); pr.node.quaternion.set(r.x, r.y, r.z, r.w); } updateCamera(dt); const c = cart.comWorld(); level.lights.update(new THREE.Vector3(c.x, c.y, c.z), 1); if (sun.visible) { const d = sun.userData.dir; sun.position.set(c.x - d.x * 30, c.y - d.y * 30, c.z - d.z * 30); sun.target.position.set(c.x, c.y, c.z); } skyDome.position.copy(camera.position); hud(); renderer.render(scene, camera); },
+  renderOnce(dt = 1 / 60) { cart.sync(); for (const s of others()) s.sync(); for (const pr of level.props) if (pr.node) { const t = pr.body.translation(), r = pr.body.rotation(); pr.node.position.set(t.x, t.y, t.z); pr.node.quaternion.set(r.x, r.y, r.z, r.w); } updateCamera(dt); const c = cart.comWorld(); level.lights.update(new THREE.Vector3(c.x, c.y, c.z), 1); if (sun.visible) { const d = sun.userData.dir; sun.position.set(c.x - d.x * 30, c.y - d.y * 30, c.z - d.z * 30); sun.target.position.set(c.x, c.y, c.z); } skyDome.position.copy(camera.position); hud(); renderer.render(scene, camera); },
   stats() { return { drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, meshes: level.drawn, fps }; },
 };

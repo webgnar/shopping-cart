@@ -18,6 +18,8 @@
 [ext_resource type="PackedScene" path="res://scenes/props/garage/exit_sign.tscn" id="17_b8qpi"]
 [ext_resource type="PackedScene" path="res://scenes/props/garage/sprinkler_pipe.tscn" id="18_7ft5d"]
 [ext_resource type="Material" path="res://assets/materials/garage/concrete_pillar.tres" id="19_2y8b3"]
+[ext_resource type="NavigationMesh" path="res://assets/navigation/parking_garage.tres" id="nav_mesh"]
+[ext_resource type="PackedScene" path="res://scenes/cart/bot_cart.tscn" id="bot_cart"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_m5xhd"]
 sky_top_color = Color(0.16470589, 0.21176471, 0.3372549, 1)
@@ -957,7 +959,7 @@ size = Vector3(0.1, 0.01, 5)
 material = ExtResource("5_br7pc")
 size = Vector3(0.35, 0.45, 11.4)
 
-[node name="ParkingGarage" type="Node3D" unique_id=996082350]
+[node name="ParkingGarage" type="Node3D" unique_id=996082350 groups=["navigation_geometry"]]
 script = ExtResource("1_j6fqj")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=351272648]
@@ -3546,3 +3548,17 @@ transform = Transform3D(-4.3649354e-08, 0.053257644, 0.9985808, 2.3279656e-09, 0
 transform = Transform3D(-0.998056, 0, 0.062323358, 0, 1, 0, -0.062323358, 0, -0.998056, 81.91026, 0.13145246, -5.25)
 collision_mask = 7
 mass = 15.0
+
+[node name="Navigation" type="NavigationRegion3D" parent="."]
+navigation_mesh = ExtResource("nav_mesh")
+
+[node name="BotCarts" type="Node3D" parent="."]
+
+[node name="BotCart1" parent="BotCarts" instance=ExtResource("bot_cart")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 16.075, -3)
+
+[node name="BotCart2" parent="BotCarts" instance=ExtResource("bot_cart")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30.1, 13.865, 2)
+
+[node name="BotCart3" parent="BotCarts" instance=ExtResource("bot_cart")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.14, 11.395, -3)
