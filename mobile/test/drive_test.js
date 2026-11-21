@@ -487,8 +487,10 @@ const SCENARIOS = [
     c.sweep.draw(0); out.toast = document.getElementById('sweepToasts').textContent;
     const before = me.cents, q = c.cart.frame.rotation();
     const nose = { x: 1 - 2 * (q.y * q.y + q.z * q.z), y: 2 * (q.x * q.y + q.w * q.z), z: 2 * (q.x * q.z - q.w * q.y) };
-    c.cart.wake(); c.cart.frame.setAngvel({ x: -7 * nose.x, y: -7 * nose.y, z: -7 * nose.z }, true); c.cart.frame.setLinvel({ x: 0, y: 2, z: 0 }, true);
+    c.cart.wake(); c.cart.frame.setAngvel({ x: -12 * nose.x, y: -12 * nose.y, z: -12 * nose.z }, true); c.cart.frame.setLinvel({ x: 0, y: 3.5, z: 0 }, true);
     c.simulate(3);
+    // Upside down, the groceries lie under the basket; set the cart back on its wheels beside them (as a reset does).
+    { const o = c.cart.origin(); c.spawn(c.v3(o.x - 3, 0, o.z), 0); c.simulate(0.5); }
     out.spilled = [before, me.cents];
     const soup = sweep.bonuses.find(b => b.name === 'Giant soup');
     c.spawn(c.v3(soup.rest.p.x - 2.2, 0, soup.rest.p.z), 0); c.simulate(0.2);
