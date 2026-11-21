@@ -97,6 +97,9 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
 - `assets/audio/cart/` — the cart's rolling loops, cut from zack's recordings by
   `tools/audio/make_cart_rolling_loops.py` (also writes the browser's `mobile/audio/*.wav`). The cart's
   `Frame/RollingSound` picks the loop by the floor's physics material.
+- `assets/audio/ambience/` — level background loops (`tools/audio/make_ambience_loops.py`, also writes
+  `mobile/audio/*.mp3`), played by an autoplaying `AudioStreamPlayer` on the `Music` bus (`default_bus_layout.tres`),
+  e.g. the parking lot's `BackgroundMusic`. The browser export picks it up as the level's `"music"`.
 - `scripts/` — behaviour scripts for the scenes above.
 - `tools/` (repo root) — Blender builder and export scripts. `docs/DEV_NOTES.md` — dev notes.
 

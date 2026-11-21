@@ -10,7 +10,8 @@ extends RefCounted
 ##  - mobile/levels/<key>.json: what you touch and how it's lit: every collision shape with its friction, the
 ##    loose props (mass, shapes), CartSpawn, the spare carts, the bot carts and the navigation mesh they drive on,
 ##    sky/fog/ambient, the sun, lamps and 3D labels, the lanes of moving traffic (TrafficLane: speed, length, each
-##    car's place and shapes; cars are kin_<n>), and for the endless sandbox, the chunk grid ("stream").
+##    car's place and shapes; cars are kin_<n>), the background loop ("music"), and for the endless sandbox, the
+##    chunk grid ("stream").
 ##  - mobile/levels/chunks/<name>.glb and .json: each chunk the sandbox streams (scenes/sandbox/chunks/), the same way.
 ## And once for the cart (scenes/cart/cart.tscn): mobile/levels/cart.json with the rig (bodies, masses, shapes,
 ## hinges and their limits), the cart's shared materials (assets/materials/cart/*.tres) and the bot's settings
@@ -138,6 +139,8 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 			out.labels.append(_label(n))
 		elif n is NavigationRegion3D and n.navigation_mesh and out.navmesh == null:
 			out.navmesh = _navmesh(n)
+		elif n is AudioStreamPlayer and n.autoplay and n.stream:
+			out["music"] = _music(n)
 
 	# Moving traffic: each lane's place, speed and length, and its cars (kin_<n>) with their shapes and their
 	# places in the queue. The phone drives them the same way (TrafficLane).
@@ -469,6 +472,15 @@ static func _bot_settings() -> Dictionary:
 	out["target_desired_distance"] = agent.target_desired_distance
 	cart.free()
 	return out
+
+
+## A level's background loop (an autoplaying AudioStreamPlayer, e.g. the parking lot's BackgroundMusic). The phone
+## plays mobile/audio/<name>.mp3, cut by the same script as the .ogg (tools/audio/make_ambience_loops.py): the loop
+## plus a few seconds of what follows it, which mobile/game/music.js crossfades into the next pass.
+static func _music(p: AudioStreamPlayer) -> Dictionary:
+	var bus := AudioServer.get_bus_index(p.bus)
+	return {"file": "audio/%s.mp3" % p.stream.resource_path.get_file().get_basename(), "loop_length": p.stream.get_length(),
+		"volume_db": p.volume_db + (AudioServer.get_bus_volume_db(bus) if bus >= 0 else 0.0), "bus": String(p.bus)}
 
 
 ## The rolling sound (Frame/RollingSound): its settings, the floor probe and each surface's loop. The phone plays

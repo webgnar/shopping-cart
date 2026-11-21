@@ -3,6 +3,30 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: Parking lot background loop
+
+The parking lot level plays zack's field recording ("parking lot back ground.wav": 9:15, stereo, 24-bit 48 kHz,
+REAPER, 160 MB; kept in the project's shared files, not the repo) as a background loop.
+
+- **Cut:** `tools/audio/make_ambience_loops.py` (numpy + ffmpeg). The recording clips (hits 0 dBFS) at 4 s, 70 s
+  and 323-328 s, the last a loud event right by the mic, so the loop keeps 75-320.5 s and 332-553.5 s (the end of
+  the file is 1.5 s of silence), spliced with a 4 s equal-power crossfade in a quiet stretch, and crossfaded 4 s from
+  its end back into its start. DC removed, levelled to peak at -1 dBFS (RMS -23.8 dBFS). Loop: **459.0 s (7:39)**.
+  The seam was checked by decoding the .ogg: the sample step across it is 0.004, smaller than ordinary steps in
+  the recording, and the level either side is -30 / -29 dBFS.
+- **Files:** `assets/audio/ambience/parking_lot.ogg` (Vorbis q2, 44.1 kHz stereo, 5.3 MB, imported with loop on;
+  Ogg Vorbis loops sample-exact in Godot). Browser: `mobile/audio/parking_lot.mp3` (64 kb/s, 3.5 MB), the loop
+  plus the 4 s that follow it, unfaded: `mobile/game/music.js` starts a copy every 459 s and crossfades the
+  copies over that tail, so MP3 encoder padding can't leave a gap and Safari plays it.
+- **Scene:** `ParkingLot/BackgroundMusic` (AudioStreamPlayer, autoplay, bus `Music`, `volume_db` -12, process mode
+  Always so it keeps going with the console open). The `Music` bus (0 dB, into Master) is new, in
+  `default_bus_layout.tres`. At -12 dB the loop sits about 15 dB under the cart's asphalt roll at full speed.
+  Fast travel changes scene, which frees the level and its player, so it stops (tests/parking_lot_test.gd checks).
+- **Browser:** the level export writes an autoplaying AudioStreamPlayer as the level's `"music"` (file, loop length,
+  player + bus volume); main.js stops it on any level change and starts the new level's.
+- Left as recorded: the low rumble (most of the energy is 20-200 Hz, traffic) and a faint 14 kHz whine from 5:30 on
+  at about -80 dB.
+
 ## 2026-11-21: San Francisco hill level
 
 `scenes/levels/sf_hill.tscn` (root script `main.gd`, console `hill`): a San Francisco street that runs 445 m
