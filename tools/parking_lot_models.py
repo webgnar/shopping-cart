@@ -509,58 +509,60 @@ def parked_car():
     return m.build()
 
 
-def stall_markings(m=None):
-    """Paint for one row of 8 stalls, 2.7 m wide and 5.5 m deep, with hairpin dividers.
+def stall_markings(m=None, count=8):
+    """Paint for one row of `count` stalls (8 for the parking lot level), 2.7 m wide and 5.5 m deep, with
+    hairpin dividers.
     Origin: bottom center of the row's open (aisle) edge; stalls run toward -Y (Godot +Z) from there."""
     own = m is None
     m = Model("stall_markings") if own else m
     p = m.obj("Paint", "paint_white")
     t = 0.002
-    for k in range(9):
-        x = -10.8 + 2.7 * k
+    for k in range(count + 1):
+        x = -1.35 * count + 2.7 * k
         for dx in (-0.15, 0.15):   # hairpin: two lines joined at the aisle end
             m.box(p, (0.1, 5.4, t), (x + dx, -2.8, t / 2))
         m.box(p, (0.4, 0.1, t), (x, -0.05, t / 2))
     return m.build() if own else 0
 
 
-# One block of the sandbox's endless lot (scenes/props/parking_lot/lot_block.tscn), in Godot metres.
-LOT_BLOCK_SIZE = (78.0, 37.0)        # X (along the rows) by Z (across them); the blocks tile edge to edge
-LOT_ROW_CENTERS = (-9.25, 9.25)      # Z of each double row's centre line (the stall heads meet there)
-LOT_SEGMENTS = (-21.6, 0.0, 21.6)    # X of each 8-stall run of a row (3 x 21.6 m = 24 stalls)
-LOT_ISLAND_X = 33.9                  # planter island at the +X end of each double row
-LOT_POLE_X = 0.0                     # streetlight in the middle of each double row, on the stall heads
+# The sandbox's open-lot chunk (scenes/sandbox/chunks/open_lot.tscn), in Godot metres, centred on the chunk.
+OPEN_LOT_SIZE = 40.0                 # every sandbox chunk is 40 x 40 m (scripts/sandbox/chunk_streamer.gd)
+OPEN_LOT_ROW_CENTERS = (-10.0, 10.0) # Z of each double row's centre line (the stall heads meet there)
+OPEN_LOT_STALLS = 11                 # stalls per row: 11 x 2.7 m = 29.7 m
+OPEN_LOT_ROW_X = -4.85               # X of the middle of each row (from x = -19.7 to 10.0)
+OPEN_LOT_ISLAND_X = 11.5             # planter island at the +X end of each double row
+OPEN_LOT_POLE_X = -6.2               # streetlight on the stall heads, on the 6th divider
 
 
-def lot_block():
-    """One block of the sandbox's endless parking lot, 78 x 37 m, tiled edge to edge in Godot.
-    Two double rows of 24 stalls (5.5 m deep, 2.7 m wide) run along X with a 7.5 m drive aisle down the
-    middle (z = 0) and half an aisle at each Z edge; each double row ends in a planter island (streetlight
-    and two palms) at +X, and a 7.8 m cross aisle runs between the islands and the next block. A second
-    streetlight stands in the middle of each double row on the stall heads. The parts are the lot props
-    themselves (stall markings, planter island, streetlight, palm tree), merged into one object per
-    material so a block draws in about ten calls. The asphalt is one 78 x 37 m face at y = 0.
-    Origin: block centre on the ground (Godot coordinates in the comments; z = -Blender y)."""
-    m = Model("lot_block", by_material=True)
-    sx, sz = LOT_BLOCK_SIZE
+def open_lot():
+    """One 40 x 40 m chunk of the sandbox's endless parking lot, laid out from the aerial reference photos
+    (Level Reference Images/): two double rows of 11 stalls (2.7 x 5.5 m) along X with a 9 m drive aisle down
+    the middle (z = 0) and half an aisle along each Z edge, so neighbouring chunks meet in a full aisle; each
+    double row ends at +X in a planter island (streetlight, two palms) and a 7.3 m cross aisle runs from there to
+    the +X edge. A second streetlight stands on the stall heads of each double row. Nothing but 2 mm paint comes
+    within 0.3 m of an edge, so it meets any chunk flush.
+    The parts are the lot props themselves (stall markings, planter island, streetlight, palm tree), merged into
+    one object per material so a chunk draws in about ten calls, plus the 40 x 40 m asphalt face at y = 0.
+    Origin: chunk centre on the ground (Godot coordinates in the comments; z = -Blender y)."""
+    m = Model("open_lot", by_material=True)
+    h = OPEN_LOT_SIZE / 2
     m.at(0, 0)
     a = m.obj("Asphalt", "asphalt")
-    m._add(a, [(-sx / 2, -sz / 2, 0), (sx / 2, -sz / 2, 0), (sx / 2, sz / 2, 0), (-sx / 2, sz / 2, 0)], [(0, 1, 2, 3)])
-    for zc in LOT_ROW_CENTERS:
-        for x in LOT_SEGMENTS:
-            m.at(x, zc - 5.5)              # row facing the aisle on its -Z side (stalls run toward +Z)
-            stall_markings(m)
-            m.at(x, zc + 5.5, 180)         # row facing the aisle on its +Z side
-            stall_markings(m)
-        m.at(LOT_ISLAND_X, zc)
+    m._add(a, [(-h, -h, 0), (h, -h, 0), (h, h, 0), (-h, h, 0)], [(0, 1, 2, 3)])
+    for zc in OPEN_LOT_ROW_CENTERS:
+        m.at(OPEN_LOT_ROW_X, zc - 5.5)          # row facing the aisle on its -Z side (stalls run toward +Z)
+        stall_markings(m, OPEN_LOT_STALLS)
+        m.at(OPEN_LOT_ROW_X, zc + 5.5, 180)     # row facing the aisle on its +Z side
+        stall_markings(m, OPEN_LOT_STALLS)
+        m.at(OPEN_LOT_ISLAND_X, zc)
         planter_island(m)
-        m.at(LOT_ISLAND_X, zc, 90)          # as placed in scenes/props/parking_lot/planter_island.tscn
+        m.at(OPEN_LOT_ISLAND_X, zc, 90)          # as placed in scenes/props/parking_lot/planter_island.tscn
         streetlight(m)
-        m.at(LOT_ISLAND_X, zc - 3.8, 20)
+        m.at(OPEN_LOT_ISLAND_X, zc - 3.8, 20)
         palm_tree(m)
-        m.at(LOT_ISLAND_X, zc + 3.8, 200)
+        m.at(OPEN_LOT_ISLAND_X, zc + 3.8, 200)
         palm_tree(m)
-        m.at(LOT_POLE_X, zc, 90)
+        m.at(OPEN_LOT_POLE_X, zc, 90)
         streetlight(m)
     m.at(0, 0)
     return m.build()
@@ -785,7 +787,7 @@ def link_materials(names=None):
 
 MODELS = {f.__name__: f for f in (parking_block, cart_corral, streetlight, palm_tree, planter_island,
                                    parked_car, stall_markings, store_front, water_machine, cart_row, lot_surface,
-                                   lot_block)}
+                                   open_lot)}
 
 if __name__ == "__main__":
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]

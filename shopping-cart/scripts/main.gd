@@ -1,9 +1,9 @@
 extends Node3D
-## Sandbox: an endless parking lot to work out the cart's physics in (scenes/main.tscn). The lot is a grid of
-## blocks (scenes/props/parking_lot/lot_block.tscn) that follows the camera (scripts/levels/endless_tiles.gd) on
-## an infinite asphalt plane; down the spawn aisle (+X) a test strip has two speed bumps, a curb, a ramp up to a
-## ledge and two stacks of boxes. E/A = left hand push/pull, Q/D = right hand push/pull (hold to push or pull
-## harder), W/S lean the back/front up, P reset.
+## Sandbox: an endless parking lot to work out the cart's physics in (scenes/main.tscn). Its Chunks node
+## (scripts/sandbox/chunk_streamer.gd) fills the ground around the cart with 40 m open-lot chunks
+## (scenes/sandbox/chunks/open_lot.tscn), all facing the same way; down the spawn aisle (+X) a test strip has two
+## speed bumps, a curb, a ramp up to a ledge and two stacks of boxes. E/A = left hand push/pull, Q/D = right hand
+## push/pull (hold to push or pull harder), W/S lean the back/front up, P reset.
 ## The mouse only moves the camera (click to capture, Esc to release, wheel to zoom).
 ##
 ## The level, lights, camera, HUD and the CartSpawn marker are all nodes in the scene (scenes/main.tscn).

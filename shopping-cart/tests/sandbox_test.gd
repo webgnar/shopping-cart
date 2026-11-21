@@ -5,7 +5,8 @@ extends SceneTree
 ##  - no holes: the ground under a grid of points around the cart is always found,
 ##  - every chunk is flat at height 0 along its edges (so any two meet flush),
 ##  - each kind of chunk has the floor (and rolling sound) it should,
-##  - the cart can be pushed over the hill street's crest and rolls back down the other side.
+##  - the cart can be pushed over the hill street's crest and rolls back down the other side (when the sandbox
+##    has a hill chunk).
 ##   godot --headless --fixed-fps 120 -s res://tests/sandbox_test.gd
 
 var main: Node3D
@@ -102,8 +103,11 @@ func _run() -> void:
 			"jump to (%d, %d): %d chunks loaded, %d too far, holes %s" % [ground.x, ground.z, streamer.loaded.size(), far,
 			str(holes.slice(0, 4)) if holes else "none"])
 	var orphans := streamer.get_children().filter(func(n): return n.name.begins_with("Chunk_")).size() - streamer.loaded.size()
-	_check(max_loaded <= 20 and orphans >= 0 and kinds.size() == streamer.chunks.size(),
-		"at most %d chunks at once (limit 20), every kind seen (%d of %d)" % [max_loaded, kinds.size(), streamer.chunks.size()])
+	# The most squares that can be within unload_distance of the cart (a circle of that radius, plus a square's
+	# half diagonal): 27 for 88 m, 44 for the sandbox's 120 m.
+	var limit := ceili(PI * pow(streamer.unload_distance / streamer.chunk_size + 0.71, 2))
+	_check(max_loaded <= limit and orphans >= 0 and kinds.size() == streamer.chunks.size(),
+		"at most %d chunks at once (limit %d), every kind seen (%d of %d)" % [max_loaded, limit, kinds.size(), streamer.chunks.size()])
 
 	# Edges: every chunk kind is flat at height 0 for the last 0.3 m along all four edges (at most 1 cm off).
 	for idx in streamer.chunks.size():
@@ -124,7 +128,7 @@ func _run() -> void:
 			streamer.chunks[idx].resource_path.get_file(), worst, misses])
 
 	# Floors: a cart rolled across each kind of chunk's corner hears the right ground.
-	var floors := {"lot.tscn": "Asphalt", "street.tscn": "Concrete", "market.tscn": "Tile", "garage.tscn": "Concrete",
+	var floors := {"open_lot.tscn": "Asphalt", "lot.tscn": "Asphalt", "street.tscn": "Concrete", "market.tscn": "Tile", "garage.tscn": "Concrete",
 		"hill.tscn": "Asphalt"}
 	for idx in streamer.chunks.size():
 		var name: String = streamer.chunks[idx].resource_path.get_file()
@@ -145,6 +149,11 @@ func _run() -> void:
 	for k in streamer.chunks.size():
 		if streamer.chunks[k].resource_path.get_file() == "hill.tscn":
 			hill_idx = k
+	if hill_idx < 0:
+		print("info  no hill chunk in this sandbox, hill check skipped")
+		print("RESULT: %s" % ("ALL PASS" if failures == 0 else "FAILURES (%d)" % failures))
+		quit(1 if failures else 0)
+		return
 	var hxf := _cell_xf(_find_cell(hill_idx))
 	var heading := (hxf.basis * Vector3.RIGHT)
 	await _teleport(hxf * Vector3(-19, 0.05, -2), atan2(-heading.z, heading.x))

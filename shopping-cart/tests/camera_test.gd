@@ -8,7 +8,7 @@ extends SceneTree
 
 ## [level scene, [[cart position, heading], ...]]
 const LEVELS := [
-	["res://scenes/main.tscn", [[Vector3(0, 0, 0), 0.0], [Vector3(0, 0, 6.28), 0.0], [Vector3(0, 0, 7.55), 0.0], [Vector3(27, 0, 0), 0.0], [Vector3(32.2, 0, 6.5), -PI / 2]]],
+	["res://scenes/main.tscn", [[Vector3(0, 0, 0), 0.0], [Vector3(-6.2, 0, 7.03), 0.0], [Vector3(-6.2, 0, 8.3), 0.0], [Vector3(27, 0, 0), 0.0], [Vector3(49.8, 0, 7.25), -PI / 2]]],
 	["res://scenes/levels/parking_lot.tscn", [[Vector3(-12, 0, -9.5), 0.0], [Vector3(-14.85, 0, -4.2), -PI / 2], [Vector3(-1.3, 0, -9.5), -PI / 2]]],
 	["res://scenes/levels/supermarket.tscn", [[Vector3(-14, 0, 0), 0.0], [Vector3(-1.5, 0, 0), 0.0], [Vector3(9.5, 0, -11.2), PI], [Vector3(-9.0, 0, 0.0), PI]]],
 	["res://scenes/levels/sf_hill.tscn", [[Vector3(48, 47.8, 1.9), 0.0], [Vector3(4, 47.8, -4), PI], [Vector3(420, 0, 1.5), 0.0], [Vector3(442, 0, -1.5), 0.0]]],

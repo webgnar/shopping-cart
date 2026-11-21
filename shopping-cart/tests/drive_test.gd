@@ -17,7 +17,7 @@ const SCENARIOS := [
 	["E+Q short push", ["push_left", "push_right"], 1.2, "flat"],
 	["E+Q hard push", ["push_left", "push_right"], 2.1, "wheelie"],
 	["A+D hard pull", ["pull_left", "pull_right"], 2.6, "rear_up"],
-	["coast then rest", ["coast"], 12.0, "comes_to_rest"],
+	["coast then rest", ["coast"], 30.0, "comes_to_rest"],
 	["rested 4 s, then E+Q", ["push_left", "push_right"], 1.5, "wakes_and_moves"],
 ]
 

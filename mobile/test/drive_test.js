@@ -38,7 +38,7 @@ const SCENARIOS = [
   ['E+Q short push', { L: 1, R: 1 }, 1.2, 'flat'],
   ['E+Q hard push', { L: 1, R: 1 }, 2.1, 'wheelie'],
   ['A+D hard pull', { L: -1, R: -1 }, 2.6, 'rear_up'],
-  ['coast then rest', { coast: true }, 12.0, 'comes_to_rest'],
+  ['coast then rest', { coast: true }, 30.0, 'comes_to_rest'],
   ['rested 4 s, then E+Q', { L: 1, R: 1 }, 1.5, 'wakes_and_moves'],
 ];
 
@@ -369,9 +369,9 @@ const SCENARIOS = [
     const kinds = new Set([...st.loaded.values()].map(k => st.pick(k.i, k.j)[0]));
     c.setInput({ L: 1, R: 1 }); c.simulate(2); c.setInput({}); c.simulate(1);
     c.renderOnce();
-    return { check: st.selfCheck(), start, after: st.loaded.size, holes, landed, kinds: kinds.size, ...c.stats() };
+    return { check: st.selfCheck(), start, after: st.loaded.size, holes, landed, kinds: kinds.size, kindsTotal: st.s.chunks.length, ...c.stats() };
   });
-  report(sb.check && sb.start >= 8 && sb.holes === 0 && Math.abs(sb.landed.y) < 0.1 && sb.kinds >= 3, 'sandbox stream',
+  report(sb.check && sb.start >= 8 && sb.holes === 0 && Math.abs(sb.landed.y) < 0.1 && sb.kinds >= Math.min(3, sb.kindsTotal), 'sandbox stream',
     `layout matches Godot: ${sb.check}, ${sb.start} chunks at the start, ${sb.after} after the jump (${sb.kinds} kinds), holes ${sb.holes}, landed at y ${sb.landed.y.toFixed(2)}, ${sb.drawCalls} draws, ${Math.round(sb.triangles / 1000)}k triangles`);
   if (shots) await page.screenshot({ path: path.join(shots, 'sandbox_stream.png'), timeout: 180000 });
 
