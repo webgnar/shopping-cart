@@ -28,27 +28,39 @@ export function layerPairs(json, rig) {
 
 /**
  * Builds the level into `world` and `root` (a THREE.Group). Returns {props, labels, lights, spawn, spareCarts, ...}.
+ * The endless sandbox's chunks (stream.js) are built the same way, with opts:
+ *  - pose: a THREE.Matrix4 placing the chunk (its square's centre and turn); root should carry the same pose,
+ *  - propRoot: where loose props go (they're moved in world space by the main loop), default root,
+ *  - lights: an existing LightPool to add the lamps to, instead of a new one,
+ *  - surfaces: a shared Map (collider handle -> floor) to add to,
+ *  - keepSource: the glTF is cached and reused, so its scene is cloned and its geometry kept.
  */
 export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
   const { RAPIER, world } = ctx;
   const MIN = RAPIER.CoefficientCombineRule.Min;
+  const pose = opts.pose || null;
+  const placed = xf => (pose ? pose.clone().multiply(xfMatrix(xf)) : xfMatrix(xf));
 
   // ---------------------------------------------------------------- physics: statics in one fixed body
-  const fixed = world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
-  const surfaces = new Map();   // collider handle -> floor material name (asphalt, tile, ...): picks the rolling sound
+  const fixedDesc = RAPIER.RigidBodyDesc.fixed();
+  if (pose) { const { p, q } = xfPose(pose); fixedDesc.setTranslation(p.x, p.y, p.z).setRotation(q); }
+  const fixed = world.createRigidBody(fixedDesc);
+  const surfaces = opts.surfaces || new Map();   // collider handle -> floor material name (asphalt, tile, ...): picks the rolling sound
+  const handles = [];
   for (const s of json.statics) {
     const d = shapeDesc(RAPIER, s);
     if (!d) continue;
     const c = world.createCollider(d.setFriction(s.friction).setFrictionCombineRule(MIN).setCollisionGroups(godotGroups(1, 0xffff)), fixed);
-    if (s.surface) surfaces.set(c.handle, s.surface);
+    if (s.surface) { surfaces.set(c.handle, s.surface); handles.push(c.handle); }
   }
 
   // ---------------------------------------------------------------- what you see
-  const scene = gltf.scene;
+  const scene = opts.keepSource ? gltf.scene.clone(true) : gltf.scene;
   scene.updateMatrixWorld(true);
   const props = [];
+  const propRoot = opts.propRoot || root;
   for (const b of json.bodies) {
-    const { p, q } = xfPose(xfMatrix(b.xf));
+    const { p, q } = xfPose(placed(b.xf));
     const { com, inertia } = massProps(b.mass, b.shapes, b.com);
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(p.x, p.y, p.z).setRotation(q)
       .setAdditionalMassProperties(b.mass, com, inertia, { x: 0, y: 0, z: 0, w: 1 }).setCanSleep(b.can_sleep)
@@ -60,7 +72,11 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
     }
     body.sleep();   // loose props start at rest, as in Godot, until something touches them
     const node = scene.getObjectByName(b.node);
-    if (node) { root.attach(node); node.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } }); }
+    if (node) {
+      propRoot.attach(node);
+      node.position.set(p.x, p.y, p.z); node.quaternion.set(q.x, q.y, q.z, q.w);
+      node.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
+    }
     props.push({ body, node });
   }
   // Everything else never moves: merge it per material (and per cell), so the phone draws a few hundred meshes
@@ -88,7 +104,7 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
     if (mat.map) mat.map.anisotropy = 4;
     root.add(m); drawn++; tris += merged.attributes.position.count / 3;
   }
-  scene.traverse(o => { if (o.isMesh) o.geometry.dispose(); });
+  if (!opts.keepSource) scene.traverse(o => { if (o.isMesh) o.geometry.dispose(); });
 
   // ---------------------------------------------------------------- labels (Label3D)
   const labelCache = new Map();
@@ -108,14 +124,26 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
       obj.applyMatrix4(xfMatrix(l.xf));
     }
     obj.renderOrder = 1;
+    obj.userData.ownMaterial = true;
     root.add(obj);
   }
 
   // ---------------------------------------------------------------- light
   const env = json.environment || {};
-  const lights = new LightPool(root, json.lights, opts.lightCount);
-  return { props, lights, drawn, tris, env, sun: json.sun, spawn: json.spawn, spareCarts: json.spare_carts,
-    botCarts: json.bot_carts || [], navmesh: json.navmesh, name: json.name, surfaces };
+  let lights = opts.lights, lamps = json.lights;
+  if (pose) lamps = lamps.map(l => {
+    const m = placed([1, 0, 0, 0, 1, 0, 0, 0, 1, ...l.pos]);
+    const pos = new THREE.Vector3().setFromMatrixPosition(m);
+    const out = { ...l, pos: [pos.x, pos.y, pos.z] };
+    if (l.dir) { const d = new THREE.Vector3(...l.dir).transformDirection(pose); out.dir = [d.x, d.y, d.z]; }
+    return out;
+  });
+  let ownLamps = [];
+  if (lights) ownLamps = lights.add(lamps);
+  else lights = new LightPool(root, lamps, opts.lightCount);
+  return { props, lights, ownLamps, drawn, tris, env, sun: json.sun, spawn: json.spawn, spareCarts: json.spare_carts,
+    botCarts: json.bot_carts || [], navmesh: json.navmesh, name: json.name, surfaces, stream: json.stream || null,
+    fixed, handles };
 }
 
 /** Draws a Label3D's text the way Godot does: font_size px per line, pixel_size m per px, centred. */
@@ -151,10 +179,23 @@ function labelTexture(l) {
  */
 class LightPool {
   constructor(root, lamps, count = { omni: 4, spot: 3 }) {
-    this.lamps = lamps.map(l => ({ ...l, p: new THREE.Vector3(...l.pos) }));
+    this.lamps = [];
+    this.add(lamps);
     this.omni = []; this.spot = [];
     for (let i = 0; i < count.omni; i++) { const L = new THREE.PointLight(0xffffff, 0, 1, 2); L.visible = true; root.add(L); this.omni.push(L); }
     for (let i = 0; i < count.spot; i++) { const L = new THREE.SpotLight(0xffffff, 0, 1, 0.8, 0.3, 2); root.add(L, L.target); this.spot.push(L); }
+    this.t = 0;
+  }
+  /** More lamps (a streamed chunk's); returns them, to pass to remove() later. */
+  add(lamps) {
+    const added = lamps.map(l => ({ ...l, p: new THREE.Vector3(...l.pos) }));
+    this.lamps.push(...added);
+    this.t = 0;
+    return added;
+  }
+  remove(added) {
+    const gone = new Set(added);
+    this.lamps = this.lamps.filter(l => !gone.has(l));
     this.t = 0;
   }
   update(focus, dt) {

@@ -9,6 +9,14 @@
 [ext_resource type="PackedScene" path="res://scenes/cart_camera.tscn" id="7_jkv2x"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="8_jbj1t"]
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="9_muem4"]
+[ext_resource type="Script" path="res://scripts/sandbox/chunk_streamer.gd" id="10_strm"]
+[ext_resource type="PackedScene" path="res://scenes/sandbox/chunks/lot.tscn" id="11_lot"]
+[ext_resource type="PackedScene" path="res://scenes/sandbox/chunks/street.tscn" id="12_street"]
+[ext_resource type="PackedScene" path="res://scenes/sandbox/chunks/market.tscn" id="13_market"]
+[ext_resource type="PackedScene" path="res://scenes/sandbox/chunks/garage.tscn" id="14_garage"]
+[ext_resource type="PackedScene" path="res://scenes/sandbox/chunks/hill.tscn" id="15_hill"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="16_pconc"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/concrete.tres" id="17_mconc"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_dp3eg"]
 size = Vector3(30, 1, 40)
@@ -213,10 +221,48 @@ corner_radius_top_right = 9
 corner_radius_bottom_right = 9
 corner_radius_bottom_left = 9
 
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sbx"]
+sky_top_color = Color(0.10980392, 0.13333334, 0.1882353, 1)
+sky_horizon_color = Color(0.2901961, 0.33333334, 0.40784314, 1)
+ground_horizon_color = Color(0.2901961, 0.33333334, 0.40784314, 1)
+
+[sub_resource type="Sky" id="Sky_sbx"]
+sky_material = SubResource("ProceduralSkyMaterial_sbx")
+
+[sub_resource type="Environment" id="Environment_sbx"]
+background_mode = 2
+sky = SubResource("Sky_sbx")
+ambient_light_source = 3
+reflected_light_source = 2
+tonemap_mode = 2
+ssao_enabled = true
+fog_enabled = true
+fog_light_color = Color(0.2901961, 0.33333334, 0.40784314, 1)
+fog_density = 0.014
+fog_sky_affect = 0.0
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_yard"]
+size = Vector3(20, 1, 40)
+
+[sub_resource type="BoxMesh" id="BoxMesh_yard"]
+material = ExtResource("17_mconc")
+size = Vector3(20, 1, 40)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_far"]
+albedo_color = Color(0.25, 0.27, 0.3, 1)
+roughness = 0.95
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_far"]
+material = SubResource("StandardMaterial3D_far")
+size = Vector2(1200, 1200)
+
 [node name="Main" type="Node3D" unique_id=1647399234]
 script = ExtResource("1_85g3d")
 
 [node name="Environment" type="Node3D" parent="." unique_id=1147523159 instance=ExtResource("2_choun")]
+
+[node name="WorldEnvironment" parent="Environment" index="0"]
+environment = SubResource("Environment_sbx")
 
 [node name="Level" type="Node3D" parent="." unique_id=974435240]
 
@@ -405,6 +451,30 @@ shape = SubResource("BoxShape3D_ty1g6")
 
 [node name="Mesh" type="MeshInstance3D" parent="Level/ParkingLot/SpeedBump2" unique_id=1551279309]
 mesh = SubResource("BoxMesh_j2jfr")
+
+[node name="Yard" type="StaticBody3D" parent="Level"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -0.5, 0)
+physics_material_override = ExtResource("16_pconc")
+
+[node name="Shape" type="CollisionShape3D" parent="Level/Yard"]
+shape = SubResource("BoxShape3D_yard")
+
+[node name="Mesh" type="MeshInstance3D" parent="Level/Yard"]
+mesh = SubResource("BoxMesh_yard")
+
+[node name="Chunks" type="Node3D" parent="." node_paths=PackedStringArray("main", "far_ground")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 0, -20)
+script = ExtResource("10_strm")
+main = NodePath("..")
+chunks = Array[PackedScene]([ExtResource("11_lot"), ExtResource("12_street"), ExtResource("13_market"), ExtResource("14_garage"), ExtResource("15_hill")])
+weights = PackedFloat32Array(3, 3, 2, 2, 2)
+home_cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0)])
+far_ground = NodePath("FarGround")
+
+[node name="FarGround" type="MeshInstance3D" parent="Chunks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_far")
 
 [node name="CartSpawn" type="Marker3D" parent="." unique_id=942329566]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
