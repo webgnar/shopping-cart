@@ -1,0 +1,30 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/net/net_session.gd" id="1_net"]
+
+[node name="Net" type="Node"]
+process_mode = 3
+script = ExtResource("1_net")
+
+[node name="Overlay" type="CanvasLayer" parent="."]
+layer = 5
+visible = false
+
+[node name="Status" type="Label" parent="Overlay"]
+unique_name_in_owner = true
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -616.0
+offset_top = -40.0
+offset_right = -16.0
+offset_bottom = -12.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.92, 0.95, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.75)
+theme_override_constants/outline_size = 6
+text = "Offline"
+horizontal_alignment = 2

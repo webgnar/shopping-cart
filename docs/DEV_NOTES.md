@@ -90,6 +90,114 @@ Tests: `godot --headless --fixed-fps 120 -s res://tests/sf_hill_test.gd` (props,
 the 10 % and 31 % blocks, R on a slope, traffic driving and knocking the cart). Renders:
 `xvfb-run godot -s res://tests/sf_hill_screenshot.gd -- <prefix>`. The camera test covers the level.
 
+## 2026-11-21: multiplayer prototype (phase 0)
+
+First step toward player-hosted multiplayer; the full plan (Cloudflare join codes, WebRTC, the browser) is in
+`docs/MULTIPLAYER.md`.
+
+- **Host-authoritative:** only the host simulates. Guests send their six keys; the host puts them in the guest
+  cart's `controls` (the bot-cart hook) and sends 30 snapshots a second of every moving body. Guests freeze the
+  whole level and move each body between snapshots, 100 ms behind the newest.
+- **Scenes:** `scenes/net/net_session.tscn` is the `Net` autoload (settings as exports: port 24601, 7 guests,
+  snapshot and input rates, interpolation delay, guest spacing) with its status label as a node. No new models.
+- **Cart:** `ShoppingCart.puppet` (frozen, moved by the network, does nothing itself), `net_bodies()` (the sync
+  order), `frame_velocity()` / `frame_spin()` (the HUD and rolling sound use these so a guest sees the host's
+  speed). Not ported to `mobile/game/cart.js`: puppets are network-only, and the browser has no networking yet.
+- **Console:** `host`, `join`, `leave`, `net` (Net adds them through the console's now-public `add_command`);
+  fast travel is host-only while joined. While the console is open on the host the game pauses for everyone.
+- **Judgment calls:** our own byte protocol over a polled `MultiplayerPeer` instead of Godot RPCs or
+  `MultiplayerSynchronizer`, so the JavaScript game can speak it later. ENet is turned off throttling unreliable
+  packets to a guest (it throttled snapshots for seconds after a guest paused to load a level), and the host only
+  sends snapshots to guests that report they've loaded the current level.
+- **Left out:** WebRTC, join codes and Cloudflare (phases 1-2), browser play (phase 3), prediction, player spawn
+  markers (guests line up 1.2 m apart to the right of `CartSpawn`; in the supermarket that faces the second cart
+  into a box display).
+
+## 2026-11-21: bot carts (first pass)
+
+Unmanned carts that drive themselves around the supermarket, parking lot and garage, three per level, as a first
+step toward bots that play the game (and later, networked players driving carts the same way).
+
+- **Same controls as a player:** a bot never moves the cart directly. `ShoppingCart` now reads its six keys through
+  `held(action)`: the keyboard when `player_controlled`, otherwise the `controls` a driver sets each physics step
+  (`cart.driver`, null for a spare cart). `CartBot` (`scripts/cart_bot.gd`) holds and lets go of Q/A/E/D the way a
+  player taps them: each hand has a wanted force (forward speed toward `cruise_speed` plus a steering share),
+  and its key is held while the hand's power bar is below that force. So the power ramp, wrist lever, braking with
+  planted arms, spin brace and getting back up all apply to bots unchanged. A networked player can later fill
+  `controls` from the wire instead.
+- **Scene:** `scenes/cart/bot_cart.tscn` inherits `cart.tscn` (empty basket, not player controlled) and adds a
+  `NavPoint` marker on the Frame at the middle of the basket (0.5 m ahead of the handle) with a
+  `NavigationAgent3D` under it, and the `Bot` node (CartBot, physics priority -1 so its keys are in before the cart
+  steps). Levels place bots as `BotCarts/BotCart<n>` instances; their transform is where they start.
+- **Navigation:** each of the three levels has a `Navigation` NavigationRegion3D with its mesh saved to
+  `assets/navigation/<level>.tres`; the level root is in the `navigation_geometry` group, so the editor's Bake button
+  and `tools/bake_navigation_cli.gd` parse the same static colliders (carts and loose props are rigid, so left
+  out). Settings: cell 0.1 m x 0.05 m (project navigation cell size set to match), agent radius 0.7 m (half the
+  cart's 1 m length plus margin; supermarket aisles are 2.4 m), height 1.1 m, max climb 0.05 m (the 0.127 m
+  parking blocks and the curbs block; 0.1 m let the bake climb onto the blocks), max slope 20 degrees (garage
+  ramps are gentle). The garage bake is limited to the structure (filter AABB), so bots don't head off down the
+  street. Polygons: supermarket 344, parking lot 615, garage 1,136. Re-run the bake after moving anything solid.
+- **Wandering:** pick a random reachable spot (path end within 0.3 m of it, so not a checkout counter top or car
+  roof) between 6 and 35 m of path away, drive there slowing for corners, stand 0.5 to 3 s holding the cart
+  against rolling (garage ramps), repeat. Stuck while pushing for 1.5 s: pull back 1.2 s and re-plan; three
+  back-offs or too long on one trip: pick another spot. Fallen over: let go, then hold both hands to haul it up.
+- **Judgment calls:** max hand power 70 N, well short of a wheelie. Cruise 1.6 m/s, a brisk walk. No avoidance
+  between carts yet: bots and the player bump into each other and the back-off sorts it out.
+- **Browser version:** the level export adds `bot_carts` and `navmesh` (world-space vertices and polygons) to each
+  level JSON and the CartBot settings to `levels/cart.json` (`bot`). `mobile/game/bot.js` ports `cart_bot.gd`;
+  `mobile/game/nav.js` stands in for the navigation server (A* over the polygons through edge midpoints, then the
+  funnel; on 120 random paths, all but 5 came within 10 % of Godot's path length, the worst 1.9 times as long) and NavigationAgent3D.
+- **Tests:** `tests/bot_test.gd` (Godot) and the bot block in `mobile/test/drive_test.js` run each level's bots for
+  60 s: every bot covers ground, finishes or gives up on a trip, stays on the level and ends on its wheels.
+  In a 2-minute Godot run, bots covered 100 to 140 m each with 3 to 9 trips reached.
+- **Left out:** steering around other carts (agent avoidance), bots in the sandbox (no navigation mesh), any goal
+  beyond wandering (shopping lists, following the player, racing), respawning a bot that leaves the level.
+## 2026-11-21: cart rolling sounds from zack's recordings
+
+zack found three recordings of a real shopping cart (asphalt, a smoother roll, a sidewalk with joints). The cart
+now plays them as it rolls, in Godot and in the browser version.
+
+- **Loops:** `tools/audio/make_cart_rolling_loops.py` (numpy + ffmpeg) cuts one steady stretch of each recording
+  (kept losslessly in `tools/audio/recordings/`), mixes it to mono, crossfades 0.5 s of tail into head so it loops
+  without a click, and levels each to -20 dBFS RMS. Asphalt: `cart_asphalt.flac` 1.5 to 13.5 s. Tile: the
+  smoother `cart_rolling.flac` 3 to 15 s (the quietest recording, about 10 dB under the asphalt one). Concrete:
+  `cart_sidewalk.flac` 0.3 to 7.8 s, the slab joints clacking (it's only 8 s long). Stretches were picked from a
+  0.25 s loudness and crest scan, away from the pick-up and the stop. Godot gets `assets/audio/cart/roll_*.ogg`
+  (Vorbis q5, 80 to 130 KB, imported with loop on), the browser `mobile/audio/roll_*.wav` (22 kHz 16-bit,
+  320 to 520 KB; WAV because MP3 pads its ends and Safari won't play Ogg, so a WAV is the one format that loops
+  gaplessly everywhere). Seam check: the jump at the loop point is within normal sample-to-sample change.
+- **Scene:** `Frame/RollingSound` in `scenes/cart/cart.tscn` (`scripts/cart/cart_rolling_sound.gd`): a
+  `FloorProbe` RayCast3D down through the middle of the wheelbase (0.46 m ahead of the handle, 0.3 m up, 0.6 m
+  long, world layer only) and one AudioStreamPlayer3D per ground (`scripts/cart/rolling_surface_sound.gd`), each
+  listing the physics materials it is for: Asphalt (asphalt.tres), Tile (tile.tres, -5 dB), Concrete
+  (concrete.tres, -2 dB; also the fallback for kerbs, props and any other floor). So the parking lot plays
+  asphalt, the garage concrete, the supermarket tile, and the sandbox tile or asphalt depending on where you are.
+  Spare carts have it too, so a shoved cart rolls audibly.
+- **Feel:** silent under 0.05 m/s, full volume from 1.5 m/s (gain = (speed / 1.5)^0.7), pitch 1.0 at the
+  recordings' pace (guessed at a 1.3 m/s walk), 0.2 per m/s either side, clamped to 0.7 to 1.5. Ground changes,
+  lift-off and landing crossfade over 0.15 s. A cart in the air or lying on its side (the probe hits nothing)
+  goes quiet. Each player starts at a random point in its loop so carts side by side don't sound in step.
+  `unit_size` 4 m, `max_distance` 40 m.
+- **Browser:** `mobile/game/sound.js` ports it with Web Audio (one looping source, gain and panner per sound,
+  listener on the camera). The level export now tags each static collision shape with its physics material
+  (`surface`), and `cart.json` carries the RollingSound settings, so the phone picks the same loop. Sound
+  starts with the Start tap (browsers need one) and fades out while the menu or console is open.
+- **Tests:** `tests/rolling_sound_test.gd` (every level: right loop, louder and higher when faster, quiet at
+  rest); the browser drive test checks the same per level.
+- **Left out:** no scrape sound for a fallen cart sliding, no clatter for hits or the groceries, no separate
+  sound per wheel. Pitch-shifting a single recording is a stand-in for real speed-dependent rolling; if it sounds
+  thin at a run, the next step is a second, faster recording per ground crossfaded by speed.
+
+## 2026-11-21: parking lot cart corral moved off the sidewalk
+
+The fifth corral (`CartCorrals/CorralSidewalk`) stood on the storefront sidewalk, which a real lot
+would not do. It is now `CartCorrals/Corral1East` in an empty marked stall of row 1, east side
+(stall centre x = 9.45, between the blue and white parked cars), open end facing the fire lane like
+the other corrals. Centre z = -3.4, so its closed end sits 5 cm clear of that stall's parking block
+(corral -5.49 to -1.32, block face at -1.27); no overlaps with the neighbouring cars (about 0.8 m
+each side). The cart storage rows against the store wall stay where they were. Browser level
+(`mobile/levels/plot.*`) re-exported.
+
 ## 2026-11-16: browser version brought up to date with the Godot game
 
 The browser build (`mobile/`, three.js + Rapier) is the itch.io in-browser version, so it now plays the Godot

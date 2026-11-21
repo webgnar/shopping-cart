@@ -14,9 +14,9 @@ extends CanvasLayer
 
 
 func show_cart(cart: ShoppingCart) -> void:
-	var v := cart.frame.linear_velocity
+	var v := cart.frame_velocity()
 	_stats.text = "Speed  %.1f km/h\nTurn rate  %d°/s\nWheels down  %d / 4\nGroceries  %d / %d" % [
-		Vector2(v.x, v.z).length() * 3.6, roundi(rad_to_deg(cart.frame.angular_velocity.y)),
+		Vector2(v.x, v.z).length() * 3.6, roundi(rad_to_deg(cart.frame_spin())),
 		cart.wheels_down(), cart.groceries_in_basket(), cart.groceries.size()]
 	for side in _bars:
 		var p: float = cart.hand_power[side]

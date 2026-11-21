@@ -64,10 +64,19 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   shared default scene for each.
 - `scenes/cart/cart.tscn` — the cart rig (frame, gate, casters, wheels, hinge joints, groceries, model).
   `scenes/cart/spare_cart.tscn` — the same cart, empty and not player controlled, to place in levels.
+  `scenes/cart/bot_cart.tscn` — a cart driven by a bot (`scripts/cart_bot.gd`) pressing the same keys a player does;
+  place instances under a level's `BotCarts` node. Bots need the level's `Navigation` region: re-bake it with
+  `godot --headless -s res://tools/bake_navigation_cli.gd` after moving anything solid.
+- `scenes/net/net_session.tscn` — the `Net` autoload: host-authoritative multiplayer (`scripts/net/`). Guests'
+  carts are driven through `controls` like bot carts; guests only show the host's snapshots. Plan and wire format:
+  `docs/MULTIPLAYER.md` (bump `NetProtocol.VERSION` when a message changes).
 - `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun.
   `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
   (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera (`scripts/cart_camera.gd` lifts it over walls, see its exports).
 - `assets/physics/*.tres` — shared physics materials (tile, asphalt, solid).
+- `assets/audio/cart/` — the cart's rolling loops, cut from zack's recordings by
+  `tools/audio/make_cart_rolling_loops.py` (also writes the browser's `mobile/audio/*.wav`). The cart's
+  `Frame/RollingSound` picks the loop by the floor's physics material.
 - `scripts/` — behaviour scripts for the scenes above.
 - `tools/` (repo root) — Blender builder and export scripts. `docs/DEV_NOTES.md` — dev notes.
 
@@ -85,4 +94,7 @@ From `shopping-cart/`:
 - Browser game (from the repo root): `node mobile/test/drive_test.js`
 - Camera never clips into levels (all levels): `godot --headless --fixed-fps 120 -s res://tests/camera_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
+- Rolling sound (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
+- Multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/multiplayer_test.gd`
+- Bot carts drive themselves in every level: `godot --headless --fixed-fps 120 -s res://tests/bot_test.gd`

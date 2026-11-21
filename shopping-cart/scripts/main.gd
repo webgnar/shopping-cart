@@ -1,7 +1,7 @@
 extends Node3D
 ## Prototype sandbox: slippery store floor with shelves on +X, grippy parking lot with ramp, curb and
 ## speed bumps on -X. Q/A = left hand push/pull, E/D = right hand push/pull (hold to push or pull harder),
-## W/S lean the back/front up, R reset.
+## W/S lean the back/front up, P reset.
 ## The mouse only moves the camera (click to capture, Esc to release, wheel to zoom).
 ##
 ## The level, lights, camera, HUD and the CartSpawn marker are all nodes in the scene (scenes/main.tscn).
@@ -16,7 +16,7 @@ const HUD_SCENE := preload("res://scenes/ui/hud.tscn")
 const KEYS := {
 	"push_left": KEY_Q, "pull_left": KEY_A,
 	"push_right": KEY_E, "pull_right": KEY_D,
-	"lift": KEY_W, "press": KEY_S, "reset": KEY_R,
+	"lift": KEY_W, "press": KEY_S, "reset": KEY_P,
 	"fullscreen": KEY_F11,
 }
 
@@ -51,6 +51,10 @@ func _ready() -> void:
 		add_child(camera)
 	camera.current = true
 	_build_hud()
+	# Multiplayer: the host spawns guests' carts; a guest freezes the level and shows the host's world.
+	var net := get_node_or_null("/root/Net") as NetSession
+	if net:
+		net.level_ready(self)
 
 
 func _setup_input() -> void:
@@ -93,6 +97,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		var fs := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED if fs else DisplayServer.WINDOW_MODE_FULLSCREEN)
 	elif event.is_action_pressed("reset"):
+		var net := get_node_or_null("/root/Net") as NetSession
+		if net and net.is_guest():
+			net.request_reset()   # the host owns this cart
+			return
 		var p := cart.cart_origin()
 		spawn_cart(floor_under(p), cart.heading())
 

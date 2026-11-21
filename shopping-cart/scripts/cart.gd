@@ -32,10 +32,21 @@ extends Node3D
 ## The bigger it is, the less power it takes to lift an end. The push and pull themselves act at the height of
 ## the centre of mass, so they don't tilt the cart on their own.
 @export var wrist_lever := 0.3
-## false: a spare cart nobody is holding. It ignores the keys and only moves when something hits it.
+## true: the keyboard holds the bar. false: a spare cart nobody is holding, unless a driver (a bot, later a networked
+## player) holds it through `controls`, pressing the same six keys a player does.
 @export var player_controlled := true
 ## true: the groceries are taken out (spare carts in a level start empty).
 @export var empty_basket := false
+## Who holds the bar of a cart that isn't player_controlled: a CartBot (scripts/cart_bot.gd) today, a networked
+## player later. null: a spare cart nobody holds.
+var driver: Node = null
+## The keys the driver is holding (action name -> true), set by the driver every physics step.
+var controls := {}
+## true: this cart only shows a cart simulated on another machine (a multiplayer guest's view, see
+## scripts/net/net_session.gd). Its bodies stay frozen and the network moves them; nothing here pushes it.
+var puppet := false
+var puppet_velocity := Vector3.ZERO   ## a puppet's frame velocity on the host (for the HUD and the rolling sound)
+var puppet_spin := 0.0                ## a puppet's turn rate on the host, rad/s
 var hand_power := {"L": 0.0, "R": 0.0}   ## N each hand is putting into the bar: + push, - pull
 @export_group("Lean keys")
 ## W tips the back up, S tips the front up, at any speed, toward a lean held by the wrists (capped torque). Keep
@@ -165,16 +176,22 @@ func _process(_delta: float) -> void:
 const ACTIONS := ["push_left", "pull_left", "push_right", "pull_right", "lift", "press"]
 
 
+## Whether a key is held: the player's keyboard, or the driver's `controls` for any other cart.
+func held(action: String) -> bool:
+	return Input.is_action_pressed(action) if player_controlled else controls.get(action, false)
+
+
 func _physics_process(delta: float) -> void:
+	if puppet:
+		return
 	var any_input := false
-	if player_controlled:
-		for a in ACTIONS:
-			if Input.is_action_pressed(a):
-				any_input = true
-				break
+	for a in ACTIONS:
+		if held(a):
+			any_input = true
+			break
 	if any_input and frame.freeze:
 		_wake()
-	if player_controlled:
+	if player_controlled or driver != null:
 		_apply_hands(delta)
 	_apply_rolling_resistance(delta)
 	if not any_input:
@@ -225,6 +242,8 @@ func _on_frame_hit(body: Node) -> void:
 
 
 func _wake() -> void:
+	if puppet:
+		return
 	frame.freeze = false
 	_rest_time = 0.0
 	for b in [frame, gate, child_seat, seat_flap] + wheels.values() + forks.values():
@@ -256,7 +275,7 @@ func _apply_hands(delta: float) -> void:
 	var upright := xf.basis.y.normalized().y
 	var any_key := false
 	for a in ACTIONS:
-		any_key = any_key or Input.is_action_pressed(a)
+		any_key = any_key or held(a)
 	if not fallen and upright < fallen_upright and frame.angular_velocity.length() < fallen_still:
 		fallen = true
 		_wait_release = any_key
@@ -274,7 +293,7 @@ func _apply_hands(delta: float) -> void:
 	var drive_scale := 0.0 if fallen else clampf((upright - fallen_upright) / (0.7 - fallen_upright), 0.0, 1.0)
 	# Stopping is when you pull back with no hand pushing while the cart is still rolling forward.
 	# Push one hand and pull the other and it's a spin, not a stop.
-	var pushing_any := Input.is_action_pressed("push_left") or Input.is_action_pressed("push_right")
+	var pushing_any := held("push_left") or held("push_right")
 	var cart_along := frame.linear_velocity.dot(fwd)
 	# Which way the hands are trying to turn the cart: + = to the left (counter-clockwise from above).
 	# A hand at lateral offset s (left -1, right +1) driving the bar along the nose by dir turns it by s * dir.
@@ -284,7 +303,7 @@ func _apply_hands(delta: float) -> void:
 	for side in ["L", "R"]:
 		var suffix := "left" if side == "L" else "right"
 		dirs[side] = 0 if _wait_release else \
-			int(Input.is_action_pressed("push_" + suffix)) - int(Input.is_action_pressed("pull_" + suffix))
+			int(held("push_" + suffix)) - int(held("pull_" + suffix))
 		hand_yaw[side] = (-1.0 if side == "L" else 1.0) * dirs[side]
 	var yaw_cmd: float = hand_yaw.L + hand_yaw.R
 
@@ -364,8 +383,8 @@ func _apply_hands(delta: float) -> void:
 	# Lean keys: W tips the back up, S the front, toward a lean with capped torque. Held on, the lean grows
 	# (tip_rate) until the cart passes its balance point and the hands slip off (let_go_pitch). One hand key held
 	# as well: only that side (W lifts it, S drops it). On a fallen cart, W or S hauls it back up instead.
-	var lift := Input.is_action_pressed("lift")
-	var press := Input.is_action_pressed("press")
+	var lift := held("lift")
+	var press := held("press")
 	var tilt_dir := 0 if lift == press else (1 if press else -1)
 	if tilt_dir != _tilt_dir:
 		_tilt_dir = tilt_dir
@@ -410,6 +429,33 @@ func cart_origin() -> Vector3:
 func heading() -> float:
 	var n := frame.global_transform.basis.x
 	return atan2(-n.z, n.x)
+
+
+## The frame's velocity: from physics, or for a puppet the host's.
+func frame_velocity() -> Vector3:
+	return puppet_velocity if puppet else frame.linear_velocity
+
+
+## The frame's turn rate (rad/s about up): from physics, or for a puppet the host's.
+func frame_spin() -> float:
+	return puppet_spin if puppet else frame.angular_velocity.y
+
+
+## Every body of the rig, groceries last, in the order the network sends them.
+func net_bodies() -> Array[RigidBody3D]:
+	var list: Array[RigidBody3D] = [frame, gate, child_seat, seat_flap, forks.FL, forks.FR,
+		wheels.FL, wheels.FR, wheels.RL, wheels.RR]
+	list.append_array(groceries)
+	return list
+
+
+## Turns this cart into a puppet: frozen, moved only by the network.
+func make_puppet() -> void:
+	puppet = true
+	driver = null
+	player_controlled = false
+	for b in net_bodies():
+		b.freeze = true
 
 
 func wheels_down() -> int:

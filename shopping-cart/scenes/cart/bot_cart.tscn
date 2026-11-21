@@ -1,0 +1,24 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/cart/cart.tscn" id="1_cart"]
+[ext_resource type="Script" path="res://scripts/cart_bot.gd" id="2_bot"]
+
+[node name="BotCart" instance=ExtResource("1_cart")]
+player_controlled = false
+empty_basket = true
+
+[node name="NavPoint" type="Marker3D" parent="Frame"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
+
+[node name="NavAgent" type="NavigationAgent3D" parent="Frame/NavPoint"]
+path_desired_distance = 0.6
+target_desired_distance = 1.2
+path_height_offset = 0.1
+radius = 0.7
+height = 1.1
+
+[node name="Bot" type="Node" parent="." node_paths=PackedStringArray("cart", "agent")]
+process_physics_priority = -1
+script = ExtResource("2_bot")
+cart = NodePath("..")
+agent = NodePath("../Frame/NavPoint/NavAgent")

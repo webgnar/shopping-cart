@@ -1,5 +1,5 @@
 // Headless test for the browser version: the same drive checks as the Godot drive test
-// (shopping-cart/tests/drive_test.gd), plus every level, spare carts, cart-to-cart hits, the follow camera,
+// (shopping-cart/tests/drive_test.gd), plus every level, spare carts, bot carts, cart-to-cart hits, the follow camera,
 // the phone's touch rockers, the keyboard and the console.
 //   node mobile/test/drive_test.js [screenshot-dir]
 // Serves mobile/ on a local port (the game fetches its levels, so it can't run from file://).
@@ -331,12 +331,45 @@ const SCENARIOS = [
         minGap = Math.min(minGap, gap); if (gap < 0.05) inside++;
       }
       c.cam.yaw = 0; c.renderOnce();
+      // Rolling sound: a fresh cart at the spawn is quiet at rest, then pushed plays the loop for this floor.
+      c.spawn(c.v3(...s.pos), s.yaw); c.setInput({}); c.simulate(3);
+      const sound = c.cart.sound;
+      sound.update(1);
+      const rolling = { atRest: sound.playing(), loaded: c.loadedLoops() };
+      c.setInput({ L: 1, R: 1 }); c.simulate(1.5); sound.update(1); c.setInput({});
+      Object.assign(rolling, { surface: sound.surface && sound.surface.name, gain: sound.surface ? sound.surface.gain : 0, speed: sound.speed });
       return { spawnDrop: s.pos[1] - p.y, wheels, pinned, spares, sparesPinned, fell: p2.y < s.pos[1] - 1,
-        moved: Math.hypot(p2.x - p.x, p2.z - p.z), inside, minGap, ...c.stats() };
+        moved: Math.hypot(p2.x - p.x, p2.z - p.z), inside, minGap, rolling, ...c.stats() };
     }, lv);
+    const want = { plot: 'Asphalt', garage: 'Concrete', market: 'Tile' }[lv];
+    const rs = r.rolling;
+    report(rs.surface && (!want || rs.surface === want) && rs.gain > 0.9 && rs.atRest.length === 0 && rs.loaded.length === 3, `sound ${lv}`,
+      `rolling at ${rs.speed.toFixed(1)} m/s: ${rs.surface}${want ? ' (expected ' + want + ')' : ''} at gain ${rs.gain.toFixed(2)}, at rest playing [${rs.atRest}], loops loaded ${rs.loaded.length}/3`);
     report(Math.abs(r.spawnDrop) < 0.1 && r.wheels === 4 && r.pinned && !r.fell && r.moved > 1 && r.inside === 0, `level ${lv}`,
       `spawned on 4 wheels and came to rest: ${r.wheels === 4 && r.pinned}, drove ${r.moved.toFixed(1)} m, camera never inside walls (closest ${r.minGap.toFixed(2)} m), ${r.spares} spare carts (${r.sparesPinned} at rest), ${r.meshes} meshes, ${r.drawCalls} draws, ${Math.round(r.triangles / 1000)}k triangles`);
     if (shots) await page.screenshot({ path: path.join(shots, `level_${lv}.png`), timeout: 180000 });
+  }
+
+  // Bot carts: each level's bots drive themselves for 60 s through the player's keys, reach spots on the navigation
+  // mesh and stay on their wheels (the same checks as shopping-cart/tests/bot_test.gd).
+  for (const lv of ['market', 'plot', 'garage']) {
+    const r = await page.evaluate(async key => {
+      const c = window.__cart;
+      await c.loadLevel(key);
+      c.setInput({});
+      const bots = c.bots, last = bots.map(b => ({ ...b.cart.origin() })), moved = bots.map(() => 0), low = bots.map(b => b.cart.origin().y);
+      let n = 0;
+      const t0 = performance.now();
+      c.simulate(60, () => {
+        if (++n % 12) return;
+        bots.forEach((b, i) => { const p = b.cart.origin(); moved[i] += Math.hypot(p.x - last[i].x, p.z - last[i].z); last[i] = { ...p }; low[i] = Math.min(low[i], p.y); });
+      });
+      return { ms: performance.now() - t0, bots: bots.map((b, i) => ({ moved: moved[i], drop: bots[i].cart.origin().y - low[i], low: low[i], fallen: b.cart.fallen, stats: b.stats })) };
+    }, lv);
+    report(r.bots.length >= 2, `bots ${lv}`, `${r.bots.length} bot carts, 60 s simulated in ${(r.ms / 1000).toFixed(0)} s`);
+    r.bots.forEach((b, i) => report(b.moved > 24 && b.stats.trips + b.stats.gave_up >= 1 && !b.fallen && b.low > -2, `bots ${lv} #${i + 1}`,
+      `${b.moved.toFixed(0)} m, ${JSON.stringify(b.stats)}, fallen ${b.fallen}, lowest y ${b.low.toFixed(2)}`));
+    if (shots) { await page.evaluate(() => window.__cart.renderOnce()); await page.screenshot({ path: path.join(shots, `bots_${lv}.png`), timeout: 180000 }); }
   }
 
   // Cart-to-cart: roll the player's cart into a spare cart in the supermarket; the spare moves.

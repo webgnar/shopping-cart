@@ -16,7 +16,7 @@ and open http://localhost:8000 (or upload the `mobile/` folder as an HTML5 game 
   Drag near the top of the screen to look around. **Level** fast-travels, **Tilt** cycles on / flipped / off,
   **Set level** re-zeroes the tilt.
 - **Computers** (mouse and keyboard detected): the Godot keys. Q/A left hand push/pull, E/D right, W/S lean the
-  back/front up, R a fresh cart where you are, click to look around (Esc to let go), wheel to zoom,
+  back/front up, P a fresh cart where you are, click to look around (Esc to let go), wheel to zoom,
   ` opens the console (`help`, `where`, `plot`, `garage`, `market`, `sandbox`), F full screen. Touching the screen
   switches to the phone controls and a game key switches back.
 
@@ -24,11 +24,12 @@ and open http://localhost:8000 (or upload the `mobile/` folder as an HTML5 game 
 
 | Path | What it is | How it's made |
 | --- | --- | --- |
-| `index.html`, `game/*.js` | The game: `cart.js` is a line-for-line port of `scripts/cart.gd`, `level.js` builds an exported level, `main.js` is input, camera (`cart_camera.gd`), HUD, console and the loop | Hand-written |
+| `index.html`, `game/*.js` | The game: `cart.js` is a line-for-line port of `scripts/cart.gd`, `bot.js` of `scripts/cart_bot.gd` (bot carts), `nav.js` stands in for Godot's navigation server and NavigationAgent3D, `level.js` builds an exported level, `main.js` is input, camera (`cart_camera.gd`), HUD, console and the loop | Hand-written |
 | `cart_tuning.js` | Cart feel (every Cart export and body mass) | `shopping-cart/tools/export_cart_tuning.gd` |
-| `levels/<key>.glb` + `.json` | Each fast-travel level: meshes and materials; collision shapes with friction, loose props, CartSpawn, spare carts, sky, sun, lamps, 3D labels | `godot --headless -s res://tools/export_mobile_levels_cli.gd` (from `shopping-cart/`) |
-| `levels/cart.json` | The cart rig (bodies, masses, shapes, hinges and limits) and its materials | same |
+| `levels/<key>.glb` + `.json` | Each fast-travel level: meshes and materials; collision shapes with friction, loose props, CartSpawn, spare carts, bot carts and their navigation mesh, sky, sun, lamps, 3D labels | `godot --headless -s res://tools/export_mobile_levels_cli.gd` (from `shopping-cart/`) |
+| `levels/cart.json` | The cart rig (bodies, masses, shapes, hinges and limits), its materials and the bot's settings | same |
 | `models/cart.glb` | Phone-weight cart model (85k faces, 10 meshes) from the Godot one | `blender -b --python tools/export_mobile_model.py` |
+| `audio/roll_*.wav` | The cart's rolling loops (asphalt, tile, concrete), played by `game/sound.js` as in `scripts/cart/cart_rolling_sound.gd` | `python3 tools/audio/make_cart_rolling_loops.py` |
 | `vendor/` | three.js 0.170 and Rapier 0.14 (so it runs without a CDN) | copied from npm |
 
 Change levels and the cart in Godot, then run both export tools. `tests/tuning_sync_test.gd` and
@@ -42,5 +43,5 @@ node mobile/test/drive_test.js [screenshot-dir]
 
 Serves the folder and runs the same checks as the Godot drive test (push, pull, turn, spin, wheelies, W/S lean and
 tip-over, hard push/pull, braking, spin brace, getting back up, gate, child seat, knocked when pinned), then loads
-every level (spawns, comes to rest, drives, camera never inside a wall), rams a spare cart, and drives the phone's
+every level (spawns, comes to rest, drives, camera never inside a wall), lets each level's bot carts drive for a minute, rams a spare cart, and drives the phone's
 touch rockers, the keyboard and the console.
