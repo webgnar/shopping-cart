@@ -10,6 +10,9 @@ extends RefCounted
 ##  - mobile/levels/<key>.json: what you touch and how it's lit: every collision shape with its friction, the
 ##    loose props (mass, shapes), CartSpawn, the spare carts, the bot carts and the navigation mesh they drive on,
 ##    sky/fog/ambient, the sun, lamps and 3D labels.
+##    An endless grid (EndlessTiles, the sandbox lot) goes out once: its first block is drawn in the .glb as
+##    tiles_<n> and its shapes are listed under "tiles" with the grid's block positions and span, so the phone
+##    repeats that one block and moves the copies along as the Godot game does.
 ## And once for the cart (scenes/cart/cart.tscn): mobile/levels/cart.json with the rig (bodies, masses, shapes,
 ## hinges and their limits), the cart's shared materials (assets/materials/cart/*.tres) and the bot's settings
 ## (scenes/cart/bot_cart.tscn: the CartBot exports and its NavigationAgent3D).
@@ -88,7 +91,7 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 	var out := {
 		"key": key, "name": NAMES.get(key, key), "scene": scene_path, "source": source_hash(scene_path),
 		"spawn": null, "spare_carts": [], "bot_carts": [], "navmesh": null, "environment": {}, "sun": null, "lights": [], "labels": [],
-		"statics": [], "bodies": [],
+		"statics": [], "bodies": [], "tiles": [],
 	}
 	var spawn := level.get_node_or_null("CartSpawn") as Node3D
 	out.spawn = {"pos": _v(spawn.global_position if spawn else Vector3(2, 0, 0)), "yaw": spawn.global_rotation.y if spawn else 0.0}
@@ -108,6 +111,25 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 		if is_instance_valid(n) and n.get_parent():
 			n.get_parent().remove_child(n)
 			n.free()
+
+	# Endless grids: keep the first block as the one the phone repeats, note where every block sits.
+	var templates := {}   # template block -> its entry in out.tiles
+	for t in level.find_children("*", "EndlessTiles", true, false):
+		var blocks: Array = t.get_children().filter(func(c): return c is Node3D)
+		if blocks.is_empty():
+			continue
+		var first: Node3D = blocks[0]
+		var entry := {"node": "tiles_%d" % out.tiles.size(), "span": [t.span.x, t.span.y],
+			"origins": blocks.map(func(b): return _v(b.global_position)), "statics": []}
+		for b in blocks:
+			if not b.global_basis.is_equal_approx(Basis.IDENTITY):
+				push_warning("Mobile export: %s is turned; the phone repeats its blocks unturned" % b.get_path())
+			if b != first:
+				b.get_parent().remove_child(b)
+				b.free()
+		first.name = entry.node
+		templates[first] = entry
+		out.tiles.append(entry)
 
 	for n in level.find_children("*", "", true, false):
 		if n is WorldEnvironment:
@@ -156,11 +178,15 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 			out.bodies.append(entry)
 		else:
 			var surface := _surface(body)
+			var tile := _template_of(body, templates)
 			for sh in shapes:
 				sh["friction"] = friction
 				if surface:
 					sh["surface"] = surface
-				out.statics.append(sh)
+				if tile:
+					tile.entry.statics.append(_local_shape(sh, tile.node.global_transform))
+				else:
+					out.statics.append(sh)
 
 	# What's left that the phone draws: meshes only (lights, labels and physics are in the JSON).
 	for n in level.find_children("*", "", true, false):
@@ -182,9 +208,9 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 	f.close()
 	level.queue_free()
 	await tree.process_frame
-	print("MOBILE LEVEL %s: %d static shapes, %d loose props, %d spare carts, %d bot carts, %d nav polygons, %d lamps, %d labels" % [
+	print("MOBILE LEVEL %s: %d static shapes, %d loose props, %d spare carts, %d bot carts, %d nav polygons, %d lamps, %d labels, %d endless grids" % [
 		key, out.statics.size(), out.bodies.size(), out.spare_carts.size(), out.bot_carts.size(),
-		out.navmesh.polygons.size() if out.navmesh else 0, out.lights.size(), out.labels.size()])
+		out.navmesh.polygons.size() if out.navmesh else 0, out.lights.size(), out.labels.size(), out.tiles.size()])
 	return out
 
 
@@ -230,6 +256,16 @@ static func _shrink_textures(level: Node) -> void:
 					tex.resource_name = key.get_file().get_basename()
 					cache[key] = tex
 				m.set(slot, cache[key])
+
+
+## The endless-grid block (and its out.tiles entry) that `n` belongs to, or {} when it isn't in one.
+static func _template_of(n: Node, templates: Dictionary) -> Dictionary:
+	var p := n
+	while p:
+		if templates.has(p):
+			return {"node": p, "entry": templates[p]}
+		p = p.get_parent()
+	return {}
 
 
 static func _owner_body(n: Node) -> Node:
@@ -279,7 +315,7 @@ static func _shape(shape: Shape3D, xf: Transform3D) -> Dictionary:
 		d.type = "box"
 		var plane: Plane = shape.plane
 		d.xf = _xf(Transform3D(Basis.IDENTITY, xf * (plane.normal * plane.d - plane.normal * 0.5)))
-		d.size = [400, 1, 400]
+		d.size = [4000, 1, 4000]   # as good as endless on a phone: a fresh cart comes back long before the edge
 	else:
 		push_warning("Mobile export: %s isn't supported, skipped" % shape.get_class())
 		return {}
@@ -307,6 +343,8 @@ static func _environment(env: Environment) -> Dictionary:
 		"ambient_sky_contribution": env.ambient_light_sky_contribution,
 		"tonemap": env.tonemap_mode, "exposure": env.tonemap_exposure,
 		"fog": env.fog_enabled, "fog_color": _c(env.fog_light_color), "fog_density": env.fog_density,
+		"fog_mode": ["exponential", "depth"][env.fog_mode], "fog_depth_begin": env.fog_depth_begin,
+		"fog_depth_end": env.fog_depth_end,
 	}
 	if env.sky and env.sky.sky_material is ProceduralSkyMaterial:
 		var s := env.sky.sky_material as ProceduralSkyMaterial

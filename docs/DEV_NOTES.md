@@ -3,6 +3,61 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: sandbox is now an endless parking lot; Q and E push keys swapped
+
+The sandbox (`scenes/main.tscn`) was a 60 x 40 m slab, half store tile and half asphalt. It is now an endless
+open parking lot, so the cart's physics can be worked on with room to run. Reference: the aerial photos in
+`Level Reference Images/` (big, mostly empty lots, double rows of painted stalls, light poles on the stall heads,
+planter islands with trees at the row ends).
+
+- **How it never ends.** The ground is a `WorldBoundaryShape3D` (infinite, asphalt physics material). On top, the
+  `Lot` node (`scripts/levels/endless_tiles.gd`, class `EndlessTiles`) holds a 5 x 7 grid of `LotBlock` instances.
+  Each physics step, a block more than half the grid (`span`, 390 x 259 m) from the camera jumps a whole span
+  ahead, so the grid stays centred on the player. Blocks always land on the same world grid, so the test strip
+  and loose boxes stay between the same stalls. The camera always sees at least 111 m of lot ahead; depth fog
+  (40 to 115 m, the sky's horizon colour, with the lower sky set to the same colour) hides the edge. Checked by
+  rendering from 2 km out (`tests/sandbox_screenshot.gd`, "far"): it looks the same as at the start.
+- **Block** (`scenes/props/parking_lot/lot_block.tscn`): 78 x 37 m. Two double rows of 24 stalls (2.7 x 5.5 m,
+  as the parking lot level) along X, a 7.5 m drive aisle down the middle (the spawn aisle, z = 0) and half an
+  aisle on each Z edge, so the blocks meet in a full aisle. Each double row ends at +X in a planter island
+  (2.4 x 11 m, streetlight and two palms, as `planter_island.tscn`) followed by a 7.8 m cross aisle; a second
+  streetlight stands on the stall heads in the middle of the row. Collision: one `StaticBody3D` (solid) with
+  the island curbs, pole bases, poles and palm trunks (18 shapes), the same shapes as the separate prop scenes.
+- **Model** (`assets/models/parking_lot/lot_block/lot_block.glb`, `tools/parking_lot_models.py lot_block`):
+  the existing hand-built props (stall markings, planter island, streetlight, palm tree) placed into one model
+  and merged into one object per material, plus one 78 x 37 m asphalt face. 14,690 triangles, 558 KB,
+  12 objects / materials, all shared `.tres` by name. `Model` got a `by_material` mode and `at()` placement
+  for this; the four prop builders take an optional model to build into (their own .glb output is unchanged).
+  Why merged: 35 blocks of separate prop instances would be about 1,400 draw calls; merged, the whole sandbox is
+  355 draws / 406k triangles at 1080p (1.6 ms GPU on an RTX 2080; the parking lot level is 2,772 draws).
+  CPU: 0.56 ms per frame (`tests/perf_probe.gd`). No lamp lights in the sandbox: it is daytime.
+- **Z-fighting:** 0 hits. The scan is now a sorted sweep (fast enough for a whole block) and also measures the
+  real gap between two faces; the old plane-offset test flagged two pairs of palm trunk faces about 2 degrees
+  apart only because their offsets happened to match at the palm's spot in the block.
+- **Test strip** down the spawn aisle (+X), world-fixed so it doesn't wrap: speed bumps at x = 14 and 18
+  (0.35 x 0.05 x 6 m, as before), a 15 cm curb at x = 24, a 6.8 degree ramp (the old angle) at x = 28.4 to 31.6
+  up onto a 0.38 m ledge that ends in a drop at x = 33.6, then two stacks of three cardboard boxes in the cross
+  aisle at x = 39. `CartSpawn` is at the origin, facing +X down the aisle.
+- **Sky:** clear day, own `WorldEnvironment` (blue procedural sky, the default sun, shadows to 40 m).
+- **Browser game:** `tools/mobile_level_export.gd` exports an `EndlessTiles` grid once: the first block is drawn
+  in the .glb as `tiles_0`, its shapes and the grid's positions and span go under `"tiles"` in the level JSON.
+  `mobile/game/level.js` (`EndlessTiles`) repeats that block and moves copies and their colliders along with the
+  camera, as Godot does. Sandbox: 1.4 MB .glb, 209 draws. The exporter also passes depth fog (`fog_mode`,
+  `fog_depth_begin/end`; three.js `Fog`) and makes a world boundary a 4 km box (was 400 m).
+- **Left out:** the store tile half (the supermarket level has tile floors; the drive test's "tile push" and the
+  rolling sound test's "sandbox tile" case are gone, the supermarket case still checks the tile sound), parked
+  cars, wheel stops and cart corrals (kept open for driving), bots (no navigation mesh in an endless lot).
+- **Keys:** the two push keys swapped: **Q** is now the right hand's push and **E** the left hand's, so both
+  left-side keys (Q push right, A pull left) turn the cart left and both right-side keys (E, D) turn it right.
+  A and D are unchanged. `main.gd`, the HUD keycaps (each keeps its letter: Q reads RIGHT PUSH, E reads LEFT
+  PUSH; the LEFT and RIGHT power bars still show the hands), the browser game's keys and keycaps, and the test
+  labels.
+- **Tests:** drive test all pass on the new floor. `camera_test.gd` sandbox spots moved next to a light pole
+  (the default orbit passes through it with avoidance off: 8 frames, 0 with it on), the ramp and an island.
+  The browser drive test (`node mobile/test/drive_test.js`) passes in full, including every level, the bots
+  and the keyboard check; Playwright is installed at the repo root with `npm install --no-save playwright` and
+  `npx playwright install chromium` (`node_modules/` is git-ignored).
+
 ## 2026-11-21: bot carts (first pass)
 
 Unmanned carts that drive themselves around the supermarket, parking lot and garage, three per level, as a first

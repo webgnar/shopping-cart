@@ -129,9 +129,9 @@ function respawn() {
 }
 
 // ---------------------------------------------------------------- input
-// Keys: the Godot game's (main.gd). Q/A left push/pull, E/D right push/pull, W/S lean back/front up, P reset.
+// Keys: the Godot game's (main.gd). E/A left push/pull, Q/D right push/pull, W/S lean back/front up, P reset.
 const keys = new Set();
-const KEYS = { push_left: 'KeyQ', pull_left: 'KeyA', push_right: 'KeyE', pull_right: 'KeyD', lift: 'KeyW', press: 'KeyS' };
+const KEYS = { push_left: 'KeyE', pull_left: 'KeyA', push_right: 'KeyQ', pull_right: 'KeyD', lift: 'KeyW', press: 'KeyS' };
 const touchHand = { L: 0, R: 0 }, touchLean = { lift: false, press: false };
 let tiltLean = { lift: false, press: false };
 let testInput = null;   // set by the test hook
@@ -341,6 +341,7 @@ function frame(now) {
   if (sun.visible) { const d = sun.userData.dir; sun.position.set(c.x - d.x * 30, c.y - d.y * 30, c.z - d.z * 30); sun.target.position.set(c.x, c.y, c.z); }
   skyDome.position.copy(camera.position);
   level.lights.update(new THREE.Vector3(c.x, c.y, c.z), dt);
+  level.tiles.update(camera.position);
   hud();
   renderer.render(scene, camera);
 }
@@ -447,6 +448,6 @@ window.__cart = {
     for (let i = 0; i < n; i++) { onStep && onStep(i * STEP); physicsStep(readInput()); sample && sample(); }
     paused = false;
   },
-  renderOnce(dt = 1 / 60) { cart.sync(); for (const s of others()) s.sync(); for (const pr of level.props) if (pr.node) { const t = pr.body.translation(), r = pr.body.rotation(); pr.node.position.set(t.x, t.y, t.z); pr.node.quaternion.set(r.x, r.y, r.z, r.w); } updateCamera(dt); const c = cart.comWorld(); level.lights.update(new THREE.Vector3(c.x, c.y, c.z), 1); if (sun.visible) { const d = sun.userData.dir; sun.position.set(c.x - d.x * 30, c.y - d.y * 30, c.z - d.z * 30); sun.target.position.set(c.x, c.y, c.z); } skyDome.position.copy(camera.position); hud(); renderer.render(scene, camera); },
+  renderOnce(dt = 1 / 60) { cart.sync(); for (const s of others()) s.sync(); for (const pr of level.props) if (pr.node) { const t = pr.body.translation(), r = pr.body.rotation(); pr.node.position.set(t.x, t.y, t.z); pr.node.quaternion.set(r.x, r.y, r.z, r.w); } updateCamera(dt); level.tiles.update(camera.position); const c = cart.comWorld(); level.lights.update(new THREE.Vector3(c.x, c.y, c.z), 1); if (sun.visible) { const d = sun.userData.dir; sun.position.set(c.x - d.x * 30, c.y - d.y * 30, c.z - d.z * 30); sun.target.position.set(c.x, c.y, c.z); } skyDome.position.copy(camera.position); hud(); renderer.render(scene, camera); },
   stats() { return { drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, meshes: level.drawn, fps }; },
 };

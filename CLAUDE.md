@@ -57,7 +57,9 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
 
 ## Layout
 
-- `scenes/main.tscn` — the sandbox level (store floor, parking lot, boxes, `CartSpawn`).
+- `scenes/main.tscn` — the sandbox level: an endless parking lot (a grid of `scenes/props/parking_lot/lot_block.tscn`
+  that follows the camera, `scripts/levels/endless_tiles.gd`) on an infinite ground, with a test strip of speed
+  bumps, a curb, a ramp and boxes down the spawn aisle, and `CartSpawn`.
 - `scenes/levels/<name>.tscn` — further levels. Their root script extends `res://scripts/main.gd`,
   which supplies cart spawning, the follow camera, input and the HUD. A level scene places its own
   `CartSpawn` marker; if it has no `WorldEnvironment`, `Camera` or `HUD` node, `main.gd` adds the
@@ -92,5 +94,6 @@ From `shopping-cart/`:
 - Camera never clips into levels (all levels): `godot --headless --fixed-fps 120 -s res://tests/camera_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
 - Rolling sound (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
+- Sandbox screenshots (spawn, overview, test strip, 2 km out): `xvfb-run godot -s res://tests/sandbox_screenshot.gd -- <out prefix>`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
 - Bot carts drive themselves in every level: `godot --headless --fixed-fps 120 -s res://tests/bot_test.gd`

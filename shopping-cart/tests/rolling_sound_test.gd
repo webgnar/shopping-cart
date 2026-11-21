@@ -8,7 +8,6 @@ extends SceneTree
 const CASES := [
 	# name, level, spawn (null: the level's CartSpawn), sound expected
 	["sandbox asphalt", "res://scenes/main.tscn", Vector3(-10, 0, -3), "Asphalt"],
-	["sandbox tile", "res://scenes/main.tscn", Vector3(2, 0, 0), "Tile"],
 	["parking lot", "res://scenes/levels/parking_lot.tscn", null, "Asphalt"],
 	["parking garage", "res://scenes/levels/parking_garage.tscn", null, "Concrete"],
 	["supermarket", "res://scenes/levels/supermarket.tscn", null, "Tile"],

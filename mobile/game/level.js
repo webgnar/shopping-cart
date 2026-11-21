@@ -63,6 +63,8 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
     if (node) { root.attach(node); node.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } }); }
     props.push({ body, node });
   }
+  // Endless grids (the sandbox lot): one block came over; repeat it at every grid position.
+  const tiles = new EndlessTiles(ctx, scene, root, json.tiles || [], surfaces, opts);
   // Everything else never moves: merge it per material (and per cell), so the phone draws a few hundred meshes
   // instead of thousands.
   const buckets = new Map();
@@ -77,7 +79,7 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
     if (!buckets.has(key)) buckets.set(key, { mat: mats[0], geos: [] });
     buckets.get(key).geos.push(geo);
   });
-  let drawn = 0, tris = 0;
+  let drawn = tiles.drawn, tris = tiles.tris;
   for (const { mat, geos } of buckets.values()) {
     const merged = geos.length === 1 ? geos[0] : mergeGeometries(geos, false);
     for (const g of geos) if (g !== merged) g.dispose();
@@ -114,8 +116,74 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
   // ---------------------------------------------------------------- light
   const env = json.environment || {};
   const lights = new LightPool(root, json.lights, opts.lightCount);
-  return { props, lights, drawn, tris, env, sun: json.sun, spawn: json.spawn, spareCarts: json.spare_carts,
+  return { props, lights, tiles, drawn, tris, env, sun: json.sun, spawn: json.spawn, spareCarts: json.spare_carts,
     botCarts: json.bot_carts || [], navmesh: json.navmesh, name: json.name, surfaces };
+}
+
+/**
+ * An endless grid as the Godot game's EndlessTiles (scripts/levels/endless_tiles.gd) builds it: one block (the
+ * .glb node `tiles_<n>`, its shapes in the JSON in block coordinates) copied to every grid position. update()
+ * moves a copy that falls more than half a span behind the camera a whole span ahead, meshes and colliders.
+ */
+class EndlessTiles {
+  constructor(ctx, scene, root, list, surfaces, opts) {
+    const { RAPIER, world } = ctx;
+    const MIN = RAPIER.CoefficientCombineRule.Min;
+    this.grids = []; this.drawn = 0; this.tris = 0;
+    for (const t of list) {
+      const node = scene.getObjectByName(t.node);
+      if (!node) continue;
+      node.removeFromParent();
+      // The block's meshes, merged per material, in the block's own coordinates.
+      const toBlock = node.matrixWorld.clone().invert(), buckets = new Map();
+      node.traverse(o => {
+        if (!o.isMesh || !o.geometry) return;
+        const mat = Array.isArray(o.material) ? o.material[0] : o.material;
+        const geo = o.geometry.clone().applyMatrix4(toBlock.clone().multiply(o.matrixWorld));
+        const key = `${mat.uuid}|${Object.keys(geo.attributes).sort().join(',')}|${geo.index ? 'i' : 'n'}`;
+        if (!buckets.has(key)) buckets.set(key, { mat, geos: [] });
+        buckets.get(key).geos.push(geo);
+      });
+      const block = new THREE.Group();
+      for (const { mat, geos } of buckets.values()) {
+        const merged = geos.length === 1 ? geos[0] : mergeGeometries(geos, false);
+        if (!merged) continue;
+        merged.computeBoundingSphere();
+        const m = new THREE.Mesh(merged, mat);
+        m.castShadow = !(mat.transparent) && !opts.noShadows; m.receiveShadow = true;
+        if (mat.map) mat.map.anisotropy = 4;
+        block.add(m);
+        this.tris += merged.attributes.position.count / 3 * t.origins.length;
+      }
+      node.traverse(o => { if (o.isMesh) o.geometry.dispose(); });
+      const copies = t.origins.map(o => {
+        const group = block.clone();
+        group.position.set(o[0], o[1], o[2]);
+        root.add(group);
+        const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(o[0], o[1], o[2]));
+        for (const s of t.statics) {
+          const d = shapeDesc(RAPIER, s);
+          if (!d) continue;
+          const c = world.createCollider(d.setFriction(s.friction).setFrictionCombineRule(MIN).setCollisionGroups(godotGroups(1, 0xffff)), body);
+          if (s.surface) surfaces.set(c.handle, s.surface);
+        }
+        return { group, body, p: new THREE.Vector3(o[0], o[1], o[2]) };
+      });
+      this.drawn += block.children.length * copies.length;
+      this.grids.push({ span: t.span, copies });
+    }
+  }
+  update(focus) {
+    for (const { span, copies } of this.grids) {
+      for (const c of copies) {
+        const dx = Math.round((focus.x - c.p.x) / span[0]) * span[0], dz = Math.round((focus.z - c.p.z) / span[1]) * span[1];
+        if (!dx && !dz) continue;
+        c.p.x += dx; c.p.z += dz;
+        c.group.position.copy(c.p);
+        c.body.setTranslation({ x: c.p.x, y: c.p.y, z: c.p.z }, true);
+      }
+    }
+  }
 }
 
 /** Draws a Label3D's text the way Godot does: font_size px per line, pixel_size m per px, centred. */
@@ -192,7 +260,9 @@ export function applyEnvironment(renderer, scene, env, skyDome) {
     skyDome.visible = false;
     scene.background = color(env.bg_color || [0.1, 0.12, 0.16, 1]).multiplyScalar(env.bg_energy ?? 1);
   }
-  scene.fog = env.fog ? new THREE.FogExp2(color(env.fog_color), env.fog_density) : null;
+  scene.fog = !env.fog ? null : env.fog_mode === 'depth'
+    ? new THREE.Fog(color(env.fog_color), env.fog_depth_begin, env.fog_depth_end)
+    : new THREE.FogExp2(color(env.fog_color), env.fog_density);
   renderer.toneMapping = TONEMAPS[env.tonemap ?? 3] ?? THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = env.exposure ?? 1;
 }

@@ -24,23 +24,22 @@ function serve() {
   });
 }
 
-// name, input held {L, R: -1/0/1, lift, press}, seconds, check  (sandbox, asphalt at (-10, 0, -3) unless "tile")
+// name, input held {L, R: -1/0/1, lift, press}, seconds, check  (sandbox, asphalt at (-10, 0, -3))
 const SCENARIOS = [
   ['idle', {}, 5.0, 'still'],
-  ['Q+E both push', { L: 1, R: 1 }, 1.5, 'forward_straight'],
+  ['E+Q both push', { L: 1, R: 1 }, 1.5, 'forward_straight'],
   ['A+D both pull', { L: -1, R: -1 }, 1.5, 'backward'],
-  ['E right push', { R: 1 }, 1.5, 'turns_left'],
-  ['Q left push', { L: 1 }, 1.5, 'turns_right'],
-  ['Q+D spin', { L: 1, R: -1 }, 1.2, 'spins_right'],
+  ['Q right push', { R: 1 }, 1.5, 'turns_left'],
+  ['E left push', { L: 1 }, 1.5, 'turns_right'],
+  ['E+D spin', { L: 1, R: -1 }, 1.2, 'spins_right'],
   ['S front up', { press: true }, 1.5, 'wheelie'],
   ['W back up', { lift: true }, 1.5, 'rear_up'],
-  ['W+E right side up', { lift: true, R: 1 }, 1.5, 'right_up'],
-  ['Q+E short push', { L: 1, R: 1 }, 1.2, 'flat'],
-  ['Q+E hard push', { L: 1, R: 1 }, 2.1, 'wheelie'],
+  ['W+Q right side up', { lift: true, R: 1 }, 1.5, 'right_up'],
+  ['E+Q short push', { L: 1, R: 1 }, 1.2, 'flat'],
+  ['E+Q hard push', { L: 1, R: 1 }, 2.1, 'wheelie'],
   ['A+D hard pull', { L: -1, R: -1 }, 2.6, 'rear_up'],
-  ['tile Q+E push', { L: 1, R: 1 }, 1.5, 'forward_straight'],
   ['coast then rest', { coast: true }, 12.0, 'comes_to_rest'],
-  ['rested 4 s, then Q+E', { L: 1, R: 1 }, 1.5, 'wakes_and_moves'],
+  ['rested 4 s, then E+Q', { L: 1, R: 1 }, 1.5, 'wakes_and_moves'],
 ];
 
 (async () => {
@@ -82,7 +81,7 @@ const SCENARIOS = [
 
   for (const [name, inp, secs, check] of SCENARIOS) {
     const r = await page.evaluate(([name, inp, secs, check]) => {
-      const c = T.c, cart = T.fresh(name.startsWith('tile') ? 2 : -10, name.startsWith('tile') ? 0 : -3);
+      const c = T.c, cart = T.fresh(-10, -3);
       if (check === 'wakes_and_moves') c.simulate(4.0);
       const p0 = { ...cart.origin() }, h0 = cart.heading(), wasPinned = cart.pinned;
       let maxFront = 0, maxRear = 0, maxRight = 0, maxPitch = 0, i = 0;
@@ -149,7 +148,7 @@ const SCENARIOS = [
   report(Math.abs(acc.pull - acc.push) < 0.1 * acc.push, 'pull = push', `after 0.5 s from rest: pushing ${acc.push.toFixed(2)} m/s, pulling ${acc.pull.toFixed(2)} m/s`);
 
   // Countering a spin with the other hand stops it.
-  for (const [first, then, label] of [[{ L: -1 }, { R: -1 }, 'A spin, then D'], [{ L: 1, R: -1 }, { L: -1, R: 1 }, 'Q+D spin, then A+E']]) {
+  for (const [first, then, label] of [[{ L: -1 }, { R: -1 }, 'A spin, then D'], [{ L: 1, R: -1 }, { L: -1, R: 1 }, 'E+D spin, then A+Q']]) {
     const r = await page.evaluate(([first, then]) => {
       const c = T.c, cart = T.fresh();
       T.hold(first, 1.5);
@@ -235,7 +234,7 @@ const SCENARIOS = [
       return { downUp, wasFallen, tUp, slid, wheels: cartNow.wheelsDown() };
     }, setup);
     report(r.wasFallen && r.downUp < 0.3 && r.tUp > 0 && r.wheels === 4 && r.slid < 3.0, `get up (${setup})`,
-      `lying at up ${r.downUp.toFixed(2)} (fallen ${r.wasFallen}), E held: ${r.tUp > 0 ? 'upright in ' + r.tUp.toFixed(2) + ' s' : 'still down after 5 s'}, moved ${r.slid.toFixed(2)} m, ${r.wheels}/4 wheels down`);
+      `lying at up ${r.downUp.toFixed(2)} (fallen ${r.wasFallen}), Q held: ${r.tUp > 0 ? 'upright in ' + r.tUp.toFixed(2) + ' s' : 'still down after 5 s'}, moved ${r.slid.toFixed(2)} m, ${r.wheels}/4 wheels down`);
   }
 
   // Gate, seat flap and backrest hinges (limits and resting on their stops).

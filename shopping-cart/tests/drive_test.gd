@@ -6,20 +6,19 @@ extends SceneTree
 const SCENARIOS := [
 	# name, actions held, seconds, check
 	["idle", [], 5.0, "still"],
-	["Q+E both push", ["push_left", "push_right"], 1.5, "forward_straight"],
+	["E+Q both push", ["push_left", "push_right"], 1.5, "forward_straight"],
 	["A+D both pull", ["pull_left", "pull_right"], 1.5, "backward"],
-	["E right push", ["push_right"], 1.5, "turns_left"],
-	["Q left push", ["push_left"], 1.5, "turns_right"],
-	["Q+D spin", ["push_left", "pull_right"], 1.2, "spins_right"],
+	["Q right push", ["push_right"], 1.5, "turns_left"],
+	["E left push", ["push_left"], 1.5, "turns_right"],
+	["E+D spin", ["push_left", "pull_right"], 1.2, "spins_right"],
 	["S front up", ["press"], 1.5, "wheelie"],
 	["W back up", ["lift"], 1.5, "rear_up"],
-	["W+E right side up", ["lift", "push_right"], 1.5, "right_up"],
-	["Q+E short push", ["push_left", "push_right"], 1.2, "flat"],
-	["Q+E hard push", ["push_left", "push_right"], 2.1, "wheelie"],
+	["W+Q right side up", ["lift", "push_right"], 1.5, "right_up"],
+	["E+Q short push", ["push_left", "push_right"], 1.2, "flat"],
+	["E+Q hard push", ["push_left", "push_right"], 2.1, "wheelie"],
 	["A+D hard pull", ["pull_left", "pull_right"], 2.6, "rear_up"],
-	["tile Q+E push", ["push_left", "push_right"], 1.5, "forward_straight"],
 	["coast then rest", ["coast"], 12.0, "comes_to_rest"],
-	["rested 4 s, then Q+E", ["push_left", "push_right"], 1.5, "wakes_and_moves"],
+	["rested 4 s, then E+Q", ["push_left", "push_right"], 1.5, "wakes_and_moves"],
 ]
 
 var main: Node3D
@@ -40,8 +39,7 @@ func _wait(seconds: float) -> void:
 func _run() -> void:
 	await _wait(0.5)
 	for sc in SCENARIOS:
-		var on_tile: bool = sc[0].begins_with("tile")
-		main.spawn_cart(Vector3(2, 0, 0) if on_tile else Vector3(-10, 0, -3), 0.0)
+		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 		await _wait(1.0)
 		var cart: ShoppingCart = main.cart
 		var p0 := cart.cart_origin()
@@ -152,7 +150,7 @@ func _run() -> void:
 
 	# Countering a spin: pull one hand to spin, then pull with the other hand instead. The second hand works
 	# against the spin, so it grabs the bar and stops it within a second (then turns the cart the other way).
-	for counter in [[["pull_left"], ["pull_right"], "A spin, then D"], [["push_left", "pull_right"], ["pull_left", "push_right"], "Q+D spin, then A+E"]]:
+	for counter in [[["pull_left"], ["pull_right"], "A spin, then D"], [["push_left", "pull_right"], ["pull_left", "push_right"], "E+D spin, then A+Q"]]:
 		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 		await _wait(1.0)
 		var sc_cart: ShoppingCart = main.cart
@@ -283,7 +281,7 @@ func _run() -> void:
 		var up_ok := was_fallen and down_up < 0.3 and t_up > 0.0 and rc.wheels_down() == 4 and slid < 3.0   # one it rolls over from upside down travels a little
 		if not up_ok:
 			failures += 1
-		print("%-5s %-18s lying at up %.2f (fallen %s), E held: %s, moved %.2f m, then %d / 4 wheels down" % [
+		print("%-5s %-18s lying at up %.2f (fallen %s), Q held: %s, moved %.2f m, then %d / 4 wheels down" % [
 			"PASS" if up_ok else "FAIL", "get up (" + setup + ")", down_up, was_fallen,
 			("upright in %.2f s" % t_up) if t_up > 0.0 else "still down after 5 s", slid, rc.wheels_down()])
 	# Gate swings into the basket when shoved, and stops at its limit.

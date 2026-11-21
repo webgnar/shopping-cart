@@ -1,0 +1,102 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://assets/models/parking_lot/lot_block/lot_block.glb" id="1_model"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="2_solid"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_curb"]
+size = Vector3(2.4, 0.15, 8.6)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_curb_end"]
+height = 0.15
+radius = 1.2
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_pole_base"]
+height = 1.0
+radius = 0.36
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_pole"]
+height = 8.4
+radius = 0.11
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_palm"]
+height = 7.0
+radius = 0.24
+
+[node name="LotBlock" type="Node3D"]
+
+[node name="Model" parent="." instance=ExtResource("1_model")]
+
+[node name="Solid" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("2_solid")
+
+[node name="IslandNorthCurb" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 0.075, -9.25)
+shape = SubResource("BoxShape3D_curb")
+
+[node name="IslandNorthCurbEndN" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 0.075, -13.55)
+shape = SubResource("CylinderShape3D_curb_end")
+
+[node name="IslandNorthCurbEndS" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 0.075, -4.95)
+shape = SubResource("CylinderShape3D_curb_end")
+
+[node name="IslandNorthPoleBase" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 0.5, -9.25)
+shape = SubResource("CylinderShape3D_pole_base")
+
+[node name="IslandNorthPole" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 5.2, -9.25)
+shape = SubResource("CylinderShape3D_pole")
+
+[node name="IslandNorthPalmN" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 3.5, -13.05)
+shape = SubResource("CylinderShape3D_palm")
+
+[node name="IslandNorthPalmS" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 3.5, -5.45)
+shape = SubResource("CylinderShape3D_palm")
+
+[node name="RowNorthPoleBase" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -9.25)
+shape = SubResource("CylinderShape3D_pole_base")
+
+[node name="RowNorthPole" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.2, -9.25)
+shape = SubResource("CylinderShape3D_pole")
+
+[node name="IslandSouthCurb" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 0.075, 9.25)
+shape = SubResource("BoxShape3D_curb")
+
+[node name="IslandSouthCurbEndN" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 0.075, 4.95)
+shape = SubResource("CylinderShape3D_curb_end")
+
+[node name="IslandSouthCurbEndS" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 0.075, 13.55)
+shape = SubResource("CylinderShape3D_curb_end")
+
+[node name="IslandSouthPoleBase" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 0.5, 9.25)
+shape = SubResource("CylinderShape3D_pole_base")
+
+[node name="IslandSouthPole" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 5.2, 9.25)
+shape = SubResource("CylinderShape3D_pole")
+
+[node name="IslandSouthPalmN" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 3.5, 5.45)
+shape = SubResource("CylinderShape3D_palm")
+
+[node name="IslandSouthPalmS" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.9, 3.5, 13.05)
+shape = SubResource("CylinderShape3D_palm")
+
+[node name="RowSouthPoleBase" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 9.25)
+shape = SubResource("CylinderShape3D_pole_base")
+
+[node name="RowSouthPole" type="CollisionShape3D" parent="Solid"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.2, 9.25)
+shape = SubResource("CylinderShape3D_pole")
