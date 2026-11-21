@@ -23,6 +23,7 @@ const CONSOLE_SCENE := "res://scenes/ui/console.tscn"
 const CART_SCENE := "res://scenes/cart/cart.tscn"
 const SPARE_CART_SCENE := "res://scenes/cart/spare_cart.tscn"
 const BOT_CART_SCENE := "res://scenes/cart/bot_cart.tscn"
+const SKYLINE_SKY_SHADER := "res://scenes/environment/skyline_sky.gdshader"
 const CART_MATERIALS_DIR := "res://assets/materials/cart/"
 const OUT_DIR := "../mobile/levels"
 const NAMES := {"sandbox": "Sandbox", "plot": "Parking lot", "garage": "Parking garage", "market": "Supermarket",
@@ -117,6 +118,9 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 				spares.append(n)
 			drop.append(n)
 		elif n is Camera3D or n is CanvasLayer or n is CartNest:
+			drop.append(n)
+		elif n.is_in_group("mobile_export_skip"):
+			# Local-only content (the garage's Manhattan skyline from Google Earth tiles) never goes to the web.
 			drop.append(n)
 	for n in spares:
 		var e := {"pos": _v(n.global_position), "yaw": n.global_rotation.y}
@@ -379,6 +383,15 @@ static func _environment(env: Environment) -> Dictionary:
 		d.sky = {"top": _c(s.sky_top_color), "horizon": _c(s.sky_horizon_color),
 			"ground_bottom": _c(s.ground_bottom_color), "ground_horizon": _c(s.ground_horizon_color),
 			"energy": s.sky_energy_multiplier}
+	elif env.sky and env.sky.sky_material is ShaderMaterial and env.sky.sky_material.shader \
+			and env.sky.sky_material.shader.resource_path == SKYLINE_SKY_SHADER:
+		# The garage's sky: a procedural sky in a shader (plus a skyline the phone doesn't get).
+		var m := env.sky.sky_material as ShaderMaterial
+		d.sky = {"top": _c(m.get_shader_parameter("sky_top_color")),
+			"horizon": _c(m.get_shader_parameter("sky_horizon_color")),
+			"ground_bottom": _c(m.get_shader_parameter("ground_bottom_color")),
+			"ground_horizon": _c(m.get_shader_parameter("ground_horizon_color")),
+			"energy": float(m.get_shader_parameter("sky_energy"))}
 	elif env.sky and env.sky.sky_material is PhysicalSkyMaterial:
 		var p := env.sky.sky_material as PhysicalSkyMaterial
 		d.sky = {"top": _c(p.rayleigh_color), "horizon": _c(p.mie_color), "ground_bottom": _c(p.ground_color),

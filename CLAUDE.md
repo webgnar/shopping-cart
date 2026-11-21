@@ -93,7 +93,9 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   (`scripts/net/webrtc_link.gd`, desktop plugin in `addons/webrtc/`) introduced by the rendezvous service in
   `services/rendezvous/` (Cloudflare Worker; `npm run dev` there runs it locally). M opens the Multiplayer menu
   (`scenes/ui/multiplayer_menu.tscn`). Don't deploy the Worker or create Cloudflare resources without asking zack.
-- `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun.
+- `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun, and the garage's sky shader
+  (`skyline_sky.gdshader`). `assets/manhattan_skyline/` (not in git) — the garage's Manhattan skyline from
+  zack's Google Earth tiles, made by `sh tools/manhattan_skyline.sh`; the garage shows it only where it exists.
   `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
   (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera (`scripts/cart_camera.gd` lifts it over walls, see its exports).
 - `assets/physics/*.tres` — shared physics materials (tile, asphalt, solid).
