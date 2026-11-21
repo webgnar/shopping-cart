@@ -106,16 +106,23 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 		st.free()
 
 	# Things the phone builds itself: the player's cart, spare carts, camera, HUD, UI.
+	# A spare cart tucked into another (a stack, scenes/cart/cart_stack_*.tscn) names the spare it is nested in.
 	var drop: Array[Node] = []
+	var spares: Array[ShoppingCart] = []
 	for n in level.find_children("*", "", true, false):
 		if n is ShoppingCart:
 			if n.driver is CartBot:
 				out.bot_carts.append({"pos": _v(n.global_position), "yaw": n.global_rotation.y})
 			elif n.scene_file_path == SPARE_CART_SCENE or not n.player_controlled:
-				out.spare_carts.append({"pos": _v(n.global_position), "yaw": n.global_rotation.y})
+				spares.append(n)
 			drop.append(n)
-		elif n is Camera3D or n is CanvasLayer:
+		elif n is Camera3D or n is CanvasLayer or n is CartNest:
 			drop.append(n)
+	for n in spares:
+		var e := {"pos": _v(n.global_position), "yaw": n.global_rotation.y}
+		if n.nested_in != null and spares.has(n.nested_in):
+			e["nested_in"] = spares.find(n.nested_in)
+		out.spare_carts.append(e)
 	for n in drop:
 		if is_instance_valid(n) and n.get_parent():
 			n.get_parent().remove_child(n)
@@ -431,6 +438,7 @@ static func export_cart() -> Dictionary:
 	out["rolling_sound"] = _rolling_sound(cart.get_node("Frame/RollingSound"))
 	out["wheel_radius"] = cart.get_node("Wheel_FL/Shape").shape.radius
 	out["hand_position"] = _v(cart.hand_position)
+	out["nest"] = _nest_settings(cart.get_node("Frame/NestMouth"))
 	cart.free()
 	out["bot"] = _bot_settings()
 	var f := FileAccess.open(out_path("cart.json"), FileAccess.WRITE)
@@ -438,6 +446,27 @@ static func export_cart() -> Dictionary:
 	f.close()
 	print("MOBILE CART: %d bodies, %d hinges, %d groceries, %d materials" % [out.bodies.size(), out.joints.size(),
 		out.groceries.size(), out.materials.size()])
+	return out
+
+
+## How carts nest (scenes/cart/nest_joint.tscn and the cart's Frame/NestMouth): the slide, its grip, the play,
+## where the pivot sits, the gate motor, what breaks a nest and when a nose is caught.
+static func _nest_settings(mouth: CartNestMouth) -> Dictionary:
+	var j: CartNest = mouth.nest_scene.instantiate()
+	var out := {"spacing": j.spacing, "pivot": _v(j.pivot), "gate_speed": j.gate_speed, "gate_impulse": j.gate_impulse,
+		"break_impulse": j.break_impulse, "impulse_window": j.impulse_window, "release_margin": j.release_margin,
+		"slide": [j.get("linear_limit_x/lower_distance"), j.get("linear_limit_x/upper_distance")],
+		"grip": j.get("linear_motor_x/force_limit") if j.get("linear_motor_x/enabled") else 0.0,
+		"yaw": [j.get("angular_limit_y/lower_angle"), j.get("angular_limit_y/upper_angle")],
+		"pitch": [j.get("angular_limit_z/lower_angle"), j.get("angular_limit_z/upper_angle")],
+		"roll": [j.get("angular_limit_x/lower_angle"), j.get("angular_limit_x/upper_angle")],
+		"capture_depth": mouth.capture_depth, "capture_offset": mouth.capture_offset, "capture_angle": mouth.capture_angle,
+		"capture_tilt": mouth.capture_tilt, "capture_speed": mouth.capture_speed, "nose": _v(mouth.nose)}
+	var zone := mouth.get_node("Zone") as CollisionShape3D
+	out["mouth"] = _shape(zone.shape, zone.transform)
+	j.free()
+	var cart: ShoppingCart = mouth.get_parent().get_parent()
+	out["ghost_clearance"] = cart.ghost_clearance
 	return out
 
 

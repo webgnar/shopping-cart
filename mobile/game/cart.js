@@ -66,7 +66,10 @@ export class Cart {
    */
   constructor(ctx, { pos, yaw, player = true, empty = false, bit }) {
     const { RAPIER, world, rig } = ctx;
-    this.ctx = ctx; this.player = player; this.bit = bit;
+    this.ctx = ctx; this.player = player; this.bit = bit; this.ownBit = bit;
+    // Nesting (nest.js): the cart this one's nose is in, the cart in this one's back, the joint, carts it passes through.
+    this.nestedIn = null; this.nestedBehind = null; this.nest = null; this.ghosts = new Set(); this.keysHeld = false;
+    this.cartColliders = [];   // [collider, layer, mask] of every cart part, to regroup when carts pass through each other
     this.T = Object.assign({}, DEFAULTS, ctx.tune);
     this.handPower = { L: 0, R: 0 }; this.armExt = { L: 0, R: 0 }; this.handState = { L: '', R: '' };
     this.fallen = false; this.waitRelease = false; this.tiltDir = 0; this.tiltTime = 0; this.letGo = false; this.pinned = false; this.restTime = 0; this.restAnchor = null;
@@ -91,7 +94,7 @@ export class Cart {
       const g = godotGroups(bd.layer, ctx.widen(bd.layer, bd.mask), bit);
       for (const s of bd.shapes) {
         const d = shapeDesc(RAPIER, s);
-        if (d) world.createCollider(d.setDensity(0).setFriction(bd.friction).setFrictionCombineRule(MIN).setCollisionGroups(g), body);
+        if (d) this.cartColliders.push([world.createCollider(d.setDensity(0).setFriction(bd.friction).setFrictionCombineRule(MIN).setCollisionGroups(g), body), bd.layer, bd.mask]);
       }
       this.b[bd.name] = body; this.local[bd.name] = lp; this.bodyMass[bd.name] = bd.mass;
       if (bd.name === 'Frame') this.com = com;
@@ -104,6 +107,7 @@ export class Cart {
 
     // Hinges: Godot's HingeJoint3D turns about the joint's Z axis. Rapier measures the angle the other way round,
     // so Godot's [lower, upper] becomes [-upper, -lower]. All bodies start unrotated in the cart's frame.
+    this.joints = {};
     for (const j of rig.joints) {
       const a = this.b[j.a], b = this.b[j.b];
       if (!a || !b) continue;
@@ -111,6 +115,7 @@ export class Cart {
       const joint = world.createImpulseJoint(RAPIER.JointData.revolute(sub(o, this.local[j.a]), sub(o, this.local[j.b]), axis), a, b, true);
       joint.setContactsEnabled(false);
       if (j.limit) joint.setLimits(-j.limit[1], -j.limit[0]);
+      this.joints[j.name] = joint;
     }
     // Guard zone: a loose object or another cart entering it releases a pinned cart before it hits.
     if (rig.guard) {
@@ -227,10 +232,14 @@ export class Cart {
   }
 
   // ---------------------------------------------------------------- one physics step (before world.step)
+  /** Whether this cart's own keys are held (set before any cart steps, so a stack can wake as one). */
+  setKeys(inp) { this.keysHeld = !!inp && (inp.L !== 0 || inp.R !== 0 || !!inp.lift || !!inp.press); }
+
   /** inp: {L, R: -1 pull / 0 / +1 push, lift, press} for the player's cart; null for a spare cart. */
   step(inp, dt) {
     for (const b of this.parts) { b.resetForces(false); b.resetTorques(false); }
-    const anyInput = !!inp && (inp.L !== 0 || inp.R !== 0 || inp.lift || inp.press);
+    // A stack is one herd: a key held on any of its carts keeps them all awake and rolling.
+    const anyInput = this.stack().some(c => c.keysHeld);
     if (anyInput && this.pinned) this.wake();
     if (this.pinned) return;
     if (inp) this._applyHands(inp, dt);
@@ -377,7 +386,8 @@ export class Cart {
     const twist = a ? 2 * Math.acos(clamp(Math.abs(q.x * a.q.x + q.y * a.q.y + q.z * a.q.z + q.w * a.q.w), 0, 1)) : Infinity;
     if (drift < T.stop_speed * W && twist < T.stop_spin * W && len(this.gate.angvel()) < 0.5) {
       this.restTime += dt;
-      if (this.restTime >= W) this.pin();
+      // In a stack, only once every cart of it has come to rest.
+      if (this.restTime >= W && this.stack().every(c => c === this || c.pinned || c.restTime >= W)) for (const c of this.stack()) c.pin();
     } else {
       this.restAnchor = { pos: { ...pos }, q: { ...q } };
       this.restTime = 0;
@@ -398,6 +408,7 @@ export class Cart {
   }
 
   pin() {
+    if (this.pinned) return;
     const { RAPIER } = this.ctx;
     for (const b of [this.frame, ...Object.values(this.wheels), ...Object.values(this.forks)]) { b.setLinvel(v3(0, 0, 0), false); b.setAngvel(v3(0, 0, 0), false); }
     this.frame.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased, true);
@@ -406,15 +417,39 @@ export class Cart {
 
   wake() {
     const { RAPIER } = this.ctx;
-    if (this.pinned) this.frame.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
-    for (const b of this.parts) b.wakeUp();
-    this.pinned = false; this.restTime = 0; this.restAnchor = null;
+    for (const c of this.stack()) {
+      if (c.pinned) c.frame.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
+      for (const b of c.parts) b.wakeUp();
+      c.pinned = false; c.restTime = 0; c.restAnchor = null;
+    }
   }
+
+  // ---------------------------------------------------------------- stacks (nest.js)
+  /** The carts of this cart's stack, front to back (just this cart when it stands alone). */
+  stack() {
+    let f = this;
+    while (f.nestedIn) f = f.nestedIn;
+    const list = [];
+    for (let c = f; c; c = c.nestedBehind) list.push(c);
+    return list;
+  }
+
+  /** Every part collides as a member of `bit`: carts sharing a bit pass through each other (a nose in a basket). */
+  setBit(bit) {
+    if (bit === this.bit) return;
+    this.bit = bit;
+    for (const [c, layer, mask] of this.cartColliders) c.setCollisionGroups(godotGroups(layer, this.ctx.widen(layer, mask), bit));
+    if (this.guard) this.guard.setCollisionGroups(godotGroups(2, 3, bit));
+  }
+
+  /** Mass of the whole rig (groceries left out). */
+  rigMass() { return this.totalMass; }
 
   /** Something hit the guard zone of this pinned cart: let physics take it again (not its own parts or groceries). */
   guardHit(otherBody) {
     if (!this.pinned || !otherBody || !(otherBody.isDynamic() || otherBody.isKinematic())) return;   // props, carts, traffic
     if (this.partSet.has(otherBody.handle) || this.grocerySet.has(otherBody.handle)) return;
+    if (this.stack().some(c => c.partSet.has(otherBody.handle))) return;
     this.wake();
   }
 }

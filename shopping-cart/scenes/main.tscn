@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" path="res://scenes/sandbox/chunks/hill.tscn" id="15_hill"]
 [ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="16_pconc"]
 [ext_resource type="Material" path="res://assets/parking_lot/materials/concrete.tres" id="17_mconc"]
+[ext_resource type="PackedScene" path="res://scenes/cart/cart_stack_4.tscn" id="stack4"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_dp3eg"]
 size = Vector3(30, 1, 40)
@@ -475,6 +476,9 @@ far_ground = NodePath("FarGround")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_far")
+
+[node name="CartStack" parent="." instance=ExtResource("stack4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 2.5)
 
 [node name="CartSpawn" type="Marker3D" parent="." unique_id=942329566]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)

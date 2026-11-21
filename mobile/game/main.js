@@ -5,6 +5,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import RAPIER from 'rapier';
 import { v3, add, sub, clamp, rot, color, widenMask } from './util.js';
+import { catchNoses, regroup, buildStacks } from './nest.js';
 import { Cart, SIDES } from './cart.js';
 import { Bot } from './bot.js';
 import { NavMesh } from './nav.js';
@@ -97,6 +98,8 @@ async function loadLevel(key) {
       spares.push(spare);
       bit <<= 1;
     }
+    // Stacks: spare carts nested into each other (scenes/cart/cart_stack_*.tscn in Godot).
+    if (rig.nest) buildStacks(ctx, spares, level.spareCarts, rig.nest);
     // Bot carts: the same cart, driven by a bot pressing the player's keys over the level's navigation mesh.
     const nav = level.navmesh ? new NavMesh(level.navmesh) : null;
     for (const bc of nav ? level.botCarts : []) {
@@ -123,7 +126,13 @@ async function loadLevel(key) {
 
 const PLAYER_BIT = 1 << 4;
 function spawn(pos, yaw) {
-  if (cart) { cart.remove(); if (cart.sound) cart.sound.remove(); }
+  if (cart) {
+    // Out of any stack first: the carts on either side let go.
+    if (cart.nest) cart.nest.comeApart();
+    if (cart.nestedBehind && cart.nestedBehind.nest) cart.nestedBehind.nest.comeApart();
+    for (const o of cart.ghosts) o.ghosts.delete(cart);
+    cart.remove(); if (cart.sound) cart.sound.remove();
+  }
   cart = new Cart({ ...ctx, model: cartModel ? cartModel.clone() : null }, { pos, yaw, player: true, bit: PLAYER_BIT });
   if (rig.rolling_sound) cart.sound = new RollingSound(cart, rig.rolling_sound, level.surfaces);
   cam.heading = yaw; cam.target.set(pos.x, pos.y + 0.67, pos.z); cam.lift = 0; cam.reach = 1;
@@ -311,11 +320,23 @@ let lastInput = { L: 0, R: 0, lift: false, press: false };
 
 // ---------------------------------------------------------------- loop
 function physicsStep(inp) {
+  const all = [cart, ...others()];
+  if (rig.nest) {
+    regroup(all, rig.nest);
+    const botCarts = new Set(bots.map(b => b.cart));
+    catchNoses(ctx, all, rig.nest, c => botCarts.has(c));
+  }
+  // Every cart's keys first, so a stack wakes as one whichever of its carts is held.
+  const botInputs = bots.map(b => b.update(STEP));
+  cart.setKeys(inp);
+  for (const s of spares) s.setKeys(null);
+  bots.forEach((b, i) => b.cart.setKeys(botInputs[i]));
   cart.step(inp, STEP);
   for (const s of spares) s.step(null, STEP);
-  for (const b of bots) b.cart.step(b.update(STEP), STEP);
+  bots.forEach((b, i) => b.cart.step(botInputs[i], STEP));
   stepTraffic(level, STEP);
   world.step(eventQueue);
+  for (const c of all) if (c.nest) c.nest.update(world, STEP);
   cart.capWheelSpin(); for (const s of others()) if (!s.pinned) s.capWheelSpin();
   eventQueue.drainCollisionEvents((h1, h2, began) => {
     if (!began) return;
