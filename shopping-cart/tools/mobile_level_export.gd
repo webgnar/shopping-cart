@@ -9,7 +9,8 @@ extends RefCounted
 ##    can move them with their physics body.
 ##  - mobile/levels/<key>.json: what you touch and how it's lit: every collision shape with its friction, the
 ##    loose props (mass, shapes), CartSpawn, the spare carts, the bot carts and the navigation mesh they drive on,
-##    sky/fog/ambient, the sun, lamps and 3D labels; for the endless sandbox, the chunk grid ("stream").
+##    sky/fog/ambient, the sun, lamps and 3D labels, the lanes of moving traffic (TrafficLane: speed, length, each
+##    car's place and shapes; cars are kin_<n>), and for the endless sandbox, the chunk grid ("stream").
 ##  - mobile/levels/chunks/<name>.glb and .json: each chunk the sandbox streams (scenes/sandbox/chunks/), the same way.
 ## And once for the cart (scenes/cart/cart.tscn): mobile/levels/cart.json with the rig (bodies, masses, shapes,
 ## hinges and their limits), the cart's shared materials (assets/materials/cart/*.tres) and the bot's settings
@@ -25,8 +26,9 @@ const BOT_CART_SCENE := "res://scenes/cart/bot_cart.tscn"
 const SKYLINE_SKY_SHADER := "res://scenes/environment/skyline_sky.gdshader"
 const CART_MATERIALS_DIR := "res://assets/materials/cart/"
 const OUT_DIR := "../mobile/levels"
-const NAMES := {"sandbox": "Sandbox", "plot": "Parking lot", "garage": "Parking garage", "market": "Supermarket"}
-const ORDER := ["sandbox", "plot", "garage", "market"]
+const NAMES := {"sandbox": "Sandbox", "plot": "Parking lot", "garage": "Parking garage", "market": "Supermarket",
+	"hill": "San Francisco hill"}
+const ORDER := ["sandbox", "plot", "garage", "market", "hill"]
 
 
 static func out_path(file: String) -> String:
@@ -90,8 +92,10 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 	var out := {
 		"key": key, "name": NAMES.get(key, key), "scene": scene_path, "source": source_hash(scene_path),
 		"spawn": null, "spare_carts": [], "bot_carts": [], "navmesh": null, "environment": {}, "sun": null, "lights": [], "labels": [],
-		"statics": [], "bodies": [],
+		"statics": [], "bodies": [], "traffic": [],
 	}
+	if level.has_meta("mobile_merge_cell"):   # a long level can merge its meshes in bigger cells (fewer draws)
+		out["merge_cell"] = float(level.get_meta("mobile_merge_cell"))
 	var spawn := level.get_node_or_null("CartSpawn") as Node3D
 	out.spawn = {"pos": _v(spawn.global_position if spawn else Vector3(2, 0, 0)), "yaw": spawn.global_rotation.y if spawn else 0.0}
 
@@ -139,11 +143,33 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 		elif n is NavigationRegion3D and n.navigation_mesh and out.navmesh == null:
 			out.navmesh = _navmesh(n)
 
+	# Moving traffic: each lane's place, speed and length, and its cars (kin_<n>) with their shapes and their
+	# places in the queue. The phone drives them the same way (TrafficLane).
+	var moving := {}
+	for lane in level.find_children("*", "Node3D", true, false):
+		if not lane is TrafficLane:
+			continue
+		var entry := {"xf": _xf(lane.global_transform), "speed": lane.speed, "length": lane.length, "cars": []}
+		var cars: Array = lane.get("_cars")
+		for i in cars.size():
+			var car: AnimatableBody3D = cars[i]
+			var id := "kin_%d" % moving.size()
+			moving[car] = true
+			car.name = id
+			var shapes := []   # in the car's own frame
+			for s in car.get_children():
+				if s is CollisionShape3D and not s.disabled and s.shape:
+					var sh := _shape(s.shape, s.transform)
+					if not sh.is_empty():
+						shapes.append(sh)
+			entry.cars.append({"node": id, "offset": lane.distance(i, 0.0), "friction": _friction(car), "shapes": shapes})
+		out.traffic.append(entry)
+
 	# Collision: static shapes go in one list, loose props keep their shapes per body.
 	var dyn_count := 0
 	for n in level.find_children("*", "CollisionObject3D", true, false):
 		var body := n as CollisionObject3D
-		if body is Area3D:
+		if body is Area3D or moving.has(body):
 			continue
 		var shapes := []
 		for s in body.find_children("*", "CollisionShape3D", true, false):
@@ -194,9 +220,9 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 	f.close()
 	level.queue_free()
 	await tree.process_frame
-	print("MOBILE LEVEL %s: %d static shapes, %d loose props, %d spare carts, %d bot carts, %d nav polygons, %d lamps, %d labels" % [
+	print("MOBILE LEVEL %s: %d static shapes, %d loose props, %d spare carts, %d bot carts, %d nav polygons, %d lamps, %d labels, %d traffic lanes" % [
 		key, out.statics.size(), out.bodies.size(), out.spare_carts.size(), out.bot_carts.size(),
-		out.navmesh.polygons.size() if out.navmesh else 0, out.lights.size(), out.labels.size()])
+		out.navmesh.polygons.size() if out.navmesh else 0, out.lights.size(), out.labels.size(), out.traffic.size()])
 	return out
 
 
@@ -415,7 +441,7 @@ static func export_cart() -> Dictionary:
 			if m:
 				out.materials[f.get_basename()] = {"color": _c(m.albedo_color), "metallic": m.metallic,
 					"roughness": m.roughness}
-	out["rolling_sound"] = _rolling_sound(cart.get_node("Frame/RollingSound"))
+	out["wheel_sound"] = _wheel_sound(cart.get_node("Wheel_RL/WheelSound"))
 	out["wheel_radius"] = cart.get_node("Wheel_FL/Shape").shape.radius
 	out["hand_position"] = _v(cart.hand_position)
 	cart.free()
@@ -458,19 +484,28 @@ static func _bot_settings() -> Dictionary:
 	return out
 
 
-## The rolling sound (Frame/RollingSound): its settings, the floor probe and each surface's loop. The phone plays
-## mobile/audio/<loop>.wav, cut from the same recordings as the .ogg (tools/audio/make_cart_rolling_loops.py).
-static func _rolling_sound(rs: CartRollingSound) -> Dictionary:
-	var out := {"probe": _xf(rs.transform * rs.probe.transform), "probe_target": _v(rs.probe.target_position),
-		"fallback": String(rs.fallback.name), "sounds": []}
-	for key in ["silent_speed", "full_volume_speed", "volume_curve", "recorded_speed", "min_pitch", "max_pitch",
-			"pitch_per_speed", "fade_time"]:
-		out[key] = rs.get(key)
-	for s in rs.get_children():
-		if s is RollingSurfaceSound:
-			out.sounds.append({"name": String(s.name), "file": "audio/%s.wav" % s.stream.resource_path.get_file().get_basename(),
-				"floors": s.floors.map(func(m): return m.resource_path.get_file().get_basename()),
-				"loudness_db": s.loudness_db, "unit_size": s.unit_size, "max_distance": s.max_distance})
+## The wheel sound (scenes/cart/wheel_sound.tscn, the same under every wheel): its settings, each floor's roll and
+## scrub loops, the knocks and the landing. The phone plays mobile/audio/<name>.wav, cut from the same recordings
+## as the Godot files (tools/audio/make_cart_rolling_loops.py).
+static func _wheel_sound(ws: WheelSound) -> Dictionary:
+	var wav := func(stream: AudioStream) -> String: return "audio/%s.wav" % stream.resource_path.get_file().get_basename()
+	var floor_dict := func(f: CartFloorSound) -> Dictionary: return {"name": f.resource_path.get_file().get_basename(),
+		"floors": f.floors.map(func(m): return m.resource_path.get_file().get_basename()),
+		"roll": wav.call(f.roll), "roll_db": f.roll_db, "scrub": wav.call(f.scrub), "scrub_db": f.scrub_db}
+	var shots := func(p: AudioStreamPlayer3D) -> Dictionary:
+		var r := p.stream as AudioStreamRandomizer
+		var files := []
+		for i in r.streams_count:
+			files.append(wav.call(r.get_stream(i)))
+		return {"files": files, "random_pitch": r.random_pitch}
+	var out := {"floors": ws.floor_sounds.map(floor_dict), "fallback": ws.fallback.resource_path.get_file().get_basename(),
+		"knock": shots.call(ws.knock_player), "land": shots.call(ws.land_player),
+		"unit_size": ws.roll_player.unit_size, "max_distance": ws.roll_player.max_distance}
+	for key in ["contact_gap", "wheel_db", "silent_speed", "full_volume_speed", "volume_curve", "recorded_speed",
+			"min_pitch", "max_pitch", "pitch_per_speed", "fade_time", "scrub_start", "scrub_full", "skid_tolerance", "scrub_pitch_low",
+			"scrub_pitch_per_speed", "scrub_max_pitch", "knock_start", "knock_full", "knock_db", "knock_gap",
+			"land_air_time", "land_start", "land_full", "land_db"]:
+		out[key] = ws.get(key)
 	return out
 
 

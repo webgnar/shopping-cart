@@ -1,0 +1,42 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="1_asph"]
+[ext_resource type="PackedScene" path="res://assets/models/sf_hill/hill_block/hill_block.glb" id="2_model"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="3_conc"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_road"]
+size = Vector3(60, 0.5, 12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_walk"]
+size = Vector3(60, 0.65, 3)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_yard"]
+size = Vector3(60, 1.7, 121)
+
+[node name="HillBlock" type="StaticBody3D"]
+physics_material_override = ExtResource("1_asph")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+
+[node name="RoadShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, -0.25, 0)
+shape = SubResource("BoxShape3D_road")
+
+[node name="Sidewalks" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("3_conc")
+
+[node name="NorthShape" type="CollisionShape3D" parent="Sidewalks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, -0.175, -7.5)
+shape = SubResource("BoxShape3D_walk")
+
+[node name="SouthShape" type="CollisionShape3D" parent="Sidewalks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, -0.175, 7.5)
+shape = SubResource("BoxShape3D_walk")
+
+[node name="NorthYardShape" type="CollisionShape3D" parent="Sidewalks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, -1.15, -69.5)
+shape = SubResource("BoxShape3D_yard")
+
+[node name="SouthYardShape" type="CollisionShape3D" parent="Sidewalks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, -1.15, 69.5)
+shape = SubResource("BoxShape3D_yard")

@@ -1,0 +1,61 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="1_asph"]
+[ext_resource type="PackedScene" path="res://assets/models/sf_hill/intersection/intersection.glb" id="2_model"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="3_conc"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cross"]
+size = Vector3(18, 0.5, 12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_arm"]
+size = Vector3(12, 0.5, 94)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_walk"]
+size = Vector3(3, 0.65, 94)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_yard"]
+size = Vector3(18, 1.7, 30)
+
+[node name="Intersection" type="StaticBody3D"]
+physics_material_override = ExtResource("1_asph")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+
+[node name="CrossingShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
+shape = SubResource("BoxShape3D_cross")
+
+[node name="NorthArmShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, -53)
+shape = SubResource("BoxShape3D_arm")
+
+[node name="SouthArmShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 53)
+shape = SubResource("BoxShape3D_arm")
+
+[node name="Sidewalks" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("3_conc")
+
+[node name="Walk0Shape" type="CollisionShape3D" parent="Sidewalks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, -0.175, -53)
+shape = SubResource("BoxShape3D_walk")
+
+[node name="Walk1Shape" type="CollisionShape3D" parent="Sidewalks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, -0.175, -53)
+shape = SubResource("BoxShape3D_walk")
+
+[node name="Walk2Shape" type="CollisionShape3D" parent="Sidewalks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, -0.175, 53)
+shape = SubResource("BoxShape3D_walk")
+
+[node name="Walk3Shape" type="CollisionShape3D" parent="Sidewalks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, -0.175, 53)
+shape = SubResource("BoxShape3D_walk")
+
+[node name="NorthYardShape" type="CollisionShape3D" parent="Sidewalks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.15, -115)
+shape = SubResource("BoxShape3D_yard")
+
+[node name="SouthYardShape" type="CollisionShape3D" parent="Sidewalks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.15, 115)
+shape = SubResource("BoxShape3D_yard")

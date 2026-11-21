@@ -7,6 +7,17 @@ source of truth: `shopping-cart/tools/export_cart_tuning.gd` copies the cart's s
 every fast-travel level and the cart rig (`mobile/levels/`). Never read those files from the Godot game. After
 changing the cart or a level, run both exports (the sync tests below fail until you do).
 
+## Commits
+
+zack wants every commit to show their GitHub name and profile picture, and Claude only once:
+
+- Claude stays the commit author. End every commit message with zack as co-author, using their GitHub
+  noreply address so the avatar links:
+  `Co-authored-by: webgnar <124617425+webgnar@users.noreply.github.com>`
+- Do not add a `Co-Authored-By: Claude ...` trailer: Claude is already the author, and a second Claude line
+  shows two Claude avatars. The `Claude-Session:` link line may stay.
+- Keep merging pull requests with a normal merge (not squash).
+
 ## How we build: scenes first
 
 This is a Godot project, so everything is built as scenes (`.tscn`) made of Godot nodes that can be
@@ -73,7 +84,8 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   place instances under a level's `BotCarts` node. Bots need the level's `Navigation` region: re-bake it with
   `godot --headless -s res://tools/bake_navigation_cli.gd` after moving anything solid.
 - `scenes/net/net_session.tscn` — the `Net` autoload: host-authoritative multiplayer (`scripts/net/`). Guests'
-  carts are driven through `controls` like bot carts; guests only show the host's snapshots. Plan and wire format:
+  carts are driven through `controls` like bot carts and start at the level's `PlayerSpawns` Marker3Ds (one per guest
+  slot) or beside `CartSpawn`; guests only show the host's snapshots. Plan and wire format:
   `docs/MULTIPLAYER.md` (bump `NetProtocol.VERSION` when a message changes). Online play uses WebRTC
   (`scripts/net/webrtc_link.gd`, desktop plugin in `addons/webrtc/`) introduced by the rendezvous service in
   `services/rendezvous/` (Cloudflare Worker; `npm run dev` there runs it locally). M opens the Multiplayer menu
@@ -84,9 +96,10 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
   (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera (`scripts/cart_camera.gd` lifts it over walls, see its exports).
 - `assets/physics/*.tres` — shared physics materials (tile, asphalt, solid).
-- `assets/audio/cart/` — the cart's rolling loops, cut from zack's recordings by
-  `tools/audio/make_cart_rolling_loops.py` (also writes the browser's `mobile/audio/*.wav`). The cart's
-  `Frame/RollingSound` picks the loop by the floor's physics material.
+- `assets/audio/cart/` — the cart's wheel sounds (rolls, scrubs, knocks, landing), cut from zack's recordings by
+  `tools/audio/make_cart_rolling_loops.py` (also writes the browser's `mobile/audio/*.wav`). Every wheel has a
+  `WheelSound` (`scenes/cart/wheel_sound.tscn`) driven by that wheel's spin, slide and contact; the floor's
+  physics material picks a `CartFloorSound` (`assets/audio/cart/floors/*.tres`).
 - `scripts/` — behaviour scripts for the scenes above.
 - `tools/` (repo root) — Blender builder and export scripts. `docs/DEV_NOTES.md` — dev notes.
 
@@ -104,7 +117,7 @@ From `shopping-cart/`:
 - Browser game (from the repo root): `node mobile/test/drive_test.js`
 - Camera never clips into levels (all levels): `godot --headless --fixed-fps 120 -s res://tests/camera_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
-- Rolling sound (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
+- Wheel sounds (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
 - Multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/multiplayer_test.gd`
 - Rendezvous service, and online play by join code over WebRTC (from `services/rendezvous`, after `npm install`):

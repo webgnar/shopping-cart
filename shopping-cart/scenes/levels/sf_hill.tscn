@@ -1,0 +1,1946 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/props/traffic_lane.gd" id="2_traffic_la"]
+[ext_resource type="PackedScene" path="res://scenes/props/sf_hill/hill_block.tscn" id="3_hill_block"]
+[ext_resource type="PackedScene" path="res://scenes/props/sf_hill/intersection.tscn" id="4_intersecti"]
+[ext_resource type="PackedScene" path="res://scenes/props/sf_hill/house_victorian.tscn" id="5_house_vict"]
+[ext_resource type="PackedScene" path="res://scenes/props/sf_hill/house_stucco.tscn" id="6_house_stuc"]
+[ext_resource type="PackedScene" path="res://scenes/props/sf_hill/street_lamp.tscn" id="7_street_lam"]
+[ext_resource type="PackedScene" path="res://scenes/props/sf_hill/street_tree.tscn" id="8_street_tre"]
+[ext_resource type="PackedScene" path="res://scenes/props/sf_hill/fire_hydrant.tscn" id="9_fire_hydra"]
+[ext_resource type="PackedScene" path="res://scenes/props/sf_hill/stop_sign.tscn" id="10_stop_sign"]
+[ext_resource type="PackedScene" path="res://scenes/props/sf_hill/seawall.tscn" id="11_seawall"]
+[ext_resource type="PackedScene" path="res://scenes/props/sf_hill/traffic_car.tscn" id="12_traffic_ca"]
+[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/parked_car.tscn" id="13_parked_car"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/bay_water.tres" id="14_bay_water"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_stucco_white.tres" id="15_house_stuc"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_trim_white.tres" id="16_house_trim"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_accent_navy.tres" id="17_house_acce"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_paint_butter.tres" id="18_house_pain"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_accent_mustard.tres" id="19_house_acce"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_paint_lilac.tres" id="20_house_pain"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_paint_peach.tres" id="21_house_pain"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_accent_forest.tres" id="22_house_acce"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_paint_mint.tres" id="23_house_pain"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_accent_red.tres" id="24_house_acce"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_stucco_grey.tres" id="25_house_stuc"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_paint_sage.tres" id="26_house_pain"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_accent_teal.tres" id="27_house_acce"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_trim_cream.tres" id="28_house_trim"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_accent_plum.tres" id="29_house_acce"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_stucco_cream.tres" id="30_house_stuc"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_paint_rose.tres" id="31_house_pain"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_paint_sky.tres" id="32_house_pain"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_paint_slate.tres" id="33_house_pain"]
+[ext_resource type="Material" path="res://assets/sf_hill/materials/house_stucco_sand.tres" id="34_house_stuc"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sf"]
+sky_top_color = Color(0.3, 0.5, 0.78, 1)
+sky_horizon_color = Color(0.74, 0.8, 0.86, 1)
+ground_bottom_color = Color(0.28, 0.32, 0.33, 1)
+ground_horizon_color = Color(0.74, 0.8, 0.86, 1)
+sun_angle_max = 20.0
+
+[sub_resource type="Sky" id="Sky_sf"]
+sky_material = SubResource("ProceduralSkyMaterial_sf")
+
+[sub_resource type="Environment" id="Environment_sf"]
+background_mode = 2
+sky = SubResource("Sky_sf")
+ambient_light_source = 3
+ambient_light_energy = 0.9
+reflected_light_source = 2
+tonemap_mode = 3
+ssao_enabled = true
+glow_enabled = true
+glow_intensity = 0.5
+glow_bloom = 0.03
+glow_hdr_threshold = 1.4
+fog_enabled = true
+fog_light_color = Color(0.78, 0.82, 0.86, 1)
+fog_density = 0.0045
+fog_sky_affect = 0.25
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_bay"]
+material = ExtResource("14_bay_water")
+size = Vector2(1500, 1500)
+
+[node name="SanFranciscoHill" type="Node3D"]
+script = ExtResource("1_main")
+metadata/mobile_merge_cell = 80.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_sf")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.547659, 0.574096, -0.608674, 0, 0.727468, 0.686141, 0.836702, 0.375772, -0.398405, 0, 80, 0)
+light_color = Color(1, 0.94, 0.84, 1)
+light_energy = 1.15
+shadow_enabled = true
+directional_shadow_max_distance = 140.0
+
+[node name="Street" type="Node3D" parent="."]
+
+[node name="TopBlock" parent="Street" instance=ExtResource("3_hill_block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 47.7943, 0)
+
+[node name="FirstHill" parent="Street" instance=ExtResource("3_hill_block")]
+transform = Transform3D(0.995037, 0.0995037, 0, -0.0995037, 0.995037, 0, 0, 0, 1, 78, 47.7943, 0)
+
+[node name="SecondHill" parent="Street" instance=ExtResource("3_hill_block")]
+transform = Transform3D(0.985856, 0.167595, 0, -0.167595, 0.985856, 0, 0, 0, 1, 155.702, 41.824, 0)
+
+[node name="ThirdHill" parent="Street" instance=ExtResource("3_hill_block")]
+transform = Transform3D(0.972387, 0.233373, 0, -0.233373, 0.972387, 0, 0, 0, 1, 232.854, 31.7683, 0)
+
+[node name="FourthHill" parent="Street" instance=ExtResource("3_hill_block")]
+transform = Transform3D(0.955157, 0.296099, 0, -0.296099, 0.955157, 0, 0, 0, 1, 309.197, 17.7659, 0)
+
+[node name="BottomBlock" parent="Street" instance=ExtResource("3_hill_block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 384.506, 0, 0)
+
+[node name="Crossing1" parent="Street" instance=ExtResource("4_intersecti")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 69, 47.7943, 0)
+
+[node name="Crossing2" parent="Street" instance=ExtResource("4_intersecti")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 146.702, 41.824, 0)
+
+[node name="Crossing3" parent="Street" instance=ExtResource("4_intersecti")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 223.854, 31.7683, 0)
+
+[node name="Crossing4" parent="Street" instance=ExtResource("4_intersecti")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 300.197, 17.7659, 0)
+
+[node name="Crossing5" parent="Street" instance=ExtResource("4_intersecti")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 375.506, 0, 0)
+
+[node name="SeawallNorth" parent="Street" instance=ExtResource("11_seawall")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 444.506, 0, -20.05)
+
+[node name="SeawallSouth" parent="Street" instance=ExtResource("11_seawall")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 444.506, 0, 20.05)
+
+[node name="Bay" type="MeshInstance3D" parent="Street"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1195.31, -2, 0)
+mesh = SubResource("PlaneMesh_bay")
+cast_shadow = 0
+
+[node name="Houses" type="Node3D" parent="."]
+
+[node name="House1" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.75, 47.9443, 9)
+walls = ExtResource("15_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House2" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.25, 47.9443, 9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House3" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.75, 47.9443, 9)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House4" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.25, 47.9443, 9)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House5" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.75, 47.9443, 9)
+walls = ExtResource("23_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House6" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 41.25, 47.9443, 9)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House7" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48.75, 47.9443, 9)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House8" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56.25, 47.9443, 9)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House9" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 3.75, 47.9443, -9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House10" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 11.25, 47.9443, -9)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House11" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 18.75, 47.9443, -9)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House12" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 26.25, 47.9443, -9)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House13" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 33.75, 47.9443, -9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House14" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 41.25, 47.9443, -9)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House15" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 48.75, 47.9443, -9)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House16" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 56.25, 47.9443, -9)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House17" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81.7314, 47.5719, 9)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House18" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 89.1942, 46.8256, 9)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House19" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 96.6569, 46.0793, 9)
+walls = ExtResource("23_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House20" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 104.12, 45.333, 9)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House21" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 111.583, 44.5868, 9)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House22" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 119.045, 43.8405, 9)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House23" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 126.508, 43.0942, 9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House24" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 133.971, 42.3479, 9)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House25" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 81.7314, 47.5719, -9)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House26" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 89.1942, 46.8256, -9)
+walls = ExtResource("15_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House27" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 96.6569, 46.0793, -9)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House28" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 104.12, 45.333, -9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House29" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 111.583, 44.5868, -9)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House30" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 119.045, 43.8405, -9)
+walls = ExtResource("34_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House31" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 126.508, 43.0942, -9)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House32" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 133.971, 42.3479, -9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House33" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 159.399, 41.3477, 9)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House34" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 166.793, 40.0907, 9)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House35" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 174.187, 38.8338, 9)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House36" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 181.581, 37.5768, 9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House37" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 188.975, 36.3198, 9)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House38" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 196.369, 35.0629, 9)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House39" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 203.763, 33.8059, 9)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House40" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 211.157, 32.5489, 9)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House41" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 159.399, 41.3477, -9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House42" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 166.793, 40.0907, -9)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House43" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 174.187, 38.8338, -9)
+walls = ExtResource("15_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House44" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 181.581, 37.5768, -9)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House45" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 188.975, 36.3198, -9)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House46" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 196.369, 35.0629, -9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House47" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 203.763, 33.8059, -9)
+walls = ExtResource("15_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House48" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 211.157, 32.5489, -9)
+walls = ExtResource("23_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House49" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 236.5, 31.0474, 9)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House50" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 243.793, 29.2971, 9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House51" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 251.086, 27.5468, 9)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House52" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 258.379, 25.7965, 9)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House53" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 265.672, 24.0462, 9)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House54" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 272.965, 22.2959, 9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House55" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 280.257, 20.5456, 9)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House56" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 287.55, 18.7953, 9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House57" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 236.5, 31.0474, -9)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House58" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 243.793, 29.2971, -9)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House59" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 251.086, 27.5468, -9)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House60" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 258.379, 25.7965, -9)
+walls = ExtResource("15_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House61" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 265.672, 24.0462, -9)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House62" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 272.965, 22.2959, -9)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House63" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 280.257, 20.5456, -9)
+walls = ExtResource("34_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House64" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 287.55, 18.7953, -9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House65" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 312.779, 16.8126, 9)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House66" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 319.942, 14.5919, 9)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House67" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 327.106, 12.3711, 9)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House68" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 334.27, 10.1504, 9)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House69" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 341.433, 7.92963, 9)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House70" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 348.597, 5.70889, 9)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House71" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 355.761, 3.48815, 9)
+walls = ExtResource("34_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House72" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 362.924, 1.26741, 9)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House73" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 312.779, 16.8126, -9)
+walls = ExtResource("23_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House74" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 319.942, 14.5919, -9)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House75" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 327.106, 12.3711, -9)
+walls = ExtResource("34_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House76" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 334.27, 10.1504, -9)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House77" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 341.433, 7.92963, -9)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House78" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 348.597, 5.70889, -9)
+walls = ExtResource("34_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House79" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 355.761, 3.48815, -9)
+walls = ExtResource("15_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House80" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 362.924, 1.26741, -9)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House81" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 388.256, 0.15, 9)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House82" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 395.756, 0.15, 9)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House83" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 403.256, 0.15, 9)
+walls = ExtResource("23_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House84" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 410.756, 0.15, 9)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House85" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 418.256, 0.15, 9)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House86" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 425.756, 0.15, 9)
+walls = ExtResource("15_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House87" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 433.256, 0.15, 9)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House88" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 440.756, 0.15, 9)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House89" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 388.256, 0.15, -9)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House90" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 395.756, 0.15, -9)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House91" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 403.256, 0.15, -9)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House92" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 410.756, 0.15, -9)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House93" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 418.256, 0.15, -9)
+walls = ExtResource("23_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House94" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 425.756, 0.15, -9)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House95" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 433.256, 0.15, -9)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House96" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 440.756, 0.15, -9)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House97" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 60, 47.9443, -27.6)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House98" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 60, 47.9443, -34.8)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House99" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 60, 47.9443, -42)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House100" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 60, 47.9443, -49.2)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House101" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 60, 47.9443, -56.4)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House102" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 60, 47.9443, 27.6)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House103" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 60, 47.9443, 34.8)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House104" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 60, 47.9443, 42)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House105" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 60, 47.9443, 49.2)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House106" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 60, 47.9443, 56.4)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House107" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 78, 47.9443, -27.6)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House108" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 78, 47.9443, -34.8)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House109" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 78, 47.9443, -42)
+walls = ExtResource("34_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House110" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 78, 47.9443, -49.2)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House111" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 78, 47.9443, -56.4)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House112" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 78, 47.9443, 27.6)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House113" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 78, 47.9443, 34.8)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House114" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 78, 47.9443, 42)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House115" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 78, 47.9443, 49.2)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House116" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 78, 47.9443, 56.4)
+walls = ExtResource("34_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House117" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 137.702, 41.974, -27.6)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House118" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 137.702, 41.974, -34.8)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House119" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 137.702, 41.974, -42)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House120" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 137.702, 41.974, -49.2)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House121" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 137.702, 41.974, -56.4)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House122" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 137.702, 41.974, 27.6)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House123" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 137.702, 41.974, 34.8)
+walls = ExtResource("15_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House124" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 137.702, 41.974, 42)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House125" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 137.702, 41.974, 49.2)
+walls = ExtResource("34_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House126" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 137.702, 41.974, 56.4)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House127" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 155.702, 41.974, -27.6)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House128" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 155.702, 41.974, -34.8)
+walls = ExtResource("15_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House129" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 155.702, 41.974, -42)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House130" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 155.702, 41.974, -49.2)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House131" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 155.702, 41.974, -56.4)
+walls = ExtResource("23_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House132" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 155.702, 41.974, 27.6)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House133" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 155.702, 41.974, 34.8)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House134" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 155.702, 41.974, 42)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House135" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 155.702, 41.974, 49.2)
+walls = ExtResource("23_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House136" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 155.702, 41.974, 56.4)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House137" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 214.854, 31.9183, -27.6)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House138" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 214.854, 31.9183, -34.8)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House139" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 214.854, 31.9183, -42)
+walls = ExtResource("15_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House140" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 214.854, 31.9183, -49.2)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House141" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 214.854, 31.9183, -56.4)
+walls = ExtResource("34_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House142" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 214.854, 31.9183, 27.6)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House143" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 214.854, 31.9183, 34.8)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House144" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 214.854, 31.9183, 42)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House145" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 214.854, 31.9183, 49.2)
+walls = ExtResource("23_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House146" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 214.854, 31.9183, 56.4)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House147" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 232.854, 31.9183, -27.6)
+walls = ExtResource("34_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House148" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 232.854, 31.9183, -34.8)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House149" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 232.854, 31.9183, -42)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House150" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 232.854, 31.9183, -49.2)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House151" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 232.854, 31.9183, -56.4)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House152" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 232.854, 31.9183, 27.6)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House153" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 232.854, 31.9183, 34.8)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House154" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 232.854, 31.9183, 42)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House155" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 232.854, 31.9183, 49.2)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House156" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 232.854, 31.9183, 56.4)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House157" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 291.197, 17.9159, -27.6)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House158" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 291.197, 17.9159, -34.8)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House159" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 291.197, 17.9159, -42)
+walls = ExtResource("15_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House160" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 291.197, 17.9159, -49.2)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House161" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 291.197, 17.9159, -56.4)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House162" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 291.197, 17.9159, 27.6)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House163" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 291.197, 17.9159, 34.8)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House164" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 291.197, 17.9159, 42)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House165" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 291.197, 17.9159, 49.2)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House166" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 291.197, 17.9159, 56.4)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House167" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 309.197, 17.9159, -27.6)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House168" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 309.197, 17.9159, -34.8)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House169" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 309.197, 17.9159, -42)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House170" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 309.197, 17.9159, -49.2)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House171" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 309.197, 17.9159, -56.4)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House172" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 309.197, 17.9159, 27.6)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House173" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 309.197, 17.9159, 34.8)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House174" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 309.197, 17.9159, 42)
+walls = ExtResource("25_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House175" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 309.197, 17.9159, 49.2)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House176" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 309.197, 17.9159, 56.4)
+walls = ExtResource("15_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House177" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 366.506, 0.15, -27.6)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House178" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 366.506, 0.15, -34.8)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House179" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 366.506, 0.15, -42)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House180" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 366.506, 0.15, -49.2)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House181" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 366.506, 0.15, -56.4)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House182" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 366.506, 0.15, 27.6)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House183" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 366.506, 0.15, 34.8)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House184" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 366.506, 0.15, 42)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House185" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 366.506, 0.15, 49.2)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House186" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 366.506, 0.15, 56.4)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House187" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 384.506, 0.15, -27.6)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("24_house_acce")
+
+[node name="House188" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 384.506, 0.15, -34.8)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House189" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 384.506, 0.15, -42)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House190" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 384.506, 0.15, -49.2)
+walls = ExtResource("23_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House191" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 384.506, 0.15, -56.4)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House192" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 384.506, 0.15, 27.6)
+walls = ExtResource("21_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="House193" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 384.506, 0.15, 34.8)
+walls = ExtResource("31_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House194" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 384.506, 0.15, 42)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House195" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 384.506, 0.15, 49.2)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House196" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 384.506, 0.15, 56.4)
+walls = ExtResource("30_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House197" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 47.9443, -21)
+walls = ExtResource("26_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House198" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 47.9443, -14)
+walls = ExtResource("32_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("29_house_acce")
+
+[node name="House199" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 47.9443, -7)
+walls = ExtResource("34_house_stuc")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("19_house_acce")
+
+[node name="House200" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 47.9443, 0)
+walls = ExtResource("18_house_pain")
+trim = ExtResource("16_house_trim")
+accent = ExtResource("22_house_acce")
+
+[node name="House201" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 47.9443, 7)
+walls = ExtResource("33_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House202" parent="Houses" instance=ExtResource("5_house_vict")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 47.9443, 14)
+walls = ExtResource("20_house_pain")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("27_house_acce")
+
+[node name="House203" parent="Houses" instance=ExtResource("6_house_stuc")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 47.9443, 21)
+walls = ExtResource("15_house_stuc")
+trim = ExtResource("28_house_trim")
+accent = ExtResource("17_house_acce")
+
+[node name="StreetLamps" type="Node3D" parent="."]
+
+[node name="StreetTrees" type="Node3D" parent="."]
+
+[node name="Hydrants" type="Node3D" parent="."]
+
+[node name="StopSigns" type="Node3D" parent="."]
+
+[node name="Lamp1" parent="StreetLamps" instance=ExtResource("7_street_lam")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 47.9443, 6.55)
+
+[node name="Lamp2" parent="StreetLamps" instance=ExtResource("7_street_lam")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 45, 47.9443, -6.55)
+
+[node name="Tree1" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.99154, 0, 0.129805, 0, 1, 0, -0.129805, 0, -0.99154, 7.5, 47.9443, 7.9)
+
+[node name="Tree2" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.744742, 0, 0.667352, 0, 1, 0, -0.667352, 0, -0.744742, 7.5, 47.9443, -7.9)
+
+[node name="Tree3" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.834237, 0, -0.551406, 0, 1, 0, 0.551406, 0, 0.834237, 22.5, 47.9443, 7.9)
+
+[node name="Tree4" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.98871, 0, 0.149838, 0, 1, 0, -0.149838, 0, -0.98871, 22.5, 47.9443, -7.9)
+
+[node name="Tree5" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.957863, 0, -0.287227, 0, 1, 0, 0.287227, 0, -0.957863, 37.5, 47.9443, 7.9)
+
+[node name="Tree6" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.981561, 0, -0.191149, 0, 1, 0, 0.191149, 0, -0.981561, 37.5, 47.9443, -7.9)
+
+[node name="Tree7" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.130113, 0, 0.991499, 0, 1, 0, -0.991499, 0, -0.130113, 52.5, 47.9443, 7.9)
+
+[node name="Tree8" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.778164, 0, 0.628061, 0, 1, 0, -0.628061, 0, -0.778164, 52.5, 47.9443, -7.9)
+
+[node name="Hydrant1" parent="Hydrants" instance=ExtResource("9_fire_hydra")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 47.9443, 6.5)
+
+[node name="Lamp3" parent="StreetLamps" instance=ExtResource("7_street_lam")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 92.9405, 46.451, -6.55)
+
+[node name="Lamp4" parent="StreetLamps" instance=ExtResource("7_street_lam")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 122.792, 43.4658, 6.55)
+
+[node name="Tree9" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.157557, 0, -0.98751, 0, 1, 0, 0.98751, 0, 0.157557, 85.4777, 47.1972, 7.9)
+
+[node name="Tree10" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.948472, 0, -0.316862, 0, 1, 0, 0.316862, 0, -0.948472, 85.4777, 47.1972, -7.9)
+
+[node name="Tree11" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.34003, 0, 0.940415, 0, 1, 0, -0.940415, 0, 0.34003, 100.403, 45.7047, 7.9)
+
+[node name="Tree12" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.78334, 0, -0.621593, 0, 1, 0, 0.621593, 0, -0.78334, 100.403, 45.7047, -7.9)
+
+[node name="Tree13" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.524745, 0, -0.85126, 0, 1, 0, 0.85126, 0, -0.524745, 115.329, 44.2121, 7.9)
+
+[node name="Tree14" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.766313, 0, -0.642467, 0, 1, 0, 0.642467, 0, -0.766313, 115.329, 44.2121, -7.9)
+
+[node name="Tree15" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.782137, 0, -0.623107, 0, 1, 0, 0.623107, 0, -0.782137, 130.254, 42.7196, 7.9)
+
+[node name="Tree16" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.575625, 0, 0.817714, 0, 1, 0, -0.817714, 0, -0.575625, 130.254, 42.7196, -7.9)
+
+[node name="Hydrant2" parent="Hydrants" instance=ExtResource("9_fire_hydra")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 107.866, 44.9584, -6.5)
+
+[node name="Lamp5" parent="StreetLamps" instance=ExtResource("7_street_lam")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 170.515, 39.458, 6.55)
+
+[node name="Lamp6" parent="StreetLamps" instance=ExtResource("7_street_lam")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 200.091, 34.4301, -6.55)
+
+[node name="Tree17" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.0987421, 0, 0.995113, 0, 1, 0, -0.995113, 0, 0.0987421, 163.121, 40.7149, 7.9)
+
+[node name="Tree18" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.305932, 0, -0.952053, 0, 1, 0, 0.952053, 0, -0.305932, 163.121, 40.7149, -7.9)
+
+[node name="Tree19" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.126612, 0, -0.991952, 0, 1, 0, 0.991952, 0, -0.126612, 177.909, 38.201, 7.9)
+
+[node name="Tree20" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.670149, 0, -0.742227, 0, 1, 0, 0.742227, 0, -0.670149, 177.909, 38.201, -7.9)
+
+[node name="Tree21" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.9361, 0, 0.351734, 0, 1, 0, -0.351734, 0, 0.9361, 192.697, 35.6871, 7.9)
+
+[node name="Tree22" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.976275, 0, 0.216534, 0, 1, 0, -0.216534, 0, -0.976275, 192.697, 35.6871, -7.9)
+
+[node name="Tree23" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.0522549, 0, 0.998634, 0, 1, 0, -0.998634, 0, -0.0522549, 207.485, 33.1731, 7.9)
+
+[node name="Tree24" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.759795, 0, 0.650163, 0, 1, 0, -0.650163, 0, 0.759795, 207.485, 33.1731, -7.9)
+
+[node name="Hydrant3" parent="Hydrants" instance=ExtResource("9_fire_hydra")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 185.303, 36.944, 6.5)
+
+[node name="Lamp7" parent="StreetLamps" instance=ExtResource("7_street_lam")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 247.474, 28.4136, -6.55)
+
+[node name="Lamp8" parent="StreetLamps" instance=ExtResource("7_street_lam")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 276.646, 21.4124, 6.55)
+
+[node name="Tree25" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.207221, 0, -0.978294, 0, 1, 0, 0.978294, 0, -0.207221, 240.181, 30.1639, 7.9)
+
+[node name="Tree26" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.967738, 0, 0.251957, 0, 1, 0, -0.251957, 0, -0.967738, 240.181, 30.1639, -7.9)
+
+[node name="Tree27" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.95951, 0, 0.281674, 0, 1, 0, -0.281674, 0, -0.95951, 254.767, 26.6633, 7.9)
+
+[node name="Tree28" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.82376, 0, 0.566938, 0, 1, 0, -0.566938, 0, 0.82376, 254.767, 26.6633, -7.9)
+
+[node name="Tree29" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.370505, 0, 0.928831, 0, 1, 0, -0.928831, 0, -0.370505, 269.353, 23.1627, 7.9)
+
+[node name="Tree30" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.255026, 0, -0.966934, 0, 1, 0, 0.966934, 0, -0.255026, 269.353, 23.1627, -7.9)
+
+[node name="Tree31" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.159516, 0, 0.987195, 0, 1, 0, -0.987195, 0, -0.159516, 283.939, 19.6621, 7.9)
+
+[node name="Tree32" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.162624, 0, 0.986688, 0, 1, 0, -0.986688, 0, -0.162624, 283.939, 19.6621, -7.9)
+
+[node name="Hydrant4" parent="Hydrants" instance=ExtResource("9_fire_hydra")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 262.06, 24.913, -6.5)
+
+[node name="Lamp9" parent="StreetLamps" instance=ExtResource("7_street_lam")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 323.569, 13.4677, 6.55)
+
+[node name="Lamp10" parent="StreetLamps" instance=ExtResource("7_street_lam")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 352.223, 4.58476, -6.55)
+
+[node name="Tree33" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.344135, 0, 0.93892, 0, 1, 0, -0.93892, 0, 0.344135, 316.405, 15.6885, 7.9)
+
+[node name="Tree34" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.881389, 0, 0.472391, 0, 1, 0, -0.472391, 0, -0.881389, 316.405, 15.6885, -7.9)
+
+[node name="Tree35" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.855274, 0, -0.518176, 0, 1, 0, 0.518176, 0, 0.855274, 330.732, 11.247, 7.9)
+
+[node name="Tree36" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.166273, 0, -0.98608, 0, 1, 0, 0.98608, 0, -0.166273, 330.732, 11.247, -7.9)
+
+[node name="Tree37" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.745571, 0, -0.666427, 0, 1, 0, 0.666427, 0, -0.745571, 345.06, 6.8055, 7.9)
+
+[node name="Tree38" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.443019, 0, 0.896512, 0, 1, 0, -0.896512, 0, 0.443019, 345.06, 6.8055, -7.9)
+
+[node name="Tree39" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.948159, 0, 0.317796, 0, 1, 0, -0.317796, 0, 0.948159, 359.387, 2.36401, 7.9)
+
+[node name="Tree40" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.0685083, 0, -0.997651, 0, 1, 0, 0.997651, 0, 0.0685083, 359.387, 2.36401, -7.9)
+
+[node name="Hydrant5" parent="Hydrants" instance=ExtResource("9_fire_hydra")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 337.896, 9.02624, 6.5)
+
+[node name="Lamp11" parent="StreetLamps" instance=ExtResource("7_street_lam")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 399.506, 0.15, -6.55)
+
+[node name="Lamp12" parent="StreetLamps" instance=ExtResource("7_street_lam")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 429.506, 0.15, 6.55)
+
+[node name="Tree41" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.919855, 0, 0.392258, 0, 1, 0, -0.392258, 0, 0.919855, 392.006, 0.15, 7.9)
+
+[node name="Tree42" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.884085, 0, -0.467327, 0, 1, 0, 0.467327, 0, 0.884085, 392.006, 0.15, -7.9)
+
+[node name="Tree43" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.999796, 0, -0.0202209, 0, 1, 0, 0.0202209, 0, -0.999796, 407.006, 0.15, 7.9)
+
+[node name="Tree44" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.871524, 0, 0.490353, 0, 1, 0, -0.490353, 0, -0.871524, 407.006, 0.15, -7.9)
+
+[node name="Tree45" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.701789, 0, -0.712385, 0, 1, 0, 0.712385, 0, -0.701789, 422.006, 0.15, 7.9)
+
+[node name="Tree46" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.925383, 0, -0.379034, 0, 1, 0, 0.379034, 0, 0.925383, 422.006, 0.15, -7.9)
+
+[node name="Tree47" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(0.565148, 0, -0.82499, 0, 1, 0, 0.82499, 0, 0.565148, 437.006, 0.15, 7.9)
+
+[node name="Tree48" parent="StreetTrees" instance=ExtResource("8_street_tre")]
+transform = Transform3D(-0.96769, 0, -0.252143, 0, 1, 0, 0.252143, 0, -0.96769, 437.006, 0.15, -7.9)
+
+[node name="Hydrant6" parent="Hydrants" instance=ExtResource("9_fire_hydra")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 414.506, 0.15, -6.5)
+
+[node name="Stop1Down" parent="StopSigns" instance=ExtResource("10_stop_sign")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 59.2, 47.9443, 6.55)
+
+[node name="Stop1Up" parent="StopSigns" instance=ExtResource("10_stop_sign")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 78.811, 47.8639, -6.55)
+
+[node name="Stop2Down" parent="StopSigns" instance=ExtResource("10_stop_sign")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 136.921, 42.0529, 6.55)
+
+[node name="Stop2Up" parent="StopSigns" instance=ExtResource("10_stop_sign")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 156.516, 41.8378, -6.55)
+
+[node name="Stop3Down" parent="StopSigns" instance=ExtResource("10_stop_sign")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 214.09, 32.0503, 6.55)
+
+[node name="Stop3Up" parent="StopSigns" instance=ExtResource("10_stop_sign")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 233.666, 31.7275, -6.55)
+
+[node name="Stop4Down" parent="StopSigns" instance=ExtResource("10_stop_sign")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 290.454, 18.0985, 6.55)
+
+[node name="Stop4Up" parent="StopSigns" instance=ExtResource("10_stop_sign")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 310.005, 17.6723, -6.55)
+
+[node name="Stop5Down" parent="StopSigns" instance=ExtResource("10_stop_sign")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 365.787, 0.380153, 6.55)
+
+[node name="Stop5Up" parent="StopSigns" instance=ExtResource("10_stop_sign")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 385.306, 0.15, -6.55)
+
+[node name="ParkedCars" type="Node3D" parent="."]
+
+[node name="Parked1" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 21, 47.7943, 4.85)
+paint = Color(0.16, 0.25, 0.4, 1)
+
+[node name="Parked2" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 46, 47.7943, 4.85)
+paint = Color(0.78, 0.76, 0.71, 1)
+
+[node name="Parked3" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 52, 47.7943, 4.85)
+paint = Color(0.13, 0.14, 0.15, 1)
+
+[node name="Parked4" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 9, 47.7943, -4.85)
+paint = Color(0.78, 0.76, 0.71, 1)
+
+[node name="Parked5" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 15, 47.7943, -4.85)
+paint = Color(0.12, 0.3, 0.23, 1)
+
+[node name="Parked6" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 27.5, 47.7943, -4.85)
+paint = Color(0.29, 0.31, 0.33, 1)
+
+[node name="Parked7" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.0995037, -0.995037, 0, 0.995037, 0.0995037, 1, 0, 0, 92.9256, 46.3017, 4.85)
+paint = Color(0.73, 0.75, 0.78, 1)
+
+[node name="Parked8" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.0995037, -0.995037, 0, 0.995037, 0.0995037, 1, 0, 0, 117.801, 43.8141, 4.85)
+paint = Color(0.78, 0.76, 0.71, 1)
+
+[node name="Parked9" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.0995037, -0.995037, 0, 0.995037, 0.0995037, 1, 0, 0, 123.772, 43.2171, 4.85)
+paint = Color(0.54, 0.11, 0.11, 1)
+
+[node name="Parked10" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.0995037, 0.995037, 0, 0.995037, -0.0995037, -1, 0, 0, 92.9256, 46.3017, -4.85)
+paint = Color(0.91, 0.91, 0.91, 1)
+
+[node name="Parked11" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.0995037, 0.995037, 0, 0.995037, -0.0995037, -1, 0, 0, 117.801, 43.8141, -4.85)
+paint = Color(0.73, 0.75, 0.78, 1)
+
+[node name="Parked12" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.0995037, 0.995037, 0, 0.995037, -0.0995037, -1, 0, 0, 123.772, 43.2171, -4.85)
+paint = Color(0.91, 0.91, 0.91, 1)
+
+[node name="Parked13" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.167595, -0.985856, 0, 0.985856, 0.167595, 1, 0, 0, 170.49, 39.3101, 4.85)
+paint = Color(0.73, 0.75, 0.78, 1)
+
+[node name="Parked14" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.167595, -0.985856, 0, 0.985856, 0.167595, 1, 0, 0, 195.136, 35.1202, 4.85)
+paint = Color(0.91, 0.91, 0.91, 1)
+
+[node name="Parked15" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.167595, -0.985856, 0, 0.985856, 0.167595, 1, 0, 0, 201.052, 34.1146, 4.85)
+paint = Color(0.29, 0.31, 0.33, 1)
+
+[node name="Parked16" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.167595, 0.985856, 0, 0.985856, -0.167595, -1, 0, 0, 164.575, 40.3157, -4.85)
+paint = Color(0.13, 0.14, 0.15, 1)
+
+[node name="Parked17" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.167595, 0.985856, 0, 0.985856, -0.167595, -1, 0, 0, 170.49, 39.3101, -4.85)
+paint = Color(0.16, 0.25, 0.4, 1)
+
+[node name="Parked18" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.167595, 0.985856, 0, 0.985856, -0.167595, -1, 0, 0, 201.052, 34.1146, -4.85)
+paint = Color(0.73, 0.75, 0.78, 1)
+
+[node name="Parked19" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.233373, -0.972387, 0, 0.972387, 0.233373, 1, 0, 0, 253.274, 26.8675, 4.85)
+paint = Color(0.16, 0.25, 0.4, 1)
+
+[node name="Parked20" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.233373, -0.972387, 0, 0.972387, 0.233373, 1, 0, 0, 259.594, 25.3505, 4.85)
+paint = Color(0.73, 0.75, 0.78, 1)
+
+[node name="Parked21" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.233373, -0.972387, 0, 0.972387, 0.233373, 1, 0, 0, 277.583, 21.0331, 4.85)
+paint = Color(0.12, 0.3, 0.23, 1)
+
+[node name="Parked22" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.233373, 0.972387, 0, 0.972387, -0.233373, -1, 0, 0, 247.439, 28.2677, -4.85)
+paint = Color(0.12, 0.3, 0.23, 1)
+
+[node name="Parked23" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.233373, 0.972387, 0, 0.972387, -0.233373, -1, 0, 0, 277.583, 21.0331, -4.85)
+paint = Color(0.12, 0.3, 0.23, 1)
+
+[node name="Parked24" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.233373, 0.972387, 0, 0.972387, -0.233373, -1, 0, 0, 283.418, 19.6329, -4.85)
+paint = Color(0.85, 0.6, 0.12, 1)
+
+[node name="Parked25" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.296099, -0.955157, 0, 0.955157, 0.296099, 1, 0, 0, 317.793, 15.101, 4.85)
+paint = Color(0.29, 0.31, 0.33, 1)
+
+[node name="Parked26" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.296099, -0.955157, 0, 0.955157, 0.296099, 1, 0, 0, 329.255, 11.5479, 4.85)
+paint = Color(0.12, 0.3, 0.23, 1)
+
+[node name="Parked27" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.296099, -0.955157, 0, 0.955157, 0.296099, 1, 0, 0, 347.403, 5.92198, 4.85)
+paint = Color(0.73, 0.75, 0.78, 1)
+
+[node name="Parked28" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.296099, 0.955157, 0, 0.955157, -0.296099, -1, 0, 0, 329.255, 11.5479, -4.85)
+paint = Color(0.29, 0.31, 0.33, 1)
+
+[node name="Parked29" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.296099, 0.955157, 0, 0.955157, -0.296099, -1, 0, 0, 347.403, 5.92198, -4.85)
+paint = Color(0.12, 0.3, 0.23, 1)
+
+[node name="Parked30" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0.296099, 0.955157, 0, 0.955157, -0.296099, -1, 0, 0, 358.865, 2.36879, -4.85)
+paint = Color(0.85, 0.6, 0.12, 1)
+
+[node name="Parked31" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 399.506, 0, 4.85)
+paint = Color(0.13, 0.14, 0.15, 1)
+
+[node name="Parked32" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 418.506, 0, 4.85)
+paint = Color(0.91, 0.91, 0.91, 1)
+
+[node name="Parked33" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 436.506, 0, 4.85)
+paint = Color(0.91, 0.91, 0.91, 1)
+
+[node name="Parked34" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 424.506, 0, -4.85)
+paint = Color(0.13, 0.14, 0.15, 1)
+
+[node name="Parked35" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 430.506, 0, -4.85)
+paint = Color(0.91, 0.91, 0.91, 1)
+
+[node name="Parked36" parent="ParkedCars" instance=ExtResource("13_parked_car")]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 436.506, 0, -4.85)
+paint = Color(0.16, 0.25, 0.4, 1)
+
+[node name="CrossTraffic" type="Node3D" parent="."]
+
+[node name="Crossing1Southbound" type="Node3D" parent="CrossTraffic"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 67.2, 47.7943, -95)
+script = ExtResource("2_traffic_la")
+speed = 8.0
+length = 190.0
+
+[node name="Car1" parent="CrossTraffic/Crossing1Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13.22)
+paint = Color(0.54, 0.11, 0.11, 1)
+
+[node name="Car2" parent="CrossTraffic/Crossing1Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -123.82)
+paint = Color(0.16, 0.25, 0.4, 1)
+
+[node name="Car3" parent="CrossTraffic/Crossing1Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -175.55)
+paint = Color(0.12, 0.3, 0.23, 1)
+
+[node name="Crossing1Northbound" type="Node3D" parent="CrossTraffic"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 70.8, 47.7943, 95)
+script = ExtResource("2_traffic_la")
+speed = 8.0
+length = 190.0
+
+[node name="Car4" parent="CrossTraffic/Crossing1Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -72.45)
+paint = Color(0.16, 0.25, 0.4, 1)
+
+[node name="Car5" parent="CrossTraffic/Crossing1Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -102.21)
+paint = Color(0.73, 0.75, 0.78, 1)
+
+[node name="Car6" parent="CrossTraffic/Crossing1Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -157.97)
+paint = Color(0.85, 0.6, 0.12, 1)
+
+[node name="Crossing2Southbound" type="Node3D" parent="CrossTraffic"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 144.902, 41.824, -95)
+script = ExtResource("2_traffic_la")
+speed = 9.0
+length = 190.0
+
+[node name="Car7" parent="CrossTraffic/Crossing2Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -44.85)
+paint = Color(0.91, 0.91, 0.91, 1)
+
+[node name="Car8" parent="CrossTraffic/Crossing2Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -87.71)
+paint = Color(0.16, 0.25, 0.4, 1)
+
+[node name="Car9" parent="CrossTraffic/Crossing2Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -164.72)
+paint = Color(0.78, 0.76, 0.71, 1)
+
+[node name="Crossing2Northbound" type="Node3D" parent="CrossTraffic"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 148.502, 41.824, 95)
+script = ExtResource("2_traffic_la")
+speed = 9.0
+length = 190.0
+
+[node name="Car10" parent="CrossTraffic/Crossing2Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -75.43)
+paint = Color(0.13, 0.14, 0.15, 1)
+
+[node name="Car11" parent="CrossTraffic/Crossing2Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -103.68)
+paint = Color(0.13, 0.14, 0.15, 1)
+
+[node name="Car12" parent="CrossTraffic/Crossing2Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -171.77)
+paint = Color(0.16, 0.25, 0.4, 1)
+
+[node name="Crossing3Southbound" type="Node3D" parent="CrossTraffic"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 222.054, 31.7683, -95)
+script = ExtResource("2_traffic_la")
+speed = 10.0
+length = 190.0
+
+[node name="Car13" parent="CrossTraffic/Crossing3Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -12.37)
+paint = Color(0.29, 0.31, 0.33, 1)
+
+[node name="Car14" parent="CrossTraffic/Crossing3Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -46.14)
+paint = Color(0.29, 0.31, 0.33, 1)
+
+[node name="Car15" parent="CrossTraffic/Crossing3Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -70.74)
+paint = Color(0.85, 0.6, 0.12, 1)
+
+[node name="Car16" parent="CrossTraffic/Crossing3Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -175.02)
+paint = Color(0.16, 0.25, 0.4, 1)
+
+[node name="Crossing3Northbound" type="Node3D" parent="CrossTraffic"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 225.654, 31.7683, 95)
+script = ExtResource("2_traffic_la")
+speed = 10.0
+length = 190.0
+
+[node name="Car17" parent="CrossTraffic/Crossing3Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -30.04)
+paint = Color(0.16, 0.25, 0.4, 1)
+
+[node name="Car18" parent="CrossTraffic/Crossing3Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -113.09)
+paint = Color(0.85, 0.6, 0.12, 1)
+
+[node name="Car19" parent="CrossTraffic/Crossing3Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -153.71)
+paint = Color(0.13, 0.14, 0.15, 1)
+
+[node name="Car20" parent="CrossTraffic/Crossing3Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -189.18)
+paint = Color(0.13, 0.14, 0.15, 1)
+
+[node name="Crossing4Southbound" type="Node3D" parent="CrossTraffic"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 298.397, 17.7659, -95)
+script = ExtResource("2_traffic_la")
+speed = 11.5
+length = 190.0
+
+[node name="Car21" parent="CrossTraffic/Crossing4Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10.91)
+paint = Color(0.91, 0.91, 0.91, 1)
+
+[node name="Car22" parent="CrossTraffic/Crossing4Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -58.06)
+paint = Color(0.73, 0.75, 0.78, 1)
+
+[node name="Car23" parent="CrossTraffic/Crossing4Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -112.23)
+paint = Color(0.16, 0.25, 0.4, 1)
+
+[node name="Car24" parent="CrossTraffic/Crossing4Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -170.4)
+paint = Color(0.85, 0.6, 0.12, 1)
+
+[node name="Crossing4Northbound" type="Node3D" parent="CrossTraffic"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 301.997, 17.7659, 95)
+script = ExtResource("2_traffic_la")
+speed = 11.5
+length = 190.0
+
+[node name="Car25" parent="CrossTraffic/Crossing4Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -21.61)
+paint = Color(0.29, 0.31, 0.33, 1)
+
+[node name="Car26" parent="CrossTraffic/Crossing4Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -51.54)
+paint = Color(0.85, 0.6, 0.12, 1)
+
+[node name="Car27" parent="CrossTraffic/Crossing4Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -123.43)
+paint = Color(0.29, 0.31, 0.33, 1)
+
+[node name="Car28" parent="CrossTraffic/Crossing4Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -169.38)
+paint = Color(0.16, 0.25, 0.4, 1)
+
+[node name="Crossing5Southbound" type="Node3D" parent="CrossTraffic"]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 373.706, 0, -95)
+script = ExtResource("2_traffic_la")
+speed = 13.0
+length = 190.0
+
+[node name="Car29" parent="CrossTraffic/Crossing5Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -51.67)
+paint = Color(0.16, 0.25, 0.4, 1)
+
+[node name="Car30" parent="CrossTraffic/Crossing5Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -78.94)
+paint = Color(0.54, 0.11, 0.11, 1)
+
+[node name="Car31" parent="CrossTraffic/Crossing5Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -103.14)
+paint = Color(0.73, 0.75, 0.78, 1)
+
+[node name="Car32" parent="CrossTraffic/Crossing5Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -162.36)
+paint = Color(0.13, 0.14, 0.15, 1)
+
+[node name="Car33" parent="CrossTraffic/Crossing5Southbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -186.53)
+paint = Color(0.29, 0.31, 0.33, 1)
+
+[node name="Crossing5Northbound" type="Node3D" parent="CrossTraffic"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 377.306, 0, 95)
+script = ExtResource("2_traffic_la")
+speed = 13.0
+length = 190.0
+
+[node name="Car34" parent="CrossTraffic/Crossing5Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -16.59)
+paint = Color(0.29, 0.31, 0.33, 1)
+
+[node name="Car35" parent="CrossTraffic/Crossing5Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -48.58)
+paint = Color(0.91, 0.91, 0.91, 1)
+
+[node name="Car36" parent="CrossTraffic/Crossing5Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -72.79)
+paint = Color(0.12, 0.3, 0.23, 1)
+
+[node name="Car37" parent="CrossTraffic/Crossing5Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -112.37)
+paint = Color(0.91, 0.91, 0.91, 1)
+
+[node name="Car38" parent="CrossTraffic/Crossing5Northbound" instance=ExtResource("12_traffic_ca")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -166.64)
+paint = Color(0.13, 0.14, 0.15, 1)
+
+[node name="CartSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 47.7943, 1.9)

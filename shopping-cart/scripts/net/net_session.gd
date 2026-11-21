@@ -386,10 +386,18 @@ func _on_level_exiting(old: Node) -> void:
 ## Host: a cart for guest `id`, in a row to the right of CartSpawn.
 func _spawn_guest_cart(id: int, at := Vector3.INF, yaw := 0.0) -> void:
 	if at == Vector3.INF:
-		var spawn := level.get_node_or_null("CartSpawn") as Node3D
-		var base := spawn.global_transform if spawn else Transform3D(Basis(), Vector3(2, 0, 0))
-		at = base.origin + base.basis.z.normalized() * spawn_spacing * _guests[id].slot
-		yaw = base.basis.get_euler().y
+		# The level's PlayerSpawns markers (Spawn1, Spawn2... one per guest slot), else a row beside CartSpawn.
+		var slot: int = _guests[id].slot
+		var marks := level.get_node_or_null("PlayerSpawns")
+		var mark := marks.get_child((slot - 1) % marks.get_child_count()) as Node3D if marks and marks.get_child_count() > 0 else null
+		if mark:
+			at = mark.global_position
+			yaw = mark.global_basis.get_euler().y
+		else:
+			var spawn := level.get_node_or_null("CartSpawn") as Node3D
+			var base := spawn.global_transform if spawn else Transform3D(Basis(), Vector3(2, 0, 0))
+			at = base.origin + base.basis.z.normalized() * spawn_spacing * slot
+			yaw = base.basis.get_euler().y
 	if carts.has(id) and is_instance_valid(carts[id]):
 		level.remove_child(carts[id])
 		carts[id].free()

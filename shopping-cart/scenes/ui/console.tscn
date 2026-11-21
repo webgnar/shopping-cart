@@ -43,6 +43,7 @@ destinations = Dictionary[String, String]({
 "plot": "res://scenes/levels/parking_lot.tscn",
 "garage": "res://scenes/levels/parking_garage.tscn",
 "market": "res://scenes/levels/supermarket.tscn",
+"hill": "res://scenes/levels/sf_hill.tscn",
 "sandbox": "res://scenes/main.tscn"
 })
 

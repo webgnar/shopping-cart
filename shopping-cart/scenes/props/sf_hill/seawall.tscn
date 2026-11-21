@@ -1,0 +1,23 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="1_solid"]
+[ext_resource type="PackedScene" path="res://assets/models/sf_hill/seawall/seawall.glb" id="2_model"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0"]
+size = Vector3(40.1, 6.05, 0.9)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(40, 1.05, 0.1)
+
+[node name="Seawall" type="StaticBody3D"]
+physics_material_override = ExtResource("1_solid")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+
+[node name="WallShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.975, 0.4)
+shape = SubResource("BoxShape3D_0")
+
+[node name="RailShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.575, 0.4)
+shape = SubResource("BoxShape3D_1")

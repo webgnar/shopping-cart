@@ -8,8 +8,8 @@ import { v3, add, sub, clamp, rot, color, widenMask } from './util.js';
 import { Cart, SIDES } from './cart.js';
 import { Bot } from './bot.js';
 import { NavMesh } from './nav.js';
-import { fetchLevel, buildLevel, layerPairs, applyEnvironment, ambientFor, makeSkyDome, disposeTree } from './level.js';
-import { RollingSound, unlockAudio, updateListener, loadedLoops } from './sound.js';
+import { fetchLevel, buildLevel, layerPairs, applyEnvironment, ambientFor, makeSkyDome, disposeTree, stepTraffic, syncTraffic } from './level.js';
+import { WheelSounds, unlockAudio, updateListener, loadedLoops } from './sound.js';
 import { ChunkStreamer } from './stream.js';
 
 await RAPIER.init();
@@ -93,7 +93,7 @@ async function loadLevel(key) {
     for (const sc of level.spareCarts) {
       if (bit > 0x8000) break;
       const spare = new Cart({ ...ctx, model: cartModel ? cartModel.clone() : null }, { pos: v3(...sc.pos), yaw: sc.yaw, player: false, empty: true, bit });
-      if (rig.rolling_sound) spare.sound = new RollingSound(spare, rig.rolling_sound, level.surfaces);
+      if (rig.wheel_sound) spare.sound = new WheelSounds(spare, rig.wheel_sound, level.surfaces);
       spares.push(spare);
       bit <<= 1;
     }
@@ -102,7 +102,7 @@ async function loadLevel(key) {
     for (const bc of nav ? level.botCarts : []) {
       if (bit > 0x8000) break;
       const c = new Cart({ ...ctx, model: cartModel ? cartModel.clone() : null }, { pos: v3(...bc.pos), yaw: bc.yaw, player: false, empty: true, bit });
-      if (rig.rolling_sound) c.sound = new RollingSound(c, rig.rolling_sound, level.surfaces);
+      if (rig.wheel_sound) c.sound = new WheelSounds(c, rig.wheel_sound, level.surfaces);
       bots.push(new Bot(c, nav, rig.bot));
       bit <<= 1;
     }
@@ -125,15 +125,17 @@ const PLAYER_BIT = 1 << 4;
 function spawn(pos, yaw) {
   if (cart) { cart.remove(); if (cart.sound) cart.sound.remove(); }
   cart = new Cart({ ...ctx, model: cartModel ? cartModel.clone() : null }, { pos, yaw, player: true, bit: PLAYER_BIT });
-  if (rig.rolling_sound) cart.sound = new RollingSound(cart, rig.rolling_sound, level.surfaces);
+  if (rig.wheel_sound) cart.sound = new WheelSounds(cart, rig.wheel_sound, level.surfaces);
   cam.heading = yaw; cam.target.set(pos.x, pos.y + 0.67, pos.z); cam.lift = 0; cam.reach = 1;
 }
 
 /** R: a fresh cart where this one is, on whatever floor is under it. */
 function respawn() {
   const p = cart.origin(), h = cart.heading();
-  const hit = world.castRay(new RAPIER.Ray(v3(p.x, p.y + 1.2, p.z), v3(0, -1, 0)), 50, true, undefined, (1 << 16) | 1);
-  spawn(v3(p.x, hit ? p.y + 1.2 - hit.timeOfImpact + 0.05 : p.y + 0.05, p.z), h);
+  const hit = world.castRayAndGetNormal(new RAPIER.Ray(v3(p.x, p.y + 1.2, p.z), v3(0, -1, 0)), 50, true, undefined, (1 << 16) | 1);
+  // On a slope, high enough that the wheels (the front ones a metre from the handle) clear the uphill side.
+  const lift = hit ? 0.05 + Math.sqrt(Math.max(0, 1 - hit.normal.y ** 2)) / Math.max(hit.normal.y, 0.2) : 0.05;
+  spawn(v3(p.x, hit ? p.y + 1.2 - hit.timeOfImpact + lift : p.y + 0.05, p.z), h);
 }
 
 // ---------------------------------------------------------------- input
@@ -312,8 +314,10 @@ function physicsStep(inp) {
   cart.step(inp, STEP);
   for (const s of spares) s.step(null, STEP);
   for (const b of bots) b.cart.step(b.update(STEP), STEP);
+  stepTraffic(level, STEP);
   world.step(eventQueue);
   cart.capWheelSpin(); for (const s of others()) if (!s.pinned) s.capWheelSpin();
+  for (const c of [cart, ...others()]) if (c.sound) c.sound.tick(STEP);   // each wheel's sound from its physics
   eventQueue.drainCollisionEvents((h1, h2, began) => {
     if (!began) return;
     for (const c of [cart, ...others()]) {
@@ -339,11 +343,12 @@ function frame(now) {
   }
   if (streamer) streamer.update(cart.origin(), 1);
   for (const pr of level.props) if (pr.node && !pr.body.isSleeping()) { const t = pr.body.translation(), r = pr.body.rotation(); pr.node.position.set(t.x, t.y, t.z); pr.node.quaternion.set(r.x, r.y, r.z, r.w); }
+  syncTraffic(level);
   // Off the edge of the world: a fresh cart back at the start (the Godot levels are walled in, the sandbox isn't).
   if (cart.origin().y < level.spawn.pos[1] - 30) spawn(v3(...level.spawn.pos), level.spawn.yaw);
   cart.sync(); for (const s of others()) s.sync();
   updateCamera(dt);
-  // Rolling sound: silent while paused (menu, console) or before Start.
+  // Wheel sounds: silent while paused (menu, console) or before Start.
   for (const k of [cart, ...others()]) if (k.sound) k.sound.update(dt, paused || !started);
   updateListener(camera);
   const c = cart.comWorld();
@@ -375,7 +380,7 @@ go.addEventListener('click', async () => {
   try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) await DeviceOrientationEvent.requestPermission(); } catch (e) { /* tilt stays off; the lean buttons still work */ }
   $('start').hidden = true;
   started = true;
-  unlockAudio(rig.rolling_sound);
+  unlockAudio(rig.wheel_sound);
   if (mode === 'touch' && document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation?.lock?.('landscape')).catch(() => {});
   }
@@ -387,7 +392,7 @@ function toggleFullscreen() {
 async function travel(key) { releaseTouches(); keys.clear(); await loadLevel(key); }
 
 // Browsers only allow sound after a tap, click or key; Safari sometimes wants another after the Start tap.
-for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => { if (started) unlockAudio(rig.rolling_sound); }, { passive: true });
+for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => { if (started) unlockAudio(rig.wheel_sound); }, { passive: true });
 
 $('resetBtn').addEventListener('click', () => respawn());
 $('levelBtn').addEventListener('click', () => { markLevel($('menuLevels')); $('menu').hidden = false; paused = true; });
@@ -459,6 +464,6 @@ window.__cart = {
     }
     paused = false;
   },
-  renderOnce(dt = 1 / 60) { cart.sync(); for (const s of others()) s.sync(); for (const pr of level.props) if (pr.node) { const t = pr.body.translation(), r = pr.body.rotation(); pr.node.position.set(t.x, t.y, t.z); pr.node.quaternion.set(r.x, r.y, r.z, r.w); } updateCamera(dt); const c = cart.comWorld(); level.lights.update(new THREE.Vector3(c.x, c.y, c.z), 1); if (sun.visible) { const d = sun.userData.dir; sun.position.set(c.x - d.x * 30, c.y - d.y * 30, c.z - d.z * 30); sun.target.position.set(c.x, c.y, c.z); } skyDome.position.copy(camera.position); hud(); renderer.render(scene, camera); },
+  renderOnce(dt = 1 / 60) { cart.sync(); for (const s of others()) s.sync(); for (const pr of level.props) if (pr.node) { const t = pr.body.translation(), r = pr.body.rotation(); pr.node.position.set(t.x, t.y, t.z); pr.node.quaternion.set(r.x, r.y, r.z, r.w); } syncTraffic(level); updateCamera(dt); const c = cart.comWorld(); level.lights.update(new THREE.Vector3(c.x, c.y, c.z), 1); if (sun.visible) { const d = sun.userData.dir; sun.position.set(c.x - d.x * 30, c.y - d.y * 30, c.z - d.z * 30); sun.target.position.set(c.x, c.y, c.z); } skyDome.position.copy(camera.position); hud(); renderer.render(scene, camera); },
   stats() { return { drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, meshes: level.drawn, fps }; },
 };

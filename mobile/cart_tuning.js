@@ -13,7 +13,7 @@ window.CART_TUNING = {
   "arm_reach": 0.3,
   "brake_spring": 350.0,
   "brake_damping": 25.0,
-  "brake_max": 110.0,
+  "brake_max": 120.0,
   "lift_pitch": -0.2,
   "press_pitch": 0.3,
   "side_roll": 0.22,
@@ -34,12 +34,14 @@ window.CART_TUNING = {
   "power_base": 25.0,
   "power_ramp": 120.0,
   "power_relax": 400.0,
-  "sprint_speed": 8.0,
-  "wrist_lever": 0.4,
+  "sprint_speed": 5.0,
+  "wrist_lever": 0.3,
   "fallen_upright": 0.3,
   "fallen_still": 1.0,
   "stood_upright": 0.95,
   "arm_relax_rate": 1.0,
   "settle_brake": 40.0,
-  "stop_delay": 0.25
+  "stop_delay": 0.25,
+  "settle_max_slope": 0.04,
+  "max_angular_velocity": 120.0
 };

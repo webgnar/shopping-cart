@@ -1,0 +1,24 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="1_solid"]
+[ext_resource type="PackedScene" path="res://assets/models/sf_hill/stop_sign/stop_sign.glb" id="2_model"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_0"]
+size = Vector3(0.08, 2.45, 0.08)
+
+[node name="StopSign" type="StaticBody3D" groups=["sf_stop_sign"]]
+physics_material_override = ExtResource("1_solid")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+
+[node name="PostShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.225, 0.03)
+shape = SubResource("BoxShape3D_0")
+
+[node name="Text" type="Label3D" parent="."]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, 2.1, -0.0175)
+pixel_size = 0.0034
+modulate = Color(1, 1, 1, 1)
+outline_size = 0
+font_size = 64
+text = "STOP"

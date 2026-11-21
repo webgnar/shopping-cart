@@ -90,7 +90,8 @@ isn't, phase 4 adds prediction for the guest's own cart.
 - `Net` autoload (`scenes/net/net_session.tscn`, `scripts/net/net_session.gd`). Console: `host [port]`,
   `join <address>[:port]`, `leave`, `net`. Command line: `godot --path shopping-cart -- --host` and
   `-- --join=127.0.0.1`.
-- Host spawns a cart per guest in a row to the right of `CartSpawn`. Host fast travel takes guests along; guests
+- Host spawns a cart per guest at the level's `PlayerSpawns` markers (Spawn1 for the first guest, and so on), or
+  in a row to the right of `CartSpawn` when the level has none. Host fast travel takes guests along; guests
   can't fast travel. P on a guest asks the host to put its cart back on its wheels.
 - Guest: everything in the level is frozen and moved from snapshots; bot carts' bots are switched off; the HUD and
   rolling sound read the host's speed. Status line bottom right.
@@ -123,9 +124,8 @@ isn't, phase 4 adds prediction for the guest's own cart.
 
 **Phase 4: feel and polish.**
 - Prediction for the guest's own cart if the delay feels bad (simulate it locally, blend toward the host).
-- Player names and a colour per cart (handle or paint), player spawn markers per level (`PlayerSpawns` Marker3D
-  nodes; today guests line up beside `CartSpawn`, which in the supermarket puts the second cart nose to a box
-  display), bots filling empty slots, pose quantisation, host migration is out of scope (the game ends with the host).
+- Player names and a colour per cart (handle or paint), player spawn markers in the levels that still lack them
+  (the supermarket has `PlayerSpawns/Spawn1..7`; elsewhere guests line up beside `CartSpawn`), bots filling empty slots, pose quantisation, host migration is out of scope (the game ends with the host).
 
 ## Decisions (zack, 2026-11-21)
 

@@ -18,5 +18,10 @@
     "key": "market",
     "name": "Supermarket",
     "scene": "res://scenes/levels/supermarket.tscn"
+  },
+  {
+    "key": "hill",
+    "name": "San Francisco hill",
+    "scene": "res://scenes/levels/sf_hill.tscn"
   }
 ]
