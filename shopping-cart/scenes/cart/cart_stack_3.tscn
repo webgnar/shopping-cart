@@ -1,0 +1,25 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/cart/spare_cart.tscn" id="1_spare"]
+[ext_resource type="PackedScene" path="res://scenes/cart/nest_joint.tscn" id="2_nest"]
+
+[node name="CartStack3" type="Node3D"]
+
+[node name="Cart1" parent="." instance=ExtResource("1_spare")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.005, 0)
+
+[node name="Cart2" parent="." instance=ExtResource("1_spare")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.28, 0.005, 0)
+
+[node name="Cart3" parent="." instance=ExtResource("1_spare")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.56, 0.005, 0)
+
+[node name="Nest2" parent="." instance=ExtResource("2_nest")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.17, 0.505, 0)
+node_a = NodePath("../Cart1/Frame")
+node_b = NodePath("../Cart2/Frame")
+
+[node name="Nest3" parent="." instance=ExtResource("2_nest")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.11, 0.505, 0)
+node_a = NodePath("../Cart2/Frame")
+node_b = NodePath("../Cart3/Frame")

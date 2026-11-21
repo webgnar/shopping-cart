@@ -83,6 +83,9 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   `scenes/cart/bot_cart.tscn` — a cart driven by a bot (`scripts/cart_bot.gd`) pressing the same keys a player does;
   place instances under a level's `BotCarts` node. Bots need the level's `Navigation` region: re-bake it with
   `godot --headless -s res://tools/bake_navigation_cli.gd` after moving anything solid.
+  `scenes/cart/cart_stack_3.tscn` / `cart_stack_4.tscn` — spare carts nested into each other (`nest_joint.tscn`,
+  `scripts/cart/cart_nest.gd`); any cart pushed lined up into the back of another nests (`Frame/NestMouth`), a yank
+  back pulls it off.
 - `scenes/net/net_session.tscn` — the `Net` autoload: host-authoritative multiplayer (`scripts/net/`). Guests'
   carts are driven through `controls` like bot carts and start at the level's `PlayerSpawns` Marker3Ds (one per guest
   slot) or beside `CartSpawn`; guests only show the host's snapshots. Plan and wire format:
@@ -117,6 +120,7 @@ From `shopping-cart/`:
 - Browser game (from the repo root): `node mobile/test/drive_test.js`
 - Camera never clips into levels (all levels): `godot --headless --fixed-fps 120 -s res://tests/camera_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
+- Stacked carts (nest, herd, pull off, knocks): `godot --headless --fixed-fps 120 -s res://tests/cart_stack_test.gd`
 - Wheel sounds (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
 - Multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/multiplayer_test.gd`

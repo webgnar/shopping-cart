@@ -3,6 +3,54 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: Stacked carts (nesting)
+
+zack wants carts that nest into one another and move as a herd with very different physics (reference: a photo of a
+nested row, each cart about 25 to 30 cm behind the one ahead, gates swung up, every caster on the ground).
+
+- **Nest joint** (`scenes/cart/nest_joint.tscn`, `scripts/cart/cart_nest.gd`): a Generic6DOFJoint3D between the frame
+  of the cart ahead (node_a) and the frame of the cart behind (node_b), placed at the cart behind's `pivot`
+  (0.45, 0.5, 0), inside the basket ahead. Linear X is the slide: 0 is fully in, -0.8 m is just out (the nose leaves
+  the basket); `linear_motor_x` with no target speed and an 80 N limit is the grip of the wire baskets, so sliding in
+  or out takes a push. Linear Y/Z locked. Play: yaw +-0.12 rad with a soft spring back (40 N*m/rad), pitch +-0.05,
+  roll +-0.03. Spacing 0.28 m handle to handle when fully in (renders matched the photo at 28 cm; 25 looked cramped,
+  the baskets taper so the side walls don't overlap).
+- **While nested**: the carts pass through each other (`ShoppingCart.ghost`: collision exceptions between every body
+  of every cart in the stack, and their ground rays (wheel sounds too) look past each other), the gate of the cart
+  ahead is swung up by its GateHinge motor (2 rad/s, 0.1 impulse; a stronger motor made the child seat and flap on
+  the raised gate rattle forever, so the stack never came to rest), and the stack wakes, settles and stops as one
+  (`cart.gd` `stack()`): any key held on any cart keeps the herd awake, and it only freezes when every cart is at rest.
+- **Nesting by pushing in** (`Frame/NestMouth` Area3D on every cart, `scripts/cart/cart_nest_mouth.gd`): the last cart
+  of a stack (or any loose cart) catches a nose that comes in through its open back lined up (nose at least 6 cm past
+  the handle, within 9 cm of the centre line, 0.2 rad of straight, 0.12 rad of tilt, closing at 5 cm/s or more). The
+  cart (and any carts nested behind it) is turned and slid onto the centre line in one rigid move, then a nest joint is
+  made where it stands, its limits shifted by how far it still has to slide. Bot carts never nest.
+- **Coming apart**: slid all the way out (a yank back pulls the last cart off), or a hard sideways knock passed through
+  the nest (`break_impulse` 70 N*s within 60 ms). The load is read from momentum: a knock on one side of the nest
+  (frames touching something solid, `contact_monitor` on the Frame) reaches the other side only through the joint, so
+  that side's change of sideways momentum is the joint's load. A head-on crash never breaks a nest (the carts jam, as
+  real ones do). After coming apart the carts keep passing through each other until their basket centres are 1.2 m
+  apart (`ghost_clearance`), so nothing is pushed out of anything.
+- **Feel** (tests/cart_stack_test.gd): a herd of 4 rolls straight at 4.5 m/s after 5 s of pushing; one hand alone
+  hardly turns it (every cart's fixed rear wheels scrub), push one side and pull the other turns it about 20 degrees
+  in 2 s; no measurable wobble between carts on a straight push. 1.8 to 2.4 ms per physics step for the whole parking
+  lot with 7 stacked carts and 3 bots (cloud container).
+- **Scenes**: `scenes/cart/cart_stack_3.tscn`, `cart_stack_4.tscn` (spare carts plus nest joints, front cart at the
+  origin, nose +X). Placed: parking lot `CartStacks/ByTheSpawn` (3 carts, 2 m left of the spawn line, push in from
+  behind) and `CartStacks/InCorral2A` (4 carts in corral 2A, nose to the closed end, open end toward the lot); sandbox
+  `CartStack` (4 carts at (4.5, 0, 2.5)).
+- **Multiplayer**: nothing new on the wire. The host runs the joints; the stack's carts are level bodies, so guests
+  see them through the snapshots, and a guest's cart nests on the host like any other.
+- **Browser** (`mobile/game/nest.js`): the export marks spare carts with `nested_in` and writes the nest settings to
+  `cart.json` (`nest`). Rapier's prismatic joint stands in for the 6DOF joint (same slide, limits and grip as a
+  velocity motor) but has no yaw or pitch play, so browser stacks bend less. Carts passing through each other share a
+  collision bit instead of exceptions.
+- **Z-fighting check**: nested carts are the same model offset 0.28 m along the nose. The basket walls taper, so they
+  don't overlap; the lower trays and basket floors sit at the same heights, and their wires cross rather than lie on
+  top of each other. No flicker showed in the renders (`tests/cart_stack_screenshot.gd`), but that is a still image:
+  if the trays flicker in motion, lift each nested cart's tray a few mm in the model.
+- **Left out**: no stack in the garage, market or hill yet; no way to start a level already pushing a stack (push your
+  cart into one); bots don't avoid stacks.
 ## 2026-11-21: wheel sounds driven by each wheel's physics
 
 zack wanted the cart sound to come from the wheels themselves. The one cart-wide RollingSound (a ray under the

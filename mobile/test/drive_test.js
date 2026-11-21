@@ -1,5 +1,5 @@
 // Headless test for the browser version: the same drive checks as the Godot drive test
-// (shopping-cart/tests/drive_test.gd), plus every level, spare carts, bot carts, cart-to-cart hits, the follow camera,
+// (shopping-cart/tests/drive_test.gd), plus every level, spare carts, bot carts, cart-to-cart hits, stacked carts, the follow camera,
 // the phone's touch rockers, the keyboard and the console.
 //   node mobile/test/drive_test.js [screenshot-dir]
 // Serves mobile/ on a local port (the game fetches its levels, so it can't run from file://).
@@ -421,6 +421,37 @@ const SCENARIOS = [
     return { moved: Math.hypot(s1.x - s0.x, s1.z - s0.z), wasPinned: true };
   });
   report(hit.moved > 0.05, 'cart hits spare cart', `spare cart moved ${hit.moved.toFixed(2)} m`);
+
+  // Stacks: the parking lot's stack by the spawn holds together, the player's cart nests by pushing in, the herd
+  // rolls as one, and a hard yank pulls the cart back off.
+  const st = await page.evaluate(async () => {
+    const c = window.__cart;
+    await c.loadLevel('plot');
+    c.setInput({}); c.simulate(2);
+    const nested = c.spares.filter(s => s.nestedIn).length;
+    const front = c.spares[0], last = c.spares[2], p0 = { ...front.origin() };
+    const lp = last.origin(), h = last.heading();
+    c.spawn(c.v3(lp.x - 1.5 * Math.cos(h), lp.y, lp.z + 1.5 * Math.sin(h)), h);
+    c.setInput({}); c.simulate(0.5);
+    c.setInput({ L: 1, R: 1 });
+    let t = 0;
+    while (!c.cart.nestedIn && t < 6) { c.simulate(0.05); t += 0.05; }
+    const caught = c.cart.nestedIn === last;
+    c.simulate(4);
+    const herd = c.cart.stack().length, p1 = front.origin(), moved = Math.hypot(p1.x - p0.x, p1.z - p0.z);
+    let fastest = 0;
+    for (const s of c.cart.stack()) for (const b of s.parts) { const v = b.linvel(); fastest = Math.max(fastest, Math.hypot(v.x, v.y, v.z)); }
+    c.setInput({}); c.simulate(4);
+    c.setInput({ L: -1, R: -1 });
+    let u = 0;
+    while (c.cart.nestedIn && u < 5) { c.simulate(0.05); u += 0.05; }
+    c.setInput({}); c.simulate(2);
+    return { nested, caught, t, herd, moved, fastest, off: !c.cart.nestedIn, u, left: front.stack().length, ghosts: c.cart.ghosts.size };
+  });
+  report(st.nested === 5, 'stacks built', `${st.nested} spare carts nested in another`);
+  report(st.caught && st.herd === 4 && st.moved > 1.5 && st.fastest < 6, 'cart nests into stack',
+    `caught after ${st.t.toFixed(2)} s, herd of ${st.herd} moved ${st.moved.toFixed(1)} m, fastest body ${st.fastest.toFixed(2)} m/s`);
+  report(st.off && st.left === 3 && st.ghosts === 0, 'yank pulls it off', `came off after ${st.u.toFixed(2)} s, stack left with ${st.left}, ghosts ${st.ghosts}`);
 
   await page.close();   // its draw loop would slow the phone page down
 
