@@ -96,6 +96,10 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   (`scripts/net/webrtc_link.gd`, desktop plugin in `addons/webrtc/`) introduced by the rendezvous service in
   `services/rendezvous/` (Cloudflare Worker; `npm run dev` there runs it locally). M opens the Multiplayer menu
   (`scenes/ui/multiplayer_menu.tscn`). Don't deploy the Worker or create Cloudflare resources without asking zack.
+- `scenes/race/race.tscn` — a race (`scripts/race/race.gd`): a `Grid` of start-slot Marker3Ds, a `Finish` Area3D with
+  its painted line and `BotGoal`, a `Route` of Marker3Ds the racing bots follow, and the countdown/results HUD
+  (`scenes/ui/race_hud.tscn`). The parking garage has one (roof to street exit). The console's `race` (or
+  `race nobots`) loads the garage and starts it; in multiplayer the host starts it and guests follow (RACE message).
 - `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun, and the garage's sky shader
   (`skyline_sky.gdshader`). `assets/manhattan_skyline/` (not in git) — the garage's Manhattan skyline from
   zack's Google Earth tiles, made by `sh tools/manhattan_skyline.sh`; the garage shows it only where it exists.
@@ -133,5 +137,7 @@ From `shopping-cart/`:
 - Multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/multiplayer_test.gd`
 - Rendezvous service, and online play by join code over WebRTC (from `services/rendezvous`, after `npm install`):
   `npm test` and `npm run test:godot`
+- Garage race (console `race`, count, lock until GO, finish, bots race all ten floors): `godot --headless --fixed-fps 120 -s res://tests/race_test.gd`
+- Race screenshots: `xvfb-run godot --rendering-method gl_compatibility -s res://tests/race_screenshot.gd -- <out dir>`
 - Bot carts drive themselves in every level: `godot --headless --fixed-fps 120 -s res://tests/bot_test.gd`
 - Endless sandbox (chunks load, no holes, flush edges, floors, hill): `godot --headless --fixed-fps 120 -s res://tests/sandbox_test.gd`

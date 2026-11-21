@@ -424,6 +424,37 @@ func _spawn_guest_cart(id: int, at := Vector3.INF, yaw := 0.0) -> void:
 	carts[id] = cart
 
 
+## Host: puts guest `id`'s cart (a fresh one) at `at`, facing `yaw` (a race's starting grid).
+func place_guest_cart(id: int, at: Vector3, yaw: float) -> void:
+	if role == Role.HOST and _guests.has(id) and level:
+		_spawn_guest_cart(id, at, yaw)
+
+
+## Host: the guests in the game, in the order they joined (by slot).
+func guest_ids() -> Array:
+	var ids := _guests.keys()
+	ids.sort_custom(func(a, b): return _guests[a].slot < _guests[b].slot)
+	return ids
+
+
+## A guest's name as players see it: Player 2, Player 3... (the host is Player 1).
+func guest_name(id: int) -> String:
+	return "Player %d" % (_guests[id].slot + 1) if _guests.has(id) else "Player"
+
+
+## Host: whether every guest has loaded the level being played (they send its serial with their keys).
+func guests_loaded() -> bool:
+	return _guests.values().all(func(g): return g.serial == level_serial)
+
+
+## Host: a reliable message to every guest (a race update, scripts/race/race.gd).
+func send_to_guests(data: PackedByteArray) -> void:
+	if role != Role.HOST:
+		return
+	for id in _guests:
+		_send(id, data, true)
+
+
 # ---------------------------------------------------------------- every tick
 
 func _physics_process(delta: float) -> void:
@@ -684,6 +715,11 @@ func _guest_receive(packet: PackedByteArray) -> void:
 			_update_status()
 		NetProtocol.Msg.SNAPSHOT:
 			_read_snapshot(b)
+		NetProtocol.Msg.RACE:
+			if b.get_u8() == level_serial and level and is_instance_valid(level):
+				var race := get_tree().get_first_node_in_group("race")
+				if race and race.has_method("apply_state"):
+					race.apply_state(b)
 
 
 func _load_level(serial: int, bodies: int, path: String) -> void:

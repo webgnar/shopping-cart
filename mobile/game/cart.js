@@ -73,6 +73,8 @@ export class Cart {
     this.cartColliders = [];   // [collider, layer, mask] of every cart part, to regroup when carts pass through each other
     this.T = Object.assign({}, DEFAULTS, ctx.tune);
     this.handPower = { L: 0, R: 0 }; this.armExt = { L: 0, R: 0 }; this.handState = { L: '', R: '' };
+    // locked: nobody's hands are on the bar (a race countdown, as ShoppingCart.locked): every key reads as let go.
+    this.locked = false;
     this.fallen = false; this.waitRelease = false; this.tiltDir = 0; this.tiltTime = 0; this.letGo = false; this.pinned = false; this.restTime = 0; this.restAnchor = null;
     this.handPos = arr(rig.hand_position || [0, 1, 0.2]);
     this.wheelRadius = rig.wheel_radius;
@@ -234,10 +236,11 @@ export class Cart {
 
   // ---------------------------------------------------------------- one physics step (before world.step)
   /** Whether this cart's own keys are held (set before any cart steps, so a stack can wake as one). */
-  setKeys(inp) { this.keysHeld = !!inp && (inp.L !== 0 || inp.R !== 0 || !!inp.lift || !!inp.press); }
+  setKeys(inp) { this.keysHeld = !this.locked && !!inp && (inp.L !== 0 || inp.R !== 0 || !!inp.lift || !!inp.press); }
 
   /** inp: {L, R: -1 pull / 0 / +1 push, lift, press} for the player's cart; null for a spare cart. */
   step(inp, dt) {
+    if (this.locked && inp) inp = { L: 0, R: 0, lift: false, press: false };
     for (const b of this.parts) { b.resetForces(false); b.resetTorques(false); }
     // A stack is one herd: a key held on any of its carts keeps them all awake and rolling.
     const anyInput = this.stack().some(c => c.keysHeld);
@@ -406,6 +409,26 @@ export class Cart {
       const a = w.angvel(), l = len(a);
       if (l > cap) w.setAngvel(scale(a, cap / l), false);
     }
+  }
+
+  /** Moves the whole rig (and its groceries) so the handle stands at pos, upright, facing yaw, at rest (ShoppingCart.place). */
+  place(pos, yaw) {
+    const q0 = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0));
+    const qt = { x: q0.x, y: q0.y, z: q0.z, w: q0.w };
+    const pt = add(v3(pos.x, pos.y + 0.005, pos.z), rot(qt, this.local.Frame));
+    // The move that takes the frame from where it is to there, applied to every body.
+    const qf = this.frame.rotation(), pf = this.frame.translation();
+    const qd = new THREE.Quaternion(qt.x, qt.y, qt.z, qt.w).multiply(new THREE.Quaternion(qf.x, qf.y, qf.z, qf.w).invert());
+    const d = { x: qd.x, y: qd.y, z: qd.z, w: qd.w };
+    if (this.pinned) this.wake();
+    for (const b of [...this.parts, ...this.groceries]) {
+      const p = add(pt, rot(d, sub(b.translation(), pf)));
+      const r = b.rotation(), q = qd.clone().multiply(new THREE.Quaternion(r.x, r.y, r.z, r.w));
+      b.setTranslation(p, true); b.setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }, true);
+      b.setLinvel(v3(0, 0, 0), true); b.setAngvel(v3(0, 0, 0), true);
+    }
+    this.fallen = false; this.waitRelease = false; this.handPower = { L: 0, R: 0 };
+    this.restTime = 0; this.restAnchor = null;
   }
 
   pin() {

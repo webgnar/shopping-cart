@@ -17,14 +17,14 @@ and open http://localhost:8000 (or upload the `mobile/` folder as an HTML5 game 
   **Set level** re-zeroes the tilt.
 - **Computers** (mouse and keyboard detected): the Godot keys. E/A left hand push/pull, Q/D right (the left-hand keys turn left), W/S lean the
   back/front up, P a fresh cart where you are, click to look around (Esc to let go), wheel to zoom,
-  ` opens the console (`help`, `where`, `plot`, `garage`, `market`, `sandbox`), F full screen. Touching the screen
+  ` opens the console (`help`, `where`, `race`, `plot`, `garage`, `market`, `sandbox`), F full screen. Touching the screen
   switches to the phone controls and a game key switches back.
 
 ## Files
 
 | Path | What it is | How it's made |
 | --- | --- | --- |
-| `index.html`, `game/*.js` | The game: `cart.js` is a line-for-line port of `scripts/cart.gd`, `bot.js` of `scripts/cart_bot.gd` (bot carts), `nav.js` stands in for Godot's navigation server and NavigationAgent3D, `level.js` builds an exported level, `stream.js` streams the endless sandbox's chunks around the cart (as `scripts/sandbox/chunk_streamer.gd`, same hash so the same layout), `main.js` is input, camera (`cart_camera.gd`), HUD, console and the loop | Hand-written |
+| `index.html`, `game/*.js` | The game: `cart.js` is a line-for-line port of `scripts/cart.gd`, `bot.js` of `scripts/cart_bot.gd` (bot carts), `nav.js` stands in for Godot's navigation server and NavigationAgent3D, `level.js` builds an exported level, `race.js` is the race down the garage (`scripts/race/race.gd`, console `race` or Level › Race down the garage), `stream.js` streams the endless sandbox's chunks around the cart (as `scripts/sandbox/chunk_streamer.gd`, same hash so the same layout), `main.js` is input, camera (`cart_camera.gd`), HUD, console and the loop | Hand-written |
 | `cart_tuning.js` | Cart feel (every Cart export and body mass) | `shopping-cart/tools/export_cart_tuning.gd` |
 | `levels/<key>.glb` + `.json` | Each fast-travel level: meshes and materials; collision shapes with friction, loose props, CartSpawn, spare carts, bot carts and their navigation mesh, sky, sun, lamps, 3D labels | `godot --headless -s res://tools/export_mobile_levels_cli.gd` (from `shopping-cart/`) |
 | `levels/chunks/<name>.glb` + `.json` | The endless sandbox's terrain chunks (`scenes/sandbox/chunks/`), each exported like a level; `levels/sandbox.json` has the grid (`stream`) | same |
@@ -44,5 +44,6 @@ node mobile/test/drive_test.js [screenshot-dir]
 
 Serves the folder and runs the same checks as the Godot drive test (push, pull, turn, spin, wheelies, W/S lean and
 tip-over, hard push/pull, braking, spin brace, getting back up, gate, child seat, knocked when pinned), then loads
-every level (spawns, comes to rest, drives, camera never inside a wall), lets each level's bot carts drive for a minute, rams a spare cart, and drives the phone's
+every level (spawns, comes to rest, drives, camera never inside a wall), lets each level's bot carts drive for a minute, races the garage
+against its bots, rams a spare cart, and drives the phone's
 touch rockers, the keyboard and the console.
