@@ -1,1 +1,8 @@
 *.blend1
+node_modules/
+
+# Baked Manhattan skyline from Google Earth tiles: kept local (licence), see tools/manhattan_skyline.py
+shopping-cart/assets/manhattan_skyline/
+
+# Windows temp copies Godot leaves next to a locked DLL
+~*.TMP

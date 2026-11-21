@@ -38,6 +38,68 @@ physics, gate -> child seat -> flap, and a gate swinging up should push the chil
 - **Left out:** nothing opens the seat in play (no toddler); the open flap doesn't reach the gate (the bracket moves
   the seat 4.5 cm forward), so a flap lifted level drops back.
 
+## 2026-11-21: sandbox is an endless parking lot (lot-only chunks); Q and E push keys swapped
+
+The sandbox (`scenes/main.tscn`) is now an open daytime parking lot that never ends, so the cart's physics can be
+worked on with room to run. Reference: the aerial photos in `Level Reference Images/` (big, mostly empty lots,
+double rows of painted stalls, light poles on the stall heads, planter islands with trees at the row ends).
+
+- **Built on the chunk streamer.** This started as a separate endless grid (78 x 37 m blocks following the
+  camera); main meanwhile got `ChunkStreamer` and multiplayer on top of it, so the lot was rebuilt as a 40 m
+  chunk instead. The sandbox's `Chunks` node now streams only `scenes/sandbox/chunks/open_lot.tscn`, with the new
+  `turns` export off so every chunk faces the same way and the rows read as one big lot (the browser's
+  `stream.js` honours it too). Load distance 96 m, unload 120 m (main's other chunk sets used 64 / 88): at most
+  33 chunks at once in `tests/sandbox_test.gd`. The store floor, old asphalt slab and yard (the home squares) are
+  gone; there are no home squares now. The old lot, street, market, garage and hill chunks are untouched, ready
+  to mix back in through `chunks` and `weights`; their browser exports were removed from `mobile/levels/chunks/`
+  (the exporter writes them again when they're listed).
+- **No seams: one ground plane.** Each chunk used to carry its own 40 x 40 m ground box, and a cart crossing
+  from one box to the next at speed trips on the joint: the drive test's hard pull (backing across x = -20 at
+  about 6 m/s) flipped there every time, and main's notes saw the same at the hill. The open lot has no ground
+  of its own; the sandbox's `Ground` is one `WorldBoundaryShape3D` (asphalt) and the hard pull now lands on its
+  wheels. Jolt makes a world boundary a square `world_boundary_shape_size` wide (2 km by default, so the ground
+  ended 1 km out); `project.godot` sets it to 20 km, and the browser export uses the same size. Mixing chunks
+  that bring their own ground back in would bring their seams back too.
+- **Open-lot chunk:** 40 x 40 m. Two double rows of 11 stalls (2.7 x 5.5 m, as the parking lot level) along X,
+  a 9 m drive aisle down the middle (z = 0, the spawn aisle) and a 4.5 m half aisle along each Z edge, so chunks
+  meet in a full aisle. Each double row ends at +X in a planter island (2.4 x 11 m, streetlight and two palms,
+  as `planter_island.tscn`) and a 7.3 m cross aisle runs on to the +X edge; a second streetlight stands on the
+  stall heads at x = -6.2. Only 2 mm paint comes within 0.3 m of an edge. Collision: the chunk's 40 x 40 m
+  ground box (asphalt) and one solid body with the island curbs, pole bases, poles and palm trunks (18 shapes).
+- **Model** (`assets/models/parking_lot/open_lot/open_lot.glb`, `tools/parking_lot_models.py open_lot`): the
+  existing hand-built props (stall markings, planter island, streetlight, palm tree) placed into one model and
+  merged into one object per material, plus the 40 x 40 m asphalt face. 12,922 triangles, 483 KB, 12 objects /
+  materials, all shared `.tres` by name. `Model` got a `by_material` mode and `at()` placement for this; the
+  prop builders take an optional model to build into, and `stall_markings` a stall count (their own .glb output
+  is unchanged). Merged so a chunk draws in about ten calls.
+- **Z-fighting:** 0 hits. The scan is now a sorted sweep (fast enough for a whole chunk) and also measures the
+  real gap between two faces; the old plane-offset test flagged palm trunk faces about 2 degrees apart only
+  because their offsets happened to match at the palm's spot in the chunk.
+- **Test strip** down the spawn aisle (+X), fixed in the world: speed bumps at x = 14 and 18 (0.35 x 0.05 x 6 m,
+  as before), a 15 cm curb at x = 24, a 6.8 degree ramp (the old angle) at x = 28.4 to 31.6 up onto a 0.38 m
+  ledge that drops off at x = 33.6, then two stacks of three cardboard boxes at x = 39. `CartSpawn` is at the
+  origin facing +X; the `Chunks` grid starts at (-20, 0, -20), so the spawn is the middle of a chunk's aisle.
+- **Sky:** clear day: blue procedural sky, the default sun, depth fog from 35 to 95 m in the horizon colour (the
+  lower sky is the same colour, so the edge of the loaded chunks melts into it). The browser exporter now passes
+  `fog_mode` and the depth range, and the browser uses three.js `Fog` for depth fog.
+- **Left out:** the store tile floor (the supermarket has tile; the drive test's "tile push" and the rolling
+  sound test's "sandbox tile" case are gone, the supermarket case still checks the tile sound), parked cars,
+  wheel stops and cart corrals in the open lot (kept open for driving), bots (no navigation mesh).
+- **Keys:** the two push keys swapped: **Q** is now the right hand's push and **E** the left hand's, so both
+  left-side keys (Q push right, A pull left) turn the cart left and both right-side keys (E, D) turn it right.
+  A and D are unchanged. `main.gd`, the HUD keycaps (each keeps its letter: Q reads RIGHT PUSH, E reads LEFT
+  PUSH; the LEFT and RIGHT power bars still show the hands), the browser game's keys and keycaps, and the test
+  labels.
+- **Tests:** `drive_test` (Godot and browser) "coast then rest" now waits 30 s, not 12: with the retuned cart a
+  coast from a 1 s push rolls about 15 m and is still at 0.5 m/s after 12 s on open ground; it only passed
+  before because the cart ran into the old sandbox ramp. `multiplayer_test` expects chunk body poses only when
+  the host's chunks have loose bodies (the open lot has none); the browser's stream check wants as many chunk
+  kinds as the sandbox has, up to three. `sandbox_test.gd` adds the open lot's floor, scales its chunk limit with the unload distance and
+  skips the hill when the sandbox has none. `camera_test.gd` sandbox spots sit next to a light pole (the default
+  orbit passes through it with avoidance off), the ramp and an island. Playwright is installed at the repo root
+  (`npm install --no-save playwright`, `npx playwright install chromium`; `node_modules/` is git-ignored), so
+  the browser drive test runs here too.
+
 ## 2026-11-21: Stacked carts (nesting)
 
 zack wants carts that nest into one another and move as a herd with very different physics (reference: a photo of a
@@ -933,3 +995,34 @@ the builder. The SpotLight shadows show some shadow acne on the store fascia in 
   `CartSpawn`. Each was checked with a shape query (cart footprint plus 0.3 m margin): nothing overlaps, and the
   aisle ahead is clear to about x = -6.
 - `tests/multiplayer_test.gd` checks the guest starts at Spawn1 where a level has markers.
+
+## 2026-11-21: Manhattan skyline round the parking garage (local only)
+
+- **What.** The parking garage now stands in Bryant Park, midtown Manhattan, built from zack's Google Earth
+  3D tiles (`~/Pictures/blender/MANHATTAN`: 41 OBJ tiles of ~600k triangles, each with its 8K PNG; the
+  "missing" texture of tile 40 is `8fd1b8414f3a_gltf_tile_40.png` beside it, named in its `.mtl`). The lot
+  is lined up with the street grid (turned 30.3 degrees), between 6th Ave and the library, 40th to 42nd St;
+  the park inside the lot is cut out, so the level's street slab is the ground and the park's plane trees
+  stand round its edges.
+- **How.** `tools/manhattan_skyline.sh` (Blender + gltfpack + `tools/manhattan_skyline_scene.py`):
+  buildings within 250 m are real meshes with the tiles' own photo UVs (cut, welded, thinned by gltfpack as
+  far as the UV islands allow: 1.13M -> ~470k triangles, 4K photos), as unshaded, double-sided materials,
+  slightly warm and dim to sit in the evening light, casting no shadows. Everything further out is one 8K
+  panorama rendered at full detail from 8 m up in the middle of the lot, laid over the sky by
+  `scenes/environment/skyline_sky.gdshader` (the old procedural sky, same settings, rewritten as a shader so
+  it can take the panorama). The garage's `Skyline` node (`scripts/levels/optional_backdrop.gd`) instances
+  `assets/manhattan_skyline/manhattan_skyline.tscn` and hands the panorama to the sky if the files exist.
+- **Why local only.** Google's Map Tiles terms don't allow extracting the 3D tiles or using them outside
+  Google Maps, and this repo is public, so the baked skyline stays out of git (`.gitignore`) and out of the
+  browser game (`mobile_export_skip` group on `Skyline`; the exporter also reads the garage's sky shader's
+  colours, so the browser garage's sky is unchanged). Without the files the garage is exactly as before.
+  For a shipped game the skyline needs replacing with our own buildings.
+- **Cost** (roof view, 1600x900, `tests/skyline_screenshot.gd`): 492 -> 494 draws, 467k -> 940k triangles.
+  The panorama is free per frame. No collision on the city: the cart still only has the level's slab.
+- **Tried and dropped.** Decimating the tiles with their photo UVs stalls at ~30-40 % (thousands of tiny
+  UV islands); simplifying the bare shape and re-baking the photo onto new UVs (voxel remesh or gltfpack,
+  then Cycles selected-to-active) smeared the photos, because the simplified walls sit metres off the
+  photogrammetry.
+- **Judgment calls.** The spot (Bryant Park: about the size of the level's 170 x 90 m slab, open sky over it);
+  ground level -52.5 in tile coordinates (the lawn's lowest points); 250 m as the near/far split; panorama eye
+  8 m (halfway up the garage), so from the roof or the street the far skyline is up to ~2 degrees off.

@@ -218,7 +218,7 @@ custom_minimum_size = Vector2(80, 64)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_mj13f")
 script = ExtResource("2_bo48s")
-action = &"push_left"
+action = &"push_right"
 idle_style = SubResource("StyleBoxFlat_mj13f")
 pressed_style = SubResource("StyleBoxFlat_0h1do")
 
@@ -236,7 +236,7 @@ horizontal_alignment = 1
 [node name="Caption" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyQ/Text" unique_id=150140445]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
-text = "LEFT PUSH"
+text = "RIGHT PUSH"
 horizontal_alignment = 1
 
 [node name="KeyW" type="PanelContainer" parent="ControlsPanel/Rows/Drive/KeyCaps" unique_id=1337089900]
@@ -270,7 +270,7 @@ custom_minimum_size = Vector2(80, 64)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_mj13f")
 script = ExtResource("2_bo48s")
-action = &"push_right"
+action = &"push_left"
 idle_style = SubResource("StyleBoxFlat_mj13f")
 pressed_style = SubResource("StyleBoxFlat_0h1do")
 
@@ -288,7 +288,7 @@ horizontal_alignment = 1
 [node name="Caption" type="Label" parent="ControlsPanel/Rows/Drive/KeyCaps/KeyE/Text" unique_id=1708842315]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
-text = "RIGHT PUSH"
+text = "LEFT PUSH"
 horizontal_alignment = 1
 
 [node name="KeyA" type="PanelContainer" parent="ControlsPanel/Rows/Drive/KeyCaps" unique_id=1216935309]
