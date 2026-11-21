@@ -26,6 +26,9 @@ signal chunk_loaded(cell: Vector2i, chunk: Node3D)   ## a square was just filled
 @export var weights: PackedFloat32Array = []        ## how often each chunk comes up, relative to the others
 @export var chunk_size := 40.0                      ## m: the side of a grid square (and of every chunk)
 @export var world_seed := 1                         ## a different seed lays out a different world
+## true: each square's chunk is turned a quarter turn picked by the hash. false: every chunk faces the same way
+## (the sandbox's parking lot, whose stall rows all run along X like one big lot).
+@export var turns := true
 @export var load_distance := 64.0                   ## m: squares whose nearest point is closer than this are loaded
 @export var unload_distance := 88.0                 ## m: loaded squares farther than this are freed
 @export var loads_per_frame := 1                    ## chunks built per frame while driving (all at once at the start)
@@ -151,7 +154,7 @@ func pick(cell: Vector2i) -> Array:
 			idx = k
 			break
 		idx = k
-	return [idx, (h >> 20) & 3]
+	return [idx, (h >> 20) & 3 if turns else 0]
 
 
 static func cell_hash(x: int, z: int, s: int) -> int:

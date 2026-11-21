@@ -5,6 +5,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import RAPIER from 'rapier';
 import { v3, add, sub, clamp, rot, color, widenMask } from './util.js';
+import { catchNoses, regroup, buildStacks } from './nest.js';
 import { Cart, SIDES } from './cart.js';
 import { Bot } from './bot.js';
 import { NavMesh } from './nav.js';
@@ -12,6 +13,7 @@ import { fetchLevel, buildLevel, layerPairs, applyEnvironment, ambientFor, makeS
 import { WheelSounds, unlockAudio, updateListener, loadedLoops } from './sound.js';
 import { ChunkStreamer } from './stream.js';
 import { Race, IDLE as RACE_IDLE } from './race.js';
+import { setMusic, startMusic, musicState } from './music.js';
 
 await RAPIER.init();
 const STEP = 1 / 120;                // Godot physics ticks at 120 Hz
@@ -74,6 +76,7 @@ async function loadLevel(key) {
     if (levelRoot) { scene.remove(levelRoot); disposeTree(levelRoot); }
     if (ambient) scene.remove(ambient);
     for (const c of [cart, ...others()]) if (c && c.sound) c.sound.remove();
+    setMusic(null);
     for (const c of [cart, ...others()]) if (c && c.root) scene.remove(c.root);
     for (const c of [cart, ...others()]) if (c) for (const [, g] of c.meshes) scene.remove(g);
     if (streamer) { streamer.dispose(); streamer = null; }
@@ -101,6 +104,8 @@ async function loadLevel(key) {
       spares.push(spare);
       bit <<= 1;
     }
+    // Stacks: spare carts nested into each other (scenes/cart/cart_stack_*.tscn in Godot).
+    if (rig.nest) buildStacks(ctx, spares, level.spareCarts, rig.nest);
     // Bot carts: the same cart, driven by a bot pressing the player's keys over the level's navigation mesh.
     const nav = level.navmesh ? new NavMesh(level.navmesh) : null;
     for (const bc of nav ? level.botCarts : []) {
@@ -118,6 +123,7 @@ async function loadLevel(key) {
     levelKey = entry.key;
     race = level.race ? new Race(level.race, { cart: () => cart, bots: () => bots, spawn }, raceEl) : null;
     raceEl.root.hidden = true;
+    setMusic(data.json.music);   // the level's background loop (parking lot), if it has one
     spawn(v3(...level.spawn.pos), level.spawn.yaw);
     world.step(eventQueue);   // settle the query structures before the first raycast
     localStorage.setItem('cart-level', levelKey);
@@ -129,7 +135,13 @@ async function loadLevel(key) {
 
 const PLAYER_BIT = 1 << 4;
 function spawn(pos, yaw) {
-  if (cart) { cart.remove(); if (cart.sound) cart.sound.remove(); }
+  if (cart) {
+    // Out of any stack first: the carts on either side let go.
+    if (cart.nest) cart.nest.comeApart();
+    if (cart.nestedBehind && cart.nestedBehind.nest) cart.nestedBehind.nest.comeApart();
+    for (const o of cart.ghosts) o.ghosts.delete(cart);
+    cart.remove(); if (cart.sound) cart.sound.remove();
+  }
   cart = new Cart({ ...ctx, model: cartModel ? cartModel.clone() : null }, { pos, yaw, player: true, bit: PLAYER_BIT });
   if (rig.wheel_sound) cart.sound = new WheelSounds(cart, rig.wheel_sound, level.surfaces);
   cam.heading = yaw; cam.target.set(pos.x, pos.y + 0.67, pos.z); cam.lift = 0; cam.reach = 1;
@@ -145,9 +157,9 @@ function respawn() {
 }
 
 // ---------------------------------------------------------------- input
-// Keys: the Godot game's (main.gd). Q/A left push/pull, E/D right push/pull, W/S lean back/front up, P reset.
+// Keys: the Godot game's (main.gd). E/A left push/pull, Q/D right push/pull, W/S lean back/front up, P reset.
 const keys = new Set();
-const KEYS = { push_left: 'KeyQ', pull_left: 'KeyA', push_right: 'KeyE', pull_right: 'KeyD', lift: 'KeyW', press: 'KeyS' };
+const KEYS = { push_left: 'KeyE', pull_left: 'KeyA', push_right: 'KeyQ', pull_right: 'KeyD', lift: 'KeyW', press: 'KeyS' };
 const touchHand = { L: 0, R: 0 }, touchLean = { lift: false, press: false };
 let tiltLean = { lift: false, press: false };
 let testInput = null;   // set by the test hook
@@ -318,11 +330,23 @@ let lastInput = { L: 0, R: 0, lift: false, press: false };
 // ---------------------------------------------------------------- loop
 function physicsStep(inp) {
   if (race) race.step(STEP);
+  const all = [cart, ...others()];
+  if (rig.nest) {
+    regroup(all, rig.nest);
+    const botCarts = new Set(bots.map(b => b.cart));
+    catchNoses(ctx, all, rig.nest, c => botCarts.has(c));
+  }
+  // Every cart's keys first, so a stack wakes as one whichever of its carts is held.
+  const botInputs = bots.map(b => b.update(STEP));
+  cart.setKeys(inp);
+  for (const s of spares) s.setKeys(null);
+  bots.forEach((b, i) => b.cart.setKeys(botInputs[i]));
   cart.step(inp, STEP);
   for (const s of spares) s.step(null, STEP);
-  for (const b of bots) b.cart.step(b.update(STEP), STEP);
+  bots.forEach((b, i) => b.cart.step(botInputs[i], STEP));
   stepTraffic(level, STEP);
   world.step(eventQueue);
+  for (const c of all) if (c.nest) c.nest.update(world, STEP);
   cart.capWheelSpin(); for (const s of others()) if (!s.pinned) s.capWheelSpin();
   for (const c of [cart, ...others()]) if (c.sound) c.sound.tick(STEP);   // each wheel's sound from its physics
   eventQueue.drainCollisionEvents((h1, h2, began) => {
@@ -389,7 +413,7 @@ go.addEventListener('click', async () => {
   try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) await DeviceOrientationEvent.requestPermission(); } catch (e) { /* tilt stays off; the lean buttons still work */ }
   $('start').hidden = true;
   started = true;
-  unlockAudio(rig.wheel_sound);
+  unlockAudio(rig.wheel_sound); startMusic();
   if (mode === 'touch' && document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation?.lock?.('landscape')).catch(() => {});
   }
@@ -406,7 +430,7 @@ async function startRace(withBots) {
 }
 
 // Browsers only allow sound after a tap, click or key; Safari sometimes wants another after the Start tap.
-for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => { if (started) unlockAudio(rig.wheel_sound); }, { passive: true });
+for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => { if (started) { unlockAudio(rig.wheel_sound); startMusic(); } }, { passive: true });
 
 $('resetBtn').addEventListener('click', () => respawn());
 $('levelBtn').addEventListener('click', () => { markLevel($('menuLevels')); $('menu').hidden = false; paused = true; });
@@ -470,7 +494,7 @@ go.disabled = false; go.textContent = mode === 'touch' ? 'Tap to start' : 'Start
 window.__cart = {
   get cart() { return cart; }, get spares() { return spares; }, get bots() { return bots; }, get world() { return world; }, get level() { return level; }, get streamer() { return streamer; },
   get levelKey() { return levelKey; }, get race() { return race; }, startRace, get started() { return started; }, get cam() { return cam; }, camera, renderer,
-  RAPIER, v3, levels: levelList, loadLevel, loadedLoops, spawn, respawn, runCommand, setMode, get mode() { return mode; },
+  RAPIER, v3, levels: levelList, loadLevel, loadedLoops, musicState, spawn, respawn, runCommand, setMode, get mode() { return mode; },
   /** {L, R: -1/0/1, lift, press} or null to give control back to the keys and screen. */
   setInput(inp) { testInput = inp ? { L: 0, R: 0, lift: false, press: false, ...inp } : null; },
   /** Steps the physics directly (no drawing) for `seconds`, calling sample() after each step. */

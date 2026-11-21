@@ -76,5 +76,23 @@ func _run() -> void:
 	var c := cart.cart_origin()
 	_check("cart rolls into corral", c.z > -5.0 and absf(c.x + 1.3) < 0.5,
 		"cart origin at (%.2f, %.2f); corral runs z -5.44 to -1.27" % [c.x, c.z])
+
+	# Background loop: plays on the Music bus, loops, keeps going with the console open, under the cart's roll.
+	var music := main.get_node("BackgroundMusic") as AudioStreamPlayer
+	var ogg := music.stream as AudioStreamOggVorbis
+	var bus := AudioServer.get_bus_index(&"Music")
+	_check("background music", music.playing and music.bus == &"Music" and bus > 0 and ogg != null and ogg.loop
+		and music.process_mode == Node.PROCESS_MODE_ALWAYS and music.volume_db < -6.0,
+		"playing %s on %s (bus %d), loop %s, %.0f s, %.1f dB" % [music.playing, music.bus, bus,
+		ogg.loop if ogg else false, ogg.get_length() if ogg else 0.0, music.volume_db])
+
+	# Fast travel (console) leaves the level, and its music with it.
+	current_scene = main
+	root.get_node("Console").run_command("garage")
+	await _wait(0.5)
+	var still := (root.find_children("*", "AudioStreamPlayer", true, false) as Array).filter(
+		func(p): return p.playing and p.bus == &"Music")
+	_check("music stops on travel", not is_instance_valid(main) and still.is_empty(),
+		"parking lot freed %s, %d Music players still playing" % [not is_instance_valid(main), still.size()])
 	print("RESULT: %s (%d failing)" % ["ALL PASS" if failures == 0 else "FAILURES", failures])
 	quit(1 if failures else 0)

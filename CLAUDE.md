@@ -68,12 +68,15 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
 
 ## Layout
 
-- `scenes/main.tscn` — the sandbox level (store floor, parking lot, boxes, `CartSpawn`). It is endless: its
-  `Chunks` node (`scripts/sandbox/chunk_streamer.gd`) fills a 40 m grid around the cart with terrain chunks from
-  `scenes/sandbox/chunks/` (parking lot, street, supermarket floor, garage deck, hill street), picked by a hash of
-  the square so the layout never changes. Every chunk is 40 x 40 m, centred on its origin, and flat at height 0
-  along its edges so any chunk meets any other in any turn. Add a chunk by adding it to the `Chunks` node's
-  `chunks` and `weights`. `tools/sandbox_models.py` builds the hill (then `tools/make_sandbox_shapes_cli.gd`).
+- `scenes/main.tscn` — the sandbox level: an endless parking lot to work out the cart's physics in, with a test
+  strip (speed bumps, a curb, a ramp up to a ledge, boxes) down the spawn aisle and `CartSpawn`. Its `Chunks` node
+  (`scripts/sandbox/chunk_streamer.gd`) fills a 40 m grid around the cart with terrain chunks from
+  `scenes/sandbox/chunks/`, picked by a hash of the square so the layout never changes. The sandbox uses only
+  `open_lot.tscn` with `turns` off, so every stall row runs along X; the other chunks (parking lot with cars,
+  street, supermarket floor, garage deck, hill street) are kept for mixing back in. Every chunk is 40 x 40 m,
+  centred on its origin, and flat at height 0 along its edges so any chunk meets any other in any turn. Add a
+  chunk by adding it to the `Chunks` node's `chunks` and `weights`. `tools/parking_lot_models.py open_lot` builds
+  the open lot; `tools/sandbox_models.py` builds the hill (then `tools/make_sandbox_shapes_cli.gd`).
 - `scenes/levels/<name>.tscn` — further levels. Their root script extends `res://scripts/main.gd`,
   which supplies cart spawning, the follow camera, input and the HUD. A level scene places its own
   `CartSpawn` marker; if it has no `WorldEnvironment`, `Camera` or `HUD` node, `main.gd` adds the
@@ -83,6 +86,9 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   `scenes/cart/bot_cart.tscn` — a cart driven by a bot (`scripts/cart_bot.gd`) pressing the same keys a player does;
   place instances under a level's `BotCarts` node. Bots need the level's `Navigation` region: re-bake it with
   `godot --headless -s res://tools/bake_navigation_cli.gd` after moving anything solid.
+  `scenes/cart/cart_stack_3.tscn` / `cart_stack_4.tscn` — spare carts nested into each other (`nest_joint.tscn`,
+  `scripts/cart/cart_nest.gd`); any cart pushed lined up into the back of another nests (`Frame/NestMouth`), a yank
+  back pulls it off.
 - `scenes/net/net_session.tscn` — the `Net` autoload: host-authoritative multiplayer (`scripts/net/`). Guests'
   carts are driven through `controls` like bot carts and start at the level's `PlayerSpawns` Marker3Ds (one per guest
   slot) or beside `CartSpawn`; guests only show the host's snapshots. Plan and wire format:
@@ -94,7 +100,9 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   its painted line and `BotGoal`, a `Route` of Marker3Ds the racing bots follow, and the countdown/results HUD
   (`scenes/ui/race_hud.tscn`). The parking garage has one (roof to street exit). The console's `race` (or
   `race nobots`) loads the garage and starts it; in multiplayer the host starts it and guests follow (RACE message).
-- `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun.
+- `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun, and the garage's sky shader
+  (`skyline_sky.gdshader`). `assets/manhattan_skyline/` (not in git) — the garage's Manhattan skyline from
+  zack's Google Earth tiles, made by `sh tools/manhattan_skyline.sh`; the garage shows it only where it exists.
   `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
   (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera (`scripts/cart_camera.gd` lifts it over walls, see its exports).
 - `assets/physics/*.tres` — shared physics materials (tile, asphalt, solid).
@@ -102,6 +110,9 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   `tools/audio/make_cart_rolling_loops.py` (also writes the browser's `mobile/audio/*.wav`). Every wheel has a
   `WheelSound` (`scenes/cart/wheel_sound.tscn`) driven by that wheel's spin, slide and contact; the floor's
   physics material picks a `CartFloorSound` (`assets/audio/cart/floors/*.tres`).
+- `assets/audio/ambience/` — level background loops (`tools/audio/make_ambience_loops.py`, also writes
+  `mobile/audio/*.mp3`), played by an autoplaying `AudioStreamPlayer` on the `Music` bus (`default_bus_layout.tres`),
+  e.g. the parking lot's `BackgroundMusic`. The browser export picks it up as the level's `"music"`.
 - `scripts/` — behaviour scripts for the scenes above.
 - `tools/` (repo root) — Blender builder and export scripts. `docs/DEV_NOTES.md` — dev notes.
 
@@ -119,7 +130,9 @@ From `shopping-cart/`:
 - Browser game (from the repo root): `node mobile/test/drive_test.js`
 - Camera never clips into levels (all levels): `godot --headless --fixed-fps 120 -s res://tests/camera_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
+- Stacked carts (nest, herd, pull off, knocks): `godot --headless --fixed-fps 120 -s res://tests/cart_stack_test.gd`
 - Wheel sounds (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
+- Sandbox screenshots (spawn, overview, test strip, 2 km out): `xvfb-run godot -s res://tests/sandbox_screenshot.gd -- <out prefix>`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
 - Multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/multiplayer_test.gd`
 - Rendezvous service, and online play by join code over WebRTC (from `services/rendezvous`, after `npm install`):
