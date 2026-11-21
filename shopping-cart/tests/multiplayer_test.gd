@@ -9,6 +9,8 @@ extends SceneTree
 ## stops the guest sees both carts where the host has them; then the host travels through every level and the
 ## guest follows, with matching loose bodies, everything frozen on its side, its bots off and its cart upright. Last,
 ## the host starts a race in the garage: the guest lines up, sees the count, is held until GO and gets the results.
+## Then a supermarket sweep: the guest lines up, its cart is parked by the coffee and five cans drop into it on the
+## host; the guest sees them in its basket, its score and pop-ups, and the results.
 
 const LEVELS := ["res://scenes/main.tscn", "res://scenes/levels/supermarket.tscn",
 	"res://scenes/levels/parking_lot.tscn", "res://scenes/levels/parking_garage.tscn"]
@@ -201,6 +203,7 @@ func _run() -> void:
 			var err := _vec(e.own).distance_to(guest_cart.cart_origin())
 			_check(name + ": guest's cart where the host has it", err < 0.05, "%.3f m off" % err)
 	await _race(gid)
+	await _sweep(gid)
 	OS.kill(pid)
 	_finish()
 
@@ -251,6 +254,51 @@ func _race(gid: int) -> void:
 			"counts %s" % str(g.counts))
 		_check("race: guest's results list everyone with its time", g.results_shown and int(g.racers) == res.size()
 			and absf(g.my_time - res[0].time) < 0.01, "%d racers, my time %.2f" % [g.racers, g.my_time])
+
+
+## The host runs a short sweep in the supermarket (no bots): the guest's cart, parked by the coffee, gets five cans.
+func _sweep(gid: int) -> void:
+	change_scene_to_file("res://scenes/levels/supermarket.tscn")
+	await _wait(3.0)
+	var sweep := get_first_node_in_group("sweep") as Sweep
+	_check("sweep: the supermarket has a sweep", sweep != null, "")
+	if sweep == null:
+		return
+	sweep.start(false, 12.0)
+	var deadline := Time.get_ticks_msec() + 15000
+	while sweep.phase == Sweep.Phase.WAITING and Time.get_ticks_msec() < deadline:
+		await physics_frame
+	_check("sweep: counting down once the guest has loaded", sweep.phase == Sweep.Phase.COUNTDOWN,
+		"phase %d, %d shoppers" % [sweep.phase, sweep.shoppers.size()])
+	var guest_cart: ShoppingCart = net.carts.get(gid)
+	var slot := sweep.slots()[1]
+	_check("sweep: guest lined up at the entrance", guest_cart != null and guest_cart.cart_origin().distance_to(slot.global_position) < 0.15,
+		"%s vs %s" % [guest_cart.cart_origin() if guest_cart else "none", slot.global_position])
+	while sweep.phase == Sweep.Phase.COUNTDOWN:
+		await physics_frame
+	var coffee := sweep.displays.get_node("Coffee") as ProductDisplay
+	net.place_guest_cart(gid, coffee.stop.global_position - Vector3(0.55, 0, 0), 0.0)
+	await _wait(3.5)
+	var g: Dictionary = sweep.shoppers.filter(func(x): return x.id == gid)[0]
+	_check("sweep: coffee drops into the guest's cart", g.items == 5 and g.cents == 5 * 899, "%d items, %s" % [g.items, SweepHUD.money(g.cents)])
+	deadline = Time.get_ticks_msec() + 20000
+	while sweep.phase != Sweep.Phase.DONE and Time.get_ticks_msec() < deadline:
+		await physics_frame
+	_check("sweep: time's up, guest wins", sweep.phase == Sweep.Phase.DONE and sweep.results()[0].id == gid, "")
+	var r := _guest_result()
+	deadline = Time.get_ticks_msec() + 15000
+	while not r.has("sweep") and Time.get_ticks_msec() < deadline:
+		await _wait(0.25)
+		r = _guest_result()
+	_check("sweep: guest reports", r.has("sweep"), "")
+	if r.has("sweep"):
+		var e: Dictionary = r.sweep
+		_check("sweep: guest saw 3, 2, 1", e.counts.has(3.0) and e.counts.has(2.0) and e.counts.has(1.0), "counts %s" % str(e.counts))
+		_check("sweep: guest sees the 5 cans in its basket", int(e.in_basket) == 5, "%d" % e.in_basket)
+		_check("sweep: guest's score and pop-ups", int(e.my_cents) == 5 * 899 and e.toast_seen, "%s, pop-up %s" % [
+			SweepHUD.money(int(e.my_cents)), e.toast_seen])
+		_check("sweep: guest's display sign counts down", int(e.coffee_left) == 5, "%d left" % e.coffee_left)
+		_check("sweep: guest's results list everyone", e.results_shown and int(e.shoppers) == sweep.shoppers.size(), "")
 
 
 func _finish() -> void:

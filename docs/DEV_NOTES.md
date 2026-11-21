@@ -40,6 +40,70 @@ physics, gate -> child seat -> flap, and a gate swinging up should push the chil
 - **Left out:** nothing opens the seat in play (no toddler); the open flap doesn't reach the gate (the bracket moves
   the seat 4.5 cm forward), so a flap lifted level drops back.
 
+## 2026-11-21: Supermarket sweep
+
+zack asked for a timed game mode in the supermarket in the spirit of TV grocery-sweep shows (the mechanics only: no
+show name, host, branding or music). The console's `sweep` loads the supermarket (from anywhere), restocks it and
+lines everyone up at the entrance; `sweep nobots` leaves the bot carts out, `sweep 60` plays a 60 s round (the
+default is 1:30). In the browser it's the same command, or Level › Supermarket sweep on a phone.
+
+- **Rules:** 3, 2, 1, GO (carts held with `ShoppingCart.locked`, as in the race), then the clock counts down. Every
+  cart starts with an empty basket (`ShoppingCart.show_groceries(false)` takes its five groceries out of play: hidden,
+  frozen, colliding with nothing, so the network's body lists stay the same). Roll slower than 1.4 m/s (a walk)
+  with your cart's frame in a display's GrabZone and its items drop into your basket one every 0.35 s, top of the
+  stack first; at most 5 of one product per cart (a pop-up says so once). Items are ordinary loose bodies once
+  taken: they ride in the basket, spill when you crash or roll over, and can even land in someone else's cart. A
+  cart's score is the price of what's in its basket (the same box `groceries_in_basket` uses, heaped up to 1.2 m,
+  capped at 5 per product) plus its bonuses, counted in cents. When time's up the checkout table ranks everyone
+  (ties: fewer items wins). A reset (P) mid-sweep leaves your basket's contents on the floor: that's the price.
+- **Bonuses:** three giant inflatables (soda bottle $250 in the front corner by the produce, cereal box $150 in the
+  back corner, soup can $100 by the meat): the first cart to touch one claims it and it's put away under the floor
+  until the next sweep. Two bonus stations (deli counter and coffee grinder, $50 each, in the back aisle): stop in the
+  taped 2 x 2 m box and hold still (under 0.25 m/s) for 3 s; once per cart.
+- **Scenes:** `scenes/sweep/sweep.tscn` (`scripts/sweep/sweep.gd`, all the rules) with a 12-slot `Grid`;
+  `product_display.tscn` (`ProductDisplay`: table, Title and Left labels on its price board, `Stock`, `GrabZone`
+  2.6 x 1.6 x 3.2 m reaching 1.6 m into the aisle in front, `Stop` 0.95 m out for bots); 12 product scenes in
+  `scenes/sweep/products/` (`Product`: name and price exported, a pack plus a label band, frozen until taken);
+  `inflatable_bottle/cereal/can.tscn` (`Inflatable`, light 2 to 2.5 kg bodies with a floating BONUS price);
+  `bonus_station.tscn` (`BonusStation`, an Area3D box, floor tape, a sign on a pole); the HUD
+  `scenes/ui/sweep_hud.tscn` (clock, basket total, pop-ups, standings, checkout table). The supermarket instances
+  the sweep and places 12 displays, 3 inflatables and 2 stations under it (104 products).
+- **Products and prices** (pack sizes in metres, stock per table): cereal $4.79 (0.19 x 0.28 x 0.07, 10), coffee
+  can $8.99 (r 0.065 x 0.16, 10), olive oil $12.49 (r 0.04 x 0.28, 8), detergent $13.99 (0.24 x 0.26 x 0.13, 8),
+  steak $16.99 (0.22 x 0.05 x 0.15, 8), soda 12-pack $6.49 (0.40 x 0.13 x 0.27, 8), paper towels $9.99
+  (0.30 x 0.28 x 0.20, 8), pasta $1.89 (10), soup $2.29 (10), cheese wheel $11.49 (r 0.11 x 0.08, 8), batteries
+  $14.49 (0.12 x 0.17 x 0.035, 8), ham $19.99 (0.22 x 0.13 x 0.15, 8). Small, dear things (steak, batteries, ham)
+  against big cheap ones that fill the basket (soda, towels) is the choice the round is about. Displays sit against
+  the gondolas in the aisles (leaving 2.1 m of aisle), at the back against the meat fridges, by the dairy case, by
+  the produce and in the front corner; the nav mesh was re-baked around them.
+- **Models** (`tools/supermarket_models.py`, Blender primitives, shared materials): `sweep_table` 1.0 x 0.5 m tray at
+  0.72 m on chrome legs, red skirts, price board on a pole at 1.62 to 1.92 m (204 tris, 15 KB);
+  `inflatable_bottle` 1.7 m tall, 0.64 m across (24 KB); `inflatable_cereal` 0.9 x 1.4 x 0.35 m (72 tris, 7 KB);
+  `inflatable_can` 1.0 m tall, 0.7 m across (432 tris, 21 KB). New shared materials: `vinyl_*` (glossy inflatables)
+  and `pack_*` (the products, which are Godot BoxMesh/CylinderMesh: a box or a can plus a label band).
+- **Z-fighting:** the builder's coplanar check passes for the new models (the tray rim stands 3 to 4 mm proud of the
+  tray's edge, the can's rims overlap its ends instead of sharing them); the label bands are 1 mm proud of their
+  packs; items sit 1.5 mm above the tray and 2 mm apart in a stack; the station's tape is 1.5 mm off the floor and
+  its four strips butt without overlapping; the labels are 1.5 mm off the board.
+- **Bots:** `CartBot` got an errand mode (`drive_to`, `at_errand`, `stop_errand`): drive somewhere, stop and hold
+  still. In a sweep each bot heads for the display worth most to it (price times what it can still take, over the
+  distance, cut to 30 % if another bot is already headed there), waits up to 6 s while its items drop in, then moves
+  on. They fill $40 to $110 of cart in 45 s, so a decent run beats them.
+- **Multiplayer:** the host runs the sweep; products and inflatables are level bodies, so snapshots move them. SWEEP
+  (protocol version 5, after the cart flags took 4) carries scores, items left per display and a guest's own pop-ups (docs/MULTIPLAYER.md).
+- **Browser:** `mobile/game/sweep.js` ports it (no multiplayer there). The level export now writes a sweep's products
+  as loose props marked `frozen` (Rapier fixed bodies until taken) and a "sweep" section in `levels/market.json`
+  (settings, slots, displays with their items, zones and "left" label, inflatables, stations); the live labels
+  (items left, inflatable prices) are drawn by sweep.js instead of as static labels. `cart.js` got
+  `dropGroceries()`, `bot.js` the errand mode, `level.js` exports `labelObject`. Zones are tested at three points
+  along the frame (handle, basket, nose) and an inflatable claims on a Rapier contact with the frame.
+- **Tests:** `tests/sweep_test.gd` (console, line-up, empty baskets, the count, grabbing to the limit, a spill,
+  both bonus kinds, bots shop, results, restock), a sweep step at the end of `tests/multiplayer_test.gd` (the guest's
+  cart is parked at the coffee: the guest sees the cans in its basket, its score, pop-ups, the sign and results), and
+  a sweep block in `mobile/test/drive_test.js`. Renders: `tests/sweep_screenshot.gd`.
+- **Left out for now:** a question round to earn extra time, the hidden-product bonus round, carrying the inflatables
+  in the cart (touching one claims it), scooping spilled items back up off the floor, sounds for grabs and bonuses.
+
 ## 2026-11-21: Pennant flags on player carts in multiplayer
 
 Every cart now carries a pennant flag on a tall pole, like a kids' store cart, hidden until a multiplayer game

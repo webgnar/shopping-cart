@@ -78,6 +78,25 @@ MATERIALS = {
     "roof_deck": ("4d5157", 0.9, 0, None, 0, False),
     "steel_white": ("e5e7ea", 0.6, 0.3, None, 0, False),
     "duct": ("dcdfe3", 0.45, 0.5, None, 0, False),
+    # supermarket sweep: glossy vinyl for the giant inflatables
+    "vinyl_red": ("d7261e", 0.25, 0, None, 0, False),
+    "vinyl_white": ("f4f2ec", 0.25, 0, None, 0, False),
+    "vinyl_yellow": ("f5c518", 0.25, 0, None, 0, False),
+    "vinyl_green": ("2f9e4f", 0.2, 0, None, 0, False),
+    "vinyl_blue": ("2a62c9", 0.25, 0, None, 0, False),
+    # supermarket sweep: the packs and labels of the products shoppers grab (Godot primitive meshes)
+    "pack_yellow": ("f2c12e", 0.6, 0, None, 0, False),
+    "pack_brown": ("4a2c1c", 0.5, 0, None, 0, False),
+    "pack_olive": ("6b7a22", 0.25, 0, None, 0, False),
+    "pack_sky": ("4fa3e0", 0.4, 0, None, 0, False),
+    "pack_crimson": ("9c1b22", 0.35, 0, None, 0, False),
+    "pack_red": ("d0312d", 0.4, 0, None, 0, False),
+    "pack_white": ("f3f3ef", 0.6, 0, None, 0, False),
+    "pack_blue": ("2c58b0", 0.55, 0, None, 0, False),
+    "pack_orange": ("ee8a26", 0.45, 0, None, 0, False),
+    "pack_pink": ("e59a92", 0.5, 0, None, 0, False),
+    "pack_gold": ("d9a62e", 0.35, 0.3, None, 0, False),
+    "pack_cream": ("efe6cf", 0.6, 0, None, 0, False),
     "column_paint": ("f0f0ee", 0.6, 0, None, 0, False),
 }
 for k, c in STOCK.items():
@@ -520,8 +539,68 @@ def store_shell():
     return m
 
 
+# ---------------------------------------------------------------- supermarket sweep props
+def sweep_table():
+    """Sale table for one product in a supermarket sweep: 1.0 x 0.5 m tray at 0.72 m on chrome legs, a red skirt on
+    both long sides and a price board on a pole at the back-left corner (the Godot scene puts its text on). Long
+    axis along X; the front (the side carts shop from) faces -Z, but carts shop from either side."""
+    m = Model("sweep_table")
+    L, D, top = 1.0, 0.5, 0.72
+    for sx in (-1, 1):
+        for sz in (-1, 1):
+            m.box("chrome", (0.03, top - 0.03, 0.03), (sx * (L / 2 - 0.03), (top - 0.03) / 2, sz * (D / 2 - 0.03)), "leg")
+        m.box("chrome", (0.024, 0.024, D - 0.09), (sx * (L / 2 - 0.03), 0.12, 0), "foot rail")
+    m.box("chrome", (L - 0.09, 0.024, 0.024), (0, 0.12, D / 2 - 0.03), "back rail")
+    m.box_span("shelf_dark", -L / 2, L / 2, top - 0.03, top, -D / 2, D / 2, "tray")
+    for sz in (-1, 1):   # rim round the tray, standing proud of its edge so no face lines up with the tray's
+        m.box_span("chrome", -L / 2 - 0.004, L / 2 + 0.004, top, top + 0.035, *sorted((sz * (D / 2 + 0.004), sz * (D / 2 - 0.012))), label="rim")
+    for sx in (-1, 1):
+        m.box_span("chrome", *sorted((sx * (L / 2 + 0.003), sx * (L / 2 - 0.013))), top, top + 0.034, -D / 2 + 0.013, D / 2 - 0.013, label="rim end")
+    for sz in (-1, 1):
+        m.box_span("sale_red", -L / 2 + 0.05, L / 2 - 0.05, top - 0.22, top - 0.032, *sorted((sz * (D / 2 - 0.02), sz * (D / 2 - 0.035))), label="skirt")
+    # price board on a pole
+    m.box("chrome", (0.025, 1.62 - top, 0.025), (-L / 2 + 0.06, top + (1.62 - top) / 2, D / 2 - 0.06), "pole")
+    m.box("sign_dark", (0.56, 0.3, 0.02), (-L / 2 + 0.06, 1.62 + 0.15, D / 2 - 0.06), "board")
+    m.box("sign_yellow", (0.564, 0.03, 0.024), (-L / 2 + 0.06, 1.62 + 0.3 + 0.015, D / 2 - 0.06), "board cap")
+    return m
+
+
+def inflatable_bottle():
+    """Giant inflatable soda bottle, 1.7 m tall, 0.64 m across: base ring, body, label band, shoulder, neck, cap."""
+    m = Model("inflatable_bottle")
+    m.cyl("vinyl_green", 0.28, 0.32, 0.12, (0, 0.06, 0), seg=24)             # rounded-off base
+    m.cyl("vinyl_green", 0.32, 0.32, 0.9, (0, 0.12 + 0.45, 0), seg=24)       # body
+    m.cyl("vinyl_red", 0.326, 0.326, 0.36, (0, 0.62, 0), seg=24)              # label band
+    m.cyl("vinyl_green", 0.32, 0.11, 0.42, (0, 1.02 + 0.21, 0), seg=24)      # shoulder
+    m.cyl("vinyl_green", 0.11, 0.11, 0.14, (0, 1.44 + 0.07, 0), seg=16)      # neck
+    m.cyl("vinyl_white", 0.125, 0.125, 0.12, (0, 1.58 + 0.06, 0), seg=16)    # cap
+    return m
+
+
+def inflatable_cereal():
+    """Giant inflatable cereal box, 0.9 x 1.4 x 0.35 m, front -Z: yellow box, white panel and red stripe front and back."""
+    m = Model("inflatable_cereal")
+    m.box("vinyl_yellow", (0.9, 1.4, 0.35), (0, 0.7, 0), "box")
+    m.box("vinyl_red", (0.904, 0.16, 0.354), (0, 1.18, 0), "stripe")
+    for sz in (-1, 1):
+        m.box("vinyl_white", (0.6, 0.5, 0.004), (0, 0.62, sz * (0.175 + 0.002)), "panel")
+        m.box("vinyl_blue", (0.3, 0.12, 0.004), (0, 0.95, sz * (0.175 + 0.002)), "name strip")
+    return m
+
+
+def inflatable_can():
+    """Giant inflatable soup can, 1.0 m tall, 0.7 m across: red can, white label, silver rims."""
+    m = Model("inflatable_can")
+    m.cyl("vinyl_red", 0.35, 0.35, 0.994, (0, 0.003 + 0.497, 0), seg=28)
+    m.cyl("vinyl_white", 0.356, 0.356, 0.46, (0, 0.5, 0), seg=28)
+    m.cyl("chrome", 0.362, 0.362, 0.04, (0, 0.02, 0), seg=28)
+    m.cyl("chrome", 0.362, 0.362, 0.04, (0, 1.0 - 0.02, 0), seg=28)
+    return m
+
+
 BUILDERS = {f.__name__: f for f in [gondola, fridge_case, produce_table, checkout_counter, product_case, pallet,
-                                     aisle_sign, strip_light, banner, store_shell]}
+                                     aisle_sign, strip_light, banner, store_shell,
+                                     sweep_table, inflatable_bottle, inflatable_cereal, inflatable_can]}
 
 
 # ---------------------------------------------------------------- linking .glb imports to the shared materials

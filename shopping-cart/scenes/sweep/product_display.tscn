@@ -1,0 +1,68 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/sweep/product_display.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/models/supermarket/sweep_table/sweep_table.glb" id="2"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="3"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_table"]
+size = Vector3(1.008, 0.755, 0.508)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_pole"]
+size = Vector3(0.04, 1.2, 0.04)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_zone"]
+size = Vector3(2.6, 1.6, 3.2)
+
+[node name="ProductDisplay" type="Node3D" node_paths=PackedStringArray("stock", "zone", "stop", "title", "left_label")]
+script = ExtResource("1")
+stock = NodePath("Stock")
+zone = NodePath("GrabZone")
+stop = NodePath("Stop")
+title = NodePath("Title")
+left_label = NodePath("Left")
+
+[node name="Table" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("3")
+
+[node name="Shape" type="CollisionShape3D" parent="Table"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3775, 0)
+shape = SubResource("BoxShape3D_table")
+
+[node name="PoleShape" type="CollisionShape3D" parent="Table"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.44, 1.35, 0.19)
+shape = SubResource("BoxShape3D_pole")
+
+[node name="Model" parent="." instance=ExtResource("2")]
+
+[node name="Title" type="Label3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -0.44, 1.815, 0.1785)
+pixel_size = 0.0022
+double_sided = false
+modulate = Color(1, 0.86, 0.35, 1)
+outline_size = 0
+font_size = 32
+text = "COFFEE
+$8.99"
+line_spacing = -6.0
+
+[node name="Left" type="Label3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -0.44, 1.68, 0.1785)
+pixel_size = 0.0022
+double_sided = false
+outline_size = 0
+font_size = 22
+text = "10 left"
+
+[node name="Stock" type="Node3D" parent="."]
+
+[node name="GrabZone" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="Shape" type="CollisionShape3D" parent="GrabZone"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, -0.6)
+shape = SubResource("BoxShape3D_zone")
+
+[node name="Stop" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.95)
