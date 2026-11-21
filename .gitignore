@@ -2,3 +2,4 @@
 
 # Baked Manhattan skyline from Google Earth tiles: kept local (licence), see tools/manhattan_skyline.py
 shopping-cart/assets/manhattan_skyline/
+node_modules/

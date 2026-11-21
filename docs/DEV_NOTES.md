@@ -3,6 +3,68 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: sandbox is an endless parking lot (lot-only chunks); Q and E push keys swapped
+
+The sandbox (`scenes/main.tscn`) is now an open daytime parking lot that never ends, so the cart's physics can be
+worked on with room to run. Reference: the aerial photos in `Level Reference Images/` (big, mostly empty lots,
+double rows of painted stalls, light poles on the stall heads, planter islands with trees at the row ends).
+
+- **Built on the chunk streamer.** This started as a separate endless grid (78 x 37 m blocks following the
+  camera); main meanwhile got `ChunkStreamer` and multiplayer on top of it, so the lot was rebuilt as a 40 m
+  chunk instead. The sandbox's `Chunks` node now streams only `scenes/sandbox/chunks/open_lot.tscn`, with the new
+  `turns` export off so every chunk faces the same way and the rows read as one big lot (the browser's
+  `stream.js` honours it too). Load distance 96 m, unload 120 m (main's other chunk sets used 64 / 88): at most
+  33 chunks at once in `tests/sandbox_test.gd`. The store floor, old asphalt slab and yard (the home squares) are
+  gone; there are no home squares now. The old lot, street, market, garage and hill chunks are untouched, ready
+  to mix back in through `chunks` and `weights`; their browser exports were removed from `mobile/levels/chunks/`
+  (the exporter writes them again when they're listed).
+- **No seams: one ground plane.** Each chunk used to carry its own 40 x 40 m ground box, and a cart crossing
+  from one box to the next at speed trips on the joint: the drive test's hard pull (backing across x = -20 at
+  about 6 m/s) flipped there every time, and main's notes saw the same at the hill. The open lot has no ground
+  of its own; the sandbox's `Ground` is one `WorldBoundaryShape3D` (asphalt) and the hard pull now lands on its
+  wheels. Jolt makes a world boundary a square `world_boundary_shape_size` wide (2 km by default, so the ground
+  ended 1 km out); `project.godot` sets it to 20 km, and the browser export uses the same size. Mixing chunks
+  that bring their own ground back in would bring their seams back too.
+- **Open-lot chunk:** 40 x 40 m. Two double rows of 11 stalls (2.7 x 5.5 m, as the parking lot level) along X,
+  a 9 m drive aisle down the middle (z = 0, the spawn aisle) and a 4.5 m half aisle along each Z edge, so chunks
+  meet in a full aisle. Each double row ends at +X in a planter island (2.4 x 11 m, streetlight and two palms,
+  as `planter_island.tscn`) and a 7.3 m cross aisle runs on to the +X edge; a second streetlight stands on the
+  stall heads at x = -6.2. Only 2 mm paint comes within 0.3 m of an edge. Collision: the chunk's 40 x 40 m
+  ground box (asphalt) and one solid body with the island curbs, pole bases, poles and palm trunks (18 shapes).
+- **Model** (`assets/models/parking_lot/open_lot/open_lot.glb`, `tools/parking_lot_models.py open_lot`): the
+  existing hand-built props (stall markings, planter island, streetlight, palm tree) placed into one model and
+  merged into one object per material, plus the 40 x 40 m asphalt face. 12,922 triangles, 483 KB, 12 objects /
+  materials, all shared `.tres` by name. `Model` got a `by_material` mode and `at()` placement for this; the
+  prop builders take an optional model to build into, and `stall_markings` a stall count (their own .glb output
+  is unchanged). Merged so a chunk draws in about ten calls.
+- **Z-fighting:** 0 hits. The scan is now a sorted sweep (fast enough for a whole chunk) and also measures the
+  real gap between two faces; the old plane-offset test flagged palm trunk faces about 2 degrees apart only
+  because their offsets happened to match at the palm's spot in the chunk.
+- **Test strip** down the spawn aisle (+X), fixed in the world: speed bumps at x = 14 and 18 (0.35 x 0.05 x 6 m,
+  as before), a 15 cm curb at x = 24, a 6.8 degree ramp (the old angle) at x = 28.4 to 31.6 up onto a 0.38 m
+  ledge that drops off at x = 33.6, then two stacks of three cardboard boxes at x = 39. `CartSpawn` is at the
+  origin facing +X; the `Chunks` grid starts at (-20, 0, -20), so the spawn is the middle of a chunk's aisle.
+- **Sky:** clear day: blue procedural sky, the default sun, depth fog from 35 to 95 m in the horizon colour (the
+  lower sky is the same colour, so the edge of the loaded chunks melts into it). The browser exporter now passes
+  `fog_mode` and the depth range, and the browser uses three.js `Fog` for depth fog.
+- **Left out:** the store tile floor (the supermarket has tile; the drive test's "tile push" and the rolling
+  sound test's "sandbox tile" case are gone, the supermarket case still checks the tile sound), parked cars,
+  wheel stops and cart corrals in the open lot (kept open for driving), bots (no navigation mesh).
+- **Keys:** the two push keys swapped: **Q** is now the right hand's push and **E** the left hand's, so both
+  left-side keys (Q push right, A pull left) turn the cart left and both right-side keys (E, D) turn it right.
+  A and D are unchanged. `main.gd`, the HUD keycaps (each keeps its letter: Q reads RIGHT PUSH, E reads LEFT
+  PUSH; the LEFT and RIGHT power bars still show the hands), the browser game's keys and keycaps, and the test
+  labels.
+- **Tests:** `drive_test` (Godot and browser) "coast then rest" now waits 30 s, not 12: with the retuned cart a
+  coast from a 1 s push rolls about 15 m and is still at 0.5 m/s after 12 s on open ground; it only passed
+  before because the cart ran into the old sandbox ramp. `multiplayer_test` expects chunk body poses only when
+  the host's chunks have loose bodies (the open lot has none); the browser's stream check wants as many chunk
+  kinds as the sandbox has, up to three. `sandbox_test.gd` adds the open lot's floor, scales its chunk limit with the unload distance and
+  skips the hill when the sandbox has none. `camera_test.gd` sandbox spots sit next to a light pole (the default
+  orbit passes through it with avoidance off), the ramp and an island. Playwright is installed at the repo root
+  (`npm install --no-save playwright`, `npx playwright install chromium`; `node_modules/` is git-ignored), so
+  the browser drive test runs here too.
+
 ## 2026-11-21: Stacked carts (nesting)
 
 zack wants carts that nest into one another and move as a herd with very different physics (reference: a photo of a

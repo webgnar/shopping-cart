@@ -236,7 +236,7 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 ## A ChunkStreamer's settings for mobile/game/stream.js: the grid, the chunks (exported to levels/chunks/<name>),
 ## their weights, the far ground, and a table of picks the browser checks its own hash against.
 static func _stream(st: ChunkStreamer) -> Dictionary:
-	var d := {"origin": _v(st.global_position), "chunk_size": st.chunk_size, "seed": st.world_seed,
+	var d := {"origin": _v(st.global_position), "chunk_size": st.chunk_size, "seed": st.world_seed, "turns": st.turns,
 		"load_distance": st.load_distance, "unload_distance": st.unload_distance,
 		"home_cells": st.home_cells.map(func(c): return [c.x, c.y]), "weights": Array(st.weights),
 		"chunks": st.chunks.map(func(c): return {"key": chunk_key(c.resource_path), "scene": c.resource_path}),
@@ -346,10 +346,12 @@ static func _shape(shape: Shape3D, xf: Transform3D) -> Dictionary:
 		d.type = "mesh"
 		d.faces = _flat(Array(shape.get_faces()).map(func(p): return p * sc))
 	elif shape is WorldBoundaryShape3D:
-		d.type = "box"
+		# An endless floor: the phone uses Rapier's half-space (a box tens of km wide costs contact precision).
+		# xf: a point on the plane, local +Y along its normal.
+		d.type = "plane"
 		var plane: Plane = shape.plane
-		d.xf = _xf(Transform3D(Basis.IDENTITY, xf * (plane.normal * plane.d - plane.normal * 0.5)))
-		d.size = [400, 1, 400]
+		var normal := (xf.basis * plane.normal).normalized()
+		d.xf = _xf(Transform3D(Basis(Quaternion(Vector3.UP, normal)), xf * (plane.normal * plane.d)))
 	else:
 		push_warning("Mobile export: %s isn't supported, skipped" % shape.get_class())
 		return {}
@@ -377,6 +379,8 @@ static func _environment(env: Environment) -> Dictionary:
 		"ambient_sky_contribution": env.ambient_light_sky_contribution,
 		"tonemap": env.tonemap_mode, "exposure": env.tonemap_exposure,
 		"fog": env.fog_enabled, "fog_color": _c(env.fog_light_color), "fog_density": env.fog_density,
+		"fog_mode": ["exponential", "depth"][env.fog_mode], "fog_depth_begin": env.fog_depth_begin,
+		"fog_depth_end": env.fog_depth_end,
 	}
 	if env.sky and env.sky.sky_material is ProceduralSkyMaterial:
 		var s := env.sky.sky_material as ProceduralSkyMaterial

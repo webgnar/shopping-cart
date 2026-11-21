@@ -5,7 +5,7 @@ Run from the repo root, either with Blender or with the `bpy` Python module:
     python3 tools/parking_lot_models.py [name ...]        # needs `pip install bpy`
 
 Writes shopping-cart/assets/models/parking_lot/<name>/<name>.glb. For new models, then run
-`godot --headless --import` in shopping-cart/ and `python3 tools/parking_lot_models.py --link-materials`
+`godot --headless --import` in shopping-cart/ and `python3 tools/parking_lot_models.py --link-materials [name ...]`
 (no Blender needed) so each .glb uses the shared Godot materials, and import again.
 
 Conventions (see docs/levels/parking_lot.md for every size chosen):
@@ -56,22 +56,34 @@ def material(name):
 class Model:
     """Collects primitives into named objects (one material each), then exports a .glb."""
 
-    def __init__(self, name):
+    def __init__(self, name, by_material=False):
+        """by_material: one object per material (named after it), so whole props can be placed into this
+        model with `at()` and merged; each prop builder then adds to the object for its material."""
         self.name = name
         bpy.ops.wm.read_factory_settings(use_empty=True)
         self.objs = {}
+        self.by_material = by_material
+        self.xf = Matrix.Identity(4)
 
     def obj(self, name, mat):
+        if self.by_material:
+            if mat not in self.objs:
+                self.objs[mat] = (bmesh.new(), mat)
+            return mat
         assert name not in self.objs, name
         self.objs[name] = (bmesh.new(), mat)
         return name
+
+    def at(self, x, z, yaw_deg=0.0):
+        """Place the next primitives at Godot (x, 0, z), turned yaw_deg about Godot +Y (= Blender +Z)."""
+        self.xf = Matrix.Translation((x, -z, 0)) @ Matrix.Rotation(math.radians(yaw_deg), 4, "Z")
 
     def _bm(self, o):
         return self.objs[o][0]
 
     def _add(self, o, verts, faces):
         bm = self._bm(o)
-        vs = [bm.verts.new(v) for v in verts]
+        vs = [bm.verts.new(self.xf @ Vector(v)) for v in verts]
         for f in faces:
             bm.faces.new([vs[i] for i in f])
 
@@ -259,11 +271,14 @@ def z_fighting(objects, eps=2e-4):
             xs, ys = [f[0] for f in flat], [f[1] for f in flat]
             faces.append((ob.name, p.index, n, n.dot(pts[0]), flat, (min(xs), max(xs), min(ys), max(ys)), p.center.copy()))
     hits = []
+    faces.sort(key=lambda f: f[3])   # by plane offset: only faces within eps of each other can fight
     for i in range(len(faces)):
         oa, ia, na, da, fa, ba, ca = faces[i]
         for j in range(i + 1, len(faces)):
             ob, ib, nb, db, fb, bb, cb = faces[j]
-            if na.dot(nb) < 0.999 or abs(da - db) > eps:
+            if db - da > eps:
+                break
+            if na.dot(nb) < 0.999 or abs(na.dot(cb - ca)) > eps:   # same way, and really on the same plane here
                 continue
             if min(ba[1], bb[1]) - max(ba[0], bb[0]) <= 1e-3 or min(ba[3], bb[3]) - max(ba[2], bb[2]) <= 1e-3:
                 continue
@@ -347,9 +362,10 @@ def cart_corral():
     return m.build()
 
 
-def streetlight():
+def streetlight(m=None):
     """Parking lot pole: 1 m concrete pier, 8.4 m steel pole, two LED shoebox heads at 9.4 m along X."""
-    m = Model("streetlight")
+    own = m is None
+    m = Model("streetlight") if own else m
     c = m.obj("Base", "concrete")
     m.cyl(c, 0.36, 0.95, (0, 0, 0), segs=24, r_top=0.33)
     m.cyl(c, 0.33, 0.05, (0, 0, 0.95), segs=24, r_top=0.29)   # chamfered top
@@ -372,12 +388,13 @@ def streetlight():
     lens = m.obj("Lens", "led_lens")
     for x in (-1.0, 1.0):
         m.box(lens, (0.6, 0.34, 0.012), (x, 0, 9.344))
-    return m.build()
+    return m.build() if own else 0
 
 
-def palm_tree():
+def palm_tree(m=None):
     """Washingtonia-style palm, 7.6 m tall, slight lean toward +X."""
-    m = Model("palm_tree")
+    own = m is None
+    m = Model("palm_tree") if own else m
     rnd = random.Random(3)
     t = m.obj("Trunk", "palm_trunk")
     segs, H = 14, 7.0
@@ -412,13 +429,14 @@ def palm_tree():
         pts = [crown + d * 0.2 + Vector((0, 0, 0.1)), crown + d * 0.55 + Vector((0, 0, -0.5)),
                crown + d * 0.62 + Vector((0, 0, -1.2)), crown + d * 0.6 + Vector((0, 0, -1.7))]
         m.strip(dead, pts, [0.1, 0.45, 0.4, 0.1], fold=math.radians(30))
-    return m.build()
+    return m.build() if own else 0
 
 
-def planter_island():
+def planter_island(m=None):
     """Curbed landscape island, 11 m long (along Y) and 2.4 m wide, with mulch and shrubs.
     The streetlight and palms are separate scenes placed on it."""
-    m = Model("planter_island")
+    own = m is None
+    m = Model("planter_island") if own else m
     outer = stadium(11.0, 2.4)
     inner = stadium(11.0 - 0.3, 2.4 - 0.3)
     c = m.obj("Curb", "curb_concrete")
@@ -432,7 +450,7 @@ def planter_island():
     for i, (x, y) in enumerate(spots):
         r = rnd.uniform(0.28, 0.4)
         m.ball(s, r, (x, y, 0.12 + r * 0.55), scale=(1, 1, 0.75), segs=9, rings=6, jitter=0.12, seed=i)
-    return m.build()
+    return m.build() if own else 0
 
 
 def parked_car():
@@ -491,17 +509,62 @@ def parked_car():
     return m.build()
 
 
-def stall_markings():
-    """Paint for one row of 8 stalls, 2.7 m wide and 5.5 m deep, with hairpin dividers.
+def stall_markings(m=None, count=8):
+    """Paint for one row of `count` stalls (8 for the parking lot level), 2.7 m wide and 5.5 m deep, with
+    hairpin dividers.
     Origin: bottom center of the row's open (aisle) edge; stalls run toward -Y (Godot +Z) from there."""
-    m = Model("stall_markings")
+    own = m is None
+    m = Model("stall_markings") if own else m
     p = m.obj("Paint", "paint_white")
     t = 0.002
-    for k in range(9):
-        x = -10.8 + 2.7 * k
+    for k in range(count + 1):
+        x = -1.35 * count + 2.7 * k
         for dx in (-0.15, 0.15):   # hairpin: two lines joined at the aisle end
             m.box(p, (0.1, 5.4, t), (x + dx, -2.8, t / 2))
         m.box(p, (0.4, 0.1, t), (x, -0.05, t / 2))
+    return m.build() if own else 0
+
+
+# The sandbox's open-lot chunk (scenes/sandbox/chunks/open_lot.tscn), in Godot metres, centred on the chunk.
+OPEN_LOT_SIZE = 40.0                 # every sandbox chunk is 40 x 40 m (scripts/sandbox/chunk_streamer.gd)
+OPEN_LOT_ROW_CENTERS = (-10.0, 10.0) # Z of each double row's centre line (the stall heads meet there)
+OPEN_LOT_STALLS = 11                 # stalls per row: 11 x 2.7 m = 29.7 m
+OPEN_LOT_ROW_X = -4.85               # X of the middle of each row (from x = -19.7 to 10.0)
+OPEN_LOT_ISLAND_X = 11.5             # planter island at the +X end of each double row
+OPEN_LOT_POLE_X = -6.2               # streetlight on the stall heads, on the 6th divider
+
+
+def open_lot():
+    """One 40 x 40 m chunk of the sandbox's endless parking lot, laid out from the aerial reference photos
+    (Level Reference Images/): two double rows of 11 stalls (2.7 x 5.5 m) along X with a 9 m drive aisle down
+    the middle (z = 0) and half an aisle along each Z edge, so neighbouring chunks meet in a full aisle; each
+    double row ends at +X in a planter island (streetlight, two palms) and a 7.3 m cross aisle runs from there to
+    the +X edge. A second streetlight stands on the stall heads of each double row. Nothing but 2 mm paint comes
+    within 0.3 m of an edge, so it meets any chunk flush.
+    The parts are the lot props themselves (stall markings, planter island, streetlight, palm tree), merged into
+    one object per material so a chunk draws in about ten calls, plus the 40 x 40 m asphalt face at y = 0.
+    Origin: chunk centre on the ground (Godot coordinates in the comments; z = -Blender y)."""
+    m = Model("open_lot", by_material=True)
+    h = OPEN_LOT_SIZE / 2
+    m.at(0, 0)
+    a = m.obj("Asphalt", "asphalt")
+    m._add(a, [(-h, -h, 0), (h, -h, 0), (h, h, 0), (-h, h, 0)], [(0, 1, 2, 3)])
+    for zc in OPEN_LOT_ROW_CENTERS:
+        m.at(OPEN_LOT_ROW_X, zc - 5.5)          # row facing the aisle on its -Z side (stalls run toward +Z)
+        stall_markings(m, OPEN_LOT_STALLS)
+        m.at(OPEN_LOT_ROW_X, zc + 5.5, 180)     # row facing the aisle on its +Z side
+        stall_markings(m, OPEN_LOT_STALLS)
+        m.at(OPEN_LOT_ISLAND_X, zc)
+        planter_island(m)
+        m.at(OPEN_LOT_ISLAND_X, zc, 90)          # as placed in scenes/props/parking_lot/planter_island.tscn
+        streetlight(m)
+        m.at(OPEN_LOT_ISLAND_X, zc - 3.8, 20)
+        palm_tree(m)
+        m.at(OPEN_LOT_ISLAND_X, zc + 3.8, 200)
+        palm_tree(m)
+        m.at(OPEN_LOT_POLE_X, zc, 90)
+        streetlight(m)
+    m.at(0, 0)
     return m.build()
 
 
@@ -697,13 +760,13 @@ def lot_surface():
     return m.build()
 
 
-def link_materials():
+def link_materials(names=None):
     """Point each .glb's materials at the shared Godot .tres of the same name, in its .import file
     (the editor's Advanced Import Settings > Materials > Use External). Run after `godot --import`."""
     import json
     import re
     import struct
-    for name in MODELS:
+    for name in names or MODELS:
         glb = os.path.join(OUT, name, name + ".glb")
         imp = glb + ".import"
         if not os.path.exists(imp):
@@ -723,12 +786,13 @@ def link_materials():
 
 
 MODELS = {f.__name__: f for f in (parking_block, cart_corral, streetlight, palm_tree, planter_island,
-                                   parked_car, stall_markings, store_front, water_machine, cart_row, lot_surface)}
+                                   parked_car, stall_markings, store_front, water_machine, cart_row, lot_surface,
+                                   open_lot)}
 
 if __name__ == "__main__":
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else sys.argv[1:]
-    if args == ["--link-materials"]:
-        link_materials()
+    if args[:1] == ["--link-materials"]:
+        link_materials(args[1:])
         sys.exit(0)
     names = args or list(MODELS)
     fights = 0

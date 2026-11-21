@@ -151,8 +151,9 @@ func _run() -> void:
 		var err := _vec(f.pos).distance_to(guest_cart.cart_origin())
 		_check("far away: guest sees its cart there", err < 0.05, "%.3f m off" % err)
 		_check("far away: guest has ground there", f.chunk_here and f.chunks > 4, "%d chunks" % f.chunks)
-		_check("far away: guest's chunk bodies frozen, poses from the host", f.chunk_bodies_frozen and f.chunk_poses > 0,
-			"%d chunk body poses" % f.chunk_poses)
+		var loose := streamer.find_children("*", "RigidBody3D", true, false).size()   # the sandbox's open lot has none
+		_check("far away: guest's chunk bodies frozen, poses from the host", f.chunk_bodies_frozen and (f.chunk_poses > 0 or loose == 0),
+			"%d chunk body poses (%d loose bodies in the host's chunks)" % [f.chunk_poses, loose])
 	# Fast travel: the guest follows.
 	for path in LEVELS.slice(1):
 		var name: String = path.get_file().get_basename()
