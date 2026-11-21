@@ -3,6 +3,25 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: Cart model from the restructured base model
+
+zack asked to switch the cart to the restructured `ShoppingCart_BaseModel.blend` (commit 9c2994f: parts renamed and
+joined, e.g. Frame.Base, Frame.Handle, Basket.Main, Caster.Bracket/Cap/Washer, BallBearing, Screw, Nut, Washer).
+`tools/rig_cart.py` now reads those names; the gate -> child seat -> flap chain, hinge positions and limits are
+unchanged, so cart.tscn didn't change.
+
+- **Front-left caster:** the new file has only the front-right caster (collection `Wheel.Front.Right > Caster`) and
+  the front-left wheel (`Wheel`, hub `Bolt`, no indent). The rig mirrors the right caster's fork, bearing, plate
+  hardware and wheel indent across the centre line (modifiers applied, mirror baked in, faces kept outward) and
+  names each copy `<part>.L`. The fork parts turn with the swivel; screw, washer and nut stay on the frame, as before.
+- **Materials:** new name prefixes added (Wheel rubber, Bolt hub, Caster/BallBearing/Screw/Washer/Nut steel).
+- **Size:** shopping_cart.glb 12.9 MB, 424k triangles (was 14.3 MB, 504k: the 60 separate ball bearings are now one
+  mesh per caster). Mobile cart.glb 2.4 MB, 77.9k faces; the mobile export drops BallBearing(.L) as it dropped the
+  bearings before.
+- **Renders:** old and new side by side (casters, back, gate up) look the same (tests/cart_rig_screenshot.gd now also
+  shoots the casters).
+- **Z-fighting:** the mirrored caster is the right one reflected; nothing new sits flush.
+
 ## 2026-11-21: Cart gate, child seat and seat flap as a chain of hinged parts
 
 zack: the rig wasn't finished. The child seat and the plastic seat flap should be separate parts with their own

@@ -5,7 +5,7 @@ Run headless from the repo root (after tools/rig_cart.py has exported the Godot 
 
 Starts from the same model the Godot game uses (shopping-cart/assets/models/shopping_cart.glb), so the
 rig pivots and material names match it exactly:
-- Drops the caster ball bearings (CirPattern1[n]): 30 tiny parts nobody can see.
+- Drops the caster ball bearings (BallBearing, BallBearing.L): tiny parts nobody can see.
 - Simplifies any part over FACE_BUDGET faces (the wheels and wire basket are very dense).
 - Joins each moving part (frame, gate, child seat, flap, casters, wheels) into one mesh, so the phone
   draws about 10 meshes (one draw per material in each) instead of 116. Pivot names are kept.
@@ -27,7 +27,7 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=SRC)
 
 for o in list(bpy.data.objects):
-    if o.type == "MESH" and o.name.startswith("CirPattern1["):
+    if o.type == "MESH" and o.name in ("BallBearing", "BallBearing.L"):
         bpy.data.objects.remove(o, do_unlink=True)
 
 before = 0
