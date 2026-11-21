@@ -3,6 +3,16 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: parking lot cart corral moved off the sidewalk
+
+The fifth corral (`CartCorrals/CorralSidewalk`) stood on the storefront sidewalk, which a real lot
+would not do. It is now `CartCorrals/Corral1East` in an empty marked stall of row 1, east side
+(stall centre x = 9.45, between the blue and white parked cars), open end facing the fire lane like
+the other corrals. Centre z = -3.4, so its closed end sits 5 cm clear of that stall's parking block
+(corral -5.49 to -1.32, block face at -1.27); no overlaps with the neighbouring cars (about 0.8 m
+each side). The cart storage rows against the store wall stay where they were. Browser level
+(`mobile/levels/plot.*`) re-exported.
+
 ## 2026-11-16: browser version brought up to date with the Godot game
 
 The browser build (`mobile/`, three.js + Rapier) is the itch.io in-browser version, so it now plays the Godot
