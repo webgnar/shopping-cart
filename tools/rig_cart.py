@@ -45,22 +45,25 @@ REAR_AXLE = (0.0685, 0.062)
 REAR_Y = 0.3045
 
 # ---- Which mesh goes where. '+' / '-' = left / right side (Blender +Y / -Y).
+# Part names are the restructured base model's (2026-11-21: Frame.Base, Basket.Main, Caster.*, ...). It has the
+# front-right caster only (collection Wheel.Front.Right > Caster), so MIRRORED below copies its parts across the
+# cart's centre line to make the front-left one, with ".L" added to each name.
 GATE = ["WireMesh.LowBasketBack"]
 SEAT = ["UpperBasket"]
 FLAP = ["Plane.005", "WireMesh.UpperBasketSeat"]
-FRONT_WHEEL = {"+": ["Cube", "Boss-Extrude6", "Indent1"],
+FRONT_WHEEL = {"+": ["Wheel", "Bolt", "Indent1.003.L"],
                "-": ["Cube.003", "Boss-Extrude6.003", "Indent1.003"]}
 REAR_WHEEL = {"+": ["Cube.001", "Boss-Extrude6.001", "Indent1.001"],
               "-": ["Cube.002", "Boss-Extrude6.002", "Indent1.002"]}
-FORK_PARTS = ["Cut-Extrude3", "Fillet5", "Revolve4[2]", "Revolve5", "Revolve6"]  # + CirPattern1[n]
+# The fork turns on the kingpin; the plate's screw, washer and nut stay with the frame.
+FORK = {"-": ["Caster.Bracket", "Caster.Cap", "Caster.Washer", "BallBearing", "BallBearing.Plate"]}
+FORK["+"] = [n + ".L" for n in FORK["-"]]
+PLATE = ["Screw", "Screw.Base", "Washer", "Nut"]
+MIRRORED = FORK["-"] + PLATE + ["Indent1.003"]   # the left wheel's indent is missing too
 
 
 def fork(side):
-    sfx = "" if side == "+" else ".001"
-    names = [n + sfx for n in FORK_PARTS]
-    names += [o.name for o in bpy.data.objects
-              if o.name.startswith("CirPattern1[") and o.name.endswith("]" + sfx if sfx else "]")]
-    return names
+    return FORK[side]
 
 
 def empty(name, loc, parent=None, size=0.05):
@@ -101,6 +104,24 @@ def joint(e, kind, axis, lo=None, hi=None):
 
 ref = set(o.name for o in bpy.data.collections["Reference"].objects)
 
+# ---- Front-left caster: mirror the front-right one's parts across the centre line (Blender Y = 0). Each copy
+# gets its modifiers applied and the mirror baked into its mesh (faces kept outward), with an identity
+# transform, so attach() below places it like any other part.
+from mathutils import Matrix
+deps = bpy.context.evaluated_depsgraph_get()
+for n in MIRRORED:
+    src = bpy.data.objects[n]
+    me = bpy.data.meshes.new_from_object(src.evaluated_get(deps))
+    to_world = Matrix.Diagonal((1.0, -1.0, 1.0, 1.0)) @ src.matrix_world
+    me.transform(to_world)
+    if to_world.determinant() < 0:   # an odd number of mirrors reverses the faces' winding
+        me.flip_normals()
+    me.name = n + ".L"
+    o = bpy.data.objects.new(n + ".L", me)
+    for c in src.users_collection:
+        c.objects.link(o)
+bpy.context.view_layer.update()
+
 # ---- Materials: one per part, named after the shared Godot material. Preview colours (linear) only.
 CART_MATERIALS = {
     "cart_chrome": ((0.6, 0.62, 0.64), 1.0, 0.2),      # basket wire, frame tubes, gate, seat
@@ -113,8 +134,10 @@ CART_MATERIALS = {
 PART_MATERIALS = [   # (name prefix, material); first match wins, anything else is chrome
     ("Handbar.Grip", "cart_handle"),
     ("Bumpers", "cart_plastic"), ("Plane.005", "cart_plastic"),
-    ("Cube", "wheel_rubber"),
-    ("Boss-Extrude6", "wheel_hub"), ("Indent1", "wheel_hub"),
+    ("Cube", "wheel_rubber"), ("Wheel", "wheel_rubber"),
+    ("Boss-Extrude6", "wheel_hub"), ("Indent1", "wheel_hub"), ("Bolts", "cart_steel"), ("Bolt", "wheel_hub"),
+    ("Caster", "cart_steel"), ("BallBearing", "cart_steel"), ("Screw", "cart_steel"), ("Washer", "cart_steel"),
+    ("Nut", "cart_steel"),
     ("Cut-Extrude3", "cart_steel"), ("Fillet", "cart_steel"), ("Revolve", "cart_steel"),
     ("CirPattern", "cart_steel"), ("Cut-Sweep2", "cart_steel"), ("Indent2", "cart_steel"),
     ("Cylinder", "cart_steel"), ("Bolts", "cart_steel"), ("Plane.001", "cart_steel"),

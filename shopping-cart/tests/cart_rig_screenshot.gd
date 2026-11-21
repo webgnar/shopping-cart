@@ -49,6 +49,11 @@ func _views(cart: ShoppingCart, tag: String) -> void:
 	cam.global_position = p + x * 1.3 + z * 0.7 + Vector3(0, 0.7, 0)
 	cam.look_at(p)
 	await _shot(tag + "_front")
+	# The front casters and wheels, low from the front.
+	var f := cart.frame.global_transform * Vector3(0.87, 0.1, 0)
+	cam.global_position = f + x * 0.9 + z * 0.35 + Vector3(0, 0.15, 0)
+	cam.look_at(f)
+	await _shot(tag + "_casters")
 
 
 func _run(tint: bool) -> void:
