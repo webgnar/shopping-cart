@@ -72,8 +72,23 @@ func _run() -> void:
 	# cart far away: report the ground we see there.
 	var seen := current_scene.scene_file_path if current_scene else ""
 	var start_pos := own.cart_origin()
+	var race_seen := {"phases": {}, "counts": {}}
 	while true:
 		await physics_frame
+		# A race the host starts: what we see of it (the count, our cart held still, the results).
+		var race := get_first_node_in_group("race") as Race
+		if race and race.phase != Race.Phase.IDLE and not result.has("race"):
+			race_seen.phases[race.phase] = true
+			if race.phase == Race.Phase.COUNTDOWN:
+				race_seen.counts[ceili(race.clock)] = true
+				race_seen["hud_shown"] = race.hud.visible and race.hud.get_node("%Countdown").visible
+			if race.phase == Race.Phase.DONE:
+				var me := race.results().filter(func(r): return r.id == net.my_id)
+				result.race = {"phases": race_seen.phases.keys(), "counts": race_seen.counts.keys(),
+					"hud_shown": race_seen.get("hud_shown", false), "racers": race.racers.size(),
+					"my_time": me[0].time if not me.is_empty() else -2.0,
+					"results_shown": race.hud.get_node("%Results").visible}
+				_write()
 		if not result.has("far") and is_instance_valid(own) and own.cart_origin().distance_to(start_pos) > 150.0:
 			await _wait(2.5)
 			var streamer: ChunkStreamer = current_scene.get_node("Chunks")

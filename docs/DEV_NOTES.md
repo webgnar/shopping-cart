@@ -3,6 +3,53 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: Parking garage race
+
+zack: "the parking garage should be a race. 3..2..1.. go. should be able to start race from console - goes to
+parking garage". The console's `race` loads the garage (from anywhere) and lines everyone up on the roof; `race
+nobots` races without the bot carts; `race` inside the garage starts over. In the browser it's the same command, or
+Level › Race down the garage on a phone.
+
+- **Scenes:** `scenes/race/race.tscn` (root script `scripts/race/race.gd`) is instanced at the end of
+  `parking_garage.tscn` (its ext_resource is near the top of the file and the nodes at the bottom, away from the
+  scene root and the Sun, which the unmerged Manhattan skyline branch edits). Its children are moved in the level:
+  `Grid` (12 start-slot Marker3Ds, 3 abreast 1.8 m apart, rows 2.2 m apart, facing +X on the roof at x 2.7 to
+  9.3, the middle column on the floor 10 aisle's centre line z = -3.3), a white start line (0.15 x 6.2 m, the aisle's
+  width) and START painted ahead of the front row; `Finish`, an Area3D (2 x 3 x 22.8 m, carts' frames are layer 2)
+  across the whole exit apron at x 93.1, with a chequered line (1 x 22.5 m PlaneMesh, 0.5 m squares) and FINISH
+  painted past it; `BotGoal` 2.2 m past the line; `Route`, 24 Marker3Ds the racing bots drive through (three at
+  each of the eight hairpin landings: in, across, and back onto the next aisle's centre line); and the HUD,
+  `scenes/ui/race_hud.tscn` (a CanvasLayer: the count in the middle, the clock and a status line at the top, the
+  results table). The finish chequer is painted by `tools/textures/make_race_textures.py` (64 x 1440 px PNG,
+  `assets/materials/race/finish_checker.tres`); the start line uses the garage's `paint_white`.
+- **Holding the carts:** `ShoppingCart.locked` makes every key read as let go, the keyboard's and a driver's
+  (`controls`) alike, so the player, guests and bots are all held the same way through 3, 2, 1. `ShoppingCart.place()`
+  moves a whole rig (bot carts are lined up with it, so they aren't rebuilt and the network's body lists stay valid);
+  the player and guests get fresh carts on their slots.
+- **Finishing:** the race ends when everyone is over the line, or 60 s (`finish_grace`) after the winner; the rest
+  are DNF. Times are m:ss.cc.
+- **Multiplayer:** the host runs it and sends RACE (protocol version 3) on each change and twice a second; it waits
+  (up to 10 s) for every guest to load the garage before counting, so the count is shared. See docs/MULTIPLAYER.md.
+- **Bots:** `CartBot` got a racing mode (`line_up`, `race_to(route)`, `stop_racing`): 4.5 m/s on the straights (the
+  wanderers do 1.6), 90 N a hand, no slowing for the end of a trip, never gives up. Judgment calls from watching them:
+  following the nav mesh's straight shortest path down a whole floor ran them along the centre wall until they
+  stuck, so the route puts them back on each aisle's centre line after every hairpin; a 1.2 m path-point distance
+  stops them overshooting a point and turning back for it; stuck detection now also counts trying to spin round with
+  no room (against a wall end), for wandering bots too; and a racing bot that backs off three times on one leg
+  (wedged against a parked car by another bot) is put back at the last waypoint facing the next, as racing games
+  do. Three bots finish the ten floors in about 3:00 (2:57 to 3:02 in the test), so a good run beats them.
+- **Browser:** `mobile/game/race.js` ports it (no multiplayer there); the race's grid, finish box, route and settings
+  are in `levels/garage.json` ("race"); `cart.js` got `locked` and `place`, `bot.js` the racing mode.
+- **Tests:** `tests/race_test.gd` (console, line-up, nobody moves through the count with keys held, GO, finishing,
+  bots race all the way down, results, starting over), a race step at the end of `tests/multiplayer_test.gd`, and a
+  race block in `mobile/test/drive_test.js`. `tests/garage_test.gd` now removes the bot carts first: one wandering on
+  the roof was blocking the floor 10 roll check (it failed on main too). Renders: `tests/race_screenshot.gd`.
+- **Z-fighting:** the start line sits 1.5 mm over the roof deck, the finish line 0.3 mm over the exit apron (which
+  is itself 9 mm over the street), the painted words 2 cm up like EXIT; nothing else shares those planes
+  (`garage_zfight_test` passes).
+- **Left out:** live race positions (1st, 2nd...) while racing, a start gantry or finish banner, lap or checkpoint
+  checks (the only way down is the ramps, so there's no shortcut to guard against), a best-time record.
+
 ## 2026-11-21: Parking lot background loop
 
 The parking lot level plays zack's field recording ("parking lot back ground.wav": 9:15, stereo, 24-bit 48 kHz,

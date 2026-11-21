@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/textures/race/finish_checker.png" id="1_chk"]
+
+[resource]
+resource_name = "finish_checker"
+albedo_texture = ExtResource("1_chk")
+roughness = 0.85
