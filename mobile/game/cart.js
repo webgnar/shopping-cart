@@ -198,9 +198,9 @@ export class Cart {
 
   /** A wheel touches the floor when something solid is right under it (works on every floor of the garage). */
   wheelDown(w) { return !!this._groundHit(w); }
-  _groundHit(w) {
+  _groundHit(w, gap = 0.02) {
     const { RAPIER, world } = this.ctx, p = w.translation(), r = this.wheelRadius;
-    return world.castRayAndGetNormal(new RAPIER.Ray(p, { x: 0, y: -1, z: 0 }), r + 0.02, true, undefined,
+    return world.castRayAndGetNormal(new RAPIER.Ray(p, { x: 0, y: -1, z: 0 }), r + gap, true, undefined,
       groups(this.bit, 0x000f));   // the cart's own parts carry only its own bit, so they never match
   }
   /** Rise per run of the ground under the wheels (0 unless at least three are down), as Cart.ground_slope(). */

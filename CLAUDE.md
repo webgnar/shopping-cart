@@ -94,9 +94,10 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
   (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera (`scripts/cart_camera.gd` lifts it over walls, see its exports).
 - `assets/physics/*.tres` — shared physics materials (tile, asphalt, solid).
-- `assets/audio/cart/` — the cart's rolling loops, cut from zack's recordings by
-  `tools/audio/make_cart_rolling_loops.py` (also writes the browser's `mobile/audio/*.wav`). The cart's
-  `Frame/RollingSound` picks the loop by the floor's physics material.
+- `assets/audio/cart/` — the cart's wheel sounds (rolls, scrubs, knocks, landing), cut from zack's recordings by
+  `tools/audio/make_cart_rolling_loops.py` (also writes the browser's `mobile/audio/*.wav`). Every wheel has a
+  `WheelSound` (`scenes/cart/wheel_sound.tscn`) driven by that wheel's spin, slide and contact; the floor's
+  physics material picks a `CartFloorSound` (`assets/audio/cart/floors/*.tres`).
 - `scripts/` — behaviour scripts for the scenes above.
 - `tools/` (repo root) — Blender builder and export scripts. `docs/DEV_NOTES.md` — dev notes.
 
@@ -114,7 +115,7 @@ From `shopping-cart/`:
 - Browser game (from the repo root): `node mobile/test/drive_test.js`
 - Camera never clips into levels (all levels): `godot --headless --fixed-fps 120 -s res://tests/camera_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
-- Rolling sound (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
+- Wheel sounds (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
 - Multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/multiplayer_test.gd`
 - Rendezvous service, and online play by join code over WebRTC (from `services/rendezvous`, after `npm install`):
