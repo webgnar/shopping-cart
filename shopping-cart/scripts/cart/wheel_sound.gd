@@ -7,8 +7,10 @@ extends Node3D
 ##    or a locked, sliding wheel doesn't roll, and in a wheelie only the wheels on the ground are heard.
 ##  - Scrub: the wheel sliding along its axle (sideways), or skidding (moving faster or slower over the ground
 ##    than it spins). Drifts, spins on the spot and casters whipping round.
-##  - Land: the wheel set back down after being off the ground (a wheelie, W/S, a drop): the second half of
-##    zack's drop recording, as loud as the wheel came down hard.
+##  - Land: the wheel hitting the ground after being off it (a wheelie set down, W/S, a drop, a bounce). How hard
+##    is the wheel's speed into the ground at the moment it touches (along the floor's normal). A gentle touch
+##    is silent, a soft one a light tap (the bounce of zack's drop recording), a hard one the full slam (its
+##    main hit), louder the faster it came down.
 ##  - Knock: a sudden upward jolt of a wheel that stayed on the ground (a kerb, a joint, a bump): a slab clack.
 ## A multiplayer guest's cart is frozen and moved by the network: its wheels' motion is read from how they moved
 ## between frames instead.
@@ -47,10 +49,14 @@ extends Node3D
 @export var knock_db := -4.0          ## knock volume at full
 @export var knock_gap := 0.12         ## s: at most one knock or landing per wheel this often
 @export_group("Landing")
-@export var land_air_time := 0.1      ## s off the ground before touching down counts as a landing
-@export var land_start := 0.2         ## m/s coming down: slower than this the wheel is set down silently
-@export var land_full := 1.5          ## m/s coming down for full landing volume
-@export var land_db := -3.0           ## landing volume at full
+@export var land_tap: AudioStream      ## a soft landing: a light tap
+@export var land_slam: AudioStream     ## a hard landing: the full slam
+@export var land_air_time := 0.03     ## s off the ground before touching down counts as a landing
+@export var land_start := 0.3         ## m/s into the ground: slower than this the wheel touches down silently
+@export var land_slam_speed := 1.0    ## m/s into the ground from which it slams instead of tapping (a 5 cm drop)
+@export var land_full := 3.0          ## m/s into the ground for full volume (a 45 cm drop)
+@export var land_curve := 0.8         ## gain = ((impact - land_start) / (land_full - land_start)) ^ this
+@export var land_db := -1.0           ## landing volume at full
 
 var grounded := false
 var floor_sound: CartFloorSound = null  ## the ground under this wheel (null in the air)
@@ -59,7 +65,9 @@ var slide := 0.0                        ## m/s: sideways slide and skid over the
 var roll_gain := 0.0
 var scrub_gain := 0.0
 var knocks := 0                         ## knocks so far (for tests)
-var landings := 0                       ## landings so far (for tests)
+var landings := 0                       ## landings heard so far (for tests)
+var slams := 0                          ## of those, hard ones
+var last_impact := 0.0                  ## m/s into the ground at the last touchdown, heard or not
 
 @onready var _wheel := get_parent() as RigidBody3D
 @onready var _cart := _wheel.get_parent() as ShoppingCart
@@ -70,7 +78,7 @@ var _prev_vy := 0.0
 var _have_prev := false
 var _since_knock := 1.0
 var _air_time := 0.0
-var _fall_speed := 0.0   ## m/s the wheel was coming down at, last tick in the air
+var _air_velocity := Vector3.ZERO   ## the wheel's velocity on its last tick in the air
 
 
 func _ready() -> void:
@@ -123,13 +131,21 @@ func _physics_process(delta: float) -> void:
 	_prev_vy = v.y
 	if not grounded:
 		_air_time += delta
-		_fall_speed = -v.y
+		_air_velocity = v
 	else:
 		if _air_time >= land_air_time:
-			if _fall_speed > land_start and _since_knock >= knock_gap:
+			# Speed into the ground as it touches: the last tick in the air, or this one if it is still closing in.
+			var n: Vector3 = hit.normal
+			last_impact = maxf(0.0, maxf(-_air_velocity.dot(n), -v.dot(n)))
+			if last_impact > land_start and _since_knock >= knock_gap:
 				_since_knock = 0.0
 				landings += 1
-				land_player.volume_db = land_db + linear_to_db(clampf((_fall_speed - land_start) / (land_full - land_start), 0.15, 1.0))
+				var slam := last_impact >= land_slam_speed
+				if slam:
+					slams += 1
+				land_player.stream = land_slam if slam else land_tap
+				var g := pow(clampf((last_impact - land_start) / (land_full - land_start), 0.0, 1.0), land_curve)
+				land_player.volume_db = land_db + linear_to_db(maxf(g, 0.02))
 				land_player.play()
 		elif jolt > knock_start and _since_knock >= knock_gap:
 			_since_knock = 0.0
