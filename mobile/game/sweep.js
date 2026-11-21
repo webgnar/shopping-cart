@@ -172,6 +172,7 @@ export class Sweep {
 
   _tally() {
     const loose = this.products.filter(p => !p.onDisplay);
+    for (const p of loose) if (p.body.isSleeping()) p.body.wakeUp();   // Godot's products have can_sleep off
     for (const s of this.shoppers) {
       const c = this.cartOf(s), per = new Map();
       let cents = 0, items = 0;

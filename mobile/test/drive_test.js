@@ -464,8 +464,7 @@ const SCENARIOS = [
     c.spawn(c.v3(coffee.stop[0] - 0.55, 0, coffee.stop[2]), 0); c.simulate(4);
     out.coffee = sweep.countOf(c.cart, 'Coffee'); out.cents = me.cents; out.left = sweep.left(coffee);
     c.simulate(2); out.leftLater = sweep.left(coffee);
-    c.renderOnce();
-    out.toast = document.getElementById('sweepToasts').textContent;
+    c.sweep.draw(0); out.toast = document.getElementById('sweepToasts').textContent;
     const before = me.cents, q = c.cart.frame.rotation();
     const nose = { x: 1 - 2 * (q.y * q.y + q.z * q.z), y: 2 * (q.x * q.y + q.w * q.z), z: 2 * (q.x * q.z - q.w * q.y) };
     c.cart.wake(); c.cart.frame.setAngvel({ x: -7 * nose.x, y: -7 * nose.y, z: -7 * nose.z }, true); c.cart.frame.setLinvel({ x: 0, y: 2, z: 0 }, true);
