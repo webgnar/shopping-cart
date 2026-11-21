@@ -155,8 +155,11 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 				entry["com"] = _v(rb.center_of_mass)
 			out.bodies.append(entry)
 		else:
+			var surface := _surface(body)
 			for sh in shapes:
 				sh["friction"] = friction
+				if surface:
+					sh["surface"] = surface
 				out.statics.append(sh)
 
 	# What's left that the phone draws: meshes only (lights, labels and physics are in the JSON).
@@ -234,6 +237,12 @@ static func _owner_body(n: Node) -> Node:
 	while p and not p is CollisionObject3D:
 		p = p.get_parent()
 	return p
+
+
+## The floor's physics material by name (assets/physics/<name>.tres), which picks the cart's rolling sound.
+static func _surface(body: CollisionObject3D) -> String:
+	var m: PhysicsMaterial = body.get("physics_material_override")
+	return m.resource_path.get_file().get_basename() if m and m.resource_path else ""
 
 
 static func _friction(body: CollisionObject3D) -> float:
@@ -360,6 +369,7 @@ static func export_cart() -> Dictionary:
 			if m:
 				out.materials[f.get_basename()] = {"color": _c(m.albedo_color), "metallic": m.metallic,
 					"roughness": m.roughness}
+	out["rolling_sound"] = _rolling_sound(cart.get_node("Frame/RollingSound"))
 	out["wheel_radius"] = cart.get_node("Wheel_FL/Shape").shape.radius
 	out["hand_position"] = _v(cart.hand_position)
 	cart.free()
@@ -399,6 +409,22 @@ static func _bot_settings() -> Dictionary:
 	out["path_desired_distance"] = agent.path_desired_distance
 	out["target_desired_distance"] = agent.target_desired_distance
 	cart.free()
+	return out
+
+
+## The rolling sound (Frame/RollingSound): its settings, the floor probe and each surface's loop. The phone plays
+## mobile/audio/<loop>.wav, cut from the same recordings as the .ogg (tools/audio/make_cart_rolling_loops.py).
+static func _rolling_sound(rs: CartRollingSound) -> Dictionary:
+	var out := {"probe": _xf(rs.transform * rs.probe.transform), "probe_target": _v(rs.probe.target_position),
+		"fallback": String(rs.fallback.name), "sounds": []}
+	for key in ["silent_speed", "full_volume_speed", "volume_curve", "recorded_speed", "min_pitch", "max_pitch",
+			"pitch_per_speed", "fade_time"]:
+		out[key] = rs.get(key)
+	for s in rs.get_children():
+		if s is RollingSurfaceSound:
+			out.sounds.append({"name": String(s.name), "file": "audio/%s.wav" % s.stream.resource_path.get_file().get_basename(),
+				"floors": s.floors.map(func(m): return m.resource_path.get_file().get_basename()),
+				"loudness_db": s.loudness_db, "unit_size": s.unit_size, "max_distance": s.max_distance})
 	return out
 
 

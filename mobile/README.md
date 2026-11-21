@@ -16,7 +16,7 @@ and open http://localhost:8000 (or upload the `mobile/` folder as an HTML5 game 
   Drag near the top of the screen to look around. **Level** fast-travels, **Tilt** cycles on / flipped / off,
   **Set level** re-zeroes the tilt.
 - **Computers** (mouse and keyboard detected): the Godot keys. Q/A left hand push/pull, E/D right, W/S lean the
-  back/front up, R a fresh cart where you are, click to look around (Esc to let go), wheel to zoom,
+  back/front up, P a fresh cart where you are, click to look around (Esc to let go), wheel to zoom,
   ` opens the console (`help`, `where`, `plot`, `garage`, `market`, `sandbox`), F full screen. Touching the screen
   switches to the phone controls and a game key switches back.
 
@@ -29,6 +29,7 @@ and open http://localhost:8000 (or upload the `mobile/` folder as an HTML5 game 
 | `levels/<key>.glb` + `.json` | Each fast-travel level: meshes and materials; collision shapes with friction, loose props, CartSpawn, spare carts, bot carts and their navigation mesh, sky, sun, lamps, 3D labels | `godot --headless -s res://tools/export_mobile_levels_cli.gd` (from `shopping-cart/`) |
 | `levels/cart.json` | The cart rig (bodies, masses, shapes, hinges and limits), its materials and the bot's settings | same |
 | `models/cart.glb` | Phone-weight cart model (85k faces, 10 meshes) from the Godot one | `blender -b --python tools/export_mobile_model.py` |
+| `audio/roll_*.wav` | The cart's rolling loops (asphalt, tile, concrete), played by `game/sound.js` as in `scripts/cart/cart_rolling_sound.gd` | `python3 tools/audio/make_cart_rolling_loops.py` |
 | `vendor/` | three.js 0.170 and Rapier 0.14 (so it runs without a CDN) | copied from npm |
 
 Change levels and the cart in Godot, then run both export tools. `tests/tuning_sync_test.gd` and
