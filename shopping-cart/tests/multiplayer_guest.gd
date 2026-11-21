@@ -1,7 +1,7 @@
 extends SceneTree
 ## The guest half of tests/multiplayer_test.gd, started by it as a second Godot process:
-##   godot --headless --path . -s res://tests/multiplayer_guest.gd -- <port> <result file>
-## Joins 127.0.0.1, pushes its cart for a moment, waits for every cart to stop, then follows the host through its
+##   godot --headless --path . -s res://tests/multiplayer_guest.gd -- <port or join code> <result file> [--rendezvous=<url>]
+## Joins 127.0.0.1 (or the game with that join code), pushes its cart for a moment, waits for every cart to stop, then follows the host through its
 ## levels. After each step it rewrites <result file> (JSON) with what it saw, for the host test to check.
 
 var net: NetSession
@@ -31,12 +31,15 @@ func _wait(seconds: float) -> void:
 
 func _run() -> void:
 	var args := OS.get_cmdline_user_args()
-	var port := int(args[0])
+	var where: String = args[0]
 	out = args[1]
 	net = root.get_node("Net")
 	change_scene_to_file("res://scenes/main.tscn")
 	await _wait(0.5)
-	net.join("127.0.0.1", port)
+	if NetSession.is_join_code(where):
+		net.join_online(where)
+	else:
+		net.join("127.0.0.1", int(where))
 	var deadline := Time.get_ticks_msec() + 30000
 	while not (net.level and net.carts.has(1) and net.stats.snapshots_received > 10):
 		if Time.get_ticks_msec() > deadline:
@@ -65,10 +68,24 @@ func _run() -> void:
 	result.phase1.merge({"own_end": _v(own.cart_origin()), "host_end": _v(host_cart.cart_origin()),
 		"own_frozen": own.frame.freeze, "snapshots": net.stats.snapshots_received})
 	_write()
-	# Follow the host from level to level until it ends the test.
+	# Follow the host from level to level until it ends the test. In the endless sandbox the host first moves our
+	# cart far away: report the ground we see there.
 	var seen := current_scene.scene_file_path if current_scene else ""
+	var start_pos := own.cart_origin()
 	while true:
 		await physics_frame
+		if not result.has("far") and is_instance_valid(own) and own.cart_origin().distance_to(start_pos) > 150.0:
+			await _wait(2.5)
+			var streamer: ChunkStreamer = current_scene.get_node("Chunks")
+			var p := own.cart_origin() - streamer.global_position
+			var cell := Vector2i(floori(p.x / streamer.chunk_size), floori(p.z / streamer.chunk_size))
+			var frozen := true
+			for c in streamer.loaded:
+				for b in streamer.loaded[c].find_children("*", "RigidBody3D", true, false):
+					frozen = frozen and b.freeze
+			result.far = {"pos": _v(own.cart_origin()), "chunk_here": streamer.loaded.has(cell),
+				"chunks": streamer.loaded.size(), "chunk_bodies_frozen": frozen, "chunk_poses": net.stats.chunk_poses}
+			_write()
 		var path := current_scene.scene_file_path if current_scene else ""
 		if path == seen or net.level == null or net.level != current_scene:
 			continue

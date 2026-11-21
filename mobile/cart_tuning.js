@@ -43,5 +43,5 @@ window.CART_TUNING = {
   "settle_brake": 40.0,
   "stop_delay": 0.25,
   "settle_max_slope": 0.04,
-  "max_angular_velocity": 200.0
+  "max_angular_velocity": 120.0
 };

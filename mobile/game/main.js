@@ -10,6 +10,7 @@ import { Bot } from './bot.js';
 import { NavMesh } from './nav.js';
 import { fetchLevel, buildLevel, layerPairs, applyEnvironment, ambientFor, makeSkyDome, disposeTree, stepTraffic, syncTraffic } from './level.js';
 import { RollingSound, unlockAudio, updateListener, loadedLoops } from './sound.js';
+import { ChunkStreamer } from './stream.js';
 
 await RAPIER.init();
 const STEP = 1 / 120;                // Godot physics ticks at 120 Hz
@@ -57,6 +58,7 @@ let world = null, eventQueue = null, level = null, levelRoot = null, ambient = n
 // Every cart but the player's: spare carts, then bot carts.
 const others = () => spares.concat(bots.map(b => b.cart));
 let levelKey = null, loading = false;
+let streamer = null;   // the endless sandbox's chunks (stream.js), else null
 
 async function loadLevel(key) {
   const entry = levelList.find(l => l.key === key) || levelList[0];
@@ -70,6 +72,7 @@ async function loadLevel(key) {
     for (const c of [cart, ...others()]) if (c && c.sound) c.sound.remove();
     for (const c of [cart, ...others()]) if (c && c.root) scene.remove(c.root);
     for (const c of [cart, ...others()]) if (c) for (const [, g] of c.meshes) scene.remove(g);
+    if (streamer) { streamer.dispose(); streamer = null; }
     if (world) world.free();
     cart = null; spares = []; bots = [];
     world = new RAPIER.World(v3(0, -9.81, 0));
@@ -102,6 +105,11 @@ async function loadLevel(key) {
       if (rig.rolling_sound) c.sound = new RollingSound(c, rig.rolling_sound, level.surfaces);
       bots.push(new Bot(c, nav, rig.bot));
       bit <<= 1;
+    }
+    // The endless sandbox: terrain chunks around the cart, all of the near ones in before the cart is placed.
+    if (level.stream) {
+      streamer = new ChunkStreamer(ctx, level, level.stream, LEVELS, levelRoot, { noShadows: touchFirst, reach: touchFirst ? 0.8 : 1 });
+      await streamer.prime(new THREE.Vector3(...level.spawn.pos));
     }
     levelKey = entry.key;
     spawn(v3(...level.spawn.pos), level.spawn.yaw);
@@ -332,6 +340,7 @@ function frame(now) {
     while (acc >= STEP && steps < 6) { physicsStep(lastInput); acc -= STEP; steps++; }
     if (steps === 6) acc = 0;   // running slow: drop time rather than spiral
   }
+  if (streamer) streamer.update(cart.origin(), 1);
   for (const pr of level.props) if (pr.node && !pr.body.isSleeping()) { const t = pr.body.translation(), r = pr.body.rotation(); pr.node.position.set(t.x, t.y, t.z); pr.node.quaternion.set(r.x, r.y, r.z, r.w); }
   syncTraffic(level);
   // Off the edge of the world: a fresh cart back at the start (the Godot levels are walled in, the sandbox isn't).
@@ -439,7 +448,7 @@ go.disabled = false; go.textContent = mode === 'touch' ? 'Tap to start' : 'Start
 
 // Test hook: scripted checks press the hands and keys and read the cart (mobile/test/drive_test.js).
 window.__cart = {
-  get cart() { return cart; }, get spares() { return spares; }, get bots() { return bots; }, get world() { return world; }, get level() { return level; },
+  get cart() { return cart; }, get spares() { return spares; }, get bots() { return bots; }, get world() { return world; }, get level() { return level; }, get streamer() { return streamer; },
   get levelKey() { return levelKey; }, get started() { return started; }, get cam() { return cam; }, camera, renderer,
   RAPIER, v3, levels: levelList, loadLevel, loadedLoops, spawn, respawn, runCommand, setMode, get mode() { return mode; },
   /** {L, R: -1/0/1, lift, press} or null to give control back to the keys and screen. */
@@ -448,7 +457,10 @@ window.__cart = {
   simulate(seconds, sample, onStep) {
     paused = true;
     const n = Math.round(seconds / STEP);
-    for (let i = 0; i < n; i++) { onStep && onStep(i * STEP); physicsStep(readInput()); sample && sample(); }
+    for (let i = 0; i < n; i++) {
+      onStep && onStep(i * STEP); physicsStep(readInput()); sample && sample();
+      if (streamer && i % 12 === 0) streamer.update(cart.origin(), 1);
+    }
     paused = false;
   },
   renderOnce(dt = 1 / 60) { cart.sync(); for (const s of others()) s.sync(); for (const pr of level.props) if (pr.node) { const t = pr.body.translation(), r = pr.body.rotation(); pr.node.position.set(t.x, t.y, t.z); pr.node.quaternion.set(r.x, r.y, r.z, r.w); } syncTraffic(level); updateCamera(dt); const c = cart.comWorld(); level.lights.update(new THREE.Vector3(c.x, c.y, c.z), 1); if (sun.visible) { const d = sun.userData.dir; sun.position.set(c.x - d.x * 30, c.y - d.y * 30, c.z - d.z * 30); sun.target.position.set(c.x, c.y, c.z); } skyDome.position.copy(camera.position); hud(); renderer.render(scene, camera); },

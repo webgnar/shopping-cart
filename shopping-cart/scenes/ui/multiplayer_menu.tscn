@@ -1,0 +1,190 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/multiplayer_menu.gd" id="1_menu"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 16.0
+bg_color = Color(0.05882353, 0.07058824, 0.09411765, 0.94)
+border_width_bottom = 2
+border_color = Color(0.43529412, 0.8156863, 0.54901963, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="MultiplayerMenu" type="CanvasLayer"]
+process_mode = 3
+layer = 7
+visible = false
+script = ExtResource("1_menu")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -300.0
+offset_right = 280.0
+offset_bottom = 300.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Rows" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Panel/Rows"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Multiplayer"
+
+[node name="HostHeading" type="Label" parent="Panel/Rows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.43529412, 0.8156863, 0.54901963, 1)
+text = "Host a game online"
+
+[node name="HostRow" type="HBoxContainer" parent="Panel/Rows"]
+layout_mode = 2
+
+[node name="GameName" type="LineEdit" parent="Panel/Rows/HostRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Game name"
+max_length = 32
+
+[node name="Listed" type="CheckBox" parent="Panel/Rows/HostRow"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Listed games show in everyone's game list. Unlisted ones can only be joined with the code."
+button_pressed = true
+text = "Listed"
+
+[node name="HostButton" type="Button" parent="Panel/Rows/HostRow"]
+layout_mode = 2
+text = "Host"
+
+[node name="CodeRow" type="HBoxContainer" parent="Panel/Rows"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="CodeCaption" type="Label" parent="Panel/Rows/CodeRow"]
+layout_mode = 2
+text = "Join code:"
+
+[node name="Code" type="Label" parent="Panel/Rows/CodeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "ABCD-EFGH"
+
+[node name="CopyButton" type="Button" parent="Panel/Rows/CodeRow"]
+layout_mode = 2
+text = "Copy"
+
+[node name="Sep1" type="HSeparator" parent="Panel/Rows"]
+layout_mode = 2
+
+[node name="JoinHeading" type="Label" parent="Panel/Rows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.43529412, 0.8156863, 0.54901963, 1)
+text = "Join a game"
+
+[node name="JoinRow" type="HBoxContainer" parent="Panel/Rows"]
+layout_mode = 2
+
+[node name="JoinCode" type="LineEdit" parent="Panel/Rows/JoinRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Join code, e.g. ABCD-EFGH"
+max_length = 9
+
+[node name="JoinButton" type="Button" parent="Panel/Rows/JoinRow"]
+layout_mode = 2
+text = "Join"
+
+[node name="Games" type="ItemList" parent="Panel/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+
+[node name="GamesRow" type="HBoxContainer" parent="Panel/Rows"]
+layout_mode = 2
+
+[node name="RefreshButton" type="Button" parent="Panel/Rows/GamesRow"]
+layout_mode = 2
+text = "Refresh list"
+
+[node name="JoinSelectedButton" type="Button" parent="Panel/Rows/GamesRow"]
+layout_mode = 2
+text = "Join selected"
+
+[node name="Sep2" type="HSeparator" parent="Panel/Rows"]
+layout_mode = 2
+
+[node name="LanHeading" type="Label" parent="Panel/Rows"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.43529412, 0.8156863, 0.54901963, 1)
+text = "Same network (LAN)"
+
+[node name="LanRow" type="HBoxContainer" parent="Panel/Rows"]
+layout_mode = 2
+
+[node name="Address" type="LineEdit" parent="Panel/Rows/LanRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Host's address, e.g. 192.168.1.20"
+
+[node name="JoinLanButton" type="Button" parent="Panel/Rows/LanRow"]
+layout_mode = 2
+text = "Join"
+
+[node name="HostLanButton" type="Button" parent="Panel/Rows/LanRow"]
+layout_mode = 2
+text = "Host on LAN"
+
+[node name="Status" type="RichTextLabel" parent="Panel/Rows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+bbcode_enabled = true
+text = "Offline"
+fit_content = true
+
+[node name="BottomRow" type="HBoxContainer" parent="Panel/Rows"]
+layout_mode = 2
+
+[node name="LeaveButton" type="Button" parent="Panel/Rows/BottomRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Leave game"
+
+[node name="Spacer" type="Control" parent="Panel/Rows/BottomRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CloseButton" type="Button" parent="Panel/Rows/BottomRow"]
+layout_mode = 2
+text = "Close (M)"
+
+[connection signal="pressed" from="Panel/Rows/HostRow/HostButton" to="." method="_on_host_pressed"]
+[connection signal="pressed" from="Panel/Rows/CodeRow/CopyButton" to="." method="_on_copy_pressed"]
+[connection signal="pressed" from="Panel/Rows/JoinRow/JoinButton" to="." method="_on_join_pressed"]
+[connection signal="text_submitted" from="Panel/Rows/JoinRow/JoinCode" to="." method="_on_join_code_submitted"]
+[connection signal="pressed" from="Panel/Rows/GamesRow/RefreshButton" to="." method="_on_refresh_pressed"]
+[connection signal="pressed" from="Panel/Rows/GamesRow/JoinSelectedButton" to="." method="_on_join_selected_pressed"]
+[connection signal="item_activated" from="Panel/Rows/Games" to="." method="_on_game_activated"]
+[connection signal="pressed" from="Panel/Rows/LanRow/JoinLanButton" to="." method="_on_join_lan_pressed"]
+[connection signal="pressed" from="Panel/Rows/LanRow/HostLanButton" to="." method="_on_host_lan_pressed"]
+[connection signal="pressed" from="Panel/Rows/BottomRow/LeaveButton" to="." method="_on_leave_pressed"]
+[connection signal="pressed" from="Panel/Rows/BottomRow/CloseButton" to="." method="close"]

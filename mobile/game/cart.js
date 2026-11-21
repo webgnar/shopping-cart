@@ -386,7 +386,7 @@ export class Cart {
 
   /**
    * Jolt (the Godot game's physics) caps every body's spin at its max_angular_velocity project setting (exported
-   * as T.max_angular_velocity, 200 rad/s: a 6.35 cm wheel reaches it at about 12.7 m/s). Above that the Godot
+   * as T.max_angular_velocity, 120 rad/s: a 6.35 cm wheel reaches it at about 7.6 m/s). Above that the Godot
    * cart's wheels skid and drag, so the same cap applies here, after each physics step.
    */
   capWheelSpin() {

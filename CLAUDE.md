@@ -57,7 +57,12 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
 
 ## Layout
 
-- `scenes/main.tscn` — the sandbox level (store floor, parking lot, boxes, `CartSpawn`).
+- `scenes/main.tscn` — the sandbox level (store floor, parking lot, boxes, `CartSpawn`). It is endless: its
+  `Chunks` node (`scripts/sandbox/chunk_streamer.gd`) fills a 40 m grid around the cart with terrain chunks from
+  `scenes/sandbox/chunks/` (parking lot, street, supermarket floor, garage deck, hill street), picked by a hash of
+  the square so the layout never changes. Every chunk is 40 x 40 m, centred on its origin, and flat at height 0
+  along its edges so any chunk meets any other in any turn. Add a chunk by adding it to the `Chunks` node's
+  `chunks` and `weights`. `tools/sandbox_models.py` builds the hill (then `tools/make_sandbox_shapes_cli.gd`).
 - `scenes/levels/<name>.tscn` — further levels. Their root script extends `res://scripts/main.gd`,
   which supplies cart spawning, the follow camera, input and the HUD. A level scene places its own
   `CartSpawn` marker; if it has no `WorldEnvironment`, `Camera` or `HUD` node, `main.gd` adds the
@@ -69,7 +74,10 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   `godot --headless -s res://tools/bake_navigation_cli.gd` after moving anything solid.
 - `scenes/net/net_session.tscn` — the `Net` autoload: host-authoritative multiplayer (`scripts/net/`). Guests'
   carts are driven through `controls` like bot carts; guests only show the host's snapshots. Plan and wire format:
-  `docs/MULTIPLAYER.md` (bump `NetProtocol.VERSION` when a message changes).
+  `docs/MULTIPLAYER.md` (bump `NetProtocol.VERSION` when a message changes). Online play uses WebRTC
+  (`scripts/net/webrtc_link.gd`, desktop plugin in `addons/webrtc/`) introduced by the rendezvous service in
+  `services/rendezvous/` (Cloudflare Worker; `npm run dev` there runs it locally). M opens the Multiplayer menu
+  (`scenes/ui/multiplayer_menu.tscn`). Don't deploy the Worker or create Cloudflare resources without asking zack.
 - `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun.
   `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
   (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera (`scripts/cart_camera.gd` lifts it over walls, see its exports).
@@ -97,4 +105,7 @@ From `shopping-cart/`:
 - Rolling sound (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
 - Multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/multiplayer_test.gd`
+- Rendezvous service, and online play by join code over WebRTC (from `services/rendezvous`, after `npm install`):
+  `npm test` and `npm run test:godot`
 - Bot carts drive themselves in every level: `godot --headless --fixed-fps 120 -s res://tests/bot_test.gd`
+- Endless sandbox (chunks load, no holes, flush edges, floors, hill): `godot --headless --fixed-fps 120 -s res://tests/sandbox_test.gd`

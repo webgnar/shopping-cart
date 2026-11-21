@@ -1,8 +1,11 @@
 class_name NetSession
 extends Node
 ## Multiplayer, host-authoritative: one player hosts, and the host's physics is the only physics. The `Net`
-## autoload (scenes/net/net_session.tscn). Prototype: guests join by address (LAN, or two copies on one machine);
-## join codes, the server browser and NAT traversal come later through the Cloudflare rendezvous (docs/MULTIPLAYER.md).
+## autoload (scenes/net/net_session.tscn). Two ways to connect (docs/MULTIPLAYER.md):
+##  - Online, by join code: the host registers with the rendezvous service (services/rendezvous, a Cloudflare
+##    Worker; `rendezvous_url`) and gets an 8-letter code; players connect over WebRTC (webrtc_link.gd), straight
+##    to each other or through a TURN relay. Public games are listed for anyone to browse.
+##  - LAN, by address: ENet straight to the host's IP and port (no service needed).
 ##
 ## Host: plays as usual. Each guest gets a cart (cart.tscn) beside the level's CartSpawn, driven through the cart's
 ## `controls`, exactly like a bot cart, from the keys the guest holds (INPUT packets). Every tick it sends
@@ -12,13 +15,20 @@ extends Node
 ## the two snapshots around (newest - interp_delay). Its own keys go to the host; its own cart is one of the
 ## snapshot carts. Bot carts' bots don't run on a guest.
 ##
-## Start it from the console (`host`, `join <address>`, `leave`, `net`) or the command line:
-##   godot --path shopping-cart -- --host            (port: --host=24601)
-##   godot --path shopping-cart -- --join=127.0.0.1  (or --join=192.168.1.20:24601)
+## Start it from the Multiplayer menu (M), the console (`online`, `host`, `join <code or address>`, `games`,
+## `leave`, `net`) or the command line:
+##   godot --path shopping-cart -- --online           (unlisted: --online=unlisted; name: --name=Zack's store)
+##   godot --path shopping-cart -- --join=ABCD-EFGH   (a join code)
+##   godot --path shopping-cart -- --host             (LAN; port: --host=24601)
+##   godot --path shopping-cart -- --join=127.0.0.1   (LAN; or --join=192.168.1.20:24601)
+##   add --rendezvous=<url> to use another rendezvous service (default: rendezvous_url)
 ## The transport is any MultiplayerPeer, polled directly with our own packets (net_protocol.gd), not Godot's RPCs,
-## so the browser game can speak the same bytes: ENet for now, WebRTCMultiplayerPeer once signaling exists.
+## so the browser game can speak the same bytes.
 
 signal status_changed(text: String)
+signal hosted_online(code: String)       ## the join code to share
+signal games_listed(games: Array)        ## answer to list_games(): [{code, name, level, players, max_players}]
+signal message(text: String)             ## something to tell the player (also in the console), BBCode
 
 const CART_SCENE := preload("res://scenes/cart/cart.tscn")
 
@@ -30,7 +40,14 @@ const CART_SCENE := preload("res://scenes/cart/cart.tscn")
 @export var refresh_per_snapshot := 24    ## resting bodies resent with each snapshot
 @export var spawn_spacing := 1.2          ## m between guest carts, in a row to the right of CartSpawn
 @export var max_packet := 1100            ## bytes: snapshots are split to stay under one network packet
-@export var connect_timeout := 8.0        ## s a guest waits for the host to answer
+@export var connect_timeout := 20.0       ## s a guest waits to reach the host (WebRTC needs a few round trips)
+@export_group("Online")
+## The rendezvous service (services/rendezvous). Local: `npm run dev` there serves http://127.0.0.1:8787.
+@export var rendezvous_url := "http://127.0.0.1:8787"
+@export var game_name := "Shopping cart"   ## shown in the game list
+@export var listed := true                 ## public games appear in the game list; unlisted ones only by code
+@export var heartbeat_interval := 30.0     ## s between "still here" messages that keep a listing alive
+@export_group("")
 
 enum Role { OFFLINE, HOST, GUEST }
 var role := Role.OFFLINE
@@ -44,16 +61,22 @@ var level_bodies: Array[RigidBody3D] = []   ## the level's loose bodies, in the 
 ## Player id -> ShoppingCart. Host: guests' carts. Guest: every player's cart as shown here, its own included.
 var carts := {}
 ## What has gone through, for the status line and tests.
-var stats := {"snapshots_sent": 0, "snapshots_received": 0, "inputs_received": 0, "packets_in": 0}
+var stats := {"snapshots_sent": 0, "snapshots_received": 0, "inputs_received": 0, "packets_in": 0, "chunk_poses": 0}
 
 @onready var _overlay: CanvasLayer = $Overlay
 @onready var _status: Label = %Status
+@onready var _http: HTTPRequest = $Rendezvous
+var join_code := ""          ## the online game's code, host or guest
+var _heartbeat_clock := 0.0
+var _http_busy := false
 
 # host
 var _guests := {}            ## id -> {"keys": int, "slot": int} for guests that said HELLO
 var _tick := 0
 var _snap_clock := 0.0
 var _refresh_cursor := 0
+var _chunk_cursor := 0
+var _streamers: Array = []   ## the level's ChunkStreamers (the endless sandbox has one)
 # guest
 var _samples := {}           ## RigidBody3D -> [t0, pos0, rot0, t1, pos1, rot1]
 var _newest := -1.0          ## host time (s) of the newest snapshot
@@ -72,8 +95,20 @@ func _ready() -> void:
 		console.add_command("join", _cmd_join, "join a game: join <address>[:port]")
 		console.add_command("leave", func(_a): leave(), "leave or stop the multiplayer game")
 		console.add_command("net", func(_a): _log(status_text()), "show the multiplayer status")
-	for arg in OS.get_cmdline_user_args():
-		if arg == "--host" or arg.begins_with("--host="):
+		console.add_command("online", _cmd_online, "host an online game with a join code: online [unlisted] [name]")
+		console.add_command("games", func(_a): _cmd_games(), "list public online games")
+	var args := OS.get_cmdline_user_args()
+	for arg in args:
+		if arg.begins_with("--rendezvous="):
+			rendezvous_url = arg.get_slice("=", 1)
+		elif arg.begins_with("--name="):
+			game_name = arg.get_slice("=", 1)
+	for arg in args:
+		if arg == "--online" or arg.begins_with("--online="):
+			if arg.get_slice("=", 1) == "unlisted":
+				listed = false
+			host_online.call_deferred()
+		elif arg == "--host" or arg.begins_with("--host="):
 			host.call_deferred(int(arg.get_slice("=", 1)) if "=" in arg else default_port)
 		elif arg.begins_with("--join="):
 			_join_address.call_deferred(arg.get_slice("=", 1))
@@ -82,6 +117,7 @@ func _ready() -> void:
 
 # ---------------------------------------------------------------- starting and stopping
 
+## LAN: host on a UDP port; others join by this computer's address.
 func host(port: int = 0) -> bool:
 	leave()
 	port = port if port > 0 else default_port
@@ -90,21 +126,50 @@ func host(port: int = 0) -> bool:
 	if err != OK:
 		_log("[color=#ff8a7a]Couldn't host on port %d (error %d).[/color]" % [port, err])
 		return false
-	peer = enet
+	_start_host(enet, "port %d" % port)
+	_log("Hosting on port %d. Others join with: join <this computer's address>" % port)
+	return true
+
+
+## Online: registers with the rendezvous service and hosts under a join code (hosted_online gives the code).
+## Returns the code, or "" if the service said no or couldn't be reached.
+func host_online() -> String:
+	leave()
+	_log("Asking %s for a join code..." % rendezvous_url)
+	var body := {"name": game_name, "level": _level_key(), "max_players": max_guests + 1, "public": listed,
+		"protocol": NetProtocol.VERSION}
+	var res: Array = await _request("/host", HTTPClient.METHOD_POST, JSON.stringify(body))
+	if res[0] != 200 or not res[1] is Dictionary or not res[1].has("code"):
+		var why: String = res[1].get("error", "") if res[1] is Dictionary else ""
+		_log("[color=#ff8a7a]Couldn't host online: %s[/color]" % (why if why else "no answer from %s" % rendezvous_url))
+		return ""
+	var code: String = res[1].code
+	var link := WebRtcLink.hosting(_ws_url("/room/%s/host" % code), res[1].token, code)
+	join_code = code
+	_heartbeat_clock = 0.0
+	_start_host(link, "code " + pretty_code(code))
+	_log("Hosting online. Join code: [b]%s[/b]%s" % [pretty_code(code), "" if listed else " (unlisted)"])
+	hosted_online.emit(code)
+	return code
+
+
+func _start_host(transport: MultiplayerPeer, address: String) -> void:
+	peer = transport
 	peer.peer_connected.connect(_on_peer_connected)
 	peer.peer_disconnected.connect(_on_peer_disconnected)
+	if peer is WebRtcLink:
+		peer.signal_message.connect(func(_msg): _update_status())
 	role = Role.HOST
 	my_id = 1
-	host_address = "port %d" % port
+	host_address = address
 	# The level already running becomes the hosted one.
 	var scene := get_tree().current_scene
 	if scene and scene.has_method("spawn_cart"):
 		level_ready(scene)
-	_log("Hosting on port %d. Others join with: join <this computer's address>" % port)
 	_update_status()
-	return true
 
 
+## LAN: joins the host at `address`.
 func join(address: String, port: int = 0) -> bool:
 	leave()
 	port = port if port > 0 else default_port
@@ -113,15 +178,88 @@ func join(address: String, port: int = 0) -> bool:
 	if err != OK:
 		_log("[color=#ff8a7a]Couldn't reach %s:%d (error %d).[/color]" % [address, port, err])
 		return false
-	peer = enet
+	_start_guest(enet, "%s:%d" % [address, port])
+	return true
+
+
+## Online: joins the game with this join code (dashes and case don't matter).
+func join_online(code: String) -> bool:
+	leave()
+	code = code.to_upper().replace("-", "").strip_edges()
+	if not is_join_code(code):
+		_log("[color=#ff8a7a]'%s' isn't a join code (8 letters and numbers).[/color]" % code)
+		return false
+	join_code = code
+	_start_guest(WebRtcLink.joining(_ws_url("/room/%s/join?protocol=%d" % [code, NetProtocol.VERSION]), code),
+		"code " + pretty_code(code))
+	return true
+
+
+func _start_guest(transport: MultiplayerPeer, address: String) -> void:
+	peer = transport
 	peer.peer_connected.connect(_on_peer_connected)
 	peer.peer_disconnected.connect(_on_peer_disconnected)
+	if peer is WebRtcLink:
+		peer.signal_message.connect(func(_msg): _update_status())
 	role = Role.GUEST
-	host_address = "%s:%d" % [address, port]
+	host_address = address
 	_connecting_for = 0.0
 	_log("Joining %s..." % host_address)
 	_update_status()
+
+
+## Public online games (also sent as games_listed). Each: {code, name, level, players, max_players, protocol}.
+func list_games() -> Array:
+	var res: Array = await _request("/games?protocol=%d" % NetProtocol.VERSION, HTTPClient.METHOD_GET, "")
+	var games: Array = res[1].get("games", []) if res[0] == 200 and res[1] is Dictionary else []
+	if res[0] != 200:
+		_log("[color=#ff8a7a]Couldn't get the game list from %s.[/color]" % rendezvous_url)
+	games_listed.emit(games)
+	return games
+
+
+## A join code: 8 of the letters and digits the service uses (no I, L, O, 0 or 1).
+static func is_join_code(text: String) -> bool:
+	var code := text.to_upper().replace("-", "")
+	if code.length() != 8:
+		return false
+	for c in code:
+		if not c in "ABCDEFGHJKMNPQRSTUVWXYZ23456789":
+			return false
 	return true
+
+
+static func pretty_code(code: String) -> String:
+	return code.substr(0, 4) + "-" + code.substr(4)
+
+
+## [status code, parsed JSON or null]. One request at a time; a second waits for the first.
+func _request(path: String, method: int, body: String) -> Array:
+	while _http_busy:
+		await get_tree().process_frame
+	_http_busy = true
+	var err := _http.request(rendezvous_url.rstrip("/") + path, ["Content-Type: application/json"], method, body)
+	if err != OK:
+		_http_busy = false
+		return [0, null]
+	var r: Array = await _http.request_completed
+	_http_busy = false
+	return [r[1], JSON.parse_string((r[3] as PackedByteArray).get_string_from_utf8())]
+
+
+func _ws_url(path: String) -> String:
+	return rendezvous_url.rstrip("/").replace("https://", "wss://").replace("http://", "ws://") + path
+
+
+## The level's console fast-travel key (what the rendezvous service lists), "sandbox" if it has none.
+func _level_key() -> String:
+	var console := get_node_or_null("/root/Console")
+	var scene := get_tree().current_scene
+	if console and scene:
+		for key in console.destinations:
+			if console.destinations[key] == scene.scene_file_path:
+				return key
+	return "sandbox"
 
 
 ## Ends the session. A guest goes back to playing the level on its own.
@@ -142,6 +280,7 @@ func leave() -> void:
 	_samples.clear()
 	_welcomed = false
 	_newest = -1.0
+	join_code = ""
 	_log("Left the multiplayer game.")
 	_update_status()
 	if was_guest and get_tree().current_scene:
@@ -167,15 +306,25 @@ func level_ready(new_level: Node) -> void:
 	if not level.tree_exiting.is_connected(_on_level_exiting):
 		level.tree_exiting.connect(_on_level_exiting.bind(level))
 	var own: Node = level.get("cart")
+	# Streamed terrain (the endless sandbox): its chunks come and go, so their loose bodies are sent by square.
+	_streamers.clear()
+	for n in level.find_children("*", "", true, false):
+		if n is ChunkStreamer:
+			_streamers.append(n)
+			if role == Role.GUEST and not n.chunk_loaded.is_connected(_on_chunk_loaded):
+				n.chunk_loaded.connect(_on_chunk_loaded)
 	level_bodies.clear()
 	for n in level.find_children("*", "RigidBody3D", true, false):
 		if n.is_queued_for_deletion() or (own and own.is_ancestor_of(n)):
+			continue
+		if _streamers.any(func(st): return st.is_ancestor_of(n)):
 			continue
 		level_bodies.append(n)
 	level_bodies.sort_custom(func(a, b): return str(level.get_path_to(a)) < str(level.get_path_to(b)))
 	carts.clear()
 	_samples.clear()
 	_refresh_cursor = 0
+	_chunk_cursor = 0
 	if role == Role.HOST:
 		level_serial = (level_serial + 1) % 256
 		for id in _guests:
@@ -191,14 +340,38 @@ func level_ready(new_level: Node) -> void:
 			_log("[color=#ff8a7a]This level doesn't match the host's (%d loose bodies here, %d there): different builds?[/color]" % [level_bodies.size(), _expected_bodies])
 		for b in level_bodies:
 			b.freeze = true
-		for c in level.find_children("*", "", true, false):
-			if c is ShoppingCart:
-				c.make_puppet()
-			elif c is CartBot:
-				c.process_mode = Node.PROCESS_MODE_DISABLED
+		_freeze_all(level)
+		for st in _streamers:
+			for cell in st.loaded:
+				_freeze_all(st.loaded[cell])
 		if own:
 			carts[my_id] = own
 	_update_status()
+
+
+## Guest: everything under `root` only shows the host's world: bodies frozen, carts puppets, bots off.
+func _freeze_all(root: Node) -> void:
+	for c in root.find_children("*", "", true, false):
+		if c is ShoppingCart:
+			c.make_puppet()
+		elif c is CartBot:
+			c.process_mode = Node.PROCESS_MODE_DISABLED
+		elif c is RigidBody3D:
+			c.freeze = true
+
+
+func _on_chunk_loaded(_cell: Vector2i, chunk: Node3D) -> void:
+	if role == Role.GUEST:
+		_freeze_all(chunk)
+
+
+## A chunk's loose bodies, in the same order on every machine.
+func _chunk_bodies(chunk: Node) -> Array:
+	if not chunk.has_meta("net_bodies"):
+		var list := chunk.find_children("*", "RigidBody3D", true, false).filter(func(b): return not b.is_queued_for_deletion())
+		list.sort_custom(func(a, b): return str(chunk.get_path_to(a)) < str(chunk.get_path_to(b)))
+		chunk.set_meta("net_bodies", list)
+	return chunk.get_meta("net_bodies")
 
 
 func _on_level_exiting(old: Node) -> void:
@@ -330,6 +503,15 @@ func _host_receive(from: int, packet: PackedByteArray) -> void:
 
 func _host_tick(delta: float) -> void:
 	_tick += 1
+	if peer is WebRtcLink:
+		if peer.get_connection_status() == MultiplayerPeer.CONNECTION_DISCONNECTED:
+			_log("[color=#ff8a7a]Stopped hosting: %s[/color]" % peer.error_text)
+			leave()
+			return
+		_heartbeat_clock += delta
+		if _heartbeat_clock >= heartbeat_interval:
+			_heartbeat_clock = 0.0
+			peer.heartbeat()
 	if level == null or not is_instance_valid(level):
 		return
 	# Guests hold their carts' bars through `controls`, as a bot does.
@@ -395,30 +577,56 @@ func _build_snapshot() -> Array[PackedByteArray]:
 		b.put_u16(i)
 		NetProtocol.put_pose(b, level_bodies[i].global_transform)
 		body_blocks.append(b.data_array)
-	# Pack greedily: carts first, then bodies; every packet is a complete SNAPSHOT.
+	# Loose bodies in streamed chunks, by square: the same rule (moving, plus some resting ones in turn).
+	var chunk_entries := []   # [cell, index, body]
+	for st in _streamers:
+		for cell in st.loaded:
+			var list := _chunk_bodies(st.loaded[cell])
+			for i in list.size():
+				chunk_entries.append([cell, i, list[i]])
+	var chunk_picked := {}
+	for k in chunk_entries.size():
+		var body: RigidBody3D = chunk_entries[k][2]
+		if is_instance_valid(body) and not body.sleeping and not body.freeze:
+			chunk_picked[k] = true
+	for k in mini(refresh_per_snapshot, chunk_entries.size()):
+		_chunk_cursor = (_chunk_cursor + 1) % chunk_entries.size()
+		chunk_picked[_chunk_cursor] = true
+	var chunk_blocks: Array[PackedByteArray] = []
+	for k in chunk_picked:
+		var e: Array = chunk_entries[k]
+		if not is_instance_valid(e[2]):
+			continue
+		var b := StreamPeerBuffer.new()
+		b.put_16(e[0].x)
+		b.put_16(e[0].y)
+		b.put_u16(e[1])
+		NetProtocol.put_pose(b, (e[2] as RigidBody3D).global_transform)
+		chunk_blocks.append(b.data_array)
+	# Pack greedily: carts, then level bodies, then chunk bodies; every packet is a complete SNAPSHOT.
 	var packets: Array[PackedByteArray] = []
-	var ci := 0
-	var bi := 0
-	while ci < cart_blocks.size() or bi < body_blocks.size() or packets.is_empty():
-		var size := 1 + 1 + 4 + 1 + 2
-		var carts_in: Array[PackedByteArray] = []
-		while ci < cart_blocks.size() and (carts_in.is_empty() or size + cart_blocks[ci].size() <= max_packet):
-			size += cart_blocks[ci].size()
-			carts_in.append(cart_blocks[ci])
-			ci += 1
-		var bodies_in: Array[PackedByteArray] = []
-		while bi < body_blocks.size() and size + body_blocks[bi].size() <= max_packet:
-			size += body_blocks[bi].size()
-			bodies_in.append(body_blocks[bi])
-			bi += 1
+	var lists := [cart_blocks, body_blocks, chunk_blocks]
+	var at := [0, 0, 0]
+	while at[0] < cart_blocks.size() or at[1] < body_blocks.size() or at[2] < chunk_blocks.size() or packets.is_empty():
+		var size := 1 + 1 + 4 + 1 + 2 + 2
+		var taken := [[], [], []]
+		for l in 3:
+			var blocks: Array[PackedByteArray] = lists[l]
+			while at[l] < blocks.size() and (size + blocks[at[l]].size() <= max_packet or (l == 0 and taken[0].is_empty())):
+				size += blocks[at[l]].size()
+				taken[l].append(blocks[at[l]])
+				at[l] += 1
 		var p := NetProtocol.writer(NetProtocol.Msg.SNAPSHOT)
 		p.put_u8(level_serial)
 		p.put_u32(_tick)
-		p.put_u8(carts_in.size())
-		for c in carts_in:
+		p.put_u8(taken[0].size())
+		for c in taken[0]:
 			p.put_data(c)
-		p.put_u16(bodies_in.size())
-		for c in bodies_in:
+		p.put_u16(taken[1].size())
+		for c in taken[1]:
+			p.put_data(c)
+		p.put_u16(taken[2].size())
+		for c in taken[2]:
 			p.put_data(c)
 		packets.append(p.data_array)
 	return packets
@@ -493,6 +701,17 @@ func _read_snapshot(b: StreamPeerBuffer) -> void:
 		var pose := NetProtocol.get_pose(b)
 		if i < level_bodies.size() and is_instance_valid(level_bodies[i]):
 			_add_sample(level_bodies[i], t, pose)
+	for k in b.get_u16():
+		var cell := Vector2i(b.get_16(), b.get_16())
+		var i := b.get_u16()
+		var pose := NetProtocol.get_pose(b)
+		for st in _streamers:
+			var chunk: Node = st.loaded.get(cell)
+			if chunk and is_instance_valid(chunk):   # not loaded here (yet): skip, the next one will do
+				var list := _chunk_bodies(chunk)
+				if i < list.size() and is_instance_valid(list[i]):
+					_add_sample(list[i], t, pose)
+					stats.chunk_poses += 1
 
 
 ## The cart shown for player `id`, made on first sight.
@@ -520,6 +739,11 @@ func _add_sample(body: RigidBody3D, t: float, pose: Array) -> void:
 
 func _guest_tick(delta: float) -> void:
 	if not _welcomed:
+		if peer.get_connection_status() == MultiplayerPeer.CONNECTION_DISCONNECTED:
+			var why: String = peer.error_text if peer is WebRtcLink else ""
+			_log("[color=#ff8a7a]Couldn't join %s%s[/color]" % [host_address, ": " + why if why else "."])
+			leave()
+			return
 		_connecting_for += delta
 		if _connecting_for > connect_timeout:
 			_log("[color=#ff8a7a]No answer from %s.[/color]" % host_address)
@@ -528,7 +752,8 @@ func _guest_tick(delta: float) -> void:
 	# Our keys, to the host: whenever they change, and input_rate times a second anyway (packets can be lost).
 	var keys := 0
 	var console := get_node_or_null("/root/Console")
-	if not (console and console.is_open()):
+	var focus := get_viewport().gui_get_focus_owner()
+	if not (console and console.is_open()) and not (focus is LineEdit or focus is TextEdit):
 		for i in ShoppingCart.ACTIONS.size():
 			if Input.is_action_pressed(ShoppingCart.ACTIONS[i]):
 				keys |= 1 << i
@@ -551,8 +776,9 @@ func _guest_tick(delta: float) -> void:
 		_render_time = target
 	else:
 		_render_time = lerpf(_render_time, target, 0.05)
-	for body in _samples:
+	for body in _samples.keys():
 		if not is_instance_valid(body):
+			_samples.erase(body)   # its chunk was freed
 			continue
 		var s: Array = _samples[body]
 		var w := 1.0
@@ -570,6 +796,8 @@ func request_reset() -> void:
 # ---------------------------------------------------------------- status
 
 func status_text() -> String:
+	if role == Role.HOST and peer is WebRtcLink and peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
+		return "Starting online game..."
 	match role:
 		Role.HOST:
 			return "Hosting on %s · %s" % [host_address, _players(_guests.size() + 1)]
@@ -592,6 +820,7 @@ func _update_status() -> void:
 
 
 func _log(text: String) -> void:
+	message.emit(text)
 	var console := get_node_or_null("/root/Console")
 	if console and console.has_method("log_line"):
 		console.log_line(text)
@@ -605,12 +834,33 @@ func _cmd_host(args: PackedStringArray) -> void:
 
 func _cmd_join(args: PackedStringArray) -> void:
 	if args.is_empty():
-		_log("Usage: join <address>[:port], e.g. join 127.0.0.1")
+		_log("Usage: join <join code> or join <address>[:port], e.g. join ABCD-EFGH or join 127.0.0.1")
 		return
 	_join_address(args[0])
 
 
+func _cmd_online(args: PackedStringArray) -> void:
+	var words := Array(args)
+	if not words.is_empty() and words[0] in ["unlisted", "public"]:
+		listed = words.pop_front() == "public"
+	if not words.is_empty():
+		game_name = " ".join(words)
+	host_online()
+
+
+func _cmd_games() -> void:
+	var games := await list_games()
+	if games.is_empty():
+		_log("No public games right now.")
+	for g in games:
+		_log("  [b]%s[/b]  %s  (%s, %d/%d players)" % [pretty_code(g.code), g.name, g.level, g.players, g.max_players])
+
+
+## A join code joins online; anything else is a LAN address.
 func _join_address(text: String) -> void:
+	if is_join_code(text) and not "." in text:
+		join_online(text)
+		return
 	var parts := text.rsplit(":", true, 1)
 	if parts.size() == 2 and parts[1].is_valid_int():
 		join(parts[0], int(parts[1]))

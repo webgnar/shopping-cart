@@ -176,9 +176,13 @@ func _process(_delta: float) -> void:
 const ACTIONS := ["push_left", "pull_left", "push_right", "pull_right", "lift", "press"]
 
 
-## Whether a key is held: the player's keyboard, or the driver's `controls` for any other cart.
+## Whether a key is held: the player's keyboard (not while typing in a text box), or the driver's `controls` for
+## any other cart.
 func held(action: String) -> bool:
-	return Input.is_action_pressed(action) if player_controlled else controls.get(action, false)
+	if not player_controlled:
+		return controls.get(action, false)
+	var focus := get_viewport().gui_get_focus_owner()
+	return Input.is_action_pressed(action) and not (focus is LineEdit or focus is TextEdit)
 
 
 func _physics_process(delta: float) -> void:
