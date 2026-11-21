@@ -190,6 +190,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_far")
 
+[node name="CartStack" parent="." instance=ExtResource("stack4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 2.5)
+
 [node name="TestStrip" type="Node3D" parent="."]
 
 [node name="SpeedBump1" type="StaticBody3D" parent="TestStrip"]
@@ -273,9 +276,6 @@ mass = 2.0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39, 0.875, 0.2)
 collision_mask = 7
 mass = 2.0
-
-[node name="CartStack" parent="." instance=ExtResource("stack4")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 2.5)
 
 [node name="CartSpawn" type="Marker3D" parent="." unique_id=942329566]
 
