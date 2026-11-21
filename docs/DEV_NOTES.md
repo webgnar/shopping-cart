@@ -228,7 +228,10 @@ starts; then every player's cart flies it in that player's colour so you can tel
 - **Scene:** `scenes/cart/flag.tscn` (`CartFlag`, `scripts/cart/cart_flag.gd`): `colors` is the pennant palette
   (`assets/materials/flag/pennant_*.tres`: red, yellow, green, orange, purple, cyan, pink, white) and `color` picks
   one. It is instanced as `Cart/Frame/Flag` on the rear-left corner of the basket, outside the side wall, turned so
-  the pennant trails behind the cart, with `visible` off. Spare and bot carts inherit it and stay without a flag.
+  the pennant trails behind the cart, with `visible` off. The pole leans back 14 degrees, along the basket's rear
+  corner tube (measured from the cart model: that tube runs from x 0.22 at 0.44 m up to x 0.10 at 0.94 m, a
+  1-in-4 slope), 1.5 cm outside it, so both clips sit on the tube (zack asked for it to line up with what it's
+  clipped to). Spare and bot carts inherit it and stay without a flag.
 - **No physics:** it is a plain Node3D with meshes, no body and no collision shape, under the Frame (which already
   sets its centre of mass by hand), so the cart's mass, centre of mass and tipping don't change; the camera's wall
   checks and the nest mouth never see it.
