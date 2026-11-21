@@ -12,7 +12,8 @@ extends RefCounted
 ##                                        the host only sends snapshots to guests that have loaded its level
 ##   RESET     guest -> host  reliable    (nothing: put my cart back on its wheels where it is)
 ##   SNAPSHOT  host -> guests unreliable  u8 level serial, u32 tick, u8 carts, then per cart:
-##                                          u32 player id, i16 left hand N, i16 right hand N, u8 flags (1 = fallen),
+##                                          u32 player id, i16 left hand N, i16 right hand N, u8 flags (bit 0 fallen, bits 1-3
+##                                          the player's slot: host 0, guests 1-7, picks the flag colour),
 ##                                          3 x f32 frame velocity, f32 turn rate, u8 bodies, a pose per body
 ##                                          (ShoppingCart.net_bodies() order);
 ##                                        then u16 level bodies, per body: u16 index, pose (index into the level's
@@ -20,12 +21,17 @@ extends RefCounted
 ##                                        then u16 chunk bodies, per body: i16 square x, i16 square z, u16 index,
 ##                                          pose (index into that chunk's RigidBody3Ds sorted by path)
 ##   LEFT      host -> guests reliable    u32 player id
+##   RACE      host -> guests reliable    u8 level serial, u8 phase (Race.Phase: 0 idle, 1 waiting for guests,
+##                                          2 counting down, 3 racing, 4 over), f32 clock (counting down: s to GO;
+##                                          else race time), f32 s since the winner finished (< 0: nobody yet),
+##                                          u8 racers, per racer: i32 id (player id; bots -1, -2...),
+##                                          f32 finish time (< 0: not over the line), str name
 ## A snapshot too big for one packet is sent as several, each a complete SNAPSHOT for the same tick.
 
-const VERSION := 2
+const VERSION := 4
 ## Bump VERSION whenever a message changes, so old and new builds refuse each other cleanly.
 
-enum Msg { HELLO = 1, WELCOME, REJECT, LEVEL, INPUT, RESET, SNAPSHOT, LEFT }
+enum Msg { HELLO = 1, WELCOME, REJECT, LEVEL, INPUT, RESET, SNAPSHOT, LEFT, RACE }
 
 const POSE_BYTES := 28
 

@@ -9,6 +9,8 @@ extends CanvasLayer
 
 @export var destinations: Dictionary[String, String] = {}
 @export var toggle_key: Key = KEY_QUOTELEFT   ## physical key that opens the console (` / ~)
+## The `race` command's level: a destinations key whose scene has a Race node (scenes/race/race.tscn).
+@export var race_level := "garage"
 
 @onready var _output: RichTextLabel = %Output
 @onready var _entry: LineEdit = %Input
@@ -24,6 +26,7 @@ func _ready() -> void:
 	add_command("help", _cmd_help, "list the commands")
 	add_command("clear", func(_a): _output.clear(), "clear this window")
 	add_command("where", _cmd_where, "show which level is loaded")
+	add_command("race", _cmd_race, "race to the bottom of the parking garage: 3, 2, 1, go! (race nobots: just players)")
 	for place in destinations:
 		add_command(place, _travel.bind(place), "fast travel to %s" % destinations[place].get_file())
 	log_line("[color=#8a93a6]Console ready. Type [b]help[/b] for commands.[/color]")
@@ -125,6 +128,24 @@ func _cmd_help(_args: PackedStringArray) -> void:
 func _cmd_where(_args: PackedStringArray) -> void:
 	var scene := get_tree().current_scene
 	log_line("Loaded: %s" % (scene.scene_file_path if scene else "nothing"))
+
+
+func _cmd_race(args: PackedStringArray) -> void:
+	var net := get_node_or_null("/root/Net")
+	if net and net.is_guest():
+		log_line("[color=#ffc66d]The host starts races. Type leave to race on your own.[/color]")
+		return
+	var with_bots := not ("nobots" in args or "solo" in args)
+	var race := get_tree().get_first_node_in_group("race") as Race
+	var scene := get_tree().current_scene
+	if race and scene and scene.scene_file_path == destinations.get(race_level, ""):
+		log_line("Lining up for the race...")
+		close()
+		race.start(with_bots)
+		return
+	Race.start_on_load = true
+	Race.bots_on_load = with_bots
+	_travel(PackedStringArray(), race_level)
 
 
 func _travel(_args: PackedStringArray, place: String) -> void:

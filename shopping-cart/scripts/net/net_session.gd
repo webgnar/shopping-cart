@@ -282,10 +282,24 @@ func leave() -> void:
 	_welcomed = false
 	_newest = -1.0
 	join_code = ""
+	if level and is_instance_valid(level):
+		_show_flag(level.get("cart"), -1)
 	_log("Left the multiplayer game.")
 	_update_status()
 	if was_guest and get_tree().current_scene:
 		get_tree().reload_current_scene()
+
+
+## Every player's cart flies its flag (scenes/cart/flag.tscn) in its player slot's colour; slot -1 hides it.
+static func _show_flag(cart: Node, slot: int) -> void:
+	var flag := cart.get_node_or_null("Frame/Flag") as CartFlag if cart and is_instance_valid(cart) else null
+	if flag == null:
+		return
+	if slot < 0:
+		flag.visible = false
+	elif not flag.visible or flag.color != slot:
+		flag.color = slot
+		flag.visible = true
 
 
 func is_host() -> bool:
@@ -410,6 +424,37 @@ func _spawn_guest_cart(id: int, at := Vector3.INF, yaw := 0.0) -> void:
 	carts[id] = cart
 
 
+## Host: puts guest `id`'s cart (a fresh one) at `at`, facing `yaw` (a race's starting grid).
+func place_guest_cart(id: int, at: Vector3, yaw: float) -> void:
+	if role == Role.HOST and _guests.has(id) and level:
+		_spawn_guest_cart(id, at, yaw)
+
+
+## Host: the guests in the game, in the order they joined (by slot).
+func guest_ids() -> Array:
+	var ids := _guests.keys()
+	ids.sort_custom(func(a, b): return _guests[a].slot < _guests[b].slot)
+	return ids
+
+
+## A guest's name as players see it: Player 2, Player 3... (the host is Player 1).
+func guest_name(id: int) -> String:
+	return "Player %d" % (_guests[id].slot + 1) if _guests.has(id) else "Player"
+
+
+## Host: whether every guest has loaded the level being played (they send its serial with their keys).
+func guests_loaded() -> bool:
+	return _guests.values().all(func(g): return g.serial == level_serial)
+
+
+## Host: a reliable message to every guest (a race update, scripts/race/race.gd).
+func send_to_guests(data: PackedByteArray) -> void:
+	if role != Role.HOST:
+		return
+	for id in _guests:
+		_send(id, data, true)
+
+
 # ---------------------------------------------------------------- every tick
 
 func _physics_process(delta: float) -> void:
@@ -523,6 +568,7 @@ func _host_tick(delta: float) -> void:
 			peer.heartbeat()
 	if level == null or not is_instance_valid(level):
 		return
+	_show_flag(level.get("cart"), 0)   # the host's own flag flies from the start, before anyone joins
 	# Guests hold their carts' bars through `controls`, as a bot does.
 	for id in _guests:
 		var cart: ShoppingCart = carts.get(id)
@@ -558,7 +604,9 @@ func _build_snapshot() -> Array[PackedByteArray]:
 		b.put_u32(id)
 		b.put_16(clampi(roundi(cart.hand_power.L), -32768, 32767))
 		b.put_16(clampi(roundi(cart.hand_power.R), -32768, 32767))
-		b.put_u8(1 if cart.fallen else 0)
+		var slot: int = 0 if id == 1 else _guests.get(id, {}).get("slot", 0)
+		_show_flag(cart, slot)
+		b.put_u8((1 if cart.fallen else 0) | (slot & 7) << 1)
 		var v := cart.frame_velocity()
 		b.put_float(v.x)
 		b.put_float(v.y)
@@ -667,6 +715,11 @@ func _guest_receive(packet: PackedByteArray) -> void:
 			_update_status()
 		NetProtocol.Msg.SNAPSHOT:
 			_read_snapshot(b)
+		NetProtocol.Msg.RACE:
+			if b.get_u8() == level_serial and level and is_instance_valid(level):
+				var race := get_tree().get_first_node_in_group("race")
+				if race and race.has_method("apply_state"):
+					race.apply_state(b)
 
 
 func _load_level(serial: int, bodies: int, path: String) -> void:
@@ -697,7 +750,9 @@ func _read_snapshot(b: StreamPeerBuffer) -> void:
 		var cart := _puppet(id)
 		cart.hand_power.L = b.get_16()
 		cart.hand_power.R = b.get_16()
-		cart.fallen = b.get_u8() & 1 != 0
+		var flags := b.get_u8()
+		cart.fallen = flags & 1 != 0
+		_show_flag(cart, flags >> 1 & 7)
 		cart.puppet_velocity = Vector3(b.get_float(), b.get_float(), b.get_float())
 		cart.puppet_spin = b.get_float()
 		var bodies := cart.net_bodies()
