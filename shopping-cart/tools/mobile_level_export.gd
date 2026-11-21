@@ -8,9 +8,11 @@ extends RefCounted
 ##  - mobile/levels/<key>.glb: what you see (meshes and materials). Loose props are named dyn_<n> so the phone
 ##    can move them with their physics body.
 ##  - mobile/levels/<key>.json: what you touch and how it's lit: every collision shape with its friction, the
-##    loose props (mass, shapes), CartSpawn, the spare carts, sky/fog/ambient, the sun, lamps and 3D labels.
+##    loose props (mass, shapes), CartSpawn, the spare carts, the bot carts and the navigation mesh they drive on,
+##    sky/fog/ambient, the sun, lamps and 3D labels.
 ## And once for the cart (scenes/cart/cart.tscn): mobile/levels/cart.json with the rig (bodies, masses, shapes,
-## hinges and their limits) and the cart's shared materials (assets/materials/cart/*.tres).
+## hinges and their limits), the cart's shared materials (assets/materials/cart/*.tres) and the bot's settings
+## (scenes/cart/bot_cart.tscn: the CartBot exports and its NavigationAgent3D).
 ##
 ## Run headless from shopping-cart/:  godot --headless -s res://tools/export_mobile_levels_cli.gd
 ## tests/mobile_levels_sync_test.gd fails when a level or the cart changed since the last export.
@@ -18,6 +20,7 @@ extends RefCounted
 const CONSOLE_SCENE := "res://scenes/ui/console.tscn"
 const CART_SCENE := "res://scenes/cart/cart.tscn"
 const SPARE_CART_SCENE := "res://scenes/cart/spare_cart.tscn"
+const BOT_CART_SCENE := "res://scenes/cart/bot_cart.tscn"
 const CART_MATERIALS_DIR := "res://assets/materials/cart/"
 const OUT_DIR := "../mobile/levels"
 const NAMES := {"sandbox": "Sandbox", "plot": "Parking lot", "garage": "Parking garage", "market": "Supermarket"}
@@ -46,6 +49,7 @@ static func source_hash(scene_path: String) -> String:
 	var seen := {}
 	_collect_deps(scene_path, seen)
 	_collect_deps(CART_SCENE, seen)
+	_collect_deps(BOT_CART_SCENE, seen)
 	_collect_deps("res://tools/mobile_level_export.gd", seen)
 	var paths := seen.keys()
 	paths.sort()
@@ -83,7 +87,7 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 	level.process_mode = Node.PROCESS_MODE_DISABLED   # the level script must not drive the cart we take out
 	var out := {
 		"key": key, "name": NAMES.get(key, key), "scene": scene_path, "source": source_hash(scene_path),
-		"spawn": null, "spare_carts": [], "environment": {}, "sun": null, "lights": [], "labels": [],
+		"spawn": null, "spare_carts": [], "bot_carts": [], "navmesh": null, "environment": {}, "sun": null, "lights": [], "labels": [],
 		"statics": [], "bodies": [],
 	}
 	var spawn := level.get_node_or_null("CartSpawn") as Node3D
@@ -93,7 +97,9 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 	var drop: Array[Node] = []
 	for n in level.find_children("*", "", true, false):
 		if n is ShoppingCart:
-			if n.scene_file_path == SPARE_CART_SCENE or not n.player_controlled:
+			if n.driver is CartBot:
+				out.bot_carts.append({"pos": _v(n.global_position), "yaw": n.global_rotation.y})
+			elif n.scene_file_path == SPARE_CART_SCENE or not n.player_controlled:
 				out.spare_carts.append({"pos": _v(n.global_position), "yaw": n.global_rotation.y})
 			drop.append(n)
 		elif n is Camera3D or n is CanvasLayer:
@@ -118,6 +124,8 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 				"angle": deg_to_rad(n.spot_angle), "attenuation": n.spot_attenuation})
 		elif n is Label3D and n.is_visible_in_tree():
 			out.labels.append(_label(n))
+		elif n is NavigationRegion3D and n.navigation_mesh and out.navmesh == null:
+			out.navmesh = _navmesh(n)
 
 	# Collision: static shapes go in one list, loose props keep their shapes per body.
 	var dyn_count := 0
@@ -147,8 +155,11 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 				entry["com"] = _v(rb.center_of_mass)
 			out.bodies.append(entry)
 		else:
+			var surface := _surface(body)
 			for sh in shapes:
 				sh["friction"] = friction
+				if surface:
+					sh["surface"] = surface
 				out.statics.append(sh)
 
 	# What's left that the phone draws: meshes only (lights, labels and physics are in the JSON).
@@ -171,8 +182,9 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 	f.close()
 	level.queue_free()
 	await tree.process_frame
-	print("MOBILE LEVEL %s: %d static shapes, %d loose props, %d spare carts, %d lamps, %d labels" % [
-		key, out.statics.size(), out.bodies.size(), out.spare_carts.size(), out.lights.size(), out.labels.size()])
+	print("MOBILE LEVEL %s: %d static shapes, %d loose props, %d spare carts, %d bot carts, %d nav polygons, %d lamps, %d labels" % [
+		key, out.statics.size(), out.bodies.size(), out.spare_carts.size(), out.bot_carts.size(),
+		out.navmesh.polygons.size() if out.navmesh else 0, out.lights.size(), out.labels.size()])
 	return out
 
 
@@ -225,6 +237,12 @@ static func _owner_body(n: Node) -> Node:
 	while p and not p is CollisionObject3D:
 		p = p.get_parent()
 	return p
+
+
+## The floor's physics material by name (assets/physics/<name>.tres), which picks the cart's rolling sound.
+static func _surface(body: CollisionObject3D) -> String:
+	var m: PhysicsMaterial = body.get("physics_material_override")
+	return m.resource_path.get_file().get_basename() if m and m.resource_path else ""
 
 
 static func _friction(body: CollisionObject3D) -> float:
@@ -351,14 +369,62 @@ static func export_cart() -> Dictionary:
 			if m:
 				out.materials[f.get_basename()] = {"color": _c(m.albedo_color), "metallic": m.metallic,
 					"roughness": m.roughness}
+	out["rolling_sound"] = _rolling_sound(cart.get_node("Frame/RollingSound"))
 	out["wheel_radius"] = cart.get_node("Wheel_FL/Shape").shape.radius
 	out["hand_position"] = _v(cart.hand_position)
 	cart.free()
+	out["bot"] = _bot_settings()
 	var f := FileAccess.open(out_path("cart.json"), FileAccess.WRITE)
 	f.store_string(JSON.stringify(_tidy(out), "", false) + "\n")
 	f.close()
 	print("MOBILE CART: %d bodies, %d hinges, %d groceries, %d materials" % [out.bodies.size(), out.joints.size(),
 		out.groceries.size(), out.materials.size()])
+	return out
+
+
+## The navigation mesh the bots drive on (a level's NavigationRegion3D), in world space: vertices and polygons.
+static func _navmesh(region: NavigationRegion3D) -> Dictionary:
+	var nm := region.navigation_mesh
+	var xf := region.global_transform
+	var verts := []
+	for v in nm.get_vertices():
+		verts.append(xf * v)
+	var polys := []
+	for i in nm.get_polygon_count():
+		polys.append(Array(nm.get_polygon(i)))
+	return {"vertices": _flat(verts), "polygons": polys}
+
+
+## The bot's settings from scenes/cart/bot_cart.tscn: every CartBot export, plus where its NavigationAgent3D sits on
+## the frame and how close it gets to a path point or the target.
+static func _bot_settings() -> Dictionary:
+	var cart: ShoppingCart = (load(BOT_CART_SCENE) as PackedScene).instantiate()
+	var bot: CartBot = cart.find_children("*", "", true, false).filter(func(n): return n is CartBot)[0]
+	var out := {}
+	for p in bot.get_property_list():
+		if p.usage & PROPERTY_USAGE_SCRIPT_VARIABLE and p.usage & PROPERTY_USAGE_EDITOR and p.type in [TYPE_FLOAT, TYPE_INT]:
+			out[p.name] = bot.get(p.name)
+	var agent := bot.agent
+	out["nav_point"] = _v((agent.get_parent() as Node3D).position)
+	out["path_desired_distance"] = agent.path_desired_distance
+	out["target_desired_distance"] = agent.target_desired_distance
+	cart.free()
+	return out
+
+
+## The rolling sound (Frame/RollingSound): its settings, the floor probe and each surface's loop. The phone plays
+## mobile/audio/<loop>.wav, cut from the same recordings as the .ogg (tools/audio/make_cart_rolling_loops.py).
+static func _rolling_sound(rs: CartRollingSound) -> Dictionary:
+	var out := {"probe": _xf(rs.transform * rs.probe.transform), "probe_target": _v(rs.probe.target_position),
+		"fallback": String(rs.fallback.name), "sounds": []}
+	for key in ["silent_speed", "full_volume_speed", "volume_curve", "recorded_speed", "min_pitch", "max_pitch",
+			"pitch_per_speed", "fade_time"]:
+		out[key] = rs.get(key)
+	for s in rs.get_children():
+		if s is RollingSurfaceSound:
+			out.sounds.append({"name": String(s.name), "file": "audio/%s.wav" % s.stream.resource_path.get_file().get_basename(),
+				"floors": s.floors.map(func(m): return m.resource_path.get_file().get_basename()),
+				"loudness_db": s.loudness_db, "unit_size": s.unit_size, "max_distance": s.max_distance})
 	return out
 
 

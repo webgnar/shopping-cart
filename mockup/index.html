@@ -75,7 +75,7 @@ kbd.on { background: var(--tag); color: #1b1f27; border-color: var(--tag); }
     <div class="hand" id="handL"><b>Left hand</b><div class="st" id="stL">&nbsp;</div></div>
     <div class="hand" id="handR"><b>Right hand</b><div class="st" id="stR">&nbsp;</div></div>
   </div>
-  <div class="row"><kbd data-k="KeyR">R</kbd>reset the cart</div>
+  <div class="row"><kbd data-k="KeyP">P</kbd>reset the cart</div>
 </div>
 <div class="hud stats">
   <div><span>Speed</span><b id="sSpeed">0.0 km/h</b></div>
@@ -252,7 +252,7 @@ resetCart();
 
 // ---------------------------------------------------------------- input: two hands
 const keys = new Set();
-addEventListener('keydown', e => { if (['KeyQ', 'KeyA', 'KeyE', 'KeyD', 'KeyW', 'KeyS', 'KeyR'].includes(e.code)) { keys.add(e.code); e.preventDefault(); if (e.code === 'KeyR') resetCart(frame.position.vsub(frame.quaternion.vmult(T.com)).vadd(V(0, 0.05, 0)), heading()); } });
+addEventListener('keydown', e => { if (['KeyQ', 'KeyA', 'KeyE', 'KeyD', 'KeyW', 'KeyS', 'KeyP'].includes(e.code)) { keys.add(e.code); e.preventDefault(); if (e.code === 'KeyP') resetCart(frame.position.vsub(frame.quaternion.vmult(T.com)).vadd(V(0, 0.05, 0)), heading()); } });
 addEventListener('keyup', e => keys.delete(e.code));
 addEventListener('blur', () => keys.clear());
 

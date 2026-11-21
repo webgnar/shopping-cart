@@ -35,9 +35,12 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
 
   // ---------------------------------------------------------------- physics: statics in one fixed body
   const fixed = world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
+  const surfaces = new Map();   // collider handle -> floor material name (asphalt, tile, ...): picks the rolling sound
   for (const s of json.statics) {
     const d = shapeDesc(RAPIER, s);
-    if (d) world.createCollider(d.setFriction(s.friction).setFrictionCombineRule(MIN).setCollisionGroups(godotGroups(1, 0xffff)), fixed);
+    if (!d) continue;
+    const c = world.createCollider(d.setFriction(s.friction).setFrictionCombineRule(MIN).setCollisionGroups(godotGroups(1, 0xffff)), fixed);
+    if (s.surface) surfaces.set(c.handle, s.surface);
   }
 
   // ---------------------------------------------------------------- what you see
@@ -111,7 +114,8 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
   // ---------------------------------------------------------------- light
   const env = json.environment || {};
   const lights = new LightPool(root, json.lights, opts.lightCount);
-  return { props, lights, drawn, tris, env, sun: json.sun, spawn: json.spawn, spareCarts: json.spare_carts, name: json.name };
+  return { props, lights, drawn, tris, env, sun: json.sun, spawn: json.spawn, spareCarts: json.spare_carts,
+    botCarts: json.bot_carts || [], navmesh: json.navmesh, name: json.name, surfaces };
 }
 
 /** Draws a Label3D's text the way Godot does: font_size px per line, pixel_size m per px, centred. */
