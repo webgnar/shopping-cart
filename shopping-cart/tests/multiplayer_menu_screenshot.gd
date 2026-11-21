@@ -1,6 +1,6 @@
 extends SceneTree
-## The Multiplayer menu while hosting online, saved as a screenshot. Needs the rendezvous service running
-## (`npm run dev` in services/rendezvous) and a display (e.g. xvfb-run):
+## The Multiplayer menu while hosting online, saved as a screenshot. Uses the rendezvous service in
+## rendezvous_url (or --rendezvous=<url>, e.g. a local `npm run dev`) and needs a display (e.g. xvfb-run):
 ##   xvfb-run godot -s res://tests/multiplayer_menu_screenshot.gd -- <output.png> [--rendezvous=<url>]
 
 func _initialize() -> void:
