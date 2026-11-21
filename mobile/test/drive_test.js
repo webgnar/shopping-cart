@@ -163,9 +163,11 @@ const SCENARIOS = [
   }
 
   // Hard push / pull tips the cart: hold on and it may go over, let go as soon as an end lifts and it comes down.
+  // A push starts 25 m further back: let go at a run, the cart coasts about 30 m, and from (-10, -3) that reaches the
+  // sandbox's speed bump at x = 14, which trips it over.
   for (const [dir, after, falls] of [[1, 4.0, true], [-1, 4.0, true], [1, 0.0, false], [-1, 0.0, false]]) {
     const r = await page.evaluate(([dir, after]) => {
-      const c = T.c, cart = T.fresh();
+      const c = T.c, cart = T.fresh(dir > 0 ? -35 : -10, -3);
       c.setInput({ L: dir, R: dir });
       let held = 0, lifted = 0, stop = false;
       c.simulate(6, () => {

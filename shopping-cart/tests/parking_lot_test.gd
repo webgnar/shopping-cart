@@ -35,6 +35,10 @@ func _push(seconds: float) -> void:
 
 
 func _run() -> void:
+	# The level's bot carts roam the lot. Their routes come from the navigation server, which runs on its own
+	# timing, so on a busy machine a bot can reach corral 1A just as the push check rolls a cart into it. Take them
+	# out so the checks below see only the player's cart (tests/bot_test.gd covers the bots).
+	main.get_node("BotCarts").free()
 	await _wait(1.0)
 	var blocks := get_nodes_in_group("parking_block").size()
 	var corrals := get_nodes_in_group("cart_corral").size()
