@@ -15,6 +15,11 @@ extends Node3D
 ## ground rather than sky; the level's fog hides where the chunks stop.
 ##
 ## The browser version streams the same grid (mobile/game/stream.js); keep pick() in step with it.
+##
+## Multiplayer: chunks gather around every player's cart (the Net autoload's `carts`), so a guest who drives off on
+## their own still has ground under them, on the host and on their own screen.
+
+signal chunk_loaded(cell: Vector2i, chunk: Node3D)   ## a square was just filled (Net freezes its loose bodies on a guest)
 
 @export var main: Node                              ## the level; its `cart` is what the chunks gather around
 @export var chunks: Array[PackedScene] = []         ## the terrain chunks to fill squares with
@@ -28,7 +33,7 @@ extends Node3D
 @export var far_ground: Node3D                      ## follows the cart (snapped to the grid) to fill the horizon
 
 var loaded := {}        ## Vector2i -> the chunk node in that square
-var _last_focus := Vector3.INF
+var _last_foci: Array[Vector3] = []
 
 
 func _ready() -> void:
@@ -36,45 +41,72 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	var focus := _focus()
+	var foci := _foci()
+	var focus := foci[0]
 	if far_ground:
 		var snap := Vector3(snappedf(focus.x, chunk_size), far_ground.global_position.y, snappedf(focus.z, chunk_size))
 		far_ground.global_position = snap
-	# At the start, and after a jump (a fresh cart somewhere else), everything near is built at once so the cart
-	# never lands on a missing square; while driving, a few per frame so there's no hitch.
-	var jumped := _last_focus == Vector3.INF or focus.distance_to(_last_focus) > chunk_size * 0.5
-	update(focus, 0 if jumped else loads_per_frame)
-	_last_focus = focus
+	# At the start, and after a jump (a fresh cart somewhere else, or a player joining), everything near is built at
+	# once so no cart lands on a missing square; while driving, a few per frame so there's no hitch.
+	var jumped := foci.size() != _last_foci.size()
+	for k in foci.size():
+		if jumped or foci[k].distance_to(_last_foci[k]) > chunk_size * 0.5:
+			jumped = true
+			break
+	update_around(foci, 0 if jumped else loads_per_frame)
+	_last_foci = foci
 
 
-## Where the chunks gather: the cart if there is one, else the camera.
-func _focus() -> Vector3:
+## Where the chunks gather: this level's cart (else the camera), plus every other player's cart in a multiplayer
+## game.
+func _foci() -> Array[Vector3]:
+	var out: Array[Vector3] = []
 	var cart: Node = main.get("cart") if main else null
 	if cart is ShoppingCart and is_instance_valid(cart):
-		return (cart as ShoppingCart).cart_origin()
-	var cam := get_viewport().get_camera_3d()
-	return cam.global_position if cam else global_position
+		out.append((cart as ShoppingCart).cart_origin())
+	else:
+		var cam := get_viewport().get_camera_3d()
+		out.append(cam.global_position if cam else global_position)
+	var net := get_node_or_null("/root/Net")
+	if net and net.get("carts") is Dictionary:
+		for other in net.carts.values():
+			if other is ShoppingCart and is_instance_valid(other) and other != cart and other.is_inside_tree():
+				out.append((other as ShoppingCart).cart_origin())
+	return out
 
 
 ## Loads the missing squares near `focus` (at most `budget` of them, nearest first; 0 = all) and frees far ones.
 func update(focus: Vector3, budget: int = 0) -> void:
-	var local := focus - global_position
-	var c := Vector2i(floori(local.x / chunk_size), floori(local.z / chunk_size))
+	update_around([focus], budget)
+
+
+## The same for several places at once: a square is wanted if it is near any of them, and freed only once it is
+## far from all of them.
+func update_around(foci: Array[Vector3], budget: int = 0) -> void:
 	var reach := ceili(load_distance / chunk_size)
-	var wanted := []
-	for i in range(c.x - reach, c.x + reach + 1):
-		for j in range(c.y - reach, c.y + reach + 1):
-			var cell := Vector2i(i, j)
-			if loaded.has(cell) or home_cells.has(cell):
-				continue
-			var d := _distance(local, cell)
-			if d < load_distance:
-				wanted.append([d, cell])
-	wanted.sort_custom(func(a, b): return a[0] < b[0])
+	var nearest := {}   # Vector2i -> distance to the nearest focus
+	for focus in foci:
+		var local := focus - global_position
+		var c := Vector2i(floori(local.x / chunk_size), floori(local.z / chunk_size))
+		for i in range(c.x - reach, c.x + reach + 1):
+			for j in range(c.y - reach, c.y + reach + 1):
+				var cell := Vector2i(i, j)
+				if loaded.has(cell) or home_cells.has(cell):
+					continue
+				var d := _distance(local, cell)
+				if d < load_distance and d < nearest.get(cell, INF):
+					nearest[cell] = d
+	var wanted := nearest.keys()
+	wanted.sort_custom(func(a, b): return nearest[a] < nearest[b])
 	for k in wanted.size() if budget <= 0 else mini(budget, wanted.size()):
-		_load(wanted[k][1])
+		_load(wanted[k])
 	for cell in loaded.keys():
-		if _distance(local, cell) > unload_distance:
+		var far := true
+		for focus in foci:
+			if _distance(focus - global_position, cell) <= unload_distance:
+				far = false
+				break
+		if far:
 			loaded[cell].queue_free()
 			loaded.erase(cell)
 
@@ -95,6 +127,7 @@ func _load(cell: Vector2i) -> void:
 	chunk.transform = cell_transform(cell, p[1])
 	add_child(chunk)
 	loaded[cell] = chunk
+	chunk_loaded.emit(cell, chunk)
 
 
 ## Where a chunk in `cell` sits (relative to this node): the square's centre, turned `turns` quarter turns.

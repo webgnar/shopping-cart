@@ -15,11 +15,14 @@ extends RefCounted
 ##                                          u32 player id, i16 left hand N, i16 right hand N, u8 flags (1 = fallen),
 ##                                          3 x f32 frame velocity, f32 turn rate, u8 bodies, a pose per body
 ##                                          (ShoppingCart.net_bodies() order);
-##                                        then u16 level bodies, per body: u16 index, pose
+##                                        then u16 level bodies, per body: u16 index, pose (index into the level's
+##                                          RigidBody3Ds sorted by node path, streamed chunks left out);
+##                                        then u16 chunk bodies, per body: i16 square x, i16 square z, u16 index,
+##                                          pose (index into that chunk's RigidBody3Ds sorted by path)
 ##   LEFT      host -> guests reliable    u32 player id
 ## A snapshot too big for one packet is sent as several, each a complete SNAPSHOT for the same tick.
 
-const VERSION := 1
+const VERSION := 2
 ## Bump VERSION whenever a message changes, so old and new builds refuse each other cleanly.
 
 enum Msg { HELLO = 1, WELCOME, REJECT, LEVEL, INPUT, RESET, SNAPSHOT, LEFT }

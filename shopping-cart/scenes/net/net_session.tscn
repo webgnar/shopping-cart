@@ -1,10 +1,14 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/net/net_session.gd" id="1_net"]
+[ext_resource type="PackedScene" path="res://scenes/ui/multiplayer_menu.tscn" id="2_menu"]
 
 [node name="Net" type="Node"]
 process_mode = 3
 script = ExtResource("1_net")
+
+[node name="Rendezvous" type="HTTPRequest" parent="."]
+timeout = 10.0
 
 [node name="Overlay" type="CanvasLayer" parent="."]
 layer = 5
@@ -28,3 +32,5 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 0.75)
 theme_override_constants/outline_size = 6
 text = "Offline"
 horizontal_alignment = 2
+
+[node name="Menu" parent="." instance=ExtResource("2_menu")]
