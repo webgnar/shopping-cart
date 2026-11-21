@@ -7,7 +7,8 @@ extends SceneTree
 ## (services/rendezvous/test/godot_online_test.mjs starts the service and runs this for you.)
 ## Checks: the guest joins and gets a cart; both carts are pushed and both move on the host; once everything
 ## stops the guest sees both carts where the host has them; then the host travels through every level and the
-## guest follows, with matching loose bodies, everything frozen on its side, its bots off and its cart upright.
+## guest follows, with matching loose bodies, everything frozen on its side, its bots off and its cart upright. Last,
+## the host starts a race in the garage: the guest lines up, sees the count, is held until GO and gets the results.
 
 const LEVELS := ["res://scenes/main.tscn", "res://scenes/levels/supermarket.tscn",
 	"res://scenes/levels/parking_lot.tscn", "res://scenes/levels/parking_garage.tscn"]
@@ -188,8 +189,57 @@ func _run() -> void:
 		if e.has("own"):
 			var err := _vec(e.own).distance_to(guest_cart.cart_origin())
 			_check(name + ": guest's cart where the host has it", err < 0.05, "%.3f m off" % err)
+	await _race(gid)
 	OS.kill(pid)
 	_finish()
+
+
+## The host starts a race in the garage (the last level): the guest lines up on the grid, is held still through
+## the count it sees too, and its finish shows up in the results on both sides.
+func _race(gid: int) -> void:
+	var race := get_first_node_in_group("race") as Race
+	_check("race: the garage has a race", race != null, "")
+	if race == null:
+		return
+	race.start(true)
+	var deadline := Time.get_ticks_msec() + 15000
+	while race.phase == Race.Phase.WAITING and Time.get_ticks_msec() < deadline:
+		await physics_frame
+	_check("race: counting down once the guest has loaded", race.phase == Race.Phase.COUNTDOWN,
+		"phase %d, %d racers" % [race.phase, race.racers.size()])
+	var guest_cart: ShoppingCart = net.carts.get(gid)
+	var slot := race.slots()[1]
+	_check("race: guest lined up in the second slot", guest_cart != null and guest_cart.cart_origin().distance_to(slot.global_position) < 0.15,
+		"%s vs %s" % [guest_cart.cart_origin() if guest_cart else "?", slot.global_position])
+	_check("race: guest's cart is held during the count", guest_cart != null and guest_cart.locked, "")
+	while race.phase == Race.Phase.COUNTDOWN:
+		await physics_frame
+	guest_cart = net.carts.get(gid)
+	_check("race: GO frees the guest's cart", race.phase == Race.Phase.RACING and not guest_cart.locked, "")
+	# Put the guest's cart, then ours, over the line; the bots get two seconds more.
+	var line: Vector3 = race.finish.global_position
+	net.place_guest_cart(gid, Vector3(line.x + 0.6, 0.0, -3.0), 0.0)
+	await _wait(1.0)
+	current_scene.spawn_cart(Vector3(line.x + 0.6, 0.0, -6.0), 0.0)
+	race.finish_grace = 2.0
+	deadline = Time.get_ticks_msec() + 10000
+	while race.phase != Race.Phase.DONE and Time.get_ticks_msec() < deadline:
+		await physics_frame
+	var res := race.results()
+	_check("race: guest finishes first, host second", res.size() >= 2 and res[0].id == gid and res[1].id == 1,
+		", ".join(res.map(func(x): return "%s %.2f" % [x.name, x.time])))
+	var r := _guest_result()
+	deadline = Time.get_ticks_msec() + 15000
+	while not r.has("race") and Time.get_ticks_msec() < deadline:
+		await _wait(0.25)
+		r = _guest_result()
+	_check("race: guest reports", r.has("race"), "")
+	if r.has("race"):
+		var g: Dictionary = r.race
+		_check("race: guest saw 3, 2, 1", g.counts.has(3.0) and g.counts.has(2.0) and g.counts.has(1.0) and g.hud_shown,
+			"counts %s" % str(g.counts))
+		_check("race: guest's results list everyone with its time", g.results_shown and int(g.racers) == res.size()
+			and absf(g.my_time - res[0].time) < 0.01, "%d racers, my time %.2f" % [g.racers, g.my_time])
 
 
 func _finish() -> void:

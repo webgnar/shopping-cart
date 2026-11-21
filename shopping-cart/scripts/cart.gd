@@ -45,6 +45,9 @@ var controls := {}
 ## true: this cart only shows a cart simulated on another machine (a multiplayer guest's view, see
 ## scripts/net/net_session.gd). Its bodies stay frozen and the network moves them; nothing here pushes it.
 var puppet := false
+## true: nobody's hands are on the bar (a race countdown, scripts/race/race.gd). Every key reads as let go, the
+## keyboard's and a driver's alike.
+var locked := false
 var puppet_velocity := Vector3.ZERO   ## a puppet's frame velocity on the host (for the HUD and the rolling sound)
 var puppet_spin := 0.0                ## a puppet's turn rate on the host, rad/s
 var hand_power := {"L": 0.0, "R": 0.0}   ## N each hand is putting into the bar: + push, - pull
@@ -117,10 +120,12 @@ var _tilt_dir := 0                  ## +1 S, -1 W, 0 neither
 var _let_go := false                ## the hands slipped off on this W/S hold; it does nothing more until let go
 
 var _links := []           ## [visual node, body, offset] kept in step every frame
+var _frame_rest := Transform3D.IDENTITY   ## the frame's place relative to the cart's origin, as built
 var _own_rids: Array[RID] = []   ## this cart's bodies, which its wheel-on-the-ground rays look past
 
 
 func _ready() -> void:
+	_frame_rest = global_transform.affine_inverse() * frame.global_transform
 	for g in $Groceries.get_children():
 		if empty_basket:
 			g.queue_free()
@@ -179,6 +184,8 @@ const ACTIONS := ["push_left", "pull_left", "push_right", "pull_right", "lift", 
 ## Whether a key is held: the player's keyboard (not while typing in a text box), or the driver's `controls` for
 ## any other cart.
 func held(action: String) -> bool:
+	if locked:
+		return false
 	if not player_controlled:
 		return controls.get(action, false)
 	var focus := get_viewport().gui_get_focus_owner()
@@ -451,6 +458,21 @@ func net_bodies() -> Array[RigidBody3D]:
 		wheels.FL, wheels.FR, wheels.RL, wheels.RR]
 	list.append_array(groceries)
 	return list
+
+
+## Moves the whole rig (and whatever is in its basket) so the handle stands at `at`, upright and facing `yaw`, at
+## rest. A bot cart or a spare one can be put somewhere else this way without being rebuilt.
+func place(at: Vector3, yaw: float) -> void:
+	var to := Transform3D(Basis(Vector3.UP, yaw), at + Vector3(0, 0.005, 0)) * _frame_rest
+	var move := to * frame.global_transform.affine_inverse()
+	for b in net_bodies():
+		b.global_transform = move * b.global_transform
+		b.linear_velocity = Vector3.ZERO
+		b.angular_velocity = Vector3.ZERO
+	fallen = false
+	_wait_release = false
+	hand_power = {"L": 0.0, "R": 0.0}
+	_wake()
 
 
 ## Turns this cart into a puppet: frozen, moved only by the network.

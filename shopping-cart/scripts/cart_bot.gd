@@ -35,10 +35,24 @@ extends Node
 @export var back_off_time := 1.2    ## s it pulls back when stuck
 @export var max_back_offs := 3      ## backing off this many times on one trip: it picks another spot
 @export var give_up_slack := 10.0   ## s: it gives up on a trip that takes this much longer than at half cruise_speed
+@export_group("Racing")
+## In a race (scripts/race/race.gd) it drives to the finish faster and never gives up on the trip.
+@export var race_speed := 4.5       ## m/s on a straight
+@export var race_corner_speed := 1.2   ## m/s while turning hard
+@export var race_max_power := 90.0  ## N per hand
+## m: at racing speed it counts a path point as passed this far off (instead of the agent's path_desired_distance),
+## so it doesn't overshoot one and turn back for it.
+@export var race_path_distance := 1.2
+@export var race_waypoint_radius := 2.5   ## m: this close (across the floor) to a waypoint of the route, it heads for the next
 @export_group("")
 
 enum State { PAUSE, DRIVE, BACK_OFF, GET_UP }
 var state := State.PAUSE
+## In a race: lined up at the start (holding still), then driving to the finish (race_to).
+var racing := false
+var _path_distance := -1.0          ## the agent's own path_desired_distance, while racing changes it
+var _route: Array[Vector3] = []     ## racing: the waypoints still ahead, the finish last
+var _passed := Vector3.INF          ## racing: the last waypoint it got past (where it's put back if wedged)
 var _timer := 0.0
 var _trip_time := 0.0
 var _trip_limit := 0.0
@@ -46,7 +60,7 @@ var _backoffs := 0                  ## times it has backed off on this trip
 var _stuck := 0.0
 var _rng := RandomNumberGenerator.new()
 ## What it has done so far (for tests and the console): spots reached, trips given up, times it backed off or fell.
-var stats := {"trips": 0, "gave_up": 0, "backed_off": 0, "fell": 0}
+var stats := {"trips": 0, "gave_up": 0, "backed_off": 0, "fell": 0, "put_back": 0}
 
 
 func _ready() -> void:
@@ -93,6 +107,56 @@ func pick_target() -> bool:
 	return true
 
 
+## Race: stand still at the start line until race_to.
+func line_up() -> void:
+	racing = true
+	_route.clear()
+	state = State.PAUSE
+	_timer = INF
+	_release()
+
+
+## Race: drive through `route` (the race's waypoints, the spot past the finish line last) as fast as it safely can,
+## and don't give up on the way. The nav mesh finds the way from one waypoint to the next.
+func race_to(route: Array[Vector3]) -> void:
+	racing = true
+	_route = route.duplicate()
+	_passed = cart.cart_origin()
+	if _path_distance < 0.0:
+		_path_distance = agent.path_desired_distance
+	agent.path_desired_distance = race_path_distance
+	agent.target_position = _route[0]
+	state = State.DRIVE
+	_trip_time = 0.0
+	_trip_limit = INF
+	_stuck = 0.0
+	_backoffs = 0
+
+
+## Racing: on to the next waypoint once near enough this one (the last one, past the finish, it drives right to).
+func _next_waypoint() -> void:
+	if _route.size() < 2:
+		return
+	var at: Vector3 = agent.get_parent().global_position
+	var d := _route[0] - at
+	if Vector2(d.x, d.z).length() < race_waypoint_radius and absf(d.y) < 1.0:
+		_passed = _route.pop_front()
+		agent.target_position = _route[0]
+		_backoffs = 0
+
+
+## Race over: back to wandering after a short rest.
+func stop_racing() -> void:
+	racing = false
+	_route.clear()
+	if _path_distance >= 0.0:
+		agent.path_desired_distance = _path_distance
+		_path_distance = -1.0
+	if state != State.GET_UP:
+		state = State.PAUSE
+	_timer = _rng.randf_range(pause_min, pause_max)
+
+
 func _physics_process(delta: float) -> void:
 	if cart == null or agent == null or cart.frame == null:
 		return
@@ -110,7 +174,10 @@ func _physics_process(delta: float) -> void:
 		return
 	if state == State.GET_UP:
 		state = State.PAUSE
-		_timer = 1.0
+		_timer = INF if racing else 1.0
+		if racing and not _route.is_empty() and not agent.is_navigation_finished():
+			state = State.DRIVE   # back on its wheels mid-race: carry on
+			agent.target_position = agent.target_position
 	match state:
 		State.PAUSE:
 			# Standing still, as a player would: hold the cart against rolling away (down a ramp, or coasting in).
@@ -120,10 +187,20 @@ func _physics_process(delta: float) -> void:
 				state = State.DRIVE
 		State.DRIVE:
 			_trip_time += delta
+			if racing:
+				_next_waypoint()
+			if racing and _backoffs >= max_back_offs and not agent.is_navigation_finished():
+				# Racing and wedged (against a parked car, or another cart): back to the last waypoint, facing
+				# the next, as a racing game puts you back on the track.
+				_backoffs = 0
+				stats.put_back += 1
+				var to := _route[0] - _passed
+				cart.place(_passed, atan2(-to.z, to.x) if Vector2(to.x, to.z).length() > 0.1 else cart.heading())
+				agent.target_position = _route[0]
 			if agent.is_navigation_finished() or _trip_time > _trip_limit or _backoffs >= max_back_offs:
 				stats["trips" if agent.is_navigation_finished() else "gave_up"] += 1
 				state = State.PAUSE
-				_timer = _rng.randf_range(pause_min, pause_max)
+				_timer = INF if racing else _rng.randf_range(pause_min, pause_max)
 			else:
 				c = _drive(delta)
 		State.BACK_OFF:
@@ -158,12 +235,17 @@ func _drive(delta: float) -> Dictionary:
 	var err := _steer_err()
 	# Slow down for corners and for the end of the trip.
 	var left := agent.distance_to_target()
-	var want := lerpf(cruise_speed, corner_speed, clampf(absf(err) / spin_angle, 0.0, 1.0))
-	want = minf(want, maxf(0.4, left * 0.6))
-	var forward := 0.0 if absf(err) > spin_angle else clampf(speed_gain * (want - speed), -max_power, max_power)
+	var top := race_speed if racing else cruise_speed
+	var corner := race_corner_speed if racing else corner_speed
+	var power := race_max_power if racing else max_power
+	var want := lerpf(top, corner, clampf(absf(err) / spin_angle, 0.0, 1.0))
+	if not racing:
+		want = minf(want, maxf(0.4, left * 0.6))   # racing: straight through the finish, no slowing down
+	var forward := 0.0 if absf(err) > spin_angle else clampf(speed_gain * (want - speed), -power, power)
 	var steer := steer_gain * err - steer_damping * yaw_rate
-	# Not getting anywhere while pushing: pull back a little, then try again.
-	if forward > 0.0 and speed < 0.15 and absf(yaw_rate) < 0.3:
+	# Not getting anywhere while pushing (or while trying to spin round, say against the end of a wall): pull back
+	# a little, then try again.
+	if (forward > 0.0 or absf(err) > spin_angle) and absf(speed) < 0.15 and absf(yaw_rate) < 0.3:
 		_stuck += delta
 		if _stuck > stuck_time:
 			state = State.BACK_OFF
@@ -178,7 +260,8 @@ func _drive(delta: float) -> Dictionary:
 ## The keys for a forward force and a steering force (+ = turn left: the right hand pushes harder).
 func _hands(forward: float, steer: float) -> Dictionary:
 	var c := {}
-	var want := {"L": clampf(forward - steer, -max_power, max_power), "R": clampf(forward + steer, -max_power, max_power)}
+	var cap := race_max_power if racing else max_power
+	var want := {"L": clampf(forward - steer, -cap, cap), "R": clampf(forward + steer, -cap, cap)}
 	for side in ["L", "R"]:
 		var suffix := "left" if side == "L" else "right"
 		var w: float = want[side]
