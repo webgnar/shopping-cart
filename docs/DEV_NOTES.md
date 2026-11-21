@@ -20,7 +20,7 @@ REAPER, 160 MB; kept in the project's shared files, not the repo) as a backgroun
   copies over that tail, so MP3 encoder padding can't leave a gap and Safari plays it.
 - **Scene:** `ParkingLot/BackgroundMusic` (AudioStreamPlayer, autoplay, bus `Music`, `volume_db` -12, process mode
   Always so it keeps going with the console open). The `Music` bus (0 dB, into Master) is new, in
-  `default_bus_layout.tres`. -12 dB keeps it under the wheel sounds; tune it on the node.
+  `default_bus_layout.tres`. -12 dB is meant to sit under the wheel sounds; tune it on the node.
   Fast travel changes scene, which frees the level and its player, so it stops (tests/parking_lot_test.gd checks).
 - **Browser:** the level export writes an autoplaying AudioStreamPlayer as the level's `"music"` (file, loop length,
   player + bus volume); main.js stops it on any level change and starts the new level's.
