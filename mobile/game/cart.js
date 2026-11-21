@@ -22,7 +22,12 @@ export function shapeDesc(RAPIER, s) {
   let d;
   switch (s.type) {
     case 'box': d = RAPIER.ColliderDesc.cuboid(s.size[0] / 2, s.size[1] / 2, s.size[2] / 2); break;
-    case 'plane': d = RAPIER.ColliderDesc.halfspace({ x: 0, y: 1, z: 0 }); break;   // a world boundary: endless floor
+    case 'plane': {   // a world boundary: endless floor. This Rapier build has no halfspace collider, so a slab
+      // 20 km wide and 2 m thick whose top face is the plane stands in for it.
+      if (RAPIER.ColliderDesc.halfspace) { d = RAPIER.ColliderDesc.halfspace({ x: 0, y: 1, z: 0 }); break; }
+      const { p, q } = xfPose(xfMatrix(s.xf)), down = rot(q, v3(0, -1, 0));
+      return RAPIER.ColliderDesc.cuboid(10000, 1, 10000).setTranslation(p.x + down.x, p.y + down.y, p.z + down.z).setRotation(q);
+    }
     case 'sphere': d = RAPIER.ColliderDesc.ball(s.radius); break;
     case 'cylinder': d = RAPIER.ColliderDesc.cylinder(s.height / 2, s.radius); break;
     case 'capsule': d = RAPIER.ColliderDesc.capsule(Math.max(0.001, s.height / 2 - s.radius), s.radius); break;
