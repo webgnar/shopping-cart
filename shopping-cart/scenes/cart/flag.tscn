@@ -1,0 +1,31 @@
+[gd_scene format=4]
+
+[ext_resource type="Script" path="res://scripts/cart/cart_flag.gd" id="1_flag"]
+[ext_resource type="PackedScene" path="res://assets/models/flag/flag.glb" id="2_model"]
+[ext_resource type="Material" path="res://assets/materials/cart/cart_handle.tres" id="3_handle"]
+[ext_resource type="Material" path="res://assets/materials/cart/cart_plastic.tres" id="4_plastic"]
+[ext_resource type="Material" path="res://assets/materials/flag/pennant_red.tres" id="p0_red"]
+[ext_resource type="Material" path="res://assets/materials/flag/pennant_yellow.tres" id="p1_yellow"]
+[ext_resource type="Material" path="res://assets/materials/flag/pennant_green.tres" id="p2_green"]
+[ext_resource type="Material" path="res://assets/materials/flag/pennant_orange.tres" id="p3_orange"]
+[ext_resource type="Material" path="res://assets/materials/flag/pennant_purple.tres" id="p4_purple"]
+[ext_resource type="Material" path="res://assets/materials/flag/pennant_cyan.tres" id="p5_cyan"]
+[ext_resource type="Material" path="res://assets/materials/flag/pennant_pink.tres" id="p6_pink"]
+[ext_resource type="Material" path="res://assets/materials/flag/pennant_white.tres" id="p7_white"]
+
+[node name="Flag" type="Node3D"]
+script = ExtResource("1_flag")
+colors = Array[Material]([ExtResource("p0_red"), ExtResource("p1_yellow"), ExtResource("p2_green"), ExtResource("p3_orange"), ExtResource("p4_purple"), ExtResource("p5_cyan"), ExtResource("p6_pink"), ExtResource("p7_white")])
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+
+[node name="Pole" parent="Model" index="0"]
+surface_material_override/0 = ExtResource("3_handle")
+
+[node name="Fittings" parent="Model" index="1"]
+surface_material_override/0 = ExtResource("4_plastic")
+
+[node name="Pennant" parent="Model" index="2"]
+surface_material_override/0 = ExtResource("p0_red")
+
+[editable path="Model"]
