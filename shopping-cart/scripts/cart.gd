@@ -17,7 +17,7 @@ extends Node3D
 
 
 @export_group("Hands")
-## Hand power: holding a hand's key (Q/A left, E/D right) ramps that hand's push or pull from power_base, with no
+## Hand power: holding a hand's key (E/A left push/pull, Q/D right; the left-hand keys turn the cart left) ramps that hand's push or pull from power_base, with no
 ## cap. The HUD shows it as that hand's bar. Pushing and pulling share the same base and ramp. As the arms strain,
 ## the wrists lever the bar (wrist_lever): pushing hard presses it down and the front wheels come up (a wheelie);
 ## pulling hard lifts it and the rear wheels come up onto the front casters, which breaks the back loose for a

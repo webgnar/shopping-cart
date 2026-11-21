@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_85g3d"]
 [ext_resource type="PackedScene" path="res://scenes/environment/default_environment.tscn" id="2_choun"]
-[ext_resource type="PhysicsMaterial" path="res://assets/physics/tile.tres" id="3_ya4ey"]
 [ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="4_eb6dy"]
 [ext_resource type="PackedScene" path="res://scenes/props/cardboard_box.tscn" id="5_trceg"]
 [ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="6_a8y0u"]
@@ -10,133 +9,13 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="8_jbj1t"]
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="9_muem4"]
 [ext_resource type="Script" path="res://scripts/sandbox/chunk_streamer.gd" id="10_strm"]
-[ext_resource type="PackedScene" path="res://scenes/sandbox/chunks/lot.tscn" id="11_lot"]
-[ext_resource type="PackedScene" path="res://scenes/sandbox/chunks/street.tscn" id="12_street"]
-[ext_resource type="PackedScene" path="res://scenes/sandbox/chunks/market.tscn" id="13_market"]
-[ext_resource type="PackedScene" path="res://scenes/sandbox/chunks/garage.tscn" id="14_garage"]
-[ext_resource type="PackedScene" path="res://scenes/sandbox/chunks/hill.tscn" id="15_hill"]
+[ext_resource type="PackedScene" path="res://scenes/sandbox/chunks/open_lot.tscn" id="11_open_lot"]
 [ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="16_pconc"]
 [ext_resource type="Material" path="res://assets/parking_lot/materials/concrete.tres" id="17_mconc"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/bollard_yellow.tres" id="18_yellow"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/curb_concrete.tres" id="19_curb"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/asphalt.tres" id="20_asphalt"]
 [ext_resource type="PackedScene" path="res://scenes/cart/cart_stack_4.tscn" id="stack4"]
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_dp3eg"]
-size = Vector3(30, 1, 40)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0ld40"]
-albedo_color = Color(0.68235296, 0.70980394, 0.7490196, 1)
-roughness = 0.2
-
-[sub_resource type="BoxMesh" id="BoxMesh_gqmmt"]
-material = SubResource("StandardMaterial3D_0ld40")
-size = Vector3(30, 1, 40)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_yc10j"]
-size = Vector3(10, 1.8, 0.6)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jscy8"]
-albedo_color = Color(0.49019608, 0.5294118, 0.5882353, 1)
-roughness = 0.85
-
-[sub_resource type="BoxMesh" id="BoxMesh_pm3ni"]
-material = SubResource("StandardMaterial3D_jscy8")
-size = Vector3(10, 1.8, 0.6)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_y6deb"]
-size = Vector3(10, 1.8, 0.6)
-
-[sub_resource type="BoxMesh" id="BoxMesh_og1vs"]
-material = SubResource("StandardMaterial3D_jscy8")
-size = Vector3(10, 1.8, 0.6)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_2wyq8"]
-size = Vector3(10, 1.8, 0.6)
-
-[sub_resource type="BoxMesh" id="BoxMesh_vxglm"]
-material = SubResource("StandardMaterial3D_jscy8")
-size = Vector3(10, 1.8, 0.6)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_2f3dj"]
-size = Vector3(10, 1.8, 0.6)
-
-[sub_resource type="BoxMesh" id="BoxMesh_yq6so"]
-material = SubResource("StandardMaterial3D_jscy8")
-size = Vector3(10, 1.8, 0.6)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_fv21b"]
-size = Vector3(0.4, 2.4, 40)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tel4y"]
-albedo_color = Color(0.6039216, 0.6392157, 0.6901961, 1)
-roughness = 0.85
-
-[sub_resource type="BoxMesh" id="BoxMesh_qkpxi"]
-material = SubResource("StandardMaterial3D_tel4y")
-size = Vector3(0.4, 2.4, 40)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_5q0nq"]
-size = Vector3(30, 1, 40)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dgi5k"]
-albedo_color = Color(0.23137255, 0.24705882, 0.27450982, 1)
-roughness = 0.85
-
-[sub_resource type="BoxMesh" id="BoxMesh_j8jky"]
-material = SubResource("StandardMaterial3D_dgi5k")
-size = Vector3(30, 1, 40)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kmb1v"]
-albedo_color = Color(0.9098039, 0.8862745, 0.78431374, 1)
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_fuf3a"]
-material = SubResource("StandardMaterial3D_kmb1v")
-size = Vector2(5, 0.1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_pibwh"]
-size = Vector3(3.2, 0.2, 2.4)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_c6pm6"]
-albedo_color = Color(0.35686275, 0.38039216, 0.41960785, 1)
-roughness = 0.85
-
-[sub_resource type="BoxMesh" id="BoxMesh_5he1u"]
-material = SubResource("StandardMaterial3D_c6pm6")
-size = Vector3(3.2, 0.2, 2.4)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_5poiv"]
-size = Vector3(2, 0.36, 2.4)
-
-[sub_resource type="BoxMesh" id="BoxMesh_2cjbq"]
-material = SubResource("StandardMaterial3D_c6pm6")
-size = Vector3(2, 0.36, 2.4)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_chjal"]
-size = Vector3(0.3, 0.12, 12)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cjqg0"]
-albedo_color = Color(0.61960787, 0.6392157, 0.65882355, 1)
-roughness = 0.85
-
-[sub_resource type="BoxMesh" id="BoxMesh_vchkt"]
-material = SubResource("StandardMaterial3D_cjqg0")
-size = Vector3(0.3, 0.12, 12)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_txyw0"]
-size = Vector3(0.35, 0.05, 6)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vc5cj"]
-albedo_color = Color(0.84705883, 0.69803923, 0.22745098, 1)
-roughness = 0.85
-
-[sub_resource type="BoxMesh" id="BoxMesh_nvyfr"]
-material = SubResource("StandardMaterial3D_vc5cj")
-size = Vector3(0.35, 0.05, 6)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_ty1g6"]
-size = Vector3(0.35, 0.05, 6)
-
-[sub_resource type="BoxMesh" id="BoxMesh_j2jfr"]
-material = SubResource("StandardMaterial3D_vc5cj")
-size = Vector3(0.35, 0.05, 6)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8qguk"]
 content_margin_top = 6.0
@@ -222,10 +101,12 @@ corner_radius_top_right = 9
 corner_radius_bottom_right = 9
 corner_radius_bottom_left = 9
 
+
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sbx"]
-sky_top_color = Color(0.10980392, 0.13333334, 0.1882353, 1)
-sky_horizon_color = Color(0.2901961, 0.33333334, 0.40784314, 1)
-ground_horizon_color = Color(0.2901961, 0.33333334, 0.40784314, 1)
+sky_top_color = Color(0.25, 0.44, 0.74, 1)
+sky_horizon_color = Color(0.69, 0.76, 0.84, 1)
+ground_bottom_color = Color(0.69, 0.76, 0.84, 1)
+ground_horizon_color = Color(0.69, 0.76, 0.84, 1)
 
 [sub_resource type="Sky" id="Sky_sbx"]
 sky_material = SubResource("ProceduralSkyMaterial_sbx")
@@ -238,23 +119,45 @@ reflected_light_source = 2
 tonemap_mode = 2
 ssao_enabled = true
 fog_enabled = true
-fog_light_color = Color(0.2901961, 0.33333334, 0.40784314, 1)
-fog_density = 0.014
+fog_mode = 1
+fog_light_color = Color(0.69, 0.76, 0.84, 1)
+fog_density = 1.0
 fog_sky_affect = 0.0
+fog_depth_begin = 35.0
+fog_depth_end = 95.0
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_yard"]
-size = Vector3(20, 1, 40)
+[sub_resource type="BoxShape3D" id="BoxShape3D_bump"]
+size = Vector3(0.35, 0.05, 6)
 
-[sub_resource type="BoxMesh" id="BoxMesh_yard"]
+[sub_resource type="BoxMesh" id="BoxMesh_bump"]
+material = ExtResource("18_yellow")
+size = Vector3(0.35, 0.05, 6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_curb"]
+size = Vector3(0.3, 0.15, 6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_curb"]
+material = ExtResource("19_curb")
+size = Vector3(0.3, 0.15, 6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ramp"]
+size = Vector3(3.2, 0.2, 2.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ramp"]
 material = ExtResource("17_mconc")
-size = Vector3(20, 1, 40)
+size = Vector3(3.2, 0.2, 2.4)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_far"]
-albedo_color = Color(0.25, 0.27, 0.3, 1)
-roughness = 0.95
+[sub_resource type="BoxShape3D" id="BoxShape3D_ramp_top"]
+size = Vector3(2, 0.380325, 2.4)
+
+[sub_resource type="BoxMesh" id="BoxMesh_ramp_top"]
+material = ExtResource("17_mconc")
+size = Vector3(2, 0.380325, 2.4)
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_ground"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_far"]
-material = SubResource("StandardMaterial3D_far")
+material = ExtResource("20_asphalt")
 size = Vector2(1200, 1200)
 
 [node name="Main" type="Node3D" unique_id=1647399234]
@@ -265,211 +168,21 @@ script = ExtResource("1_85g3d")
 [node name="WorldEnvironment" parent="Environment" index="0"]
 environment = SubResource("Environment_sbx")
 
-[node name="Level" type="Node3D" parent="." unique_id=974435240]
-
-[node name="Store" type="Node3D" parent="Level" unique_id=714895006]
-
-[node name="TileFloor" type="StaticBody3D" parent="Level/Store" unique_id=885514475]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, -0.5, 0)
-physics_material_override = ExtResource("3_ya4ey")
-
-[node name="Shape" type="CollisionShape3D" parent="Level/Store/TileFloor" unique_id=1681068672]
-shape = SubResource("BoxShape3D_dp3eg")
-
-[node name="Mesh" type="MeshInstance3D" parent="Level/Store/TileFloor" unique_id=1457551939]
-mesh = SubResource("BoxMesh_gqmmt")
-
-[node name="Shelf1" type="StaticBody3D" parent="Level/Store" unique_id=423979530]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.9, -6)
-physics_material_override = ExtResource("4_eb6dy")
-
-[node name="Shape" type="CollisionShape3D" parent="Level/Store/Shelf1" unique_id=704020726]
-shape = SubResource("BoxShape3D_yc10j")
-
-[node name="Mesh" type="MeshInstance3D" parent="Level/Store/Shelf1" unique_id=405141111]
-mesh = SubResource("BoxMesh_pm3ni")
-
-[node name="Shelf2" type="StaticBody3D" parent="Level/Store" unique_id=46773936]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.9, -2.2)
-physics_material_override = ExtResource("4_eb6dy")
-
-[node name="Shape" type="CollisionShape3D" parent="Level/Store/Shelf2" unique_id=1578155678]
-shape = SubResource("BoxShape3D_y6deb")
-
-[node name="Mesh" type="MeshInstance3D" parent="Level/Store/Shelf2" unique_id=486050533]
-mesh = SubResource("BoxMesh_og1vs")
-
-[node name="Shelf3" type="StaticBody3D" parent="Level/Store" unique_id=1897101803]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.9, 1.6)
-physics_material_override = ExtResource("4_eb6dy")
-
-[node name="Shape" type="CollisionShape3D" parent="Level/Store/Shelf3" unique_id=1259501440]
-shape = SubResource("BoxShape3D_2wyq8")
-
-[node name="Mesh" type="MeshInstance3D" parent="Level/Store/Shelf3" unique_id=1105350034]
-mesh = SubResource("BoxMesh_vxglm")
-
-[node name="Shelf4" type="StaticBody3D" parent="Level/Store" unique_id=1510233974]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.9, 5.4)
-physics_material_override = ExtResource("4_eb6dy")
-
-[node name="Shape" type="CollisionShape3D" parent="Level/Store/Shelf4" unique_id=468542584]
-shape = SubResource("BoxShape3D_2f3dj")
-
-[node name="Mesh" type="MeshInstance3D" parent="Level/Store/Shelf4" unique_id=316984712]
-mesh = SubResource("BoxMesh_yq6so")
-
-[node name="BackWall" type="StaticBody3D" parent="Level/Store" unique_id=1872258692]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.8, 1.2, 0)
-physics_material_override = ExtResource("4_eb6dy")
-
-[node name="Shape" type="CollisionShape3D" parent="Level/Store/BackWall" unique_id=1249346271]
-shape = SubResource("BoxShape3D_fv21b")
-
-[node name="Mesh" type="MeshInstance3D" parent="Level/Store/BackWall" unique_id=237418481]
-mesh = SubResource("BoxMesh_qkpxi")
-
-[node name="Boxes" type="Node3D" parent="Level/Store" unique_id=1501653411]
-
-[node name="CardboardBox1" type="RigidBody3D" parent="Level/Store/Boxes" unique_id=1044625966 instance=ExtResource("5_trceg")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.175, -1.2)
-collision_mask = 7
-mass = 2.0
-
-[node name="CardboardBox2" type="RigidBody3D" parent="Level/Store/Boxes" unique_id=617226269 instance=ExtResource("5_trceg")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.525, -1.2)
-collision_mask = 7
-mass = 2.0
-
-[node name="CardboardBox3" type="RigidBody3D" parent="Level/Store/Boxes" unique_id=1394626633 instance=ExtResource("5_trceg")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.875, -1.2)
-collision_mask = 7
-mass = 2.0
-
-[node name="CardboardBox4" type="RigidBody3D" parent="Level/Store/Boxes" unique_id=1045596799 instance=ExtResource("5_trceg")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.175, -0.8)
-collision_mask = 7
-mass = 2.0
-
-[node name="CardboardBox5" type="RigidBody3D" parent="Level/Store/Boxes" unique_id=6220736 instance=ExtResource("5_trceg")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.525, -0.8)
-collision_mask = 7
-mass = 2.0
-
-[node name="CardboardBox6" type="RigidBody3D" parent="Level/Store/Boxes" unique_id=617528222 instance=ExtResource("5_trceg")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0.875, -0.8)
-collision_mask = 7
-mass = 2.0
-
-[node name="ParkingLot" type="Node3D" parent="Level" unique_id=1358520692]
-
-[node name="Asphalt" type="StaticBody3D" parent="Level/ParkingLot" unique_id=433839758]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, -0.5, 0)
+[node name="Ground" type="StaticBody3D" parent="."]
 physics_material_override = ExtResource("6_a8y0u")
 
-[node name="Shape" type="CollisionShape3D" parent="Level/ParkingLot/Asphalt" unique_id=1687337688]
-shape = SubResource("BoxShape3D_5q0nq")
-
-[node name="Mesh" type="MeshInstance3D" parent="Level/ParkingLot/Asphalt" unique_id=794427988]
-mesh = SubResource("BoxMesh_j8jky")
-
-[node name="BayLines" type="Node3D" parent="Level/ParkingLot" unique_id=692726976]
-
-[node name="Line1" type="MeshInstance3D" parent="Level/ParkingLot/BayLines" unique_id=941359617]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.002, -8.4)
-mesh = SubResource("PlaneMesh_fuf3a")
-
-[node name="Line2" type="MeshInstance3D" parent="Level/ParkingLot/BayLines" unique_id=2020074801]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.002, -5.6)
-mesh = SubResource("PlaneMesh_fuf3a")
-
-[node name="Line3" type="MeshInstance3D" parent="Level/ParkingLot/BayLines" unique_id=1075414573]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.002, -2.8)
-mesh = SubResource("PlaneMesh_fuf3a")
-
-[node name="Line4" type="MeshInstance3D" parent="Level/ParkingLot/BayLines" unique_id=1681967860]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.002, 0)
-mesh = SubResource("PlaneMesh_fuf3a")
-
-[node name="Line5" type="MeshInstance3D" parent="Level/ParkingLot/BayLines" unique_id=863407140]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.002, 2.8)
-mesh = SubResource("PlaneMesh_fuf3a")
-
-[node name="Line6" type="MeshInstance3D" parent="Level/ParkingLot/BayLines" unique_id=830775757]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.002, 5.6)
-mesh = SubResource("PlaneMesh_fuf3a")
-
-[node name="Line7" type="MeshInstance3D" parent="Level/ParkingLot/BayLines" unique_id=400885028]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.002, 8.4)
-mesh = SubResource("PlaneMesh_fuf3a")
-
-[node name="Ramp" type="StaticBody3D" parent="Level/ParkingLot" unique_id=1276427512]
-transform = Transform3D(0.99280864, -0.119712204, 0, 0.119712204, 0.99280864, 0, 0, 0, 1, -6, 0.16, -7)
-physics_material_override = ExtResource("6_a8y0u")
-
-[node name="Shape" type="CollisionShape3D" parent="Level/ParkingLot/Ramp" unique_id=2119854636]
-shape = SubResource("BoxShape3D_pibwh")
-
-[node name="Mesh" type="MeshInstance3D" parent="Level/ParkingLot/Ramp" unique_id=426912856]
-mesh = SubResource("BoxMesh_5he1u")
-
-[node name="RampTop" type="StaticBody3D" parent="Level/ParkingLot" unique_id=1087154062]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.55, 0.18, -7)
-physics_material_override = ExtResource("6_a8y0u")
-
-[node name="Shape" type="CollisionShape3D" parent="Level/ParkingLot/RampTop" unique_id=1519466284]
-shape = SubResource("BoxShape3D_5poiv")
-
-[node name="Mesh" type="MeshInstance3D" parent="Level/ParkingLot/RampTop" unique_id=137247389]
-mesh = SubResource("BoxMesh_2cjbq")
-
-[node name="Curb" type="StaticBody3D" parent="Level/ParkingLot" unique_id=1689311823]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.2, 0.06, 6)
-physics_material_override = ExtResource("6_a8y0u")
-
-[node name="Shape" type="CollisionShape3D" parent="Level/ParkingLot/Curb" unique_id=1915486773]
-shape = SubResource("BoxShape3D_chjal")
-
-[node name="Mesh" type="MeshInstance3D" parent="Level/ParkingLot/Curb" unique_id=1473118033]
-mesh = SubResource("BoxMesh_vchkt")
-
-[node name="SpeedBump1" type="StaticBody3D" parent="Level/ParkingLot" unique_id=2117238444]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0.025, 4)
-physics_material_override = ExtResource("6_a8y0u")
-
-[node name="Shape" type="CollisionShape3D" parent="Level/ParkingLot/SpeedBump1" unique_id=1214304639]
-shape = SubResource("BoxShape3D_txyw0")
-
-[node name="Mesh" type="MeshInstance3D" parent="Level/ParkingLot/SpeedBump1" unique_id=1335265646]
-mesh = SubResource("BoxMesh_nvyfr")
-
-[node name="SpeedBump2" type="StaticBody3D" parent="Level/ParkingLot" unique_id=1988865537]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0.025, 4)
-physics_material_override = ExtResource("6_a8y0u")
-
-[node name="Shape" type="CollisionShape3D" parent="Level/ParkingLot/SpeedBump2" unique_id=389375966]
-shape = SubResource("BoxShape3D_ty1g6")
-
-[node name="Mesh" type="MeshInstance3D" parent="Level/ParkingLot/SpeedBump2" unique_id=1551279309]
-mesh = SubResource("BoxMesh_j2jfr")
-
-[node name="Yard" type="StaticBody3D" parent="Level"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, -0.5, 0)
-physics_material_override = ExtResource("16_pconc")
-
-[node name="Shape" type="CollisionShape3D" parent="Level/Yard"]
-shape = SubResource("BoxShape3D_yard")
-
-[node name="Mesh" type="MeshInstance3D" parent="Level/Yard"]
-mesh = SubResource("BoxMesh_yard")
+[node name="Shape" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("WorldBoundaryShape3D_ground")
 
 [node name="Chunks" type="Node3D" parent="." node_paths=PackedStringArray("main", "far_ground")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 0, -20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, -20)
 script = ExtResource("10_strm")
 main = NodePath("..")
-chunks = Array[PackedScene]([ExtResource("11_lot"), ExtResource("12_street"), ExtResource("13_market"), ExtResource("14_garage"), ExtResource("15_hill")])
-weights = PackedFloat32Array(3, 3, 2, 2, 2)
-home_cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0)])
+chunks = Array[PackedScene]([ExtResource("11_open_lot")])
+weights = PackedFloat32Array(1)
+turns = false
+load_distance = 96.0
+unload_distance = 120.0
 far_ground = NodePath("FarGround")
 
 [node name="FarGround" type="MeshInstance3D" parent="Chunks"]
@@ -480,8 +193,91 @@ mesh = SubResource("PlaneMesh_far")
 [node name="CartStack" parent="." instance=ExtResource("stack4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 2.5)
 
+[node name="TestStrip" type="Node3D" parent="."]
+
+[node name="SpeedBump1" type="StaticBody3D" parent="TestStrip"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.025, 0)
+physics_material_override = ExtResource("6_a8y0u")
+
+[node name="Shape" type="CollisionShape3D" parent="TestStrip/SpeedBump1"]
+shape = SubResource("BoxShape3D_bump")
+
+[node name="Mesh" type="MeshInstance3D" parent="TestStrip/SpeedBump1"]
+mesh = SubResource("BoxMesh_bump")
+
+[node name="SpeedBump2" type="StaticBody3D" parent="TestStrip"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.025, 0)
+physics_material_override = ExtResource("6_a8y0u")
+
+[node name="Shape" type="CollisionShape3D" parent="TestStrip/SpeedBump2"]
+shape = SubResource("BoxShape3D_bump")
+
+[node name="Mesh" type="MeshInstance3D" parent="TestStrip/SpeedBump2"]
+mesh = SubResource("BoxMesh_bump")
+
+[node name="Curb" type="StaticBody3D" parent="TestStrip"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.075, 0)
+physics_material_override = ExtResource("4_eb6dy")
+
+[node name="Shape" type="CollisionShape3D" parent="TestStrip/Curb"]
+shape = SubResource("BoxShape3D_curb")
+
+[node name="Mesh" type="MeshInstance3D" parent="TestStrip/Curb"]
+mesh = SubResource("BoxMesh_curb")
+
+[node name="Ramp" type="StaticBody3D" parent="TestStrip"]
+transform = Transform3D(0.992912, -0.118852, 0, 0.118852, 0.992912, 0, 0, 0, 1, 30, 0.0908713, 0)
+physics_material_override = ExtResource("16_pconc")
+
+[node name="Shape" type="CollisionShape3D" parent="TestStrip/Ramp"]
+shape = SubResource("BoxShape3D_ramp")
+
+[node name="Mesh" type="MeshInstance3D" parent="TestStrip/Ramp"]
+mesh = SubResource("BoxMesh_ramp")
+
+[node name="RampTop" type="StaticBody3D" parent="TestStrip"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.5768, 0.190163, 0)
+physics_material_override = ExtResource("16_pconc")
+
+[node name="Shape" type="CollisionShape3D" parent="TestStrip/RampTop"]
+shape = SubResource("BoxShape3D_ramp_top")
+
+[node name="Mesh" type="MeshInstance3D" parent="TestStrip/RampTop"]
+mesh = SubResource("BoxMesh_ramp_top")
+
+[node name="Boxes" type="Node3D" parent="TestStrip"]
+
+[node name="CardboardBox1" parent="TestStrip/Boxes" instance=ExtResource("5_trceg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39, 0.175, -0.2)
+collision_mask = 7
+mass = 2.0
+
+[node name="CardboardBox2" parent="TestStrip/Boxes" instance=ExtResource("5_trceg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39, 0.525, -0.2)
+collision_mask = 7
+mass = 2.0
+
+[node name="CardboardBox3" parent="TestStrip/Boxes" instance=ExtResource("5_trceg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39, 0.875, -0.2)
+collision_mask = 7
+mass = 2.0
+
+[node name="CardboardBox4" parent="TestStrip/Boxes" instance=ExtResource("5_trceg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39, 0.175, 0.2)
+collision_mask = 7
+mass = 2.0
+
+[node name="CardboardBox5" parent="TestStrip/Boxes" instance=ExtResource("5_trceg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39, 0.525, 0.2)
+collision_mask = 7
+mass = 2.0
+
+[node name="CardboardBox6" parent="TestStrip/Boxes" instance=ExtResource("5_trceg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39, 0.875, 0.2)
+collision_mask = 7
+mass = 2.0
+
 [node name="CartSpawn" type="Marker3D" parent="." unique_id=942329566]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
 [node name="Camera" type="Camera3D" parent="." unique_id=2083043449 instance=ExtResource("7_jkv2x")]
 current = true

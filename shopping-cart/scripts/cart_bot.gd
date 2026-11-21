@@ -1,7 +1,7 @@
 class_name CartBot
 extends Node
-## A bot that drives a cart the way a player does: it only presses the same six keys (Q/A left hand push/pull,
-## E/D right, W/S lean) through the cart's `controls`, so the cart's hands, power ramp, wheelies, braking and
+## A bot that drives a cart the way a player does: it only presses the same six keys (E/A left hand push/pull,
+## Q/D right, W/S lean) through the cart's `controls`, so the cart's hands, power ramp, wheelies, braking and
 ## getting back up all work exactly as they do for the keyboard. A networked player can later drive a cart the
 ## same way.
 ##
