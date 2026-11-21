@@ -497,9 +497,14 @@ func wheel_on_ground(w: RigidBody3D) -> bool:
 	return not _ground_hit(w).is_empty()
 
 
-func _ground_hit(w: RigidBody3D) -> Dictionary:
+## What's right under a wheel (`gap` m of air at most): the ray hit (collider, position, normal), or empty.
+func ground_hit(w: RigidBody3D, gap := 0.02) -> Dictionary:
+	return _ground_hit(w, gap)
+
+
+func _ground_hit(w: RigidBody3D, gap := 0.02) -> Dictionary:
 	var q := PhysicsRayQueryParameters3D.create(w.global_position,
-		w.global_position + Vector3.DOWN * (wheel_radius + 0.02), 0x000f, _own_rids)
+		w.global_position + Vector3.DOWN * (wheel_radius + gap), 0x000f, _own_rids)
 	return w.get_world_3d().direct_space_state.intersect_ray(q)
 
 

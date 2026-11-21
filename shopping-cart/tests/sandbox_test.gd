@@ -134,8 +134,8 @@ func _run() -> void:
 		Input.action_press("push_left")
 		Input.action_press("push_right")
 		await _wait(1.0)
-		var rs: CartRollingSound = main.cart.get_node("Frame/RollingSound")
-		var heard: String = rs.surface.name if rs.surface else "nothing"
+		var ws: WheelSound = main.cart.wheels.RL.get_node("WheelSound")
+		var heard: String = ws.floor_sound.resource_path.get_file().get_basename().capitalize() if ws.floor_sound else "nothing"
 		Input.action_release("push_left")
 		Input.action_release("push_right")
 		_check(heard == floors.get(name, "?"), "%s: rolling on %s (want %s)" % [name, heard, floors.get(name, "?")])

@@ -50,6 +50,45 @@ Level › Race down the garage on a phone.
 - **Left out:** live race positions (1st, 2nd...) while racing, a start gantry or finish banner, lap or checkpoint
   checks (the only way down is the ramps, so there's no shortcut to guard against), a best-time record.
 
+## 2026-11-21: wheel sounds driven by each wheel's physics
+
+zack wanted the cart sound to come from the wheels themselves. The one cart-wide RollingSound (a ray under the
+middle, the frame's speed) is replaced by a sound per wheel, kept on the same speed warp zack liked.
+
+- **Scene:** `scenes/cart/wheel_sound.tscn` (`scripts/cart/wheel_sound.gd`), instanced under each wheel body of
+  `scenes/cart/cart.tscn`, with Roll and Scrub loop players and Knock and Land one-shot players. Each floor is a
+  `CartFloorSound` resource (`assets/audio/cart/floors/{asphalt,tile,concrete}.tres`: physics materials, roll
+  loop and level, scrub loop and level); concrete is the fallback (kerbs, props). Knocks and the landing are
+  AudioStreamRandomizers (`knocks.tres`, `lands.tres`) for random pitch.
+- **Per wheel, every physics tick:** a ray under the wheel (`Cart.ground_hit(wheel, gap)`, 5 mm of air at most,
+  tighter than the cart's 2 cm wheels-down check so a lifted wheel spinning down doesn't count) gives contact,
+  floor and normal. Roll speed = spin about the axle x radius; volume and pitch use the old curve on that
+  (silent under 0.05 m/s, full at 1.5 m/s, pitch 1.0 at 1.3 m/s, 0.2 per m/s, 0.7 to 1.5), each wheel at -6 dB
+  so four wheels sound like the old one. Slide = sideways speed along the axle on the ground, combined with skid
+  (ground speed against roll speed, past a 15 % tolerance: rolling wheels run a few per cent off, about 10 % fast
+  on Rapier's rear wheels); scrub fades in from 0.25 m/s to full at 1.5 m/s. Landing: back on the ground
+  after 0.1 s or more in the air, coming down faster than 0.2 m/s (full at 1.5 m/s). Knock: a wheel that stayed
+  down jolts upward by more than 0.6 m/s in one tick (kerbs, joints). One knock or landing per wheel per 0.12 s.
+  Floor changes fade the old loop out before swapping. A multiplayer guest's frozen puppet cart reads its wheels'
+  motion from how they moved between frames.
+- **Sounds:** `tools/audio/make_cart_rolling_loops.py` now also makes `scrub_rough` (asphalt and concrete: the
+  asphalt roll cut into 35 ms grains, shuffled at random rates to lose the roll's rhythm, with 30 Hz stick-slip
+  chatter, low end cut and 1.5 to 6 kHz lifted) and `scrub_squeak` (tile: rubber stick-slip, a wavering 1.4 kHz
+  tone in bursts a few times a second over grains of the tile roll), both 4 s loops. There is no real scrub
+  recording, so these are stand-ins. `knock_1..4` are the four slab-joint clacks of the sidewalk recording (0.3 s,
+  roll under them decayed away). `land.wav` is the second part of zack's new recording (`cart_drop.flac`, 0.83 to
+  1.85 s: the hard hit at 0.86 s, a bounce at 1.18 s, the settle at 1.56 s), which zack heard as lifted wheels
+  dropping. Its first part (0.14 to 0.8 s, a rattling roll) is too short for a loop and isn't used yet.
+- **What it does in play:** a straight push rolls all four with no scrub; a wheelie quiets the lifted front pair
+  and they land with the drop sound when set down; a cart spun hard on one hand or shoved sideways scrubs at the
+  rear wheels; a spin on the spot (Q+D) mostly rolls (the rear wheels turn opposite ways, the casters swivel),
+  scrubbing only once it is fast.
+- **Browser:** `mobile/game/sound.js` ports it (`WheelSounds`): the physics part runs each physics step, the
+  audio once per drawn frame; `cart.json` carries `wheel_sound` (settings, floors, files).
+- **Tests:** `tests/rolling_sound_test.gd` (each level, wheelie quiet and landing, sideways shove scrubs, drop
+  lands); the browser drive test checks each level the same way.
+- **Left out:** no caster flutter (the physics casters don't shimmy), no rattle of the basket or groceries.
+
 ## 2026-11-21: San Francisco hill level
 
 `scenes/levels/sf_hill.tscn` (root script `main.gd`, console `hill`): a San Francisco street that runs 445 m

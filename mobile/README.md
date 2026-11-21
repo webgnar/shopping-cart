@@ -30,7 +30,7 @@ and open http://localhost:8000 (or upload the `mobile/` folder as an HTML5 game 
 | `levels/chunks/<name>.glb` + `.json` | The endless sandbox's terrain chunks (`scenes/sandbox/chunks/`), each exported like a level; `levels/sandbox.json` has the grid (`stream`) | same |
 | `levels/cart.json` | The cart rig (bodies, masses, shapes, hinges and limits), its materials and the bot's settings | same |
 | `models/cart.glb` | Phone-weight cart model (85k faces, 10 meshes) from the Godot one | `blender -b --python tools/export_mobile_model.py` |
-| `audio/roll_*.wav` | The cart's rolling loops (asphalt, tile, concrete), played by `game/sound.js` as in `scripts/cart/cart_rolling_sound.gd` | `python3 tools/audio/make_cart_rolling_loops.py` |
+| `audio/*.wav` | The cart's wheel sounds (rolls, scrubs, knocks, landing), played per wheel by `game/sound.js` as in `scripts/cart/wheel_sound.gd` | `python3 tools/audio/make_cart_rolling_loops.py` |
 | `vendor/` | three.js 0.170 and Rapier 0.14 (so it runs without a CDN) | copied from npm |
 
 Change levels and the cart in Godot, then run both export tools. `tests/tuning_sync_test.gd` and

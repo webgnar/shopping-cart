@@ -1,0 +1,38 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://c6dx7avap8u52" path="res://scripts/cart/wheel_sound.gd" id="1_ws"]
+[ext_resource type="Resource" path="res://assets/audio/cart/floors/asphalt.tres" id="2_asph"]
+[ext_resource type="Resource" path="res://assets/audio/cart/floors/tile.tres" id="3_tile"]
+[ext_resource type="Resource" path="res://assets/audio/cart/floors/concrete.tres" id="4_conc"]
+[ext_resource type="Script" uid="uid://28v0wq5iecy6" path="res://scripts/cart/cart_floor_sound.gd" id="6_fs"]
+[ext_resource type="AudioStreamRandomizer" path="res://assets/audio/cart/knocks.tres" id="5_knock"]
+[ext_resource type="AudioStreamRandomizer" path="res://assets/audio/cart/lands.tres" id="7_land"]
+
+[node name="WheelSound" type="Node3D" node_paths=PackedStringArray("roll_player", "scrub_player", "knock_player", "land_player")]
+script = ExtResource("1_ws")
+roll_player = NodePath("Roll")
+scrub_player = NodePath("Scrub")
+knock_player = NodePath("Knock")
+land_player = NodePath("Land")
+floor_sounds = Array[ExtResource("6_fs")]([ExtResource("2_asph"), ExtResource("3_tile"), ExtResource("4_conc")])
+fallback = ExtResource("4_conc")
+
+[node name="Roll" type="AudioStreamPlayer3D" parent="."]
+volume_db = -80.0
+unit_size = 4.0
+max_distance = 40.0
+
+[node name="Scrub" type="AudioStreamPlayer3D" parent="."]
+volume_db = -80.0
+unit_size = 4.0
+max_distance = 40.0
+
+[node name="Knock" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("5_knock")
+unit_size = 4.0
+max_distance = 40.0
+
+[node name="Land" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("7_land")
+unit_size = 4.0
+max_distance = 40.0

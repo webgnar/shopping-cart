@@ -9,7 +9,7 @@ import { Cart, SIDES } from './cart.js';
 import { Bot } from './bot.js';
 import { NavMesh } from './nav.js';
 import { fetchLevel, buildLevel, layerPairs, applyEnvironment, ambientFor, makeSkyDome, disposeTree, stepTraffic, syncTraffic } from './level.js';
-import { RollingSound, unlockAudio, updateListener, loadedLoops } from './sound.js';
+import { WheelSounds, unlockAudio, updateListener, loadedLoops } from './sound.js';
 import { ChunkStreamer } from './stream.js';
 import { Race, IDLE as RACE_IDLE } from './race.js';
 
@@ -97,7 +97,7 @@ async function loadLevel(key) {
     for (const sc of level.spareCarts) {
       if (bit > 0x8000) break;
       const spare = new Cart({ ...ctx, model: cartModel ? cartModel.clone() : null }, { pos: v3(...sc.pos), yaw: sc.yaw, player: false, empty: true, bit });
-      if (rig.rolling_sound) spare.sound = new RollingSound(spare, rig.rolling_sound, level.surfaces);
+      if (rig.wheel_sound) spare.sound = new WheelSounds(spare, rig.wheel_sound, level.surfaces);
       spares.push(spare);
       bit <<= 1;
     }
@@ -106,7 +106,7 @@ async function loadLevel(key) {
     for (const bc of nav ? level.botCarts : []) {
       if (bit > 0x8000) break;
       const c = new Cart({ ...ctx, model: cartModel ? cartModel.clone() : null }, { pos: v3(...bc.pos), yaw: bc.yaw, player: false, empty: true, bit });
-      if (rig.rolling_sound) c.sound = new RollingSound(c, rig.rolling_sound, level.surfaces);
+      if (rig.wheel_sound) c.sound = new WheelSounds(c, rig.wheel_sound, level.surfaces);
       bots.push(new Bot(c, nav, rig.bot));
       bit <<= 1;
     }
@@ -131,7 +131,7 @@ const PLAYER_BIT = 1 << 4;
 function spawn(pos, yaw) {
   if (cart) { cart.remove(); if (cart.sound) cart.sound.remove(); }
   cart = new Cart({ ...ctx, model: cartModel ? cartModel.clone() : null }, { pos, yaw, player: true, bit: PLAYER_BIT });
-  if (rig.rolling_sound) cart.sound = new RollingSound(cart, rig.rolling_sound, level.surfaces);
+  if (rig.wheel_sound) cart.sound = new WheelSounds(cart, rig.wheel_sound, level.surfaces);
   cam.heading = yaw; cam.target.set(pos.x, pos.y + 0.67, pos.z); cam.lift = 0; cam.reach = 1;
 }
 
@@ -324,6 +324,7 @@ function physicsStep(inp) {
   stepTraffic(level, STEP);
   world.step(eventQueue);
   cart.capWheelSpin(); for (const s of others()) if (!s.pinned) s.capWheelSpin();
+  for (const c of [cart, ...others()]) if (c.sound) c.sound.tick(STEP);   // each wheel's sound from its physics
   eventQueue.drainCollisionEvents((h1, h2, began) => {
     if (!began) return;
     for (const c of [cart, ...others()]) {
@@ -354,7 +355,7 @@ function frame(now) {
   if (cart.origin().y < level.spawn.pos[1] - 30) spawn(v3(...level.spawn.pos), level.spawn.yaw);
   cart.sync(); for (const s of others()) s.sync();
   updateCamera(dt);
-  // Rolling sound: silent while paused (menu, console) or before Start.
+  // Wheel sounds: silent while paused (menu, console) or before Start.
   for (const k of [cart, ...others()]) if (k.sound) k.sound.update(dt, paused || !started);
   updateListener(camera);
   const c = cart.comWorld();
@@ -388,7 +389,7 @@ go.addEventListener('click', async () => {
   try { if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) await DeviceOrientationEvent.requestPermission(); } catch (e) { /* tilt stays off; the lean buttons still work */ }
   $('start').hidden = true;
   started = true;
-  unlockAudio(rig.rolling_sound);
+  unlockAudio(rig.wheel_sound);
   if (mode === 'touch' && document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation?.lock?.('landscape')).catch(() => {});
   }
@@ -405,7 +406,7 @@ async function startRace(withBots) {
 }
 
 // Browsers only allow sound after a tap, click or key; Safari sometimes wants another after the Start tap.
-for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => { if (started) unlockAudio(rig.rolling_sound); }, { passive: true });
+for (const ev of ['pointerdown', 'keydown']) addEventListener(ev, () => { if (started) unlockAudio(rig.wheel_sound); }, { passive: true });
 
 $('resetBtn').addEventListener('click', () => respawn());
 $('levelBtn').addEventListener('click', () => { markLevel($('menuLevels')); $('menu').hidden = false; paused = true; });
