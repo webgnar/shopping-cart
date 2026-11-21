@@ -34,6 +34,8 @@ physics, gate -> child seat -> flap, and a gate swinging up should push the chil
   Re-exported with bpy 5.0 (cloud).
 - **Checks:** drive_test (new "gate lifts seat", "seat backrest", "seat flap"), cart_stack_test, all other suites
   pass; garage_test "floor 10" fails as it did before this change (the cart creeps down the ramp, less now).
+  Browser drive test mirrors the three seat checks (pass); its "hard push", "console: garage" and "touch rockers"
+  fail on main as well.
   Renders: tests/cart_rig_screenshot.gd (`-- <prefix> tint` colours gate red, seat green, flap blue).
 - **Left out:** nothing opens the seat in play (no toddler); the open flap doesn't reach the gate (the bracket moves
   the seat 4.5 cm forward), so a flap lifted level drops back.

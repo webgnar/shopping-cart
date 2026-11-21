@@ -254,26 +254,49 @@ const SCENARIOS = [
     out.gateSwing = between(g0, yAxis(gate.rotation()));
     c.simulate(1.5);
     out.gateBack = between(g0, yAxis(gate.rotation()));
-    for (const [name, key, push, dirLocal, force] of [['flap', 'SeatFlap', [0.13, 0, 0], 'up', 6], ['seat', 'ChildSeat', [0.13, 0.47, 0], 'left', 10]]) {
-      cart = T.fresh(-10, -3, 0.5);
-      const body = cart.b[key], b0 = yAxis(body.rotation());
-      const start = angle(cart.gate.rotation(), body.rotation());
-      let maxSwing = 0;
-      const pushAt = () => { const p = body.translation(), v = T.rotq(body.rotation(), push); return { x: p.x + v.x, y: p.y + v.y, z: p.z + v.z }; };
-      c.simulate(30 / 120, () => { maxSwing = Math.max(maxSwing, between(b0, yAxis(body.rotation()))); }, () => {
-        const b = T.basis(), d = dirLocal === 'up' ? b.y : { x: -b.x.x, y: -b.x.y, z: -b.x.z };   // Godot Vector3.LEFT is -X
-        body.applyImpulseAtPoint({ x: d.x * force / 120, y: d.y * force / 120, z: d.z * force / 120 }, pushAt(), true);
-      });
-      c.simulate(2);
-      const stays = between(b0, yAxis(body.rotation()));
-      if (key === 'ChildSeat') { c.simulate(30 / 120, null, () => { const b = T.basis(); body.applyImpulseAtPoint({ x: b.x.x * force / 120, y: b.x.y * force / 120, z: b.x.z * force / 120 }, pushAt(), true); }); c.simulate(2); }
-      out[name] = { start, maxSwing, stays, back: between(b0, yAxis(body.rotation())) };
-    }
+    // Child seat folded on the gate, flap folded between them; the gate swinging up carries both (drive_test.gd).
+    const imp = (body, dir, force, local) => {
+      const p = body.translation(), v = T.rotq(body.rotation(), local);
+      body.applyImpulseAtPoint({ x: dir.x * force / 120, y: dir.y * force / 120, z: dir.z * force / 120 }, { x: p.x + v.x, y: p.y + v.y, z: p.z + v.z }, true);
+    };
+    const neg = v => ({ x: -v.x, y: -v.y, z: -v.z });
+    cart = T.fresh(-10, -3, 1.0);
+    let seat = cart.b.ChildSeat, flap = cart.b.SeatFlap;
+    out.lift = { seatRest: angle(cart.gate.rotation(), seat.rotation()), flapRest: angle(seat.rotation(), flap.rotation()), seatUp: 0, flapUp: 0 };
+    const gy0 = yAxis(cart.gate.rotation()), sy0 = yAxis(seat.rotation());
+    let n = 0;
+    c.simulate(1.0, () => { if (++n > 60) { out.lift.seatUp = Math.max(out.lift.seatUp, angle(cart.gate.rotation(), seat.rotation()));
+      out.lift.flapUp = Math.max(out.lift.flapUp, angle(seat.rotation(), flap.rotation())); } },
+      () => imp(cart.gate, T.basis().x, 60, [0.17, -0.5, 0]));
+    out.lift.gateUp = between(gy0, yAxis(cart.gate.rotation()));
+    out.lift.seatLift = between(sy0, yAxis(seat.rotation()));
+    c.simulate(2);
+    out.lift.seatBack = angle(cart.gate.rotation(), seat.rotation());
+    // Backrest pulls open and stays open; with it open the flap lifts when pushed and drops back; pushed back, it folds.
+    cart = T.fresh(-10, -3, 0.5);
+    seat = cart.b.ChildSeat; flap = cart.b.SeatFlap;
+    const o = { seatMax: 0, flapMax: 0 };
+    c.simulate(40 / 120, () => { o.seatMax = Math.max(o.seatMax, angle(cart.gate.rotation(), seat.rotation())); }, () => imp(seat, T.basis().x, 10, [-0.15, 0.45, 0]));
+    c.simulate(2);
+    o.seatStays = angle(cart.gate.rotation(), seat.rotation());
+    o.flap0 = angle(seat.rotation(), flap.rotation());
+    c.simulate(30 / 120, () => { o.flapMax = Math.max(o.flapMax, angle(seat.rotation(), flap.rotation())); }, () => imp(flap, neg(T.basis().x), 6, [0.03, -0.1, 0]));
+    c.simulate(2);
+    o.flapBack = angle(seat.rotation(), flap.rotation());
+    c.simulate(40 / 120, null, () => imp(seat, neg(T.basis().x), 10, [-0.15, 0.45, 0]));
+    c.simulate(2);
+    o.seatFolded = angle(cart.gate.rotation(), seat.rotation());
+    out.open = o;
     return out;
   });
   report(hinge.gateSwing > 10 && hinge.gateSwing < 75 && hinge.gateBack < 5, 'gate', `swung ${hinge.gateSwing.toFixed(0)} deg when shoved, back to ${hinge.gateBack.toFixed(0)} deg after`);
-  report(hinge.flap.start < 2 && hinge.flap.maxSwing > 20 && hinge.flap.maxSwing < 110 && hinge.flap.back < 3, 'seat flap', `at rest ${hinge.flap.start.toFixed(1)} deg off its stop, swung ${hinge.flap.maxSwing.toFixed(0)} deg when pushed, back to ${hinge.flap.back.toFixed(1)} deg`);
-  report(hinge.seat.start < 2 && hinge.seat.maxSwing > 5 && hinge.seat.maxSwing < 33 && hinge.seat.stays > 25 && hinge.seat.back < 3, 'seat backrest', `at rest ${hinge.seat.start.toFixed(1)} deg, swung ${hinge.seat.maxSwing.toFixed(0)} deg, stayed folded at ${hinge.seat.stays.toFixed(0)} deg, back to ${hinge.seat.back.toFixed(1)} deg`);
+  const SL = hinge.lift, SO = hinge.open;
+  report(SL.seatRest < 2 && SL.flapRest < 3 && SL.gateUp > 45 && Math.abs(SL.seatLift - SL.gateUp) < 5 && SL.seatUp < 10 && SL.flapUp < 10 && SL.seatBack < 2, 'gate lifts seat',
+    `folded at rest: backrest ${SL.seatRest.toFixed(1)} deg off the gate, flap ${SL.flapRest.toFixed(1)}; gate up ${SL.gateUp.toFixed(0)} deg lifts the backrest ${SL.seatLift.toFixed(0)} deg (within ${SL.seatUp.toFixed(1)}, flap ${SL.flapUp.toFixed(1)})`);
+  report(SO.seatMax > 25 && SO.seatMax < 38 && SO.seatStays > 25 && SO.seatFolded < 2, 'seat backrest',
+    `pulled open ${SO.seatMax.toFixed(0)} deg, stayed open at ${SO.seatStays.toFixed(0)} deg, pushed back to ${SO.seatFolded.toFixed(1)} deg`);
+  report(SO.flap0 < 3 && SO.flapMax > 20 && SO.flapMax < 80 && SO.flapBack < 3, 'seat flap',
+    `at rest ${SO.flap0.toFixed(1)} deg off its stop, swung ${SO.flapMax.toFixed(0)} deg when pushed, back to ${SO.flapBack.toFixed(1)} deg`);
 
   // A pinned cart is knocked loose when a box hits it.
   const knock = await page.evaluate(() => {
