@@ -26,6 +26,7 @@ also in the project files under `asphalt/doc/`.
 - Speed: `_open_edges` caches each edge's cell and works out the block threshold once a step; years 15 to 24 take
   about 3.4 s here (the test allows 4).
 - Checks: `tests/asphalt_test.gd` now 36 (adds plucked cells, height map depths, shoulders and flush edges, relief view).
+
 ## 2026-11-22: Child seat folds like a real cart (seat plate folds up, not down)
 
 zack: the child seat was still rigged wrong (screenshot: the plastic seat hung at an odd angle by the backrest).
