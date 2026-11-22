@@ -31,7 +31,7 @@ var scrape_log := []   ## [s, loop file, volume dB, pitch] per tick per scraping
 
 
 func _log_scrapes(cart: ShoppingCart, s: ImpactSynth) -> void:
-	for body in [cart.frame, cart.gate, cart.child_seat, cart.seat_flap]:
+	for body in [cart.frame, cart.gate, cart.child_seat, cart.seat_flap, cart.seat_plastic]:
 		var cs: ContactSound = body.get_node_or_null("ContactSound")
 		if cs and cs.scrape_player.playing and cs.scrape_player.stream:
 			scrape_log.append([s.captured.size() / 24000.0, ProjectSettings.globalize_path(cs.scrape_player.stream.resource_path),

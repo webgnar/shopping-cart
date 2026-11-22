@@ -9,9 +9,11 @@ extends Node3D
 ##  - Gate: hinged at the top rail, swings into the basket 0 to 70 degrees.
 ##  - ChildSeat (the wire backrest): hinged on the gate at its bottom bar. It rests folded back against the gate and
 ##    the folded seat flap (its 0 stop), so when the gate swings up it carries it up; it opens 30 degrees into the basket.
-##  - SeatFlap (the seat, wire and plastic): its loops hook round a gate wire and are its hinge. Folded it stands up
-##    against the gate's front (its 0 stop); pulled down it lies level as a seat at 98 degrees.
-##    Both hinges swing freely (no friction or damping).
+##  - SeatFlap (the wire seat): its loops hook round a gate wire and are its hinge. Folded it stands up against the
+##    gate's front (its 0 stop); pulled down it lies level as a seat at 98 degrees.
+##  - SeatPlastic (the plastic plate on the seat): hinged on the seat by its loops. It lies on the seat (its 0 stop)
+##    and lifts off it until it meets the gate.
+##    All three seat hinges swing freely (no friction or damping).
 ##  - Groceries: loose bodies in the basket; add or move them under the Groceries node.
 ##  - Model: the rigged model (assets/models/shopping_cart.glb); its pivots follow the physics bodies.
 ## Cart local axes: nose = +X, up = +Y, left = -Z. Units: metres, kg, newtons.
@@ -147,6 +149,7 @@ const LAYER_CARGO := 4
 @onready var gate: RigidBody3D = $Gate
 @onready var child_seat: RigidBody3D = $ChildSeat
 @onready var seat_flap: RigidBody3D = $SeatFlap
+@onready var seat_plastic: RigidBody3D = $SeatPlastic
 @onready var forks := {"FL": $Fork_FL, "FR": $Fork_FR}   ## RigidBody3D each
 @onready var wheels := {"FL": $Wheel_FL, "FR": $Wheel_FR, "RL": $Wheel_RL, "RR": $Wheel_RR}   ## RigidBody3D each
 @onready var _model: Node3D = $Model
@@ -183,7 +186,7 @@ func _ready() -> void:
 		elif g is RigidBody3D:
 			groceries.append(g)
 	# Carts collide with other carts (their bodies' masks include LAYER_CART), but not with their own parts.
-	var parts: Array = [frame, gate, child_seat, seat_flap] + wheels.values() + forks.values()
+	var parts: Array = [frame, gate, child_seat, seat_flap, seat_plastic] + wheels.values() + forks.values()
 	for a in parts:
 		for b in parts:
 			if a != b and not _touching(a, b):
@@ -196,6 +199,7 @@ func _ready() -> void:
 	_link(_model.find_child("Gate_Hinge"), gate)
 	_link(_model.find_child("ChildSeat_Hinge"), child_seat)
 	_link(_model.find_child("SeatFlap_Hinge"), seat_flap)
+	_link(_model.find_child("SeatPlastic_Hinge"), seat_plastic)
 	for side in ["L", "R"]:
 		_link(_model.find_child("Caster_F%s_Swivel" % side), forks["F" + side])
 		_link(_model.find_child("Wheel_F%s_Axle" % side), wheels["F" + side])
@@ -203,8 +207,9 @@ func _ready() -> void:
 
 
 ## The cart's own bodies never collide with each other (the hinges hold them together), except these pairs: the
-## backrest lies over the folded seat flap and holds it against the gate.
-const TOUCHING_PARTS := [["ChildSeat", "SeatFlap"]]
+## backrest lies over the folded seat flap and holds it against the gate, and the seat plastic lifts until it meets
+## the gate.
+const TOUCHING_PARTS := [["ChildSeat", "SeatFlap"], ["Gate", "SeatPlastic"]]
 
 func _process(_delta: float) -> void:
 	for l in _links:
@@ -306,7 +311,7 @@ func _wake() -> void:
 	for c in stack():
 		c.frame.freeze = false
 		c._rest_time = 0.0
-		for b in [c.frame, c.gate, c.child_seat, c.seat_flap] + c.wheels.values() + c.forks.values():
+		for b in [c.frame, c.gate, c.child_seat, c.seat_flap, c.seat_plastic] + c.wheels.values() + c.forks.values():
 			b.sleeping = false
 
 
@@ -327,7 +332,7 @@ func stack() -> Array[ShoppingCart]:
 
 ## Every physics body of the rig, groceries included.
 func bodies() -> Array[RigidBody3D]:
-	var list: Array[RigidBody3D] = [frame, gate, child_seat, seat_flap]
+	var list: Array[RigidBody3D] = [frame, gate, child_seat, seat_flap, seat_plastic]
 	list.append_array(wheels.values())
 	list.append_array(forks.values())
 	list.append_array(groceries)
@@ -336,7 +341,7 @@ func bodies() -> Array[RigidBody3D]:
 
 ## Mass of the whole rig (groceries left out).
 func rig_mass() -> float:
-	var m := frame.mass + gate.mass + child_seat.mass + seat_flap.mass
+	var m := frame.mass + gate.mass + child_seat.mass + seat_flap.mass + seat_plastic.mass
 	for b in wheels.values() + forks.values():
 		m += b.mass
 	return m
@@ -409,7 +414,7 @@ func _exit_tree() -> void:
 
 ## Each wheel resists rolling with a small torque, as real casters do. Also keeps the cart still on flat ground.
 func _apply_rolling_resistance(delta: float) -> void:
-	var total_mass := frame.mass + gate.mass + child_seat.mass + seat_flap.mass
+	var total_mass := frame.mass + gate.mass + child_seat.mass + seat_flap.mass + seat_plastic.mass
 	for b in wheels.values() + forks.values():
 		total_mass += b.mass
 	var max_torque := rolling_resistance * total_mass * 9.81 / 4.0 * wheel_radius
@@ -668,7 +673,7 @@ func frame_spin() -> float:
 
 ## Every body of the rig, groceries last, in the order the network sends them.
 func net_bodies() -> Array[RigidBody3D]:
-	var list: Array[RigidBody3D] = [frame, gate, child_seat, seat_flap, forks.FL, forks.FR,
+	var list: Array[RigidBody3D] = [frame, gate, child_seat, seat_flap, seat_plastic, forks.FL, forks.FR,
 		wheels.FL, wheels.FR, wheels.RL, wheels.RR]
 	list.append_array(groceries)
 	return list

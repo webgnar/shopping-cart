@@ -1636,3 +1636,14 @@ the sim's new `unsealed_edges = false` stops edge cracking and fretting where se
 still showed the old cracks 5 cm deep. Now it keeps the year each pixel was last repaired, and only cracks newer
 than that repair cut it (patch seams and failed fills still come back). Sealed cracks are filled flush, with the
 overband standing `SEAL_PROUD` (1.5 mm) above the road until the sealant debonds.
+
+## Cart: the seat plastic is its own body (Nov 22 2026)
+
+The plastic plate (Plane.005) was part of the SeatFlap body, so it never moved off the wire seat. It now has its
+own pivot in the rig (`SeatPlastic_Hinge`, at its Blender origin by the loops, under `SeatFlap_Hinge`) and its own
+body, `SeatPlastic` (0.15 kg; the wire seat went from 0.4 to 0.3 kg), on a free `SeatPlasticHinge` to the seat:
+0 lying on the seat, lifting off it up to 98 degrees. It touches the gate (TOUCHING_PARTS), which stops it when
+lifted. Its box covers only the plate's upper half (its seat-side 6 mm), because folded the plate's lower end sits
+inside the gate's 3 cm collision box; at rest it leans about 1.5 degrees onto the gate. Adding the body changes
+`net_bodies()`, so NetProtocol.VERSION is 6. drive_test checks it lies on the seat folded and open, lifts off, and
+drops back.

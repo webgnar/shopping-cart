@@ -31,8 +31,10 @@ GATE_HINGE = (0.068, 0.0, 0.985)   # top edge of the gate, under the handle bar
 # end of each hinge. Each part turns about its own origin in the base model, which sits on its hinge:
 #  - Child seat (backrest, UpperBasket): hinged on the gate at its bottom bar. Folded back SEAT_FOLD degrees it lies
 #    against the gate and the folded seat; the gate swinging up lifts it with it.
-#  - Seat flap (seat + plastic, origins on the seat's loops): the loops hook round a gate wire and are its hinge, so
-#    it hangs on the gate and the loops never move. Folded up FLAP_FOLD degrees it stands against the gate's front.
+#  - Seat flap (the wire seat, origin on its loops): the loops hook round a gate wire and are its hinge, so it hangs
+#    on the gate and the loops never move. Folded up FLAP_FOLD degrees it stands against the gate's front.
+#  - Seat plastic (Plane.005): the plastic plate on top of the wire seat, hinged on the seat at its own origin (by the
+#    loops). It lies on the seat and can lift off it, up to standing against the gate.
 GATE_LEAN = 18.2      # degrees: the gate's top leans back (toward the handle) from vertical
 SEAT_FOLD = 30.0      # degrees the backrest folds back from the base model: 1 mm clear of the gate and folded seat
 FLAP_FOLD = 98.0      # degrees the seat folds up about its loops: 0.5 mm clear of the gate's front wires
@@ -47,7 +49,8 @@ REAR_Y = 0.3045
 # cart's centre line to make the front-left one, with ".L" added to each name.
 GATE = ["WireMesh.LowBasketBack"]
 SEAT = ["UpperBasket"]
-FLAP = ["Plane.005", "WireMesh.UpperBasketSeat"]
+FLAP = ["WireMesh.UpperBasketSeat"]
+PLASTIC = ["Plane.005"]
 FRONT_WHEEL = {"+": ["Wheel", "Bolt", "Indent1.003.L"],
                "-": ["Cube.003", "Boss-Extrude6.003", "Indent1.003"]}
 REAR_WHEEL = {"+": ["Cube.001", "Boss-Extrude6.001", "Indent1.001"],
@@ -191,15 +194,17 @@ def turn(deg, about):
 
 
 seat_pivot = bpy.data.objects[SEAT[0]].matrix_world.translation.copy()
-flap_pivot = bpy.data.objects[FLAP[1]].matrix_world.translation.copy()   # the wire seat's loops
+flap_pivot = bpy.data.objects[FLAP[0]].matrix_world.translation.copy()   # the wire seat's loops
 seat_fold = turn(SEAT_FOLD, (seat_pivot.x, seat_pivot.z))
 flap_fold = turn(FLAP_FOLD, (flap_pivot.x, flap_pivot.z))
-for n in FLAP:
+for n in FLAP + PLASTIC:
     bpy.data.objects[n].matrix_world = flap_fold @ bpy.data.objects[n].matrix_world
 for n in SEAT:
     bpy.data.objects[n].matrix_world = seat_fold @ bpy.data.objects[n].matrix_world
 bpy.context.view_layer.update()
-print("CHILD SEAT HINGE", tuple(round(v, 4) for v in seat_pivot), "FLAP HINGE", tuple(round(v, 4) for v in flap_pivot))
+plastic_pivot = bpy.data.objects[PLASTIC[0]].matrix_world.translation.copy()   # its origin, folded with the seat
+print("CHILD SEAT HINGE", tuple(round(v, 4) for v in seat_pivot), "FLAP HINGE", tuple(round(v, 4) for v in flap_pivot),
+      "PLASTIC HINGE", tuple(round(v, 4) for v in plastic_pivot))
 
 # Basket back: gate hangs from the top rail and swings forward into the basket. The child seat (backrest) and the
 # seat flap both hang on the gate. Limits in degrees, same sign as Godot's hinge angle.
@@ -209,9 +214,12 @@ seat = empty("ChildSeat_Hinge", tuple(seat_pivot), gate)
 joint(seat, "hinge", "Y", 0, SEAT_FOLD)   # 0 folded on the gate .. leaning into the basket for a toddler
 flap = empty("SeatFlap_Hinge", tuple(flap_pivot), gate)
 joint(flap, "hinge", "Y", 0, FLAP_FOLD)   # 0 folded up against the gate .. level as a seat
+plastic = empty("SeatPlastic_Hinge", tuple(plastic_pivot), flap)
+joint(plastic, "hinge", "Y", -FLAP_FOLD, 0)   # 0 lying on the seat .. lifted off it, up against the gate
 attach(GATE, gate)
 attach(SEAT, seat)
 attach(FLAP, flap)
+attach(PLASTIC, plastic)
 
 for side, tag in (("+", "L"), ("-", "R")):
     y = FRONT_Y if side == "+" else -FRONT_Y
