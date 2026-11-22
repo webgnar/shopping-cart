@@ -27,25 +27,23 @@ window/size/mode=2
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[navigation]
+
+3d/default_cell_size=0.1
+3d/default_cell_height=0.05
+
 [physics]
 
-jolt_physics_3d/limits/max_angular_velocity=120.0
-jolt_physics_3d/limits/world_boundary_shape_size=20000.0
-
-3d/physics_engine="Jolt Physics"
 common/physics_ticks_per_second=120
 3d/physics_engine="Jolt Physics"
 jolt_physics_3d/simulation/velocity_steps=30
 jolt_physics_3d/simulation/position_steps=8
 jolt_physics_3d/simulation/penetration_slop=0.002
+jolt_physics_3d/limits/world_boundary_shape_size=20000.0
+jolt_physics_3d/limits/max_angular_velocity=120.0
 3d/default_linear_damp=0.02
 3d/default_angular_damp=0.05
 
 [rendering]
 
 rendering_device/driver.windows="d3d12"
-
-[navigation]
-
-3d/default_cell_size=0.1
-3d/default_cell_height=0.05

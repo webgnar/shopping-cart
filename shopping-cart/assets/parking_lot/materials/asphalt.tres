@@ -1,4 +1,4 @@
-[gd_resource type="StandardMaterial3D" format=3]
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://nbqmsaws5o7"]
 
 [sub_resource type="Gradient" id="Gradient_o3hav"]
 colors = PackedColorArray(0.72, 0.72, 0.72, 1, 1, 1, 1, 1)
@@ -42,7 +42,8 @@ albedo_texture = SubResource("NoiseTexture2D_fncrf")
 roughness = 0.95
 roughness_texture = SubResource("NoiseTexture2D_16dt2")
 normal_enabled = true
+normal_scale = 0.52
 normal_texture = SubResource("NoiseTexture2D_tf686")
-uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_scale = Vector3(0.72, 0.72, 0.72)
 uv1_triplanar = true
 uv1_world_triplanar = true
