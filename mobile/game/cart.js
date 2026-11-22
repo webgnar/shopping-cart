@@ -344,11 +344,9 @@ export class Cart {
     const pushingNow = dirs.L > 0 || dirs.R > 0;
     for (const [h, s] of SIDES) handYaw[h] = s * dirs[h];
     const yawNow = handYaw.L + handYaw.R;
-    // Both hands the same way (not braking): what they push in common moves the cart, capped by running speed;
-    // the difference twists the bar at any speed.
-    const together = dirs.L !== 0 && dirs.L === dirs.R && !(dirs.L < 0 && !pushingNow && cartAlong > 0.05);
-    const common = together ? 0.5 * (drives.L + drives.R) : 0;
-    const commonK = together ? clamp(1 - dirs.L * cartAlong / (dirs.L > 0 ? T.sprint_speed : T.reverse_speed), 0, 1) : 1;
+    // Each hand's push moves the cart (capped by running speed, along the middle of the bar) and twists it by its
+    // force times its reach from the middle, at any speed: turning is force times place on the bar.
+    const upA = norm(upAxis);
 
     for (const [h, s] of SIDES) {
       const dir = dirs[h];
@@ -370,13 +368,11 @@ export class Cart {
         st = `braking ${Math.round(Math.max(F, drive))} N (arm ${Math.round(100 * this.armExt[h] / T.arm_reach)}%)`;
       } else {
         this.armExt[h] = Math.max(0, this.armExt[h] - T.arm_relax_rate * dt);
-        if (together) {
-          f.addForceAtPoint(scale(fwd, dir * (common * commonK + drive - common) * driveScale), driveG, true);
-          st = `${dir > 0 ? 'pushing' : 'pulling'} ${Math.round(drive)} N`;
-        } else if (dir !== 0) {
-          // One hand: a running person tops out at sprint_speed (a backward walk when pulling).
-          const k = clamp(1 - dir * along / (dir > 0 ? T.sprint_speed : T.reverse_speed), 0, 1);
-          f.addForceAtPoint(scale(fwd, dir * drive * k * driveScale), driveG, true);
+        if (dir !== 0) {
+          const k = clamp(1 - dir * cartAlong / (dir > 0 ? T.sprint_speed : T.reverse_speed), 0, 1);
+          const midG = add(p, rot(q, v3(this.handPos.x, this.com.y, 0)));
+          f.addForceAtPoint(scale(fwd, dir * drive * k * driveScale), midG, true);
+          f.addTorque(scale(upA, s * reach * dir * drive * driveScale), true);
           st = `${dir > 0 ? 'pushing' : 'pulling'} ${Math.round(drive)} N`;
         }
       }

@@ -29,8 +29,8 @@ extends Node3D
 ##    end). Each press moves it out by tap_step, a quick press (tap_fast after the last) by up to tap_boost times
 ##    that, and it slides back in at grip_drain. Each press after the first is also a shove (tap_power on top of
 ##    the power), and between taps the hand stays on the bar, its power leaking away (tap_hold_leak).
-## Each hand pushes or pulls where it holds the bar, so the turn comes from the physics: right force times its
-## distance from the middle, minus the left's. A hand out at the end turns the cart harder; a push with one hand
+## Each hand's push turns the cart by its force times its distance from the middle of the bar (right minus left),
+## at any speed; only the forward part of the push is capped by running speed. A hand out at the end turns the cart harder; a push with one hand
 ## and a pull with the other turns it hardest. Held hands tire (fatigue): the arm's force wanders (wobble) and its
 ## grip on the cart's twist weakens, so a cart left on held keys drifts off line; a press freshens the arm.
 ## W/S lean the cart on purpose (see "Lean keys"). Once the cart has fallen over and come to rest, any hand key
@@ -545,15 +545,12 @@ func _apply_hands(delta: float) -> void:
 		hand_yaw[side] = (-1.0 if side == "L" else 1.0) * dirs[side]
 	yaw_cmd = hand_yaw.L + hand_yaw.R
 
-	# Both hands the same way (and not braking): the body carries the bar along and the arms twist it. What the two
-	# hands push in common (their average) is what moves the cart, and a running player can only add that up to
-	# their running speed; the difference between them twists the bar, which the arms can do at any speed. So at
-	# a run, two hands still steer by how hard each pushes and where it holds the bar.
-	var together: bool = dirs.L != 0 and dirs.L == dirs.R and not (dirs.L < 0 and not pushing_any and cart_along > 0.05)
-	var common: float = 0.5 * (drives.L + drives.R) if together else 0.0
-	var common_k := 1.0
-	if together:
-		common_k = clampf(1.0 - dirs.L * cart_along / (sprint_speed if dirs.L > 0 else reverse_speed), 0.0, 1.0)
+	# Each hand's push does two things. It moves the cart: a running player can only add that up to their running
+	# speed (a backward walk when pulling), so the forward part is capped by how fast the cart already goes. And it
+	# twists the bar by its force times how far from the middle the hand holds it, which the arms can do at any
+	# speed (the body braces against it). So turning is each hand's force times its place on the bar: a hand out at
+	# the end turns harder, a push and a pull turn hardest, and equal hands at equal places run straight.
+	var up_axis := xf.basis.y.normalized()
 
 	for side in ["L", "R"]:
 		var s := -1.0 if side == "L" else 1.0
@@ -582,16 +579,12 @@ func _apply_hands(delta: float) -> void:
 		else:
 			# Not braking: the body steps back in to its relaxed distance from the handle.
 			arm_extension[side] = maxf(0.0, arm_extension[side] - arm_relax_rate * delta)
-			if together:
-				# The common part, capped by running speed, plus this hand's share of the twist.
-				var f := common * common_k + (drive - common)
-				frame.apply_force(fwd * dir * f * drive_scale, drive_g - frame.global_position)
-				st = ("pushing %d N" if dir > 0 else "pulling %d N") % roundi(drive)
-			elif dir != 0:
-				# One hand: a running person can only add force up to their running speed (a backward walk when
-				# pulling), at the speed the hand moves.
-				var k := clampf(1.0 - dir * along / (sprint_speed if dir > 0 else reverse_speed), 0.0, 1.0)
-				frame.apply_force(fwd * dir * drive * k * drive_scale, drive_g - frame.global_position)
+			if dir != 0:
+				# Forward, capped by running speed, along the middle of the bar; the twist, force times reach.
+				var k := clampf(1.0 - dir * cart_along / (sprint_speed if dir > 0 else reverse_speed), 0.0, 1.0)
+				var mid_g := xf * Vector3(hand_position.x, frame.center_of_mass.y, 0.0)
+				frame.apply_force(fwd * dir * drive * k * drive_scale, mid_g - frame.global_position)
+				frame.apply_torque(up_axis * s * reach * dir * drive * drive_scale)
 				st = ("pushing %d N" if dir > 0 else "pulling %d N") % roundi(drive)
 		if dir != 0 or hand_grip[side] > 0.05:
 			st = (st + " " if st else "") + "at %d cm" % roundi(100.0 * reach)
