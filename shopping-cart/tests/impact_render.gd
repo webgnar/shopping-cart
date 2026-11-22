@@ -86,30 +86,34 @@ func _run() -> void:
 		Input.action_release("push_left")
 		Input.action_release("push_right")
 		var cart: ShoppingCart = level.cart
-		cart.frame.apply_torque_impulse(cart.frame.global_transform.basis.x * 80.0 * side[1])
+		cart.frame.apply_torque_impulse(cart.frame.global_transform.basis.x * 40.0 * side[1])
 		for i in 360:
 			await physics_frame
 			_log_scrapes(cart, s)
 		await _save(s, side[0], all)
 
-	# Dragged along on its side: tipped over, then pulled across the lot (friction is what you hear).
+	# Tipped over, then dragged along on its side at a walking pace (about 1.4 m/s), then let go: it slides to a
+	# stop. The tip is part of the recording; the drag holds the pace (a hand pulling), not a set force.
 	var sd := await _spawn(level, spawn, 0.0)
 	await _wait(1.0)
 	var dc: ShoppingCart = level.cart
+	sd.captured.clear()
+	sd.recordings.clear()
+	scrape_log = []
 	Input.action_press("push_left")
 	Input.action_press("push_right")
 	await _wait(0.3)
 	Input.action_release("push_left")
 	Input.action_release("push_right")
-	dc.frame.apply_torque_impulse(dc.frame.global_transform.basis.x * 80.0)
-	await _wait(1.5)
-	sd.captured.clear()
-	sd.recordings.clear()
-	scrape_log = []
+	dc.frame.apply_torque_impulse(dc.frame.global_transform.basis.x * 40.0)   # just enough to fall onto its side
+	for i in 180:
+		await physics_frame
+		_log_scrapes(dc, sd)
 	var pull := -dc.frame.global_transform.basis.x.slide(Vector3.UP).normalized()
-	for i in 420:
-		if i < 300:
-			dc.frame.apply_central_force(pull * 220.0 * minf(1.0, i / 60.0))
+	for i in 480:
+		if i < 360:
+			var short := 1.4 * minf(1.0, i / 90.0) - dc.frame.linear_velocity.dot(pull)
+			dc.frame.apply_central_force(pull * clampf(short * 400.0, 0.0, 300.0))
 		await physics_frame
 		_log_scrapes(dc, sd)
 	await _save(sd, "drag_on_side", all)
