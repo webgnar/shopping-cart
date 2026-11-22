@@ -7,9 +7,6 @@ skips those: it is 75-320.5 s spliced to 332-553.5 s (both splice points sit in 
 equal-power crossfade at the splice and another from the end back into the start. Levelled to peak at -1 dBFS;
 the scene sets how loud it plays. Writes:
   shopping-cart/assets/audio/ambience/parking_lot.ogg   (Godot: seamless loop, imported with loop on)
-  mobile/audio/parking_lot.mp3                          (browser: the loop plus XFADE s of what follows it,
-                                                         unfaded; mobile/game/music.js overlaps the copies itself
-                                                         so MP3 encoder padding can't leave a gap)
 
 Run from the repo root:  python3 tools/audio/make_ambience_loops.py [path/to/recording.wav]   (numpy, ffmpeg)
 """
@@ -21,7 +18,6 @@ import numpy as np
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DEFAULT_SRC = "/mnt/project-files/parking lot back ground.wav"
 GODOT_OUT = os.path.join(ROOT, "shopping-cart", "assets", "audio", "ambience", "parking_lot.ogg")
-WEB_OUT = os.path.join(ROOT, "mobile", "audio", "parking_lot.mp3")
 RATE = 44100
 XFADE = 4.0                            # s of crossfade at the splice and at the loop point
 PIECES = [(75.0, 320.5), (332.0, 553.5)]  # kept stretches of the recording, s
@@ -62,13 +58,11 @@ def write(samples: np.ndarray, path: str, args: list) -> None:
 
 def main() -> None:
     src = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_SRC
-    loop, web = build(decode(src))
+    loop, _ = build(decode(src))
     write(loop, GODOT_OUT, ["-c:a", "libvorbis", "-q:a", "2"])
-    write(web, WEB_OUT, ["-c:a", "libmp3lame", "-b:a", "64k"])
     rms = 20 * np.log10(np.sqrt(np.mean(loop ** 2)))
     print("loop %.3f s (%d samples at %d Hz), RMS %.1f dBFS" % (len(loop) / RATE, len(loop), RATE, rms))
-    for p in (GODOT_OUT, WEB_OUT):
-        print("  %s (%d KB)" % (os.path.relpath(p, ROOT), os.path.getsize(p) // 1024))
+    print("  %s (%d KB)" % (os.path.relpath(GODOT_OUT, ROOT), os.path.getsize(GODOT_OUT) // 1024))
 
 
 if __name__ == "__main__":

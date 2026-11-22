@@ -1,7 +1,6 @@
 class_name NetProtocol
 extends RefCounted
-## The multiplayer wire format: plain little-endian bytes, so the browser game (mobile/, JavaScript DataView) can
-## speak it too. Every packet starts with a one-byte message type. Strings are a u32 byte length then UTF-8.
+## The multiplayer wire format: plain little-endian bytes. Every packet starts with a one-byte message type. Strings are a u32 byte length then UTF-8.
 ## A pose is position (3 x f32) then rotation quaternion x, y, z, w (4 x f32): 28 bytes.
 ##
 ##   HELLO     guest -> host  reliable    u16 version

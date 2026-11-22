@@ -14,8 +14,6 @@ extends Node3D
 ## `far_ground` (a big plane just below the floors) follows the cart, so the horizon past the loaded chunks is
 ## ground rather than sky; the level's fog hides where the chunks stop.
 ##
-## The browser version streams the same grid (mobile/game/stream.js); keep pick() in step with it.
-##
 ## Multiplayer: chunks gather around every player's cart (the Net autoload's `carts`), so a guest who drives off on
 ## their own still has ground under them, on the host and on their own screen.
 
@@ -139,8 +137,7 @@ func cell_transform(cell: Vector2i, turns: int) -> Transform3D:
 	return Transform3D(Basis(Vector3.UP, turns * PI / 2), centre)
 
 
-## [chunk index, quarter turns] for a square. The same in the browser (mobile/game/stream.js): 32-bit integer
-## hashing only, so both get the same world from the same seed.
+## [chunk index, quarter turns] for a square. 32-bit integer hashing only, so the same seed gives the same world.
 func pick(cell: Vector2i) -> Array:
 	var h := cell_hash(cell.x, cell.y, world_seed)
 	var total := 0.0
@@ -164,7 +161,7 @@ static func cell_hash(x: int, z: int, s: int) -> int:
 	return h
 
 
-## A 32-bit integer mix (lowbias32), the same as the browser's Math.imul version.
+## A 32-bit integer mix (lowbias32).
 static func _mix(h: int) -> int:
 	h &= 0xFFFFFFFF
 	h ^= h >> 16
