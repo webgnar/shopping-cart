@@ -24,6 +24,16 @@ const CHUNK := 6              ## points per drawn piece of crack (each piece get
 @export var sealant_texture: Texture2D        ## poured crack sealant
 @export var sealant_texture_m := 0.5
 
+@export_group("Damage textures")
+@export var pothole_texture: Texture2D        ## wet base course at the bottom of a pothole
+@export var pothole_texture_m := 0.5
+@export var broken_texture: Texture2D         ## broken, ravelled asphalt: pothole rims and spalled crack edges
+@export var broken_texture_m := 0.5
+@export var base_course_texture: Texture2D    ## dry base course where the edge has fretted away
+@export var base_course_texture_m := 1.0
+@export var shoulder_texture: Texture2D       ## the gravel shoulders
+@export var shoulder_texture_m := 1.0
+
 @export_group("Colours")
 @export var fresh_asphalt := Color(0.075, 0.075, 0.08)
 @export var aged_asphalt := Color(0.37, 0.365, 0.35)
@@ -89,6 +99,14 @@ func _poly(pts: PackedVector2Array, c: Color, scale := 1.0) -> void:
 		draw_colored_polygon(pts, c)
 
 
+## A damage area: its texture in the colour map (darkened by `dark`), else the flat colour with grain.
+func _surface(pts: PackedVector2Array, c: Color, scale: float, tex: Texture2D, metres: float, dark := 0.0) -> void:
+	if tex and mode == Mode.COLOR:
+		_textured(pts, tex, metres, Color.BLACK, dark)
+	else:
+		_poly(pts, c, scale)
+
+
 ## How far a repair `age` years old has greyed towards aged_asphalt (fills grey faster: `speed` < 1).
 func _greying(age: float, speed: float) -> float:
 	return 0.85 * (1.0 - exp(-maxf(age, 0.0) * sim.climate / (oxidation_years * speed)))
@@ -104,9 +122,10 @@ func _textured(pts: PackedVector2Array, tex: Texture2D, metres: float, wash: Col
 		draw_colored_polygon(pts, Color(wash, amount))
 
 
-## The sealant texture along a polyline (pixels) as a strip `width` pixels wide, aged by `amount`. Neighbouring
-## quads share their corners (the side offset at each point is the average of its two segments), so no steps.
-func _textured_band(seg: PackedVector2Array, width: float, amount: float) -> void:
+## A texture `metres` across along a polyline (pixels) as a strip `width` pixels wide, washed with `wash` at
+## `amount`. Neighbouring quads share their corners (the side offset at each point is the average of its two
+## segments), so no steps.
+func _textured_band(seg: PackedVector2Array, width: float, tex: Texture2D, metres: float, wash: Color, amount: float) -> void:
 	var n := seg.size()
 	var side := PackedVector2Array()
 	side.resize(n)
@@ -119,11 +138,11 @@ func _textured_band(seg: PackedVector2Array, width: float, amount: float) -> voi
 		var quad := PackedVector2Array([seg[j] + side[j], seg[j + 1] + side[j + 1], seg[j + 1] - side[j + 1], seg[j] - side[j]])
 		var uvs := PackedVector2Array()
 		for q in quad:
-			uvs.append(q / (sealant_texture_m * px_per_m))
+			uvs.append(q / (metres * px_per_m))
 		# draw_primitive, not a polygon: at a sharp bend the quad can fold over, which polygons refuse.
-		draw_primitive(quad, PackedColorArray([Color.WHITE]), uvs, sealant_texture)
+		draw_primitive(quad, PackedColorArray([Color.WHITE]), uvs, tex)
 		if amount > 0.01:
-			draw_primitive(quad, PackedColorArray([Color(sealant_aged, amount * 0.8)]), PackedVector2Array())
+			draw_primitive(quad, PackedColorArray([Color(wash, amount)]), PackedVector2Array())
 
 
 func _circle_pts(c: Vector2, r: float, seed_n: float, rough: float) -> PackedVector2Array:
@@ -176,7 +195,10 @@ func _draw() -> void:
 			var wpx := w * px_per_m
 			if w > 0.005:
 				var spall := minf(w * 2.2 + 0.008, 0.06) * px_per_m
-				draw_polyline(seg, _hc(-0.004) if hm else spall_color, spall)
+				if broken_texture and not hm:
+					_textured_band(seg, spall, broken_texture, broken_texture_m, Color.BLACK, 0.0)
+				else:
+					draw_polyline(seg, _hc(-0.004) if hm else spall_color, spall)
 			var depth := -clampf(w * 4.0, 0.006, 0.06)
 			var col := _hc(depth) if hm else crack_color
 			if wpx < 1.5 and not hm:
@@ -205,7 +227,7 @@ func _draw() -> void:
 				var band := (0.06 + 0.025 * _h(piece + c.pts[0].y) + c.width(k, c.seal_from) * 2.0) * px_per_m
 				draw_polyline(seg, col, band)
 				if sealant_texture and not hm:
-					_textured_band(seg, band, clampf(age / 10.0, 0.0, 1.0))
+					_textured_band(seg, band, sealant_texture, sealant_texture_m, sealant_aged, clampf(age / 10.0, 0.0, 1.0) * 0.8)
 			k = e
 	# Throw-and-roll fills: lumpy cold-mix blobs over the cracks they filled, a little proud of the surface.
 	for i in sim.nx * sim.ny:
@@ -224,20 +246,21 @@ func _draw() -> void:
 		var d := sim.plucked[k]
 		if d <= 0.0 or sim.net_cells[k].is_empty():
 			continue
-		_poly(_scaled(sim.net_cells[k], sim.net_seeds[k], 1.1, k), _hc(-d * 0.3) if hm else pothole_rim, 0.25)
+		_surface(_scaled(sim.net_cells[k], sim.net_seeds[k], 1.1, k), _hc(-d * 0.3) if hm else pothole_rim, 0.25, broken_texture, broken_texture_m)
 	for k in sim.plucked.size():
 		var d := sim.plucked[k]
 		if d <= 0.0 or sim.net_cells[k].is_empty():
 			continue
 		var col := _hc(-d) if hm else pothole_floor.darkened(clampf(d / AsphaltSim.HOLE_MAX, 0.0, 1.0) * 0.45)
-		_poly(_scaled(sim.net_cells[k], sim.net_seeds[k], 1.0, k + 0.5), col, 0.15)
+		_surface(_scaled(sim.net_cells[k], sim.net_seeds[k], 1.0, k + 0.5), col, 0.15, pothole_texture, pothole_texture_m, clampf(d / AsphaltSim.HOLE_MAX, 0.0, 1.0) * 0.45)
 	for i in sim.nx * sim.ny:
 		if sim.hole[i] <= 0.0 or sim._cell_seed[i] >= 0:
 			continue
 		var c := sim.cell_center(i) + Vector2(_h(i * 1.3) - 0.5, _h(i * 2.1) - 0.5) * 0.03
 		var d := sim.hole[i]
-		_poly(_circle_pts(c, 0.11, i * 0.91, 0.5), _hc(-d * 0.3) if hm else pothole_rim, 0.25)
-		_poly(_circle_pts(c, 0.085, i * 0.53, 0.35), _hc(-d) if hm else pothole_floor.darkened(clampf(d / AsphaltSim.HOLE_MAX, 0.0, 1.0) * 0.45), 0.15)
+		_surface(_circle_pts(c, 0.11, i * 0.91, 0.5), _hc(-d * 0.3) if hm else pothole_rim, 0.25, broken_texture, broken_texture_m)
+		_surface(_circle_pts(c, 0.085, i * 0.53, 0.35), _hc(-d) if hm else pothole_floor.darkened(clampf(d / AsphaltSim.HOLE_MAX, 0.0, 1.0) * 0.45), 0.15,
+			pothole_texture, pothole_texture_m, clampf(d / AsphaltSim.HOLE_MAX, 0.0, 1.0) * 0.45)
 	# Shoulders, and the pavement edge fretted back into them.
 	for side in 2:
 		var e := sim.edge_l if side == 0 else sim.edge_r
@@ -255,8 +278,8 @@ func _draw() -> void:
 		var fret_poly := PackedVector2Array([Vector2(x0, 0.0) * px_per_m])
 		fret_poly.append_array(fret)
 		fret_poly.append(Vector2(x0, sim.size.y) * px_per_m)
-		_poly(fret_poly, _hc(-0.03) if hm else base_course, 0.2)
+		_surface(fret_poly, _hc(-0.03) if hm else base_course, 0.2, base_course_texture, base_course_texture_m)
 		var dirt_poly := PackedVector2Array([Vector2(x0, 0.0) * px_per_m])
 		dirt_poly.append_array(dirt)
 		dirt_poly.append(Vector2(x0, sim.size.y) * px_per_m)
-		_poly(dirt_poly, _hc(-0.04) if hm else shoulder_color, 0.2)
+		_surface(dirt_poly, _hc(-0.04) if hm else shoulder_color, 0.2, shoulder_texture, shoulder_texture_m)
