@@ -3,6 +3,26 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+
+## 2026-11-22: generated hits depend on where and on what; layered with the recordings
+
+zack: "all the impact sounds are the same?" and "we are going to need a mix of the shopping cart sounds and the physics
+based ones".
+
+- **Where.** Each `RingingPart` has a `region` (a box in the frame's space) with `along`/`across` axes and a `falloff`.
+  The hit point picks:
+    - the parts near it (exp(-distance outside / 0.3 m));
+    - the modes that ring, by the free-free beam mode shape at the point along the bars;
+    - the bars that ring, by a Gaussian across the spans.
+
+  Wheels strike at their own position, and frame hits at the impulse-weighted contact point.
+- **On what.** `CartFloorSound.contact_time_scale` sets how hard the floor is: tile 0.7, concrete 1.0, asphalt 1.4.
+- **Measured** (same 10 N s knock, spectral centroid): handle 870 Hz, basket corner 794, basket side 947, basket
+  floor 897, chassis 1229. Tipping left 581 vs right 443. A 20 cm drop on tile 452 vs asphalt 378.
+- **Mix.** The recorded tap/slam/knock play again for every hit, and the synth strikes under them (`ImpactSynth`
+  `volume_db` +4, about 4-5 dB under the recording). `tests/impact_render.gd` also logs the recordings each hit
+  played (`<name>.json`), so a render can be mixed offline.
+
 ## 2026-11-22: Child seat hinged on its loop (Blender origins)
 
 zack: the loop on the seat is its hinge and should not move; the origins in the Blender model are right. The seat

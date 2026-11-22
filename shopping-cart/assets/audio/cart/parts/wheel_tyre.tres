@@ -11,3 +11,6 @@ loss_per_khz = 0.0
 level = 1.5
 frame_coupling = 0.0
 wheel_coupling = 1.0
+region = AABB(0, 0, -0.35, 0.95, 0.13, 0.7)
+along = 0
+across = 2

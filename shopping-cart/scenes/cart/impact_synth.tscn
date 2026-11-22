@@ -15,6 +15,7 @@ buffer_length = 0.15
 
 [node name="ImpactSynth" type="AudioStreamPlayer3D"]
 stream = SubResource("AudioStreamGenerator_gen")
+volume_db = 4.0
 unit_size = 4.0
 max_distance = 40.0
 script = ExtResource("1_is")
