@@ -5,9 +5,14 @@
 [ext_resource type="Script" path="res://scripts/asphalt/asphalt_canvas.gd" id="3_canvas"]
 [ext_resource type="Shader" path="res://assets/asphalt/asphalt_base.gdshader" id="4_shader"]
 [ext_resource type="Texture2D" path="res://assets/asphalt/asphalt_grain.tres" id="5_grain"]
+[ext_resource type="Texture2D" uid="uid://c1kl7q3ps6434" path="res://assets/asphalt/textures/fresh_hotmix.png" id="6_hotmix"]
+[ext_resource type="Texture2D" uid="uid://p6r5d5su53f4" path="res://assets/asphalt/textures/cold_mix_fill.png" id="7_coldmix"]
+[ext_resource type="Texture2D" uid="uid://chnpmc4mkdmib" path="res://assets/asphalt/textures/crack_sealant.png" id="8_sealant"]
+[ext_resource type="Texture2D" uid="uid://r2fxfjkqgqib" path="res://assets/asphalt/textures/chip_seal.png" id="9_chip"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_color"]
 shader = ExtResource("4_shader")
+shader_parameter/chip_texture = ExtResource("9_chip")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_height"]
 shader = ExtResource("4_shader")
@@ -97,12 +102,16 @@ offset_bottom = 2048.0
 mouse_filter = 2
 
 [node name="Damage" type="Node2D" parent="ColorViewport" node_paths=PackedStringArray("sim", "base")]
+texture_filter = 4
 texture_repeat = 2
 script = ExtResource("3_canvas")
 sim = NodePath("../../Sim")
 mode = 0
 base = NodePath("../Base")
 grain = ExtResource("5_grain")
+patch_texture = ExtResource("6_hotmix")
+fill_texture = ExtResource("7_coldmix")
+sealant_texture = ExtResource("8_sealant")
 
 [node name="HeightViewport" type="SubViewport" parent="."]
 disable_3d = true

@@ -20,6 +20,9 @@ uniform vec3 fresh_color : source_color = vec3(0.075, 0.075, 0.08);
 uniform vec3 aged_color : source_color = vec3(0.37, 0.365, 0.35);
 uniform vec3 stone_color : source_color = vec3(0.50, 0.49, 0.46);
 uniform vec3 chip_color : source_color = vec3(0.46, 0.44, 0.40);
+uniform sampler2D chip_texture : source_color, repeat_enable, filter_linear_mipmap;  // chip seal photo, seamless
+uniform float chip_texture_m = 1.0;  // m the chip texture spans
+uniform bool use_chip_texture = true;
 
 vec2 hash2(vec2 p) {
 	p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
@@ -108,6 +111,12 @@ void fragment() {
 		vec3 rock = mix(stone_color, chip_color, chip_seal) * (0.8 + 0.4 * st.y);
 		vec3 col = mix(binder, mix(binder, rock, show), stone);
 		col = mix(col, binder * 0.55, pit);
+		if (use_chip_texture && chip_seal > 0.0) {
+			// The chip seal photo, its binder dulling towards grey with age as the chips wear clean.
+			vec3 chip = texture(chip_texture, sp / chip_texture_m).rgb;
+			chip = mix(chip, aged_color * (0.7 + 0.6 * chip), ox * 0.5);
+			col = mix(col, chip, chip_seal);
+		}
 		// Tyre polish and rubber in the wheel paths; oil and fuel drips down the middle of the lane.
 		col *= 1.0 - 0.10 * clamp(wheel, 0.0, 1.0) * min(surface_age / 3.0, 1.0);
 		float oil = smoothstep(0.6, 0.78, fbm(sp * vec2(3.5, 1.2) + 11.0) + 0.25 * vnoise(sp * 9.0) - 0.12) * lane_mid * min(surface_age / 4.0, 1.0);

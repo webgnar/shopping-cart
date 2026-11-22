@@ -3,6 +3,15 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-22: Asphalt lab repairs use zack's textures
+
+zack made four ChatGPT textures (`assets/asphalt/textures/`, 1024 px, made seamless here by blending each with
+itself shifted half a tile; two had mirror seams, two had hard edges). AsphaltCanvas draws heavy patches with
+`fresh_hotmix` (1 m), throw-and-roll fills with `cold_mix_fill` (1 m) and crack sealant with `crack_sealant` (0.5 m,
+a strip along the crack); the surface shader uses `chip_seal` (1 m) for a chip seal. Each greys with age by a wash of
+the aged colour over the texture. Height maps unchanged. Textures are imported with mipmaps (the lab shows 1 m at
+205 px). zack plans better, more "rolled flat" versions; swapping the PNGs is all it takes.
+
 ## 2026-11-22: Asphalt lab, ageing pass: crack networks, real height map, relief view, explainer doc
 
 zack wants the simulator right before it goes in game (later: a colour texture plus a displacement map so the cart
