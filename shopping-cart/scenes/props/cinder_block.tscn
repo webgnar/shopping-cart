@@ -1,0 +1,45 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="1_conc"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_block"]
+size = Vector3(0.39, 0.19, 0.19)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_block"]
+albedo_color = Color(0.56, 0.55, 0.52, 1)
+roughness = 0.95
+
+[sub_resource type="BoxMesh" id="BoxMesh_face"]
+material = SubResource("StandardMaterial3D_block")
+size = Vector3(0.39, 0.19, 0.032)
+
+[sub_resource type="BoxMesh" id="BoxMesh_web"]
+material = SubResource("StandardMaterial3D_block")
+size = Vector3(0.032, 0.19, 0.126)
+
+[node name="CinderBlock" type="RigidBody3D"]
+collision_mask = 7
+mass = 16.0
+physics_material_override = ExtResource("1_conc")
+
+[node name="Shape" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_block")
+
+[node name="FrontFace" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.079)
+mesh = SubResource("BoxMesh_face")
+
+[node name="BackFace" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.079)
+mesh = SubResource("BoxMesh_face")
+
+[node name="EndWebLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.179, 0, 0)
+mesh = SubResource("BoxMesh_web")
+
+[node name="MiddleWeb" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_web")
+
+[node name="EndWebRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.179, 0, 0)
+mesh = SubResource("BoxMesh_web")

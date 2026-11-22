@@ -1,0 +1,65 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/sound_bench.gd" id="1_bench"]
+[ext_resource type="PackedScene" path="res://scenes/environment/default_environment.tscn" id="2_env"]
+[ext_resource type="PackedScene" path="res://scenes/cart/cart.tscn" id="3_cart"]
+[ext_resource type="PackedScene" path="res://scenes/props/cinder_block.tscn" id="4_block"]
+[ext_resource type="PackedScene" path="res://scenes/props/cardboard_box.tscn" id="5_box"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="6_asph"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/asphalt.tres" id="7_asph_mat"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
+size = Vector3(30, 1, 30)
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+material = ExtResource("7_asph_mat")
+size = Vector3(30, 1, 30)
+
+[node name="SoundBench" type="Node3D" node_paths=PackedStringArray("cart", "camera")]
+script = ExtResource("1_bench")
+cart = NodePath("Cart")
+camera = NodePath("Camera")
+
+[node name="DefaultEnvironment" parent="." instance=ExtResource("2_env")]
+
+[node name="Floor" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+physics_material_override = ExtResource("6_asph")
+
+[node name="Shape" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("BoxShape3D_floor")
+
+[node name="Mesh" type="MeshInstance3D" parent="Floor"]
+mesh = SubResource("BoxMesh_floor")
+
+[node name="Cart" parent="." instance=ExtResource("3_cart")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.005, 0)
+player_controlled = false
+empty_basket = true
+
+[node name="CinderBlock" parent="." instance=ExtResource("4_block")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0.095, 0.9)
+
+[node name="Box" parent="." instance=ExtResource("5_box")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0.175, 0.95)
+
+[node name="Box2" parent="." instance=ExtResource("5_box")]
+transform = Transform3D(0.92, 0, -0.39, 0, 1, 0, 0.39, 0, 0.92, 0.1, 0.175, 1.05)
+
+[node name="Camera" type="Camera3D" parent="."]
+current = true
+fov = 55.0
+
+[node name="Help" type="CanvasLayer" parent="."]
+
+[node name="Label" type="Label" parent="Help"]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 520.0
+offset_bottom = 120.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+text = "Cart sound bench
+Left mouse: grab and hold (let go to drop)
+Mouse wheel: hand nearer / further (zoom when not holding)
+Right mouse drag: orbit   Left / Right arrows: turn the cart"
