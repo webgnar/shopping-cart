@@ -68,18 +68,26 @@ func _run(tint: bool) -> void:
 		_tint(model.find_child("ChildSeat_Hinge"), Color(0.1, 0.8, 0.2))
 		_tint(model.find_child("SeatFlap_Hinge"), Color(0.15, 0.3, 0.95))
 	await _views(cart, "rest")
-	# Open the child seat: pull the backrest into the basket; the flap drops level onto the gate.
+	# Open the child seat: pull the backrest into the basket.
 	for i in 40:
 		cart.child_seat.apply_force(cart.frame.global_basis.x * 10.0, cart.child_seat.global_basis * Vector3(-0.15, 0.45, 0))
+		await physics_frame
+	for i in 120:
+		await physics_frame
+	# Then pull the seat flap down about its loops until it lies level.
+	var tip := Vector3(-0.017, 0.119, 0)
+	for i in 40:
+		cart.seat_flap.apply_force(cart.frame.global_basis.x * 8.0, cart.seat_flap.global_basis * tip)
 		await physics_frame
 	for i in 240:
 		await physics_frame
 	await _views(cart, "seat_open")
-	# Fold it again as on a real cart: lift the flap, push the backrest back.
+	# Fold it again: lift the flap back against the gate, push the backrest back.
 	for i in 60:
-		cart.seat_flap.apply_force(cart.frame.global_basis.y * 8.0, cart.seat_flap.global_basis * Vector3(-0.03, 0.09, 0))
-		if i > 20:
-			cart.child_seat.apply_force(-cart.frame.global_basis.x * 10.0, cart.child_seat.global_basis * Vector3(-0.15, 0.45, 0))
+		cart.seat_flap.apply_force((cart.frame.global_basis.y - cart.frame.global_basis.x) * 8.0, cart.seat_flap.global_basis * tip)
+		await physics_frame
+	for i in 40:
+		cart.child_seat.apply_force(-cart.frame.global_basis.x * 10.0, cart.child_seat.global_basis * Vector3(-0.15, 0.45, 0))
 		await physics_frame
 	for i in 240:
 		await physics_frame
