@@ -8,7 +8,7 @@ extends SceneTree
 ##  - landings, by each wheel's speed into the ground: a wheelie set down slams, a 5 cm drop taps, a 30 cm drop
 ##    slams, a cart set down gently is silent;
 ##  - the frame (scenes/cart/contact_sound.tscn): silent while the cart rolls on its wheels; tipped over, it hits the
-##    floor and scrapes as it slides, by the friction the physics reports, and goes quiet once it stops.
+##    floor (striking the generated ImpactSynth) and scrapes as it slides, by the friction the physics reports, and goes quiet once it stops.
 ## Run from the Godot project folder:
 ##   godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd
 
@@ -219,9 +219,10 @@ func _run() -> void:
 			t.power = fs.power
 			t.slip = fs.slip
 			t.floor = fs.floor_sound.resource_path.get_file().get_basename() if fs.floor_sound else "-"
-	_report(fs.slams >= 1 and t.scrape > 10 and cart.frame.global_transform.basis.y.y < 0.5, "tipped over",
-		"frame hit the floor at %.2f m/s (%d hits, %d slams); scraped %d ticks, up to %.0f W sliding %.2f m/s on %s" % [
-		fs.last_hit, fs.hits, fs.slams, t.scrape, t.power, t.slip, t.floor])
+	var synth: ImpactSynth = cart.frame.get_node("ImpactSynth")
+	_report(fs.hits >= 1 and synth.strikes > 0 and synth.peak > 0.01 and t.scrape > 10 and cart.frame.global_transform.basis.y.y < 0.5,
+		"tipped over", "frame hit the floor at %.2f m/s (%d hits); generated sound %d strikes, peak %.2f; scraped %d ticks, up to %.0f W sliding %.2f m/s on %s" % [
+		fs.last_hit, fs.hits, synth.strikes, synth.peak, t.scrape, t.power, t.slip, t.floor])
 	for i in 6 * Engine.physics_ticks_per_second:
 		await physics_frame
 		if cart.frame.linear_velocity.length() < 0.02 and not fs.scrape_player.playing:
