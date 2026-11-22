@@ -334,7 +334,7 @@ func _run() -> void:
 	if not gate_ok:
 		failures += 1
 	print("%-5s %-18s swung %.0f deg when shoved, back to %.0f deg after" % ["PASS" if gate_ok else "FAIL", "gate", swing, settle])
-	# Child seat: at rest the backrest lies folded on the gate and the flap hangs folded between them. The gate swinging
+	# Child seat: at rest the backrest lies folded on the gate and the flap stands folded up between them. The gate swinging
 	# up carries both up with it (the backrest lies on the gate's front, which is its stop).
 	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 	await _wait(1.0)
@@ -363,7 +363,8 @@ func _run() -> void:
 	print("%-5s %-18s folded at rest: backrest %.1f deg off the gate, flap %.1f off the backrest; gate up %.0f deg lifts the backrest %.0f deg (stays within %.1f deg of the gate, flap within %.1f)" % [
 		"PASS" if folded_ok else "FAIL", "gate lifts seat", seat_rest, flap_rest, gate_up, seat_lift, seat_up, flap_up])
 	# The backrest pulls open into the basket and stays there (it leans forward once open) until it is pushed back.
-	# Then the flap, with the backrest open, lifts when pushed and drops back onto its stop.
+	# With the backrest open the flap has dropped level onto the gate (as a seat); its free edge lifts when pushed up and
+	# drops back. Pushing the backrest shut folds the flap back up between it and the gate.
 	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 	await _wait(0.5)
 	cart = main.cart
@@ -375,28 +376,34 @@ func _run() -> void:
 	await _wait(2.0)
 	var seat_stays := _rel_deg(cart.gate, cart.child_seat)
 	var flap0 := _rel_deg(cart.child_seat, cart.seat_flap)
-	var flap_max := 0.0
+	var flap_min := flap0
 	for i in 30:
-		cart.seat_flap.apply_force(-cart.frame.global_transform.basis.x * 6.0, cart.seat_flap.global_transform.basis * Vector3(0.03, -0.1, 0))
+		cart.seat_flap.apply_force(cart.frame.global_transform.basis.y * 8.0, cart.seat_flap.global_transform.basis * Vector3(-0.03, 0.09, 0))
 		await physics_frame
-		flap_max = maxf(flap_max, _rel_deg(cart.child_seat, cart.seat_flap))
+		flap_min = minf(flap_min, _rel_deg(cart.child_seat, cart.seat_flap))
 	await _wait(2.0)
 	var flap_back := _rel_deg(cart.child_seat, cart.seat_flap)
-	for i in 40:
-		cart.child_seat.apply_force(-cart.frame.global_transform.basis.x * 10.0, cart.child_seat.global_transform.basis * Vector3(-0.15, 0.45, 0))
+	# Folding it, as on a real cart: lift the seat flap up against the backrest (the level flap props the backrest
+	# open), then push the backrest back onto the gate.
+	for i in 60:
+		cart.seat_flap.apply_force(cart.frame.global_transform.basis.y * 8.0, cart.seat_flap.global_transform.basis * Vector3(-0.03, 0.09, 0))
+		if i > 20:
+			cart.child_seat.apply_force(-cart.frame.global_transform.basis.x * 10.0, cart.child_seat.global_transform.basis * Vector3(-0.15, 0.45, 0))
 		await physics_frame
 	await _wait(2.0)
 	var seat_folded := _rel_deg(cart.gate, cart.child_seat)
-	var open_ok := seat_max > 25.0 and seat_max < 38.0 and seat_stays > 25.0 and seat_folded < 2.0
+	var flap_folded := _rel_deg(cart.child_seat, cart.seat_flap)
+	var open_ok := seat_max > 22.0 and seat_max < 30.0 and seat_stays > 22.0 and seat_folded < 2.0
 	if not open_ok:
 		failures += 1
 	print("%-5s %-18s pulled open %.0f deg, stayed open at %.0f deg, pushed back to %.1f deg" % [
 		"PASS" if open_ok else "FAIL", "seat backrest", seat_max, seat_stays, seat_folded])
-	var flap_ok := flap0 < 3.0 and flap_max > 20.0 and flap_max < 80.0 and flap_back < 3.0
+	var flap_ok := absf(flap0 - 98.8) < 4.0 and flap0 - flap_min > 20.0 and absf(flap_back - 98.8) < 4.0 \
+		and flap_folded < 8.0
 	if not flap_ok:
 		failures += 1
-	print("%-5s %-18s at rest %.1f deg off its stop, swung %.0f deg when pushed, back to %.1f deg after" % [
-		"PASS" if flap_ok else "FAIL", "seat flap", flap0, flap_max, flap_back])
+	print("%-5s %-18s dropped level %.0f deg (99), lifted to %.0f deg when pushed, back to %.0f deg, folds back up to %.1f deg" % [
+		"PASS" if flap_ok else "FAIL", "seat flap", flap0, flap_min, flap_back, flap_folded])
 	# A pinned cart still gets knocked when something hits it.
 	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 	await _wait(2.0)
