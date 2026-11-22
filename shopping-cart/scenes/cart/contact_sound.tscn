@@ -1,0 +1,28 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/cart/contact_sound.gd" id="1_cs"]
+[ext_resource type="Resource" path="res://assets/audio/cart/floors/asphalt.tres" id="2_asph"]
+[ext_resource type="Resource" path="res://assets/audio/cart/floors/tile.tres" id="3_tile"]
+[ext_resource type="Resource" path="res://assets/audio/cart/floors/concrete.tres" id="4_conc"]
+[ext_resource type="Script" uid="uid://28v0wq5iecy6" path="res://scripts/cart/cart_floor_sound.gd" id="5_fs"]
+[ext_resource type="AudioStreamRandomizer" path="res://assets/audio/cart/knocks.tres" id="6_knock"]
+[ext_resource type="AudioStreamRandomizer" path="res://assets/audio/cart/lands.tres" id="7_slam"]
+
+[node name="ContactSound" type="Node3D" node_paths=PackedStringArray("scrape_player", "hit_player")]
+script = ExtResource("1_cs")
+scrape_player = NodePath("Scrape")
+hit_player = NodePath("Hit")
+floor_sounds = Array[ExtResource("5_fs")]([ExtResource("2_asph"), ExtResource("3_tile"), ExtResource("4_conc")])
+fallback = ExtResource("4_conc")
+knock = ExtResource("6_knock")
+slam = ExtResource("7_slam")
+
+[node name="Scrape" type="AudioStreamPlayer3D" parent="."]
+volume_db = -80.0
+unit_size = 4.0
+max_distance = 40.0
+
+[node name="Hit" type="AudioStreamPlayer3D" parent="."]
+stream = ExtResource("6_knock")
+unit_size = 4.0
+max_distance = 40.0

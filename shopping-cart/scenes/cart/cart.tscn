@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/cart.gd" id="1_ytnl2"]
 [ext_resource type="PackedScene" path="res://assets/models/shopping_cart.glb" id="2_0ipfc"]
 [ext_resource type="PackedScene" path="res://scenes/cart/wheel_sound.tscn" id="3_wsnd"]
+[ext_resource type="PackedScene" path="res://scenes/cart/contact_sound.tscn" id="3_csnd"]
 [ext_resource type="Script" path="res://scripts/cart/cart_nest_mouth.gd" id="12_mouth"]
 [ext_resource type="PackedScene" path="res://scenes/cart/nest_joint.tscn" id="13_nest"]
 [ext_resource type="PackedScene" path="res://scenes/cart/flag.tscn" id="14_flag"]
@@ -130,7 +131,7 @@ center_of_mass = Vector3(0.45, 0.42, 0)
 can_sleep = false
 freeze_mode = 1
 contact_monitor = true
-max_contacts_reported = 4
+max_contacts_reported = 16
 
 [node name="BasketFloor" type="CollisionShape3D" parent="Frame" unique_id=158781773]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.57, 0.46, 0)
@@ -178,6 +179,9 @@ shape = SubResource("BoxShape3D_mouth")
 [node name="Flag" parent="Frame" instance=ExtResource("14_flag")]
 transform = Transform3D(0, -0.24253564, -0.9701425, 0, 0.9701425, -0.24253564, 1, 0, 0, 0.207, 0.5, -0.33)
 visible = false
+
+[node name="ContactSound" parent="Frame" instance=ExtResource("3_csnd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.42, 0)
 
 [node name="Gate" type="RigidBody3D" parent="." unique_id=354311188]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.068, 0.985, 0)
