@@ -27,6 +27,17 @@ func _spawn(level: Node, spawn: Marker3D, lift: float) -> ImpactSynth:
 	return s
 
 
+var scrape_log := []   ## [s, loop file, volume dB, pitch] per tick per scraping part, since the last save
+
+
+func _log_scrapes(cart: ShoppingCart, s: ImpactSynth) -> void:
+	for body in [cart.frame, cart.gate, cart.child_seat, cart.seat_flap]:
+		var cs: ContactSound = body.get_node_or_null("ContactSound")
+		if cs and cs.scrape_player.playing and cs.scrape_player.stream:
+			scrape_log.append([s.captured.size() / 24000.0, ProjectSettings.globalize_path(cs.scrape_player.stream.resource_path),
+				cs.scrape_player.volume_db, cs.scrape_player.pitch_scale])
+
+
 func _save(s: ImpactSynth, name: String, all: PackedFloat32Array) -> void:
 	s.captured_wav().save_to_wav(out.path_join(name + ".wav"))
 	# The recordings played for the same hits, for mixing in (seconds, clip files, volume dB).
@@ -40,7 +51,8 @@ func _save(s: ImpactSynth, name: String, all: PackedFloat32Array) -> void:
 			files.append(ProjectSettings.globalize_path(r[1].resource_path))
 		log.append({"t": r[0] / 24000.0, "files": files, "db": r[2]})
 	var f := FileAccess.open(out.path_join(name + ".json"), FileAccess.WRITE)
-	f.store_string(JSON.stringify(log))
+	f.store_string(JSON.stringify({"hits": log, "scrapes": scrape_log}))
+	scrape_log = []
 	f.close()
 	s.recordings.clear()
 	all.append_array(s.captured)
@@ -75,8 +87,32 @@ func _run() -> void:
 		Input.action_release("push_right")
 		var cart: ShoppingCart = level.cart
 		cart.frame.apply_torque_impulse(cart.frame.global_transform.basis.x * 80.0 * side[1])
-		await _wait(3.0)
+		for i in 360:
+			await physics_frame
+			_log_scrapes(cart, s)
 		await _save(s, side[0], all)
+
+	# Dragged along on its side: tipped over, then pulled across the lot (friction is what you hear).
+	var sd := await _spawn(level, spawn, 0.0)
+	await _wait(1.0)
+	var dc: ShoppingCart = level.cart
+	Input.action_press("push_left")
+	Input.action_press("push_right")
+	await _wait(0.3)
+	Input.action_release("push_left")
+	Input.action_release("push_right")
+	dc.frame.apply_torque_impulse(dc.frame.global_transform.basis.x * 80.0)
+	await _wait(1.5)
+	sd.captured.clear()
+	sd.recordings.clear()
+	scrape_log = []
+	var pull := -dc.frame.global_transform.basis.x.slide(Vector3.UP).normalized()
+	for i in 420:
+		if i < 300:
+			dc.frame.apply_central_force(pull * 220.0 * minf(1.0, i / 60.0))
+		await physics_frame
+		_log_scrapes(dc, sd)
+	await _save(sd, "drag_on_side", all)
 
 	# The same knock (10 N s at 2 m/s on the frame) at five spots: where a hit lands changes what rings.
 	var s0 := await _spawn(level, spawn, 0.0)

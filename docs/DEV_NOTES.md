@@ -4,6 +4,29 @@ Newest first. One entry per change to models, levels or scenes: what was built, 
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
 
+
+## 2026-11-22: metal scrapes per cart material, from zack's pipe-on-concrete recording
+
+zack: "we need a sound for when metal from the cart is scraping against the ground ... different sounds for the
+different materials the cart is made of".
+
+- **Source.** `tools/audio/recordings/pipe_on_concrete.flac` (5.6 s, 48 kHz mono; the scrape runs 0.65-4.0 s). It is
+  the pipe's own ringing (about 140, 220, 380, 800 and 920 Hz) over concrete grit, centroid about 1.5 kHz.
+- **Loops.** `tools/audio/make_scrape_loops.py` builds one loop per material:
+    - `scrape_tube`: the recording itself (frame tubes, handle, lower tray);
+    - `scrape_wire`: 1.4x faster, lows under 250 Hz thinned, 2-6 kHz lifted (the 5 mm wire cage);
+    - `scrape_seat`: shuffled 30 ms grains (the grit without the ring), 0.85x, darkened above 2.5 kHz (the gate,
+      child seat and flap: plastic and coated wire).
+
+  The wheels keep their rubber scrubs.
+- **Driven by friction.** `ContactSound.scrape` is each body's loop, and `shape_scrapes` maps a collision shape name to
+  its own loop. The Frame's cage shapes use wire; `Handlebar` and `LowerTray` use tube. The part rubbing hardest each
+  tick picks the loop. Volume follows friction power, pitch follows sliding speed.
+- **More bodies.** Gate, ChildSeat and SeatFlap now have a ContactSound (`contact_monitor` on, 4 contacts), scraping
+  with the seat loop and striking the ImpactSynth at their own position.
+- **Render.** `tests/impact_render.gd` adds `drag_on_side` (tipped, then pulled 220 N across the lot) and logs every
+  scraping part per tick. In the drag, the wire cage scrapes for 343 ticks, rising to -2 dB at pitch 1.5.
+
 ## 2026-11-22: generated hits depend on where and on what; layered with the recordings
 
 zack: "all the impact sounds are the same?" and "we are going to need a mix of the shopping cart sounds and the physics

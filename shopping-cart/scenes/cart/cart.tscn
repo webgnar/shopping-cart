@@ -5,6 +5,8 @@
 [ext_resource type="PackedScene" path="res://scenes/cart/wheel_sound.tscn" id="3_wsnd"]
 [ext_resource type="PackedScene" path="res://scenes/cart/contact_sound.tscn" id="3_csnd"]
 [ext_resource type="PackedScene" path="res://scenes/cart/impact_synth.tscn" id="3_isyn"]
+[ext_resource type="AudioStream" uid="uid://28lqrognbpij" path="res://assets/audio/cart/scrape_tube.ogg" id="3_stube"]
+[ext_resource type="AudioStream" uid="uid://co565f80ebtvp" path="res://assets/audio/cart/scrape_seat.ogg" id="3_sseat"]
 [ext_resource type="Script" path="res://scripts/cart/cart_nest_mouth.gd" id="12_mouth"]
 [ext_resource type="PackedScene" path="res://scenes/cart/nest_joint.tscn" id="13_nest"]
 [ext_resource type="PackedScene" path="res://scenes/cart/flag.tscn" id="14_flag"]
@@ -185,6 +187,10 @@ visible = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.42, 0)
 
 [node name="ContactSound" parent="Frame" node_paths=PackedStringArray("synth") instance=ExtResource("3_csnd")]
+shape_scrapes = {
+"Handlebar": ExtResource("3_stube"),
+"LowerTray": ExtResource("3_stube")
+}
 synth = NodePath("../ImpactSynth")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.42, 0)
 
@@ -195,10 +201,16 @@ collision_mask = 7
 mass = 1.5
 physics_material_override = SubResource("PhysicsMaterial_i6241")
 can_sleep = false
+contact_monitor = true
+max_contacts_reported = 4
 
 [node name="Panel" type="CollisionShape3D" parent="Gate" unique_id=1693527483]
 transform = Transform3D(0.94923544, -0.31456655, 0, 0.31456655, 0.94923544, 0, 0, 0, 1, 0.087, -0.265, 0)
 shape = SubResource("BoxShape3D_ld83i")
+
+[node name="ContactSound" parent="Gate" node_paths=PackedStringArray("synth") instance=ExtResource("3_csnd")]
+scrape = ExtResource("3_sseat")
+synth = NodePath("../../Frame/ImpactSynth")
 
 [node name="ChildSeat" type="RigidBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2098, 0.5703, 0)
@@ -208,10 +220,16 @@ mass = 0.8
 physics_material_override = SubResource("PhysicsMaterial_i6241")
 can_sleep = false
 angular_damp = 4.0
+contact_monitor = true
+max_contacts_reported = 4
 
 [node name="Backrest" type="CollisionShape3D" parent="ChildSeat"]
 transform = Transform3D(0.972, -0.2351, 0, 0.2351, 0.972, 0, 0, 0, 1, -0.0544, 0.229, 0)
 shape = SubResource("BoxShape3D_seatback")
+
+[node name="ContactSound" parent="ChildSeat" node_paths=PackedStringArray("synth") instance=ExtResource("3_csnd")]
+scrape = ExtResource("3_sseat")
+synth = NodePath("../../Frame/ImpactSynth")
 
 [node name="SeatFlap" type="RigidBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1425, 0.7755, 0)
@@ -221,10 +239,16 @@ mass = 0.4
 physics_material_override = SubResource("PhysicsMaterial_i6241")
 can_sleep = false
 angular_damp = 4.0
+contact_monitor = true
+max_contacts_reported = 4
 
 [node name="Flap" type="CollisionShape3D" parent="SeatFlap"]
 transform = Transform3D(-0.1392, -0.9903, 0, 0.9903, -0.1392, 0, 0, 0, 1, -0.0083, 0.0603, 0)
 shape = SubResource("BoxShape3D_seatflap")
+
+[node name="ContactSound" parent="SeatFlap" node_paths=PackedStringArray("synth") instance=ExtResource("3_csnd")]
+scrape = ExtResource("3_sseat")
+synth = NodePath("../../Frame/ImpactSynth")
 
 [node name="Wheel_RL" type="RigidBody3D" parent="." unique_id=1742865923]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0685, 0.062, -0.3045)
