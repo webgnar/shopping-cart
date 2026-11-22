@@ -3,6 +3,17 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-22: Child seat hinged on its loop (Blender origins)
+
+zack: the loop on the seat is its hinge and should not move; the origins in the Blender model are right. The seat
+(wire seat + plastic, SeatFlap) and the backrest (ChildSeat) now each turn about their own origin in
+ShoppingCart_BaseModel.blend: the seat about its loops (0.1425, 0.7755), which hook round a gate wire, the backrest about
+its bottom bar (0.2098, 0.5703). Both hang on the gate (the 4.5 cm backrest bracket is gone). Rest pose: seat folded up
+98 degrees against the gate's front (0.5 mm clear of the gate wires), backrest folded back 30 degrees over it (1 mm
+clear of the seat and gate). Open is the base model's own pose. Joint limits: ChildSeat 0..30, SeatFlap 0..98.
+drive_test checks the loops stay within 1 mm while the seat swings. Diagram: project files
+`cart-rig/child_seat_diagram_v2.png`.
+
 
 
 ## 2026-11-22: generated impact sound (modal synthesis), no recordings

@@ -201,7 +201,7 @@ transform = Transform3D(0.94923544, -0.31456655, 0, 0.31456655, 0.94923544, 0, 0
 shape = SubResource("BoxShape3D_ld83i")
 
 [node name="ChildSeat" type="RigidBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2497, 0.5831, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2098, 0.5703, 0)
 collision_layer = 2
 collision_mask = 7
 mass = 0.8
@@ -210,11 +210,11 @@ can_sleep = false
 angular_damp = 4.0
 
 [node name="Backrest" type="CollisionShape3D" parent="ChildSeat"]
-transform = Transform3D(0.95, -0.3123, 0, 0.3123, 0.95, 0, 0, 0, 1, -0.0765, 0.2328, 0)
+transform = Transform3D(0.972, -0.2351, 0, 0.2351, 0.972, 0, 0, 0, 1, -0.0544, 0.229, 0)
 shape = SubResource("BoxShape3D_seatback")
 
 [node name="SeatFlap" type="RigidBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.161, 0.7733, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1425, 0.7755, 0)
 collision_layer = 2
 collision_mask = 7
 mass = 0.4
@@ -223,7 +223,7 @@ can_sleep = false
 angular_damp = 4.0
 
 [node name="Flap" type="CollisionShape3D" parent="SeatFlap"]
-transform = Transform3D(0.3123, 0.95, 0, -0.95, 0.3123, 0, 0, 0, 1, -0.0119, 0.0361, 0)
+transform = Transform3D(-0.1392, -0.9903, 0, 0.9903, -0.1392, 0, 0, 0, 1, -0.0083, 0.0603, 0)
 shape = SubResource("BoxShape3D_seatflap")
 
 [node name="Wheel_RL" type="RigidBody3D" parent="." unique_id=1742865923]
@@ -319,20 +319,20 @@ angular_limit/upper = 0.0
 angular_limit/lower = -1.2217305
 
 [node name="ChildSeatHinge" type="HingeJoint3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2497, 0.5831, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2098, 0.5703, 0)
 node_a = NodePath("../Gate")
 node_b = NodePath("../ChildSeat")
 angular_limit/enable = true
-angular_limit/upper = 0.4712389
+angular_limit/upper = 0.5235988
 angular_limit/lower = 0.0
 
 [node name="SeatFlapHinge" type="HingeJoint3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.161, 0.7733, 0)
-node_a = NodePath("../ChildSeat")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1425, 0.7755, 0)
+node_a = NodePath("../Gate")
 node_b = NodePath("../SeatFlap")
 angular_limit/enable = true
-angular_limit/upper = 0.0
-angular_limit/lower = -1.7243853
+angular_limit/upper = 1.7104227
+angular_limit/lower = 0.0
 
 [node name="Axle_RL" type="HingeJoint3D" parent="." unique_id=1989381388]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0685, 0.062, -0.3045)
