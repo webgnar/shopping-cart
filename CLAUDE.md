@@ -137,7 +137,8 @@ From `shopping-cart/`:
   (fix with `godot --headless -s res://tools/export_cart_tuning_cli.gd`)
 - Levels and cart rig in sync with the browser game: `godot --headless -s res://tests/mobile_levels_sync_test.gd`
   (fix with `godot --headless -s res://tools/export_mobile_levels_cli.gd`)
-- Browser game (from the repo root): `node mobile/test/drive_test.js`
+- Browser game (from the repo root): `node mobile/test/drive_test.js --jobs` (every section at once, each in its own
+  browser). After a cart physics change `--only=drive` is enough; sections: drive, levels, bots, race, sweep, stacks, phone.
 - Camera never clips into levels (all levels): `godot --headless --fixed-fps 120 -s res://tests/camera_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
 - Coast highway level test: `godot --headless --fixed-fps 120 -s res://tests/coast_test.gd` (the level is generated
