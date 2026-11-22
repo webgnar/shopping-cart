@@ -9,6 +9,11 @@ extends Control
 @export var relief_view: TextureRect        ## AsphaltSim.bake_height in metres, shaded as if lit from the top left
 @export var relief_res := 0.02               ## m per relief pixel
 @export var relief_exaggeration := 6.0       ## slopes are shaded this many times steeper than they are
+@export var preview_view: TextureRect        ## the 3D preview: the road displaced by the real height map
+@export var preview_road: MeshInstance3D
+@export var preview_pivot: Node3D            ## drag on the preview to orbit it, wheel to zoom
+@export var preview_camera: Camera3D
+@export var preview_res := 0.01              ## m per height-map pixel in the 3D preview
 @export var max_years := 40.0
 @export var years_per_second := 2.0
 
@@ -45,7 +50,10 @@ func _process(delta: float) -> void:
 		_replay()
 	if _relief_at >= 0 and Time.get_ticks_msec() >= _relief_at:
 		_relief_at = -1
-		draw_relief()
+		if relief_view.visible:
+			draw_relief()
+		if preview_view.visible:
+			draw_preview()
 	if not playing:
 		return
 	# Keep our own clock: one frame is far less than a simulation step, so adding a frame to sim.time each time
@@ -138,11 +146,12 @@ func _on_view_selected(index: int) -> void:
 	color_view.visible = index != 1
 	height_view.visible = index == 1 or index == 2
 	relief_view.visible = index == 3
+	preview_view.visible = index == 4
 	_queue_relief()
 
 
 func _queue_relief() -> void:
-	if relief_view.visible and _relief_at < 0:
+	if (relief_view.visible or preview_view.visible) and _relief_at < 0:
 		_relief_at = Time.get_ticks_msec() + (400 if playing else 50)
 
 
@@ -165,3 +174,34 @@ func draw_relief() -> void:
 			var lit := 0.15 + 0.75 * maxf(n.dot(light), 0.0) + z * 3.0
 			bytes[i] = int(clampf(lit, 0.0, 1.0) * 255.0)
 	relief_view.texture = ImageTexture.create_from_image(Image.create_from_data(w, h, false, Image.FORMAT_L8, bytes))
+
+
+## Hands the sim's height map (metres) and colour map to the 3D preview's road material.
+func draw_preview() -> void:
+	var hmap := sim.bake_height(preview_res)
+	var w := int(round(sim.size.x / preview_res)) + 1
+	var h := int(round(sim.size.y / preview_res)) + 1
+	var img := Image.create_from_data(w, h, false, Image.FORMAT_RF, hmap.to_byte_array())
+	var mat := preview_road.get_surface_override_material(0) as ShaderMaterial
+	mat.set_shader_parameter("height_map", ImageTexture.create_from_image(img))
+	mat.set_shader_parameter("height_texel", Vector2(1.0 / (w - 1), 1.0 / (h - 1)))
+	mat.set_shader_parameter("size_m", sim.size)
+	# A copy of the colour map rather than the viewport itself: it is decoded from sRGB the same way on every renderer.
+	var color: Image = color_view.texture.get_image()
+	color.generate_mipmaps()
+	mat.set_shader_parameter("albedo_map", ImageTexture.create_from_image(color))
+
+
+func _on_preview_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_LEFT:
+		preview_pivot.rotate_y(-event.relative.x * 0.006)
+		var cam := preview_camera.transform
+		var a := clampf(atan2(cam.origin.y, cam.origin.z) + event.relative.y * 0.004, 0.08, 1.45)
+		var d := cam.origin.length()
+		preview_camera.position = Vector3(0.0, sin(a), cos(a)) * d
+		preview_camera.look_at(preview_pivot.global_position)
+	elif event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			var k := 0.9 if event.button_index == MOUSE_BUTTON_WHEEL_UP else 1.1
+			preview_camera.position = preview_camera.position * k
+			preview_camera.position = preview_camera.position.limit_length(14.0)

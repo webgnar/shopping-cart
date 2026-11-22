@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" uid="uid://dt607ar3mgodg" path="res://assets/asphalt/textures/broken_asphalt.png" id="11_broken"]
 [ext_resource type="Texture2D" uid="uid://bcfgjyp2yokpn" path="res://assets/asphalt/textures/base_course.png" id="12_base"]
 [ext_resource type="Texture2D" uid="uid://dq4ocup0ey4je" path="res://assets/asphalt/textures/gravel_shoulder.png" id="13_shoulder"]
+[ext_resource type="Shader" path="res://assets/asphalt/asphalt_surface_3d.gdshader" id="14_surface3d"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_color"]
 shader = ExtResource("4_shader")
@@ -27,6 +28,41 @@ viewport_path = NodePath("ColorViewport")
 
 [sub_resource type="ViewportTexture" id="ViewportTexture_height"]
 viewport_path = NodePath("HeightViewport")
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_preview"]
+viewport_path = NodePath("PreviewViewport")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_surface3d"]
+shader = ExtResource("14_surface3d")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_road"]
+size = Vector2(10, 10)
+subdivide_width = 499
+subdivide_depth = 499
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+size = Vector2(60, 60)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
+albedo_color = Color(0.32, 0.29, 0.23, 1)
+roughness = 1.0
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_preview"]
+sky_top_color = Color(0.42, 0.52, 0.66, 1)
+sky_horizon_color = Color(0.70, 0.71, 0.72, 1)
+ground_horizon_color = Color(0.70, 0.71, 0.72, 1)
+ground_bottom_color = Color(0.3, 0.28, 0.25, 1)
+
+[sub_resource type="Sky" id="Sky_preview"]
+sky_material = SubResource("ProceduralSkyMaterial_preview")
+
+[sub_resource type="Environment" id="Environment_preview"]
+background_mode = 2
+sky = SubResource("Sky_preview")
+ambient_light_source = 2
+ambient_light_color = Color(0.78, 0.78, 0.8, 1)
+ambient_light_energy = 0.35
+tonemap_mode = 2
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 12.0
@@ -78,7 +114,7 @@ OptionButton/styles/normal = SubResource("StyleBoxFlat_button")
 OptionButton/styles/hover = SubResource("StyleBoxFlat_button_hover")
 OptionButton/styles/pressed = SubResource("StyleBoxFlat_button_hover")
 
-[node name="AsphaltLab" type="Control" node_paths=PackedStringArray("sim", "color_view", "height_view", "relief_view")]
+[node name="AsphaltLab" type="Control" node_paths=PackedStringArray("sim", "color_view", "height_view", "relief_view", "preview_view", "preview_road", "preview_pivot", "preview_camera")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -90,6 +126,10 @@ sim = NodePath("Sim")
 color_view = NodePath("Views/ColorView")
 height_view = NodePath("Views/HeightView")
 relief_view = NodePath("Views/ReliefView")
+preview_view = NodePath("Views/PreviewView")
+preview_road = NodePath("PreviewViewport/Road")
+preview_pivot = NodePath("PreviewViewport/CameraPivot")
+preview_camera = NodePath("PreviewViewport/CameraPivot/Camera")
 
 [node name="Sim" type="Node" parent="."]
 script = ExtResource("2_sim")
@@ -150,6 +190,39 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.05, 0.055, 0.065, 1)
 
+[node name="PreviewViewport" type="SubViewport" parent="."]
+own_world_3d = true
+msaa_3d = 2
+size = Vector2i(1600, 1000)
+render_target_update_mode = 4
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="PreviewViewport"]
+environment = SubResource("Environment_preview")
+
+[node name="Sun" type="DirectionalLight3D" parent="PreviewViewport"]
+transform = Transform3D(0.766044, -0.469846, 0.438371, 0, 0.68200, 0.731354, -0.642788, -0.559951, 0.522432, 0, 5, 0)
+light_energy = 0.75
+shadow_enabled = true
+directional_shadow_max_distance = 30.0
+
+[node name="Road" type="MeshInstance3D" parent="PreviewViewport"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 5)
+mesh = SubResource("PlaneMesh_road")
+surface_material_override/0 = SubResource("ShaderMaterial_surface3d")
+
+[node name="Ground" type="MeshInstance3D" parent="PreviewViewport"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, -0.2, 5)
+mesh = SubResource("PlaneMesh_ground")
+surface_material_override/0 = SubResource("StandardMaterial3D_ground")
+
+[node name="CameraPivot" type="Node3D" parent="PreviewViewport"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 0, 5)
+
+[node name="Camera" type="Camera3D" parent="PreviewViewport/CameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, 1.6, 2.3)
+fov = 60.0
+near = 0.02
+
 [node name="Views" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -181,6 +254,14 @@ stretch_mode = 5
 visible = false
 layout_mode = 2
 size_flags_horizontal = 3
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PreviewView" type="TextureRect" parent="Views"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+texture = SubResource("ViewportTexture_preview")
 expand_mode = 1
 stretch_mode = 5
 
@@ -244,7 +325,7 @@ text = "Play"
 layout_mode = 2
 size_flags_horizontal = 3
 selected = 2
-item_count = 4
+item_count = 5
 popup/item_0/text = "Colour"
 popup/item_0/id = 0
 popup/item_1/text = "Height"
@@ -253,6 +334,8 @@ popup/item_2/text = "Both"
 popup/item_2/id = 2
 popup/item_3/text = "Colour + relief"
 popup/item_3/id = 3
+popup/item_4/text = "3D preview"
+popup/item_4/id = 4
 
 [node name="RepairsHeader" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2
@@ -450,6 +533,7 @@ autowrap_mode = 3
 [connection signal="drag_ended" from="Panel/Scroll/Box/Timeline" to="." method="_on_timeline_drag_ended"]
 [connection signal="toggled" from="Panel/Scroll/Box/PlayRow/PlayButton" to="." method="_on_play_toggled"]
 [connection signal="item_selected" from="Panel/Scroll/Box/PlayRow/View" to="." method="_on_view_selected"]
+[connection signal="gui_input" from="Views/PreviewView" to="." method="_on_preview_input"]
 [connection signal="toggled" from="Panel/Scroll/Box/AutoMaintain" to="." method="_on_auto_toggled"]
 [connection signal="pressed" from="Panel/Scroll/Box/ClearRepairs" to="." method="_on_clear_pressed"]
 [connection signal="value_changed" from="Panel/Scroll/Box/SeedRow/Seed" to="." method="_on_seed_changed"]
