@@ -16,8 +16,7 @@ extends Node3D
 ##  - Groceries: loose bodies in the basket; add or move them under the Groceries node.
 ##  - Model: the rigged model (assets/models/shopping_cart.glb); its pivots follow the physics bodies.
 ## Cart local axes: nose = +X, up = +Y, left = -Z. Units: metres, kg, newtons.
-## Every setting lives in the scene: the exports on this node and the masses on the bodies. The mobile web game
-## gets a copy of them through tools/export_cart_tuning.gd.
+## Every setting lives in the scene: the exports on this node and the masses on the bodies.
 
 
 @export_group("Hands")
@@ -205,33 +204,8 @@ func _ready() -> void:
 
 
 ## The cart's own bodies never collide with each other (the hinges hold them together), except these pairs: the
-## seat flap leans on the gate, folded or open. The browser game gets them through the cart rig export.
+## seat flap leans on the gate, folded or open.
 const TOUCHING_PARTS := [["Gate", "SeatFlap"]]
-
-## Cart feel as the shared tuning dictionary (same keys as tuning/cart_tuning.json). The values come from this
-## scene: the exports above and the bodies' masses. tools/export_cart_tuning.gd writes them out for the mobile game.
-const TUNING_KEYS := ["power_base", "power_ramp", "power_relax", "drive_max", "sprint_speed", "reverse_speed",
-	"hand_rest", "hand_end", "tap_step", "tap_boost", "tap_fast", "tap_slow", "tap_min_gap", "grip_drain", "tap_power", "tap_hold_leak",
-	"fatigue_rate", "fatigue_recover", "tap_refresh", "wobble", "grip_fatigue_loss", "wrist_lever",
-	"lift_pitch", "press_pitch", "side_roll", "tilt_kp", "tilt_kd", "tilt_max", "tip_delay", "tip_rate", "let_go_pitch",
-	"fallen_upright", "fallen_still", "stood_upright",
-	"rolling_resistance", "grip_yaw_damping", "spin_grip", "spin_grip_min",
-	"settle_speed", "settle_spin", "stop_speed", "stop_spin",
-	"arm_reach", "brake_spring", "brake_damping", "brake_max", "arm_relax_rate", "settle_delay", "settle_brake", "stop_delay",
-	"settle_max_slope"]
-
-
-func tuning() -> Dictionary:
-	var t := {
-		"frame_mass": ($Frame as RigidBody3D).mass,
-		"wheel_mass": ($Wheel_FL as RigidBody3D).mass,
-		"fork_mass": ($Fork_FL as RigidBody3D).mass,
-		"gate_mass": ($Gate as RigidBody3D).mass,
-	}
-	for key in TUNING_KEYS:
-		t[key] = get(key)
-	return t
-
 
 func _process(_delta: float) -> void:
 	for l in _links:

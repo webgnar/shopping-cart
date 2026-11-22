@@ -12,7 +12,6 @@ into head so it loops without a click, and levelled to the same loudness so the 
 volume. Writes:
   shopping-cart/assets/audio/cart/roll_<surface>.ogg, scrub_<kind>.ogg   (Godot, imported with loop on)
   shopping-cart/assets/audio/cart/knock_<n>.wav, land.wav               (Godot one-shots)
-  mobile/audio/<same names>.wav                  (browser: 16-bit WAV loops gaplessly on every browser)
 
 Run from the repo root:  python3 tools/audio/make_cart_rolling_loops.py   (needs numpy and ffmpeg)
 """
@@ -23,7 +22,6 @@ import numpy as np
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 REC = os.path.join(ROOT, "tools", "audio", "recordings")
 GODOT_OUT = os.path.join(ROOT, "shopping-cart", "assets", "audio", "cart")
-WEB_OUT = os.path.join(ROOT, "mobile", "audio")
 RATE = 44100
 WEB_RATE = 22050
 FADE = 0.5          # s of crossfade at the loop point
@@ -150,16 +148,12 @@ def knock(sidewalk: np.ndarray, at: float) -> np.ndarray:
 
 def main() -> None:
     os.makedirs(GODOT_OUT, exist_ok=True)
-    os.makedirs(WEB_OUT, exist_ok=True)
     for surface, (file, start, length) in LOOPS.items():
         loop = make_loop(decode(os.path.join(REC, file)), start, length)
         ogg = os.path.join(GODOT_OUT, "roll_%s.ogg" % surface)
-        wav = os.path.join(WEB_OUT, "roll_%s.wav" % surface)
         write(loop, ogg, ["-c:a", "libvorbis", "-q:a", "5"])
-        write(loop, wav, ["-ar", str(WEB_RATE), "-c:a", "pcm_s16le"])
-        print("%-9s %s %.1f-%.1f s -> %s (%d KB), %s (%d KB)" % (surface, file, start, start + length,
-              os.path.relpath(ogg, ROOT), os.path.getsize(ogg) // 1024, os.path.relpath(wav, ROOT),
-              os.path.getsize(wav) // 1024))
+        print("%-9s %s %.1f-%.1f s -> %s (%d KB)" % (surface, file, start, start + length,
+              os.path.relpath(ogg, ROOT), os.path.getsize(ogg) // 1024))
 
 
 def extras() -> None:
@@ -170,7 +164,6 @@ def extras() -> None:
               "scrub_squeak": scrub_squeak(tile[int(3 * RATE):int(15 * RATE)])}
     for name, loop in sounds.items():
         write(loop, os.path.join(GODOT_OUT, name + ".ogg"), ["-c:a", "libvorbis", "-q:a", "5"])
-        write(loop, os.path.join(WEB_OUT, name + ".wav"), ["-ar", str(WEB_RATE), "-c:a", "pcm_s16le"])
         print("%-12s %.1f s loop" % (name, len(loop) / RATE))
     drop = decode(os.path.join(REC, "cart_drop.flac"))
     land = drop[int(LAND[0] * RATE):int(LAND[1] * RATE)].copy()
@@ -178,7 +171,7 @@ def extras() -> None:
     land[:int(0.005 * RATE)] *= np.linspace(0, 1, int(0.005 * RATE))
     land[-int(0.15 * RATE):] *= np.linspace(1, 0, int(0.15 * RATE))
     land *= 0.85 / np.abs(land).max()
-    for path in [os.path.join(GODOT_OUT, "land.wav"), os.path.join(WEB_OUT, "land.wav")]:
+    for path in [os.path.join(GODOT_OUT, "land.wav")]:
         write(land, path, ["-ar", str(WEB_RATE), "-c:a", "pcm_s16le"])
     print("land        %.2f-%.2f s of cart_drop.flac" % LAND)
     for i, (a, b) in enumerate(TAPS):
@@ -187,12 +180,12 @@ def extras() -> None:
         tap[:int(0.003 * RATE)] *= np.linspace(0, 1, int(0.003 * RATE))
         tap *= np.exp(-np.arange(len(tap)) / (0.08 * RATE))
         tap *= 0.85 / np.abs(tap).max()
-        for path in [os.path.join(GODOT_OUT, "land_tap_%d.wav" % (i + 1)), os.path.join(WEB_OUT, "land_tap_%d.wav" % (i + 1))]:
+        for path in [os.path.join(GODOT_OUT, "land_tap_%d.wav" % (i + 1))]:
             write(tap, path, ["-ar", str(WEB_RATE), "-c:a", "pcm_s16le"])
         print("land_tap_%d  %.2f-%.2f s of cart_drop.flac" % (i + 1, a, b))
     for i, at in enumerate(KNOCKS):
         k = knock(sidewalk, at)
-        for path in [os.path.join(GODOT_OUT, "knock_%d.wav" % (i + 1)), os.path.join(WEB_OUT, "knock_%d.wav" % (i + 1))]:
+        for path in [os.path.join(GODOT_OUT, "knock_%d.wav" % (i + 1))]:
             write(k, path, ["-ar", str(WEB_RATE), "-c:a", "pcm_s16le"])
         print("knock_%d     clack at %.2f s of the sidewalk recording" % (i + 1, at))
 

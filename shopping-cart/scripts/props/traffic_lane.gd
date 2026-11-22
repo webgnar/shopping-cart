@@ -3,7 +3,6 @@ extends Node3D
 ## A lane of cross traffic. The cars are this node's children (traffic_car.tscn instances), placed along the
 ## lane's -Z axis in the scene: each keeps its place in the queue and drives along -Z at `speed`, and when it
 ## passes `length` it comes round to the start again. Cars don't stop for anything, carts included.
-## The browser version runs the same lanes (tools/mobile_level_export.gd exports them).
 
 @export var speed := 10.0       ## m/s (10 m/s is 22 mph)
 @export var length := 200.0     ## m along -Z before a car comes back round to the start

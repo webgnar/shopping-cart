@@ -5,7 +5,6 @@ extends Path3D
 ## facing along it (so cars pitch with the grade), and when it reaches the end it comes back round to the start.
 ## Put the ends somewhere out of sight (the coast highway's are inside its tunnels). Cars don't stop for anything,
 ## carts included. TrafficLane is the same thing for a straight lane.
-## The browser version runs the same routes (tools/mobile_level_export.gd exports them).
 
 @export var speed := 11.0   ## m/s (11 m/s is about 25 mph)
 
