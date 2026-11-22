@@ -1647,3 +1647,12 @@ lifted. Its box covers only the plate's upper half (its seat-side 6 mm), because
 inside the gate's 3 cm collision box; at rest it leans about 1.5 degrees onto the gate. Adding the body changes
 `net_bodies()`, so NetProtocol.VERSION is 6. drive_test checks it lies on the seat folded and open, lifts off, and
 drops back.
+
+## Asphalt lot: repaired column and baked sections (Nov 22 2026)
+
+The lot has a fifth column (x = 25) of sections with `road_crew` on (AsphaltSim.auto_maintain), aged 12, 20, 28
+and 36 years, so patches, fills and crack sealant show up. Simulating all 20 sections on load took about 27 s, so
+`tools/bake_asphalt_sections_cli.gd` bakes each section's colour map (WebP, q 0.9, mipmapped on import) and height
+map (FORMAT_RF `.res`) into `assets/asphalt/baked/asphalt_lot/` and sets the section's `color_map`/`height_map`. A
+section with both set skips the simulation: the lot now loads in about 3.5 s. zack plans a parking lot generator
+built on this later.

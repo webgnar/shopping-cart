@@ -30,7 +30,9 @@ potholes) and getting repaired, drawn as a colour map and a height map. In 3D it
 - `scripts/asphalt/asphalt_canvas.gd`: draws the maps. `scripts/asphalt/asphalt_lab.gd`: the lab UI.
 - `scenes/asphalt/asphalt_lab.tscn`: the lab scene. `assets/asphalt/`: the surface shader and grain.
 - `scenes/asphalt/asphalt_section.tscn` (`asphalt_section.gd`): a 10 x 10 m section in 3D, displaced and with matching
-  collision. `scenes/levels/asphalt_lot.tscn` (console `asphalt`): a 40 x 40 m test lot of 16 sections aged 8 to 32 years.
+  collision. `scenes/levels/asphalt_lot.tscn` (console `asphalt`): a 50 x 40 m test lot of 20 sections, the last column
+  repaired by the road crew. Its sections are baked (`tools/bake_asphalt_sections_cli.gd`, steps in its header) and load
+  from `assets/asphalt/baked/`; re-bake after changing a section or the simulator.
 - Test: `godot --headless -s res://tests/asphalt_test.gd`. Screenshots:
   `xvfb-run godot --rendering-method gl_compatibility -s res://tests/asphalt_screenshot.gd -- <out dir>`.
 - Reference: zack's Asphalt Cracking Quick Guide (crack types), in the project files under `asphalt/`.

@@ -3,6 +3,46 @@
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/asphalt/asphalt_section.tscn" id="2_section"]
 [ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="3_concrete"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_1_color.webp" id="3_xsclq"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_1_height.res" id="4_cvx05"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_2_color.webp" id="5_l2o22"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_2_height.res" id="6_1thas"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_3_color.webp" id="7_8fcm3"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_3_height.res" id="8_grwsw"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_4_color.webp" id="9_rgsnw"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_4_height.res" id="10_bu0hn"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_5_color.webp" id="11_bxfte"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_5_height.res" id="12_cx3xn"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_6_color.webp" id="13_cx731"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_6_height.res" id="14_t0la1"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_7_color.webp" id="15_dqvpp"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_7_height.res" id="16_dx53y"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_8_color.webp" id="17_2jkgx"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_8_height.res" id="18_0q2xw"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_9_color.webp" id="19_gwxti"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_9_height.res" id="20_u8yw3"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_10_color.webp" id="21_pp4jm"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_10_height.res" id="22_dgivj"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_11_color.webp" id="23_2bksw"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_11_height.res" id="24_4l7i2"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_12_color.webp" id="25_8gajy"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_12_height.res" id="26_iyfbj"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_13_color.webp" id="27_vlr7f"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_13_height.res" id="28_gkkbv"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_14_color.webp" id="29_487ub"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_14_height.res" id="30_licnc"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_15_color.webp" id="31_vpbcr"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_15_height.res" id="32_g4sar"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_16_color.webp" id="33_22k2f"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_16_height.res" id="34_djo77"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_17_color.webp" id="35_invk2"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_17_height.res" id="36_qo82i"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_18_color.webp" id="37_4eaba"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_18_height.res" id="38_v7011"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_19_color.webp" id="39_kw4bb"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_19_height.res" id="40_f4fi5"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/baked/asphalt_lot/section_20_color.webp" id="41_n2y6m"]
+[ext_resource type="Image" path="res://assets/asphalt/baked/asphalt_lot/section_20_height.res" id="42_pb6h5"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_apron"]
 albedo_color = Color(0.3, 0.29, 0.27, 1)
@@ -15,6 +55,13 @@ size = Vector3(160, 1, 60)
 [sub_resource type="BoxShape3D" id="BoxShape3D_long"]
 size = Vector3(160, 1, 60)
 
+[sub_resource type="BoxMesh" id="BoxMesh_east"]
+material = SubResource("StandardMaterial3D_apron")
+size = Vector3(50, 1, 40)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_east"]
+size = Vector3(50, 1, 40)
+
 [sub_resource type="BoxMesh" id="BoxMesh_short"]
 material = SubResource("StandardMaterial3D_apron")
 size = Vector3(60, 1, 40)
@@ -22,125 +69,187 @@ size = Vector3(60, 1, 40)
 [sub_resource type="BoxShape3D" id="BoxShape3D_short"]
 size = Vector3(60, 1, 40)
 
-[node name="AsphaltLot" type="Node3D"]
+[node name="AsphaltLot" type="Node3D" unique_id=173232281]
 script = ExtResource("1_main")
 
-[node name="CartSpawn" type="Marker3D" parent="."]
+[node name="CartSpawn" type="Marker3D" parent="." unique_id=1044107796]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19, 0, 0)
 
-[node name="Sections" type="Node3D" parent="."]
+[node name="Sections" type="Node3D" parent="." unique_id=1221057802]
 
-[node name="Section1" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section1" parent="Sections" unique_id=1613943613 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -15)
-seed = 1
 year = 8.0
+color_map = ExtResource("3_xsclq")
+height_map = ExtResource("4_cvx05")
 
-[node name="Section2" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section2" parent="Sections" unique_id=1458806291 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -5)
 seed = 2
 year = 8.0
+color_map = ExtResource("5_l2o22")
+height_map = ExtResource("6_1thas")
 
-[node name="Section3" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section3" parent="Sections" unique_id=1111875409 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, 5)
 seed = 3
 year = 8.0
+color_map = ExtResource("7_8fcm3")
+height_map = ExtResource("8_grwsw")
 
-[node name="Section4" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section4" parent="Sections" unique_id=131216084 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, 15)
 seed = 4
 year = 8.0
+color_map = ExtResource("9_rgsnw")
+height_map = ExtResource("10_bu0hn")
 
-[node name="Section5" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section5" parent="Sections" unique_id=1293915761 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -15)
 seed = 5
 year = 16.0
+color_map = ExtResource("11_bxfte")
+height_map = ExtResource("12_cx3xn")
 
-[node name="Section6" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section6" parent="Sections" unique_id=1073765439 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -5)
 seed = 6
 year = 16.0
+color_map = ExtResource("13_cx731")
+height_map = ExtResource("14_t0la1")
 
-[node name="Section7" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section7" parent="Sections" unique_id=124917028 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 5)
 seed = 7
 year = 16.0
+color_map = ExtResource("15_dqvpp")
+height_map = ExtResource("16_dx53y")
 
-[node name="Section8" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section8" parent="Sections" unique_id=1892626470 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 15)
 seed = 8
 year = 16.0
+color_map = ExtResource("17_2jkgx")
+height_map = ExtResource("18_0q2xw")
 
-[node name="Section9" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section9" parent="Sections" unique_id=869585291 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -15)
 seed = 9
 year = 24.0
+color_map = ExtResource("19_gwxti")
+height_map = ExtResource("20_u8yw3")
 
-[node name="Section10" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section10" parent="Sections" unique_id=1726923205 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -5)
 seed = 10
 year = 24.0
+color_map = ExtResource("21_pp4jm")
+height_map = ExtResource("22_dgivj")
 
-[node name="Section11" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section11" parent="Sections" unique_id=1026597285 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 5)
 seed = 11
 year = 24.0
+color_map = ExtResource("23_2bksw")
+height_map = ExtResource("24_4l7i2")
 
-[node name="Section12" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section12" parent="Sections" unique_id=183871014 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 15)
 seed = 12
 year = 24.0
+color_map = ExtResource("25_8gajy")
+height_map = ExtResource("26_iyfbj")
 
-[node name="Section13" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section13" parent="Sections" unique_id=1104917859 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, -15)
 seed = 13
 year = 32.0
+color_map = ExtResource("27_vlr7f")
+height_map = ExtResource("28_gkkbv")
 
-[node name="Section14" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section14" parent="Sections" unique_id=1880111939 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, -5)
 seed = 14
 year = 32.0
+color_map = ExtResource("29_487ub")
+height_map = ExtResource("30_licnc")
 
-[node name="Section15" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section15" parent="Sections" unique_id=473532122 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 5)
 seed = 15
 year = 32.0
+color_map = ExtResource("31_vpbcr")
+height_map = ExtResource("32_g4sar")
 
-[node name="Section16" parent="Sections" instance=ExtResource("2_section")]
+[node name="Section16" parent="Sections" unique_id=759014871 instance=ExtResource("2_section")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 15)
 seed = 16
 year = 32.0
+color_map = ExtResource("33_22k2f")
+height_map = ExtResource("34_djo77")
 
-[node name="Apron" type="StaticBody3D" parent="."]
+[node name="Section17" parent="Sections" unique_id=303840233 instance=ExtResource("2_section")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0, -15)
+seed = 17
+year = 12.0
+road_crew = true
+color_map = ExtResource("35_invk2")
+height_map = ExtResource("36_qo82i")
+
+[node name="Section18" parent="Sections" unique_id=551949951 instance=ExtResource("2_section")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0, -5)
+seed = 18
+road_crew = true
+color_map = ExtResource("37_4eaba")
+height_map = ExtResource("38_v7011")
+
+[node name="Section19" parent="Sections" unique_id=857454522 instance=ExtResource("2_section")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0, 5)
+seed = 19
+year = 28.0
+road_crew = true
+color_map = ExtResource("39_kw4bb")
+height_map = ExtResource("40_f4fi5")
+
+[node name="Section20" parent="Sections" unique_id=1258884858 instance=ExtResource("2_section")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0, 15)
+seed = 20
+year = 36.0
+road_crew = true
+color_map = ExtResource("41_n2y6m")
+height_map = ExtResource("42_pb6h5")
+
+[node name="Apron" type="StaticBody3D" parent="." unique_id=336971571]
 physics_material_override = ExtResource("3_concrete")
 
-[node name="NorthMesh" type="MeshInstance3D" parent="Apron"]
+[node name="NorthMesh" type="MeshInstance3D" parent="Apron" unique_id=25822925]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 50)
 mesh = SubResource("BoxMesh_long")
 
-[node name="North" type="CollisionShape3D" parent="Apron"]
+[node name="North" type="CollisionShape3D" parent="Apron" unique_id=220412689]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 50)
 shape = SubResource("BoxShape3D_long")
 
-[node name="SouthMesh" type="MeshInstance3D" parent="Apron"]
+[node name="SouthMesh" type="MeshInstance3D" parent="Apron" unique_id=1053852636]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -50)
 mesh = SubResource("BoxMesh_long")
 
-[node name="South" type="CollisionShape3D" parent="Apron"]
+[node name="South" type="CollisionShape3D" parent="Apron" unique_id=401029754]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -50)
 shape = SubResource("BoxShape3D_long")
 
-[node name="EastMesh" type="MeshInstance3D" parent="Apron"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, -0.5, 0)
-mesh = SubResource("BoxMesh_short")
+[node name="EastMesh" type="MeshInstance3D" parent="Apron" unique_id=2108261223]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55, -0.5, 0)
+mesh = SubResource("BoxMesh_east")
 
-[node name="East" type="CollisionShape3D" parent="Apron"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, -0.5, 0)
-shape = SubResource("BoxShape3D_short")
+[node name="East" type="CollisionShape3D" parent="Apron" unique_id=1116867077]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55, -0.5, 0)
+shape = SubResource("BoxShape3D_east")
 
-[node name="WestMesh" type="MeshInstance3D" parent="Apron"]
+[node name="WestMesh" type="MeshInstance3D" parent="Apron" unique_id=1102136125]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, -0.5, 0)
 mesh = SubResource("BoxMesh_short")
 
-[node name="West" type="CollisionShape3D" parent="Apron"]
+[node name="West" type="CollisionShape3D" parent="Apron" unique_id=1241620960]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, -0.5, 0)
 shape = SubResource("BoxShape3D_short")
