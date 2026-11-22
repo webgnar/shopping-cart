@@ -3,6 +3,49 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+
+
+## 2026-11-22: metal scrapes per cart material, from zack's pipe-on-concrete recording
+
+zack: "we need a sound for when metal from the cart is scraping against the ground ... different sounds for the
+different materials the cart is made of".
+
+- **Source.** `tools/audio/recordings/pipe_on_concrete.flac` (5.6 s, 48 kHz mono; the scrape runs 0.65-4.0 s). It is
+  the pipe's own ringing (about 140, 220, 380, 800 and 920 Hz) over concrete grit, centroid about 1.5 kHz.
+- **Loops.** `tools/audio/make_scrape_loops.py` builds one loop per material:
+    - `scrape_tube`: the recording itself (frame tubes, handle, lower tray);
+    - `scrape_wire`: 1.4x faster, lows under 250 Hz thinned, 2-6 kHz lifted (the 5 mm wire cage);
+    - `scrape_seat`: shuffled 30 ms grains (the grit without the ring), 0.85x, darkened above 2.5 kHz (the gate,
+      child seat and flap: plastic and coated wire).
+
+  The wheels keep their rubber scrubs.
+- **Driven by friction.** `ContactSound.scrape` is each body's loop, and `shape_scrapes` maps a collision shape name to
+  its own loop. The Frame's cage shapes use wire; `Handlebar` and `LowerTray` use tube. The part rubbing hardest each
+  tick picks the loop. Volume follows friction power, pitch follows sliding speed.
+- **More bodies.** Gate, ChildSeat and SeatFlap now have a ContactSound (`contact_monitor` on, 4 contacts), scraping
+  with the seat loop and striking the ImpactSynth at their own position.
+- **Render.** `tests/impact_render.gd` adds `drag_on_side` (tipped, then pulled 220 N across the lot) and logs every
+  scraping part per tick. In the drag, the wire cage scrapes for 343 ticks, rising to -2 dB at pitch 1.5.
+
+## 2026-11-22: generated hits depend on where and on what; layered with the recordings
+
+zack: "all the impact sounds are the same?" and "we are going to need a mix of the shopping cart sounds and the physics
+based ones".
+
+- **Where.** Each `RingingPart` has a `region` (a box in the frame's space) with `along`/`across` axes and a `falloff`.
+  The hit point picks:
+    - the parts near it (exp(-distance outside / 0.3 m));
+    - the modes that ring, by the free-free beam mode shape at the point along the bars;
+    - the bars that ring, by a Gaussian across the spans.
+
+  Wheels strike at their own position, and frame hits at the impulse-weighted contact point.
+- **On what.** `CartFloorSound.contact_time_scale` sets how hard the floor is: tile 0.7, concrete 1.0, asphalt 1.4.
+- **Measured** (same 10 N s knock, spectral centroid): handle 870 Hz, basket corner 794, basket side 947, basket
+  floor 897, chassis 1229. Tipping left 581 vs right 443. A 20 cm drop on tile 452 vs asphalt 378.
+- **Mix.** The recorded tap/slam/knock play again for every hit, and the synth strikes under them (`ImpactSynth`
+  `volume_db` +4, about 4-5 dB under the recording). `tests/impact_render.gd` also logs the recordings each hit
+  played (`<name>.json`), so a render can be mixed offline.
+
 ## 2026-11-22: Child seat hinged on its loop (Blender origins)
 
 zack: the loop on the seat is its hinge and should not move; the origins in the Blender model are right. The seat

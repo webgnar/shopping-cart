@@ -10,3 +10,6 @@ extends Resource
 @export var roll_db := 0.0             ## how loud this ground rolls next to the others
 @export var scrub: AudioStream         ## looping scrub: a gritty scrape on rough ground, a squeak on tile
 @export var scrub_db := 0.0
+## How long a hit on this floor lasts next to concrete: softer floors (asphalt's bitumen) give longer, duller hits,
+## harder ones (glazed tile) shorter, brighter ones. Scales the contact time of generated hits (ImpactSynth).
+@export var contact_time_scale := 1.0

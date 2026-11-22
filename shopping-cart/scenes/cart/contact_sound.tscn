@@ -7,9 +7,11 @@
 [ext_resource type="Script" uid="uid://28v0wq5iecy6" path="res://scripts/cart/cart_floor_sound.gd" id="5_fs"]
 [ext_resource type="AudioStreamRandomizer" path="res://assets/audio/cart/knocks.tres" id="6_knock"]
 [ext_resource type="AudioStreamRandomizer" path="res://assets/audio/cart/lands.tres" id="7_slam"]
+[ext_resource type="AudioStream" uid="uid://cwo5fodi78wo8" path="res://assets/audio/cart/scrape_wire.ogg" id="8_wire"]
 
 [node name="ContactSound" type="Node3D" node_paths=PackedStringArray("scrape_player", "hit_player")]
 script = ExtResource("1_cs")
+scrape = ExtResource("8_wire")
 scrape_player = NodePath("Scrape")
 hit_player = NodePath("Hit")
 floor_sounds = Array[ExtResource("5_fs")]([ExtResource("2_asph"), ExtResource("3_tile"), ExtResource("4_conc")])
