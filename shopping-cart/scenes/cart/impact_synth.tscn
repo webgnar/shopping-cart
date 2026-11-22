@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/cart/impact_synth.gd" id="1_is"]
+[ext_resource type="Script" path="res://scripts/cart/ringing_part.gd" id="2_rp"]
+[ext_resource type="Resource" path="res://assets/audio/cart/parts/basket_wires.tres" id="3_bw"]
+[ext_resource type="Resource" path="res://assets/audio/cart/parts/basket_rails.tres" id="4_br"]
+[ext_resource type="Resource" path="res://assets/audio/cart/parts/frame_tubes.tres" id="5_ft"]
+[ext_resource type="Resource" path="res://assets/audio/cart/parts/handle.tres" id="6_hd"]
+[ext_resource type="Resource" path="res://assets/audio/cart/parts/caster_fork.tres" id="7_cf"]
+[ext_resource type="Resource" path="res://assets/audio/cart/parts/wheel_tyre.tres" id="8_wt"]
+
+[sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_gen"]
+mix_rate = 24000.0
+buffer_length = 0.15
+
+[node name="ImpactSynth" type="AudioStreamPlayer3D"]
+stream = SubResource("AudioStreamGenerator_gen")
+unit_size = 4.0
+max_distance = 40.0
+script = ExtResource("1_is")
+parts = Array[ExtResource("2_rp")]([ExtResource("3_bw"), ExtResource("4_br"), ExtResource("5_ft"), ExtResource("6_hd"), ExtResource("7_cf"), ExtResource("8_wt")])

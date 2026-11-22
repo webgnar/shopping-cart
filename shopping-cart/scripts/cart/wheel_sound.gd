@@ -23,6 +23,10 @@ extends Node3D
 @export var scrub_player: AudioStreamPlayer3D
 @export var knock_player: AudioStreamPlayer3D
 @export var land_player: AudioStreamPlayer3D
+## Generated hits (the cart's ImpactSynth): when set, landings and knocks strike it instead of playing recordings.
+@export var synth: ImpactSynth
+@export var struck_mass := 6.0        ## kg: the share of the cart a wheel stops when it hits (a quarter of it)
+@export var contact_time := 0.0012    ## s a hard polyurethane caster wheel's contact lasts at 1 m/s
 @export var floor_sounds: Array[CartFloorSound] = []
 @export var fallback: CartFloorSound   ## for any floor no CartFloorSound lists (kerbs, props)
 ## m of air under the wheel that still counts as touching: a wheel lifted more than this is off the ground and
@@ -157,6 +161,8 @@ func _physics_process(delta: float) -> void:
 
 ## One hit, done: a landing if the wheel came out of the air (silent, tap or slam by how hard), else a knock.
 func _play_hit(speed: float) -> void:
+	if synth:
+		synth.strike(ImpactSynth.Source.WHEEL, speed, speed * struck_mass, contact_time)
 	if _from_air:
 		_from_air = false
 		last_impact = speed
@@ -166,12 +172,16 @@ func _play_hit(speed: float) -> void:
 		var slam := speed >= land_slam_speed
 		if slam:
 			slams += 1
+		if synth:
+			return
 		land_player.stream = land_slam if slam else land_tap
 		var g := pow(clampf((speed - land_start) / (land_full - land_start), 0.0, 1.0), land_curve)
 		land_player.volume_db = land_db + linear_to_db(maxf(g, 0.02))
 		land_player.play()
 	elif speed > knock_start:
 		knocks += 1
+		if synth:
+			return
 		knock_player.volume_db = knock_db + linear_to_db(clampf((speed - knock_start) / (knock_full - knock_start), 0.1, 1.0))
 		knock_player.play()
 

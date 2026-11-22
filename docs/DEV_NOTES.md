@@ -4,6 +4,37 @@ Newest first. One entry per change to models, levels or scenes: what was built, 
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
 
+
+## 2026-11-22: generated impact sound (modal synthesis), no recordings
+
+zack: "GENERATE the sounds based on the physics so we dont have to record 4 different drops from various heights, the
+gravity and collision would solve to produce sound."
+
+- **`ImpactSynth`** (`scenes/cart/impact_synth.tscn`, under `Frame`): an AudioStreamPlayer3D on an
+  AudioStreamGenerator (24 kHz). It holds the cart's `RingingPart`s and runs one two-pole resonator per mode, each
+  physics tick. 46 modes in all; a fully ringing cart costs about 24 ms of CPU per second of sound (2.4 %).
+- **`RingingPart`** (`assets/audio/cart/parts/*.tres`) describes a part physically, and its modes are worked out from
+  that: free-free Euler-Bernoulli beams for rods and tubes (f = b_n^2 / (2 pi L^2) sqrt(E I / rho A)), a single
+  mode for a lumped part, decay sigma = pi f eta. Sizes chosen (real cart):
+    - basket wires: 5 mm steel rod, free spans 0.07-0.30 m, eta 0.009;
+    - basket rails: 6.5 mm rod, 0.45-0.62 m, eta 0.008;
+    - frame tubes: 25 x 1.5 mm steel tube, 0.45-0.90 m, eta 0.012;
+    - handle: 25 mm tube, 0.56 m, plastic-covered, eta 0.03;
+    - caster fork: 8 mm, 0.06-0.09 m, eta 0.01;
+    - wheel tyre: a lumped 160 Hz thud, eta 0.25.
+- **Strikes:**
+    - Each hit adds its impulse to every mode, weighted by the part's `frame_coupling` / `wheel_coupling` and by the
+      spectrum of a half-sine force pulse.
+    - The pulse lasts the contact time, Hertz scaling as speed^-1/5 from 0.4 ms (steel on stone) or 1.2 ms (a hard
+      polyurethane wheel) at 1 m/s. So faster hits are brighter: the spectral centroid of a drop rises from 508 Hz
+      (2 cm) to 603 Hz (40 cm).
+    - Wheels strike with speed x `struck_mass` (6 kg). The frame strikes with the summed contact impulse.
+- **Hooked up:** `WheelSound.synth` and `ContactSound.synth` point at it in `cart.tscn`. With `synth` set, their
+  recorded tap/slam/knock players stay silent; clear it to hear the recordings again. Rolling and scrape loops are
+  still recordings.
+- **Listen:** `godot --headless --fixed-fps 120 -s res://tests/impact_render.gd -- <dir>` renders drops of 2-40 cm
+  and a tip-over to WAV. Peaks: 2 cm -20 dB, 40 cm -7 dB, tip-over -2 dB.
+
 ## 2026-11-22: cart sound from the physics only; frame friction and hits
 
 zack: "for the sound, we want it to be determined by the physics ... like friction of one thing to another should

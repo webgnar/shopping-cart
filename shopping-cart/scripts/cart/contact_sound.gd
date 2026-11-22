@@ -12,6 +12,9 @@ extends Node3D
 
 @export var scrape_player: AudioStreamPlayer3D
 @export var hit_player: AudioStreamPlayer3D
+## Generated hits (the cart's ImpactSynth): when set, hits strike it with their impulse instead of playing recordings.
+@export var synth: ImpactSynth
+@export var contact_time := 0.0004    ## s steel on stone lasts at 1 m/s
 @export var floor_sounds: Array[CartFloorSound] = []   ## the scrape loop of each floor is its CartFloorSound scrub
 @export var fallback: CartFloorSound                   ## for anything no CartFloorSound lists (walls, props, carts)
 @export_group("Scrape")
@@ -48,6 +51,7 @@ var last_hit := 0.0       ## m/s of the last hit, heard or not
 var _cart: ShoppingCart = null
 var _scrape_sound: CartFloorSound = null
 var _hit := 0.0
+var _hit_impulse := 0.0
 
 
 func _ready() -> void:
@@ -85,9 +89,11 @@ func _physics_process(delta: float) -> void:
 	var dv := push / _body.mass - _body.get_gravity().length() * delta
 	if dv > hit_floor:
 		_hit += dv
+		_hit_impulse += push
 	elif _hit > 0.0:
 		_play_hit(_hit)
 		_hit = 0.0
+		_hit_impulse = 0.0
 
 	# Scrape: the loop of the floor doing the most rubbing, as loud as the friction is strong.
 	heard_power = lerpf(heard_power, power, minf(1.0, delta / power_smoothing))
@@ -118,12 +124,16 @@ func _floor_for(collider: Object) -> CartFloorSound:
 
 func _play_hit(speed: float) -> void:
 	last_hit = speed
+	if synth:
+		synth.strike(ImpactSynth.Source.FRAME, speed, _hit_impulse, contact_time)
 	if speed <= hit_start:
 		return
 	hits += 1
 	var hard := speed >= hit_slam_speed
 	if hard:
 		slams += 1
+	if synth:
+		return
 	hit_player.stream = slam if hard else knock
 	var g := clampf((speed - hit_start) / (hit_full - hit_start), 0.05, 1.0)
 	hit_player.volume_db = hit_db + linear_to_db(g)

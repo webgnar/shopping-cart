@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" path="res://assets/models/shopping_cart.glb" id="2_0ipfc"]
 [ext_resource type="PackedScene" path="res://scenes/cart/wheel_sound.tscn" id="3_wsnd"]
 [ext_resource type="PackedScene" path="res://scenes/cart/contact_sound.tscn" id="3_csnd"]
+[ext_resource type="PackedScene" path="res://scenes/cart/impact_synth.tscn" id="3_isyn"]
 [ext_resource type="Script" path="res://scripts/cart/cart_nest_mouth.gd" id="12_mouth"]
 [ext_resource type="PackedScene" path="res://scenes/cart/nest_joint.tscn" id="13_nest"]
 [ext_resource type="PackedScene" path="res://scenes/cart/flag.tscn" id="14_flag"]
@@ -180,7 +181,11 @@ shape = SubResource("BoxShape3D_mouth")
 transform = Transform3D(0, -0.24253564, -0.9701425, 0, 0.9701425, -0.24253564, 1, 0, 0, 0.207, 0.5, -0.33)
 visible = false
 
-[node name="ContactSound" parent="Frame" instance=ExtResource("3_csnd")]
+[node name="ImpactSynth" parent="Frame" instance=ExtResource("3_isyn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.42, 0)
+
+[node name="ContactSound" parent="Frame" node_paths=PackedStringArray("synth") instance=ExtResource("3_csnd")]
+synth = NodePath("../ImpactSynth")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.42, 0)
 
 [node name="Gate" type="RigidBody3D" parent="." unique_id=354311188]
@@ -233,7 +238,8 @@ angular_damp = 0.05
 [node name="Shape" type="CollisionShape3D" parent="Wheel_RL" unique_id=723913140]
 shape = SubResource("SphereShape3D_daan1")
 
-[node name="WheelSound" parent="Wheel_RL" instance=ExtResource("3_wsnd")]
+[node name="WheelSound" parent="Wheel_RL" node_paths=PackedStringArray("synth") instance=ExtResource("3_wsnd")]
+synth = NodePath("../../Frame/ImpactSynth")
 
 [node name="Fork_FL" type="RigidBody3D" parent="." unique_id=1127588295]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.887, 0.16, -0.1545)
@@ -259,7 +265,8 @@ angular_damp = 0.05
 [node name="Shape" type="CollisionShape3D" parent="Wheel_FL" unique_id=53738916]
 shape = SubResource("SphereShape3D_7vkct")
 
-[node name="WheelSound" parent="Wheel_FL" instance=ExtResource("3_wsnd")]
+[node name="WheelSound" parent="Wheel_FL" node_paths=PackedStringArray("synth") instance=ExtResource("3_wsnd")]
+synth = NodePath("../../Frame/ImpactSynth")
 
 [node name="Wheel_RR" type="RigidBody3D" parent="." unique_id=1217511901]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0685, 0.062, 0.3045)
@@ -273,7 +280,8 @@ angular_damp = 0.05
 [node name="Shape" type="CollisionShape3D" parent="Wheel_RR" unique_id=2133878828]
 shape = SubResource("SphereShape3D_dnshu")
 
-[node name="WheelSound" parent="Wheel_RR" instance=ExtResource("3_wsnd")]
+[node name="WheelSound" parent="Wheel_RR" node_paths=PackedStringArray("synth") instance=ExtResource("3_wsnd")]
+synth = NodePath("../../Frame/ImpactSynth")
 
 [node name="Fork_FR" type="RigidBody3D" parent="." unique_id=1715990862]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.887, 0.16, 0.1545)
@@ -299,7 +307,8 @@ angular_damp = 0.05
 [node name="Shape" type="CollisionShape3D" parent="Wheel_FR" unique_id=2089392624]
 shape = SubResource("SphereShape3D_qy1of")
 
-[node name="WheelSound" parent="Wheel_FR" instance=ExtResource("3_wsnd")]
+[node name="WheelSound" parent="Wheel_FR" node_paths=PackedStringArray("synth") instance=ExtResource("3_wsnd")]
+synth = NodePath("../../Frame/ImpactSynth")
 
 [node name="GateHinge" type="HingeJoint3D" parent="." unique_id=1885623471]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.068, 0.985, 0)

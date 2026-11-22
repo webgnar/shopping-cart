@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="RingingPart" format=3]
+
+[ext_resource type="Script" path="res://scripts/cart/ringing_part.gd" id="1_rp"]
+
+[resource]
+script = ExtResource("1_rp")
+shape = 2
+frequency = 160.0
+loss = 0.25
+loss_per_khz = 0.0
+level = 1.5
+frame_coupling = 0.0
+wheel_coupling = 1.0
