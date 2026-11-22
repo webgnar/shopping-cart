@@ -1,6 +1,8 @@
 extends SceneTree
 ## The guest half of tests/multiplayer_test.gd, started by it as a second Godot process:
-##   godot --headless --path . -s res://tests/multiplayer_guest.gd -- <port or join code> <result file> [--rendezvous=<url>]
+##   godot --headless --path . -s res://tests/multiplayer_guest.gd -- <port or join code> <result file> [--rendezvous=<url>] [--lag=<s>]
+## --lag delays everything this guest sends, for a slow connection. Before joining it times how long its cart takes
+## to get going on its own, to compare with the same push once joined (its cart is predicted, so: no slower).
 ## Joins 127.0.0.1 (or the game with that join code), pushes its cart for a moment, waits for every cart to stop, then follows the host through its
 ## levels. After each step it rewrites <result file> (JSON) with what it saw, for the host test to check.
 
@@ -34,8 +36,16 @@ func _run() -> void:
 	var where: String = args[0]
 	out = args[1]
 	net = root.get_node("Net")
+	for a in args:
+		if a.begins_with("--lag="):
+			net.test_latency = float(a.get_slice("=", 1))
 	change_scene_to_file("res://scenes/main.tscn")
 	await _wait(0.5)
+	while current_scene == null or current_scene.get("cart") == null:
+		await physics_frame
+	await _wait(0.5)
+	result.offline_response = await _response(current_scene.cart)
+	_write()
 	if NetSession.is_join_code(where):
 		net.join_online(where)
 	else:
@@ -52,9 +62,8 @@ func _run() -> void:
 	var own: ShoppingCart = net.carts[net.my_id]
 	var host_cart: ShoppingCart = net.carts[1]
 	result.phase1 = {"id": net.my_id, "own_start": _v(own.cart_origin()), "host_start": _v(host_cart.cart_origin())}
-	Input.action_press("push_left")
-	Input.action_press("push_right")
-	await _wait(2.5)
+	result.phase1.response = await _response(own, false)
+	await _wait(2.5 - result.phase1.response)
 	Input.action_release("push_left")
 	Input.action_release("push_right")
 	# Every cart has stopped once the host has said so for a while.
@@ -62,11 +71,11 @@ func _run() -> void:
 	deadline = Time.get_ticks_msec() + 40000
 	while still < 1.5 and Time.get_ticks_msec() < deadline:
 		await physics_frame
-		var moving := own.puppet_velocity.length() > 0.02 or host_cart.puppet_velocity.length() > 0.02
+		var moving := own.frame_velocity().length() > 0.02 or host_cart.frame_velocity().length() > 0.02
 		still = 0.0 if moving else still + 1.0 / Engine.physics_ticks_per_second
 	await _wait(0.5)
 	result.phase1.merge({"own_end": _v(own.cart_origin()), "host_end": _v(host_cart.cart_origin()),
-		"own_frozen": own.frame.freeze, "snapshots": net.stats.snapshots_received,
+		"own_frozen": own.frame.freeze, "snapshots": net.stats.snapshots_received, "own_error": net.stats.own_error,
 		"flags": [_flag(own), _flag(host_cart)]})
 	_write()
 	# Follow the host from level to level until it ends the test. In the endless sandbox the host first moves our
@@ -142,6 +151,22 @@ func _run() -> void:
 			entry.host = _v(net.carts[1].cart_origin())
 		result.levels[path] = entry
 		_write()
+
+
+## Presses both push keys and returns how long (s) until `cart` has rolled 5 cm (letting go after, unless `release`
+## is false).
+func _response(cart: ShoppingCart, release := true) -> float:
+	var from := cart.cart_origin()
+	var t0 := Time.get_ticks_msec()
+	Input.action_press("push_left")
+	Input.action_press("push_right")
+	while cart.cart_origin().distance_to(from) < 0.05 and Time.get_ticks_msec() - t0 < 3000:
+		await physics_frame
+	var took := (Time.get_ticks_msec() - t0) / 1000.0
+	if release:
+		Input.action_release("push_left")
+		Input.action_release("push_right")
+	return took
 
 
 ## A cart's flag as [shown, colour], for the flag checks.
