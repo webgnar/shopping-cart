@@ -69,7 +69,7 @@ OptionButton/styles/normal = SubResource("StyleBoxFlat_button")
 OptionButton/styles/hover = SubResource("StyleBoxFlat_button_hover")
 OptionButton/styles/pressed = SubResource("StyleBoxFlat_button_hover")
 
-[node name="AsphaltLab" type="Control" node_paths=PackedStringArray("sim", "color_view", "height_view")]
+[node name="AsphaltLab" type="Control" node_paths=PackedStringArray("sim", "color_view", "height_view", "relief_view")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -80,6 +80,7 @@ script = ExtResource("1_lab")
 sim = NodePath("Sim")
 color_view = NodePath("Views/ColorView")
 height_view = NodePath("Views/HeightView")
+relief_view = NodePath("Views/ReliefView")
 
 [node name="Sim" type="Node" parent="."]
 script = ExtResource("2_sim")
@@ -159,6 +160,13 @@ texture = SubResource("ViewportTexture_height")
 expand_mode = 1
 stretch_mode = 5
 
+[node name="ReliefView" type="TextureRect" parent="Views"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+expand_mode = 1
+stretch_mode = 5
+
 [node name="Panel" type="PanelContainer" parent="."]
 layout_mode = 1
 anchors_preset = 11
@@ -219,13 +227,15 @@ text = "Play"
 layout_mode = 2
 size_flags_horizontal = 3
 selected = 2
-item_count = 3
+item_count = 4
 popup/item_0/text = "Colour"
 popup/item_0/id = 0
 popup/item_1/text = "Height"
 popup/item_1/id = 1
 popup/item_2/text = "Both"
 popup/item_2/id = 2
+popup/item_3/text = "Colour + relief"
+popup/item_3/id = 3
 
 [node name="RepairsHeader" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2

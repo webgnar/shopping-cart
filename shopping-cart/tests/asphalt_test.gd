@@ -93,6 +93,28 @@ func _run() -> void:
 	_check("seek back replays", is_equal_approx(sim.stats().crack_m, s15.crack_m), "%.1f m" % sim.stats().crack_m)
 	_check("30 years simulate quickly", Time.get_ticks_msec() - t0 < 4000, "years 15-24 in %d ms" % (Time.get_ticks_msec() - t0))
 
+	# Potholes pluck out whole crocodile cells, and the height map carries real depths.
+	var h18 := _sim_at(18.0)
+	var plucked := 0
+	for d in h18.plucked:
+		if d > 0.0:
+			plucked += 1
+	_check("potholes pluck crocodile cells", plucked > 0, "%d cells" % plucked)
+	var hm := h18.bake_height(0.02)
+	var hw := int(round(h18.size.x / 0.02)) + 1
+	var deepest := 0.0
+	for v in hm:
+		deepest = minf(deepest, v)
+	var joint := 0.0     # the lane joint crack, between the wheel paths where there is no rut
+	for row in hw:
+		for col in range(245, 256):
+			joint = minf(joint, hm[row * hw + col])
+	var mid_row := (hw / 2) * hw
+	_check("height map: holes and cracks cut in", deepest < -0.02 and joint < -0.004,
+		"deepest %.0f mm, lane joint %.1f mm" % [deepest * 1000.0, joint * 1000.0])
+	_check("height map: shoulders low, edges flush", is_equal_approx(hm[mid_row + 20], h18.shoulder_drop) and hm[mid_row] == 0.0,
+		"%.3f m at 0.4 m in, %.3f m at the edge" % [hm[mid_row + 20], hm[mid_row]])
+
 	# Crack filling: no water in, no widening while the sealant holds.
 	var cf := _sim([[10.0, A.CRACK_FILL]])
 	cf.advance_to(10.0)
@@ -185,6 +207,13 @@ func _run() -> void:
 	for i in 30:
 		lab._process(1.0 / 60.0)
 	_check("Play runs from year 0 at 60 fps", lsim.time >= 0.8, "year %.1f after half a second" % lsim.time)
+	(lab.get_node("Panel/Scroll/Box/PlayRow/PlayButton") as Button).button_pressed = false
+	(lab.get_node("Panel/Scroll/Box/PlayRow/View") as OptionButton).select(3)
+	(lab.get_node("Panel/Scroll/Box/PlayRow/View") as OptionButton).item_selected.emit(3)
+	lab.draw_relief()
+	var relief: TextureRect = lab.get_node("Views/ReliefView")
+	_check("relief view shows the height map", relief.visible and relief.texture != null and relief.texture.get_width() == 501,
+		"%s" % [relief.texture.get_size() if relief.texture else "no texture"])
 
 	print("\n%s: %d failure(s)" % ["FAIL" if failures else "PASS", failures])
 	quit(1 if failures else 0)

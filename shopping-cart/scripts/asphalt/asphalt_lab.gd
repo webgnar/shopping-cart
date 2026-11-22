@@ -6,6 +6,9 @@ extends Control
 @export var sim: AsphaltSim
 @export var color_view: Control
 @export var height_view: Control
+@export var relief_view: TextureRect        ## AsphaltSim.bake_height in metres, shaded as if lit from the top left
+@export var relief_res := 0.02               ## m per relief pixel
+@export var relief_exaggeration := 6.0       ## slopes are shaded this many times steeper than they are
 @export var max_years := 40.0
 @export var years_per_second := 2.0
 
@@ -13,6 +16,7 @@ var playing := false
 var _dragging := false
 var _play_t := 0.0     ## years: where Play has got to (the sim catches up a step at a time)
 var _replay_at := -1   ## msec: replay once the condition sliders settle
+var _relief_at := -1   ## msec: redraw the relief view (it takes a moment, so not every frame)
 
 @onready var _year: Label = %YearLabel
 @onready var _timeline: HSlider = %Timeline
@@ -31,6 +35,7 @@ func _ready() -> void:
 		slider.set_value_no_signal(sim.get(slider.get_meta("property")))
 		_label_condition(slider)
 	sim.changed.connect(_update_ui)
+	sim.changed.connect(_queue_relief)
 	_update_ui()
 
 
@@ -38,6 +43,9 @@ func _process(delta: float) -> void:
 	if _replay_at >= 0 and Time.get_ticks_msec() >= _replay_at:
 		_replay_at = -1
 		_replay()
+	if _relief_at >= 0 and Time.get_ticks_msec() >= _relief_at:
+		_relief_at = -1
+		draw_relief()
 	if not playing:
 		return
 	# Keep our own clock: one frame is far less than a simulation step, so adding a frame to sim.time each time
@@ -128,4 +136,32 @@ func _on_seed_changed(value: float) -> void:
 
 func _on_view_selected(index: int) -> void:
 	color_view.visible = index != 1
-	height_view.visible = index != 0
+	height_view.visible = index == 1 or index == 2
+	relief_view.visible = index == 3
+	_queue_relief()
+
+
+func _queue_relief() -> void:
+	if relief_view.visible and _relief_at < 0:
+		_relief_at = Time.get_ticks_msec() + (400 if playing else 50)
+
+
+## Shades the sim's real height map: slopes facing the light are bright, holes and cracks dark.
+func draw_relief() -> void:
+	var hmap := sim.bake_height(relief_res)
+	var w := int(round(sim.size.x / relief_res)) + 1
+	var h := int(round(sim.size.y / relief_res)) + 1
+	var bytes := PackedByteArray()
+	bytes.resize(w * h)
+	var k := relief_exaggeration / relief_res
+	var light := Vector3(-1.0, -1.0, 1.2).normalized()
+	for y in h:
+		for x in w:
+			var i := y * w + x
+			var z := hmap[i]
+			var dx := z - hmap[i - 1] if x > 0 else 0.0
+			var dy := z - hmap[i - w] if y > 0 else 0.0
+			var n := Vector3(-dx * k, -dy * k, 1.0).normalized()
+			var lit := 0.15 + 0.75 * maxf(n.dot(light), 0.0) + z * 3.0
+			bytes[i] = int(clampf(lit, 0.0, 1.0) * 255.0)
+	relief_view.texture = ImageTexture.create_from_image(Image.create_from_data(w, h, false, Image.FORMAT_L8, bytes))

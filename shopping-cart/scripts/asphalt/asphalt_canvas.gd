@@ -46,7 +46,7 @@ func _refresh() -> void:
 			m.set_shader_parameter("size_m", sim.size)
 			m.set_shader_parameter("surface_age", age * sim.climate)
 			m.set_shader_parameter("ravel", clampf((age * sim.climate - 6.0) / 18.0, 0.0, 1.0))
-			m.set_shader_parameter("rut_depth", minf(0.025, 0.0011 * (sim.time - sim.rut_born) * sim.traffic / sim.structure))
+			m.set_shader_parameter("rut_depth", sim.rut_depth())
 			m.set_shader_parameter("chip_seal", 1.0 if sim.surface_kind == AsphaltSim.Surface.CHIP_SEAL else 0.0)
 			m.set_shader_parameter("height_mode", mode == Mode.HEIGHT)
 			m.set_shader_parameter("age_scale", oxidation_years)
@@ -89,6 +89,15 @@ func _circle_pts(c: Vector2, r: float, seed_n: float, rough: float) -> PackedVec
 		var rr := r * (1.0 + rough * (_h(seed_n + k * 1.7) - 0.5))
 		pts.append((c + Vector2.from_angle(a) * rr) * px_per_m)
 	return pts
+
+
+## A cell outline grown or shrunk about its centre, its corners nudged so the edge looks broken, in pixels.
+func _scaled(poly: PackedVector2Array, centre: Vector2, k: float, seed_n: float) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for j in poly.size():
+		var q := centre + (poly[j] - centre) * (k + 0.08 * (_h(seed_n * 7.1 + j) - 0.5))
+		out.append(q * px_per_m)
+	return out
 
 
 func _draw() -> void:
@@ -156,20 +165,26 @@ func _draw() -> void:
 		var c := sim.cell_center(i) + Vector2(_h(i) - 0.5, _h(i + 0.5) - 0.5) * 0.03
 		var col := _hc(0.006) if hm else cold_mix.lerp(aged_asphalt, 1.0 - exp(-(t - fb) * sim.climate / (oxidation_years * 0.6)))
 		_poly(_circle_pts(c, 0.105, i * 0.37, 0.35), col, 0.3)
-	# Potholes: broken rim, then the wet base course below, darker the deeper it goes.
+	# Potholes. Where a crocodile cell has been plucked out: its broken rim, then the wet base course below,
+	# darker the deeper it goes. Elsewhere a ragged hole round the 10 cm cell.
+	for k in sim.plucked.size():
+		var d := sim.plucked[k]
+		if d <= 0.0 or sim.net_cells[k].is_empty():
+			continue
+		_poly(_scaled(sim.net_cells[k], sim.net_seeds[k], 1.1, k), _hc(-d * 0.3) if hm else pothole_rim, 0.25)
+	for k in sim.plucked.size():
+		var d := sim.plucked[k]
+		if d <= 0.0 or sim.net_cells[k].is_empty():
+			continue
+		var col := _hc(-d) if hm else pothole_floor.darkened(clampf(d / AsphaltSim.HOLE_MAX, 0.0, 1.0) * 0.45)
+		_poly(_scaled(sim.net_cells[k], sim.net_seeds[k], 1.0, k + 0.5), col, 0.15)
 	for i in sim.nx * sim.ny:
-		if sim.hole[i] <= 0.0:
+		if sim.hole[i] <= 0.0 or sim._cell_seed[i] >= 0:
 			continue
 		var c := sim.cell_center(i) + Vector2(_h(i * 1.3) - 0.5, _h(i * 2.1) - 0.5) * 0.03
 		var d := sim.hole[i]
 		_poly(_circle_pts(c, 0.11, i * 0.91, 0.5), _hc(-d * 0.3) if hm else pothole_rim, 0.25)
-	for i in sim.nx * sim.ny:
-		if sim.hole[i] <= 0.0:
-			continue
-		var c := sim.cell_center(i) + Vector2(_h(i * 1.3) - 0.5, _h(i * 2.1) - 0.5) * 0.03
-		var d := sim.hole[i]
-		var col := _hc(-d) if hm else pothole_floor.darkened(clampf(d / AsphaltSim.HOLE_MAX, 0.0, 1.0) * 0.45)
-		_poly(_circle_pts(c, 0.085, i * 0.53, 0.35), col, 0.15)
+		_poly(_circle_pts(c, 0.085, i * 0.53, 0.35), _hc(-d) if hm else pothole_floor.darkened(clampf(d / AsphaltSim.HOLE_MAX, 0.0, 1.0) * 0.45), 0.15)
 	# Shoulders, and the pavement edge fretted back into them.
 	for side in 2:
 		var e := sim.edge_l if side == 0 else sim.edge_r
