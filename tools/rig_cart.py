@@ -31,14 +31,18 @@ GATE_HINGE = (0.068, 0.0, 0.985)   # top edge of the gate, under the handle bar
 # each hinge. Gate -> child seat -> seat flap, each hinged on its parent:
 #  - Child seat (backrest): hinged on the gate at its bottom bar, on a bracket SEAT_GAP in front of the gate.
 #    Folded, it lies along the gate's front face (the gate is its stop), so a gate swinging up lifts it with it.
-#  - Seat flap: hinged on the backrest at the flap's front edge, FLAP_GAP behind the backrest. Folded, it hangs
-#    down between the backrest and the gate.
+#  - Seat flap: hinged on the backrest at the flap's front edge, FLAP_GAP behind the backrest. Folded, it stands up
+#    along the backrest between the backrest and the gate (covering the leg openings, as on a real cart); opened, it
+#    drops level and its free edge rests on the gate. Real carts fold the same way: the seat plate folds up flat
+#    against the gate and the backrest, hinged low on the gate, folds back over it (US2891801, US7766347).
 GATE_LEAN = 18.2      # degrees: the gate's top leans back (toward the handle) from vertical
 SEAT_LEAN = -16.4     # degrees: the backrest as built, top leaning forward into the basket
 SEAT_BAR = (0.207, 0.569)   # x, z: the backrest's bottom bar, where the base model has it touch the gate
 FLAP_EDGE = (0.242, 0.776)  # x, z: on the flap's mid-plane, FLAP_GAP behind the backrest at the flap's front
 FLAP_GAP = 0.025      # m: flap mid-plane to backrest centre line (wire 1.3 cm + flap 1.0 cm + clearance)
 SEAT_GAP = 0.045      # m: backrest centre line to gate centre line, folded (flap and wires sandwiched between)
+SEAT_OPEN = 27.0      # degrees the backrest opens off the gate: there the level flap's free edge rests on the gate
+                      # (the bracket puts the backrest 7.6 degrees short of the base model's 34.6 lean, still leaning in)
 FRONT_SWIVEL_X, FRONT_Y = 0.887, 0.1545   # caster kingpin
 FRONT_AXLE = (0.849, 0.063)               # x, z
 REAR_AXLE = (0.0685, 0.062)
@@ -195,8 +199,8 @@ def turn(deg, about):
 
 gate_front = Vector((math.cos(math.radians(GATE_LEAN)), 0.0, math.sin(math.radians(GATE_LEAN))))
 seat_front = Vector((math.cos(math.radians(SEAT_LEAN)), 0.0, math.sin(math.radians(SEAT_LEAN))))
-# Flap: from level (free edge toward the gate) down along the back of the backrest.
-flap_fold = turn(90.0 + SEAT_LEAN, FLAP_EDGE)
+# Flap: from level (free edge toward the gate) up along the back of the backrest.
+flap_fold = turn(-(90.0 - SEAT_LEAN), FLAP_EDGE)
 # Backrest (flap riding on it): back onto the gate, then out onto its bracket.
 seat_fold = Matrix.Translation(gate_front * SEAT_GAP) @ turn(GATE_LEAN - SEAT_LEAN, SEAT_BAR)
 for n in FLAP:
@@ -213,9 +217,10 @@ print("CHILD SEAT HINGE", tuple(round(v, 4) for v in seat_pivot), "FLAP HINGE", 
 gate = empty("Gate_Hinge", GATE_HINGE, frame)
 joint(gate, "hinge", "Y", -70, 0)   # about level at -70
 seat = empty("ChildSeat_Hinge", tuple(seat_pivot), gate)
-joint(seat, "hinge", "Y", 0, round(GATE_LEAN - SEAT_LEAN, 1))   # 0 folded on the gate .. open for a toddler
+joint(seat, "hinge", "Y", 0, SEAT_OPEN)                          # 0 folded on the gate .. open for a toddler
 flap = empty("SeatFlap_Hinge", tuple(flap_pivot), seat)
-joint(flap, "hinge", "Y", 0, round(90.0 + SEAT_LEAN, 1))       # 0 hanging folded .. level as a seat
+# Level as a seat (resting on the gate) with the backrest at SEAT_OPEN .. 0 folded up.
+joint(flap, "hinge", "Y", -round(90.0 - SEAT_LEAN - (GATE_LEAN - SEAT_LEAN - SEAT_OPEN), 1), 0)
 attach(GATE, gate)
 attach(SEAT, seat)
 attach(FLAP, flap)

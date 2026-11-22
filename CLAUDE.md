@@ -81,7 +81,7 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   which supplies cart spawning, the follow camera, input and the HUD. A level scene places its own
   `CartSpawn` marker; if it has no `WorldEnvironment`, `Camera` or `HUD` node, `main.gd` adds the
   shared default scene for each.
-- `scenes/cart/cart.tscn` — the cart rig (frame, gate, casters, wheels, hinge joints, groceries, model).
+- `scenes/cart/cart.tscn` — the cart rig (frame, gate, casters, wheels, hinge joints, groceries, model). Keys: Q/A left hand push/pull, E/D right; holding sets how hard, tapping moves the hand out along the bar (see `scripts/cart.gd`).
   `scenes/cart/spare_cart.tscn` — the same cart, empty and not player controlled, to place in levels.
   `scenes/cart/bot_cart.tscn` — a cart driven by a bot (`scripts/cart_bot.gd`) pressing the same keys a player does;
   place instances under a level's `BotCarts` node. Bots need the level's `Navigation` region: re-bake it with
@@ -113,7 +113,8 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
 - `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun, and the garage's sky shader
   (`skyline_sky.gdshader`). `assets/manhattan_skyline/` (not in git) — the garage's Manhattan skyline from
   zack's Google Earth tiles, made by `sh tools/manhattan_skyline.sh`; the garage shows it only where it exists.
-  `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
+  `scenes/ui/hud.tscn` — the driving HUD, styled after US road signs (MUTCD, `Reference Images/UI/`; fonts and
+  colours in `assets/ui/road_sign_theme.tres` and the scene's styleboxes). `scenes/ui/console.tscn` — the debug console autoload
   (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera (`scripts/cart_camera.gd` lifts it over walls, see its exports).
 - `assets/physics/*.tres` — shared physics materials (tile, asphalt, solid).
 - `assets/audio/cart/` — the cart's wheel sounds (rolls, scrubs, knocks, landing), cut from zack's recordings by
@@ -137,7 +138,8 @@ From `shopping-cart/`:
   (fix with `godot --headless -s res://tools/export_cart_tuning_cli.gd`)
 - Levels and cart rig in sync with the browser game: `godot --headless -s res://tests/mobile_levels_sync_test.gd`
   (fix with `godot --headless -s res://tools/export_mobile_levels_cli.gd`)
-- Browser game (from the repo root): `node mobile/test/drive_test.js`
+- Browser game (from the repo root): `node mobile/test/drive_test.js --jobs` (every section at once, each in its own
+  browser). After a cart physics change `--only=drive` is enough; sections: drive, levels, bots, race, sweep, stacks, phone.
 - Camera never clips into levels (all levels): `godot --headless --fixed-fps 120 -s res://tests/camera_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
 - Coast highway level test: `godot --headless --fixed-fps 120 -s res://tests/coast_test.gd` (the level is generated

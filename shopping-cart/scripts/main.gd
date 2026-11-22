@@ -2,7 +2,7 @@ extends Node3D
 ## Sandbox: an endless parking lot to work out the cart's physics in (scenes/main.tscn). Its Chunks node
 ## (scripts/sandbox/chunk_streamer.gd) fills the ground around the cart with 40 m open-lot chunks
 ## (scenes/sandbox/chunks/open_lot.tscn), all facing the same way; down the spawn aisle (+X) a test strip has two
-## speed bumps, a curb, a ramp up to a ledge and two stacks of boxes. E/A = left hand push/pull, Q/D = right hand
+## speed bumps, a curb, a ramp up to a ledge and two stacks of boxes. Q/A = left hand push/pull, E/D = right hand
 ## push/pull (hold to push or pull harder), W/S lean the back/front up, P reset.
 ## The mouse only moves the camera (click to capture, Esc to release, wheel to zoom).
 ##
@@ -16,8 +16,8 @@ const CAMERA_SCENE := preload("res://scenes/cart_camera.tscn")
 const HUD_SCENE := preload("res://scenes/ui/hud.tscn")
 
 const KEYS := {
-	"push_left": KEY_E, "pull_left": KEY_A,
-	"push_right": KEY_Q, "pull_right": KEY_D,
+	"push_left": KEY_Q, "pull_left": KEY_A,
+	"push_right": KEY_E, "pull_right": KEY_D,
 	"lift": KEY_W, "press": KEY_S, "reset": KEY_P,
 	"fullscreen": KEY_F11,
 }

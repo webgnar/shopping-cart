@@ -26,6 +26,109 @@ also in the project files under `asphalt/doc/`.
 - Speed: `_open_edges` caches each edge's cell and works out the block threshold once a step; years 15 to 24 take
   about 3.4 s here (the test allows 4).
 - Checks: `tests/asphalt_test.gd` now 36 (adds plucked cells, height map depths, shoulders and flush edges, relief view).
+## 2026-11-22: Child seat folds like a real cart (seat plate folds up, not down)
+
+zack: the child seat was still rigged wrong (screenshot: the plastic seat hung at an odd angle by the backrest).
+Checked against real carts (patents US2891801, US7766347, US8991836): the gate hangs from the top rail, the wire
+backrest is hinged low on the gate, and the seat plate folds UP flat against the gate when the seat is shut; opened,
+the plate lies level with one edge on the gate and the other on the backrest, which props the backrest open.
+
+- **Before:** the flap (plastic seat plate) folded DOWN from its hinge on the backrest and hung between backrest and
+  gate, and the backrest opened 34.6 degrees about its 4.5 cm bracket, leaving the level plate 3 cm short of the gate.
+- **Now (tools/rig_cart.py, scenes/cart/cart.tscn):** the hierarchy is unchanged (Gate > ChildSeat > SeatFlap, same
+  hinge points). The flap folds UP along the back of the backrest (covering the leg openings, seen through the gate),
+  so its hinge range is -98.8..0 degrees (opening is now the other way). The backrest opens 27 degrees (SEAT_OPEN),
+  where the level flap's free edge rests on the gate; the backrest then leans 9 degrees into the basket instead of
+  the base model's 16. To fold it you lift the flap first, then push the backrest back, as on a real cart.
+- **Diagram:** side view of the three poses (open, folded, gate up) drawn from the model's own vertices:
+  project files `cart-rig/child_seat_diagram.png`.
+- **Clearances** are the same as before (flap mid-plane 2.5 cm behind the backrest, 2 cm in front of the gate), so no
+  coplanar faces. Model re-posed only, same triangle count.
+- **Checks:** drive_test "seat flap" now checks the flap drops level (99 degrees) with the backrest open, lifts when
+  pushed up, drops back, and folds back up when the backrest is shut; the browser drive test mirrors it.
+  `tests/cart_rig_screenshot.gd` adds a "seat_open" set of views.
+
+## 2026-11-21: hands: tap rhythm sets where each hand holds the bar; Q/E back to left/right push
+
+Keys are back to Q/A left hand push/pull, E/D right (the left hand pushing turns the cart right).
+
+Each hand key now carries two signals (`scripts/cart.gd`, mirrored in `mobile/game/cart.js`):
+
+- **How hard (hold).** Power ramps from `power_base` as before and stays uncapped, so the wrists still lever
+  the cart into a wheelie and over if a hold goes on too long. What the arm puts into the bar levels off
+  toward `drive_max` (160 N a hand, `tanh`). That also puts a ceiling on braking.
+- **Where (tap rate).** `hand_grip` (0 to 1) places the hand between `hand_rest` (0.14 m from the middle) and
+  `hand_end` (0.25 m; the bar is 0.52 m wide). Each press moves the hand out by `tap_step`, a quick press
+  (`tap_fast` after the last) by up to `tap_boost` times that, and the hand drains back in at `grip_drain`.
+  A press only counts as a tap after the key was up `tap_min_gap` (finger speed), so the bots' key pulsing
+  doesn't read as tapping. A press after the first also shoves (`tap_power` × boost). Between taps, while
+  the rhythm lasts (`tap_slow`), the hand stays on the bar and its power leaks away (`tap_hold_leak`), so a
+  steady rhythm settles at a power set by the tap rate instead of growing like a hold.
+- **Steering comes from the physics.** Each hand's force acts at its own position on the bar. With both hands
+  the same way, their common push is capped by running speed, and the difference twists the bar at any speed.
+  A difference in force or position steers even at a run.
+- **Fatigue.** Held hands tire (`fatigue_rate`); a press freshens them (`tap_refresh`). A tired arm's force
+  wanders by up to `wobble` (two slow sines per hand, out of step), and the pair's twist grip weakens
+  (`grip_fatigue_loss`). A cart left on held keys drifts off line.
+- **Backward walk.** Pulling backwards tops out at `reverse_speed` (2 m/s).
+- **Settle fix.** The near-rest brake now waits until every key has been up `settle_delay` (0.4 s). Before
+  this, the gaps between taps stopped the cart dead below 0.15 m/s, so tapping from rest went nowhere
+  (0.11 m/s after 4 s of taps, now 3-4 m/s).
+- **HUD.** A BAR strip shows each hand's position (green push, red pull, fading as the arm tires). The message
+  sign says where each hand is ("PUSHING 120 N AT 18 CM").
+
+Measured in the sandbox (headless probe, from about 3.3 m/s unless noted):
+
+| Input | Result |
+|---|---|
+| One hand held | 5°/s |
+| One hand tapped at 3 / 5 / 7 Hz | 4.8 / 7.2 / 9.3°/s |
+| At 2 m/s: held vs tapped 5 Hz | 11 vs 16°/s |
+| Push one + pull the other | 73°/s (103°/s at 2 m/s) |
+| One push + S | 37°/s, and the speed drops (rear wheels scrub) |
+| Alternating taps at 4 Hz from rest | 4.8 m/s, no tip |
+| Both held from rest | front lifts about 1.8 s, falls about 2.6 s (unchanged) |
+
+Drive test: "tapping turns" (E held 27°, E tapped 43°). One-hand turn threshold lowered to 20° (held hands turn
+gently by design). "pull = push" became "pull vs push" (backward walk).
+
+Judgment calls and open points:
+
+- **Yanking a cart off a stack.** With human caps (about 160 N a hand, 2 m/s backward) a yank only rolls a
+  free-standing stack back with the cart. The stack tests now give the yank `drive_max` 800 and
+  `reverse_speed` 5, extending the old `power_ramp` 400 override. In play, pulling a cart off a free-rolling
+  stack needs a rethink (stack wheels braked, or a yank impulse).
+- **The wheelie checks** in the Godot drive test now start at x = -80. Let go at a run, the cart rolled into
+  the test strip's first speed bump and flipped over it. The browser test already starts pushes at x = -35
+  (main's fix for the same thing).
+- **Multiplayer.** Guests don't receive `hand_grip` or `hand_fatigue` yet, so their HUD markers stay at rest.
+  Very short taps by a guest could also fall between input packets.
+- **Caster damage** (veer from crashes) is deliberately left for later.
+
+## 2026-11-21: driving HUD restyled as road signs (MUTCD 11th edition)
+
+`scenes/ui/hud.tscn` now follows the US sign manual in `Reference Images/UI/mutcd11thedition.pdf`:
+
+- Colours sampled from the manual's figures: guide green `#006C50`, warning yellow `#FCCC44`, stop red `#BC3018`.
+  Legends are white on green and red, black on yellow and white.
+- Borders follow Section 2A.10: a light border runs to the edge of a dark sign; a dark border on a light sign
+  is set in from the edge (a white or yellow rim panel around a bordered inner panel). Corners are rounded.
+- Lettering follows Section 2A.08: mixed case for names ("Shopping Cart", "Groceries"), capitals for everything
+  else. The Standard Alphabets (Highway Gothic) aren't bundled. `assets/ui/road_sign_theme.tres` is a
+  SystemFont asking for Overpass (an open Highway Gothic look-alike), then Bahnschrift (Windows), then Arial
+  Narrow, then the default.
+- Layout:
+  - Title: a guide sign with an exit-style "PROTOTYPE" tab.
+  - Speed: a white regulatory plaque (SPEED / number / KM/H).
+  - Turn rate, wheels down and groceries: a guide sign laid out like the E9 interchange sequence sign, names
+    left, numbers right.
+  - Keys are signs by meaning: push green, pull red, the W/S leans yellow warning signs. A held key is lit at
+    the full sign colour; idle keys are the same sign at about 40 % brightness (the sign without headlights).
+  - The hands' power meters are black panels with a white LEFT/RIGHT plaque.
+  - What each hand is doing shows on a changeable message sign: amber monospace capitals on black.
+- `hud.gd` fills the separate labels (`%Speed`, `%Turn`, `%Wheels`, `%Groceries`, `%Hands`). Node names of the
+  meters are unchanged.
+- Not done: the browser game's HTML HUD (`mobile/index.html`) still has the old look.
 
 ## 2026-11-22: Asphalt lab, a 2D prototype of procedural asphalt
 
@@ -383,7 +486,7 @@ REAPER, 160 MB; kept in the project's shared files, not the repo) as a backgroun
 ## 2026-11-21: sandbox is an endless parking lot (lot-only chunks); Q and E push keys swapped
 
 The sandbox (`scenes/main.tscn`) is now an open daytime parking lot that never ends, so the cart's physics can be
-worked on with room to run. Reference: the aerial photos in `Level Reference Images/` (big, mostly empty lots,
+worked on with room to run. Reference: the aerial photos in `Reference Images/Levels/` (big, mostly empty lots,
 double rows of painted stalls, light poles on the stall heads, planter islands with trees at the row ends).
 
 - **Built on the chunk streamer.** This started as a separate endless grid (78 x 37 m blocks following the
