@@ -1,8 +1,8 @@
 extends SceneTree
-## Close-ups of the cart's back end: gate, child seat and seat flap, at rest, with the seat opened and with the gate
-## swung up.
+## Close-ups of the cart's back end: gate, child seat, seat flap and seat plastic, at rest, with the seat opened, with
+## the plastic lifted off the open seat and with the gate swung up.
 ## Needs a display:  xvfb-run godot -s res://tests/cart_rig_screenshot.gd -- <output_prefix> [tint]
-## With "tint" the gate is drawn red, the child seat green and the seat flap blue.
+## With "tint" the gate is drawn red, the child seat green, the seat flap blue and the seat plastic yellow.
 
 var main: Node3D
 var prefix := "user://cart_rig"
@@ -67,6 +67,7 @@ func _run(tint: bool) -> void:
 		_tint(model.find_child("Gate_Hinge"), Color(0.9, 0.15, 0.1))
 		_tint(model.find_child("ChildSeat_Hinge"), Color(0.1, 0.8, 0.2))
 		_tint(model.find_child("SeatFlap_Hinge"), Color(0.15, 0.3, 0.95))
+		_tint(model.find_child("SeatPlastic_Hinge"), Color(0.95, 0.8, 0.1))
 	await _views(cart, "rest")
 	# Open the child seat: pull the backrest into the basket.
 	for i in 40:
@@ -82,6 +83,18 @@ func _run(tint: bool) -> void:
 	for i in 240:
 		await physics_frame
 	await _views(cart, "seat_open")
+	# Lift the plastic off the open seat by its free edge, and hold the picture halfway up.
+	var plastic_tip := Vector3(-0.017, 0.123, 0)
+	var rel := 0.0
+	while rel < 50.0:
+		cart.seat_plastic.apply_force(cart.frame.global_basis.y * 3.0, cart.seat_plastic.global_basis * plastic_tip)
+		await physics_frame
+		rel = rad_to_deg((cart.seat_flap.global_basis.inverse() * cart.seat_plastic.global_basis).get_rotation_quaternion().get_angle())
+	PhysicsServer3D.set_active(false)
+	await _views(cart, "plastic_up")
+	PhysicsServer3D.set_active(true)
+	for i in 240:
+		await physics_frame
 	# Fold it again: lift the flap back against the gate, push the backrest back.
 	for i in 60:
 		cart.seat_flap.apply_force((cart.frame.global_basis.y - cart.frame.global_basis.x) * 8.0, cart.seat_flap.global_basis * tip)

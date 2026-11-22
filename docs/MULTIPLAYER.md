@@ -62,7 +62,7 @@ it). Version 1:
 | Data | Direction | How often | Size |
 | --- | --- | --- | --- |
 | Keys held (6 bits) + the level the guest has loaded | guest -> host | on change and 30 times a second, unreliable | 3 bytes |
-| Each player cart: hand power L/R, a flags byte (fallen, and the player's slot, which colours the cart's pennant flag), frame velocity and turn rate (for the HUD and rolling sound), and the pose of all 15 bodies (frame, gate, child seat, seat flap, 2 forks, 4 wheels, 5 groceries) | host -> guests | 30 Hz, unreliable | about 450 bytes |
+| Each player cart: hand power L/R, a flags byte (fallen, and the player's slot, which colours the cart's pennant flag), frame velocity and turn rate (for the HUD and rolling sound), and the pose of all 16 bodies (frame, gate, child seat, seat flap, seat plastic, 2 forks, 4 wheels, 5 groceries) | host -> guests | 30 Hz, unreliable | about 450 bytes |
 | Level loose bodies (boxes, product cases, oil drums, spare and bot carts): every body that is awake, plus 24 resting ones in turn so a lost packet can't leave one stale | host -> guests | 30 Hz, unreliable | 30 bytes each |
 | Joins, level changes, leaving, reset requests | both | when they happen, reliable | small |
 | A race (`scripts/race/race.gd`, protocol version 3): phase, clock, each racer's id, name and finish time | host -> guests | on every change and twice a second, reliable | ~20 bytes a racer |

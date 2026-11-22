@@ -34,7 +34,7 @@ extends RefCounted
 ##                                          u8 events, per event: i32 shopper id, str text (that shopper's pop-up)
 ## A snapshot too big for one packet is sent as several, each a complete SNAPSHOT for the same tick.
 
-const VERSION := 5
+const VERSION := 6
 ## Bump VERSION whenever a message changes, so old and new builds refuse each other cleanly.
 
 enum Msg { HELLO = 1, WELCOME, REJECT, LEVEL, INPUT, RESET, SNAPSHOT, LEFT, RACE, SWEEP }

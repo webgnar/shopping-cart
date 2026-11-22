@@ -121,6 +121,9 @@ size = Vector3(0.36, 0.4, 0.4)
 [sub_resource type="BoxShape3D" id="BoxShape3D_seatflap"]
 size = Vector3(0.09, 0.006, 0.48)
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_seatplastic"]
+size = Vector3(0.059, 0.006, 0.248)
+
 [node name="Cart" type="Node3D" unique_id=148615909]
 script = ExtResource("1_ytnl2")
 
@@ -234,7 +237,7 @@ synth = NodePath("../../Frame/ImpactSynth")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1425, 0.7755, 0)
 collision_layer = 2
 collision_mask = 7
-mass = 0.4
+mass = 0.3
 physics_material_override = SubResource("PhysicsMaterial_i6241")
 can_sleep = false
 contact_monitor = true
@@ -245,6 +248,24 @@ transform = Transform3D(-0.1392, -0.9903, 0, 0.9903, -0.1392, 0, 0, 0, 1, -0.012
 shape = SubResource("BoxShape3D_seatflap")
 
 [node name="ContactSound" parent="SeatFlap" node_paths=PackedStringArray("synth") instance=ExtResource("3_csnd")]
+scrape = ExtResource("3_sseat")
+synth = NodePath("../../Frame/ImpactSynth")
+
+[node name="SeatPlastic" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1423, 0.7731, 0)
+collision_layer = 2
+collision_mask = 7
+mass = 0.15
+physics_material_override = SubResource("PhysicsMaterial_i6241")
+can_sleep = false
+contact_monitor = true
+max_contacts_reported = 4
+
+[node name="Plate" type="CollisionShape3D" parent="SeatPlastic"]
+transform = Transform3D(-0.1392, -0.9903, 0, 0.9903, -0.1392, 0, 0, 0, 1, -0.0099, 0.094, 0)
+shape = SubResource("BoxShape3D_seatplastic")
+
+[node name="ContactSound" parent="SeatPlastic" node_paths=PackedStringArray("synth") instance=ExtResource("3_csnd")]
 scrape = ExtResource("3_sseat")
 synth = NodePath("../../Frame/ImpactSynth")
 
@@ -355,6 +376,14 @@ node_b = NodePath("../SeatFlap")
 angular_limit/enable = true
 angular_limit/upper = 1.7104227
 angular_limit/lower = 0.0
+
+[node name="SeatPlasticHinge" type="HingeJoint3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1423, 0.7731, 0)
+node_a = NodePath("../SeatFlap")
+node_b = NodePath("../SeatPlastic")
+angular_limit/enable = true
+angular_limit/upper = 0.0
+angular_limit/lower = -1.7104227
 
 [node name="Axle_RL" type="HingeJoint3D" parent="." unique_id=1989381388]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0685, 0.062, -0.3045)
