@@ -11,6 +11,7 @@ extends Control
 
 var playing := false
 var _dragging := false
+var _play_t := 0.0     ## years: where Play has got to (the sim catches up a step at a time)
 var _replay_at := -1   ## msec: replay once the condition sliders settle
 
 @onready var _year: Label = %YearLabel
@@ -39,9 +40,13 @@ func _process(delta: float) -> void:
 		_replay()
 	if not playing:
 		return
-	var t := minf(sim.time + years_per_second * delta, max_years)
-	sim.advance_to(t)
-	if t >= max_years:
+	# Keep our own clock: one frame is far less than a simulation step, so adding a frame to sim.time each time
+	# would never reach the next step.
+	if absf(_play_t - sim.time) > AsphaltSim.DT:
+		_play_t = sim.time   # scrubbed or replayed while playing
+	_play_t = minf(_play_t + years_per_second * delta, max_years)
+	sim.advance_to(_play_t)
+	if _play_t >= max_years:
 		_play.button_pressed = false
 
 
@@ -93,6 +98,7 @@ func _on_play_toggled(on: bool) -> void:
 	_play.text = "Pause" if on else "Play"
 	if on and sim.time >= max_years - 0.01:
 		sim.seek(0.0)
+	_play_t = sim.time
 
 
 func _on_repair_pressed(action: int) -> void:

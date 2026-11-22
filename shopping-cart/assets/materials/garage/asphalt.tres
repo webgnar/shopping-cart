@@ -1,8 +1,8 @@
-[gd_resource type="StandardMaterial3D" format=3]
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://4qvxjpoxok53"]
 
-[ext_resource type="Texture2D" path="res://assets/textures/garage/asphalt_color.jpg" id="1_r7ba2"]
-[ext_resource type="Texture2D" path="res://assets/textures/garage/asphalt_normal.jpg" id="2_54bil"]
-[ext_resource type="Texture2D" path="res://assets/textures/garage/asphalt_rough.jpg" id="3_fum25"]
+[ext_resource type="Texture2D" uid="uid://b8qi7b4ankico" path="res://assets/textures/garage/asphalt_color.jpg" id="1_r7ba2"]
+[ext_resource type="Texture2D" uid="uid://bgq4o8rd40jfu" path="res://assets/textures/garage/asphalt_normal.jpg" id="2_54bil"]
+[ext_resource type="Texture2D" uid="uid://0stnxrd87i8i" path="res://assets/textures/garage/asphalt_rough.jpg" id="3_fum25"]
 
 [resource]
 resource_name = "asphalt"
