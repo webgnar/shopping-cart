@@ -1647,3 +1647,14 @@ lifted. Its box covers only the plate's upper half (its seat-side 6 mm), because
 inside the gate's 3 cm collision box; at rest it leans about 1.5 degrees onto the gate. Adding the body changes
 `net_bodies()`, so NetProtocol.VERSION is 6. drive_test checks it lies on the seat folded and open, lifts off, and
 drops back.
+
+## Multiplayer: the joiner's own cart is predicted (2026-11-22)
+
+- zack's first online playtest: smooth on the host, laggy for the joiner. The joiner's own cart only moved once its
+  keys reached the host and the snapshot came back, then waited the 100 ms interpolation delay on top.
+- Now the guest drives its own cart locally and eases it onto the host's pose (stamped INPUT, echoed per cart in
+  SNAPSHOT; protocol 7). Details in docs/MULTIPLAYER.md. Everyone else's carts and the loose bodies are still shown
+  from snapshots, now 80 ms behind (was 100 ms; snapshots come every 33 ms, so two can still be late).
+- `Net.test_latency` delays everything a machine sends; `multiplayer_test.gd` runs the guest with 150 ms. The guest
+  got going in 0.21 s (0.22 s offline), the largest correction was 5.8 cm, and it came to rest 0.000 m from the host.
+- Known limit: the predicted cart passes through boxes and other carts on the guest until the host's push shows up.

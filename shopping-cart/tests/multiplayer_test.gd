@@ -15,6 +15,9 @@ extends SceneTree
 const LEVELS := ["res://scenes/main.tscn", "res://scenes/levels/supermarket.tscn",
 	"res://scenes/levels/parking_lot.tscn", "res://scenes/levels/parking_garage.tscn"]
 
+## s added to everything the guest sends (a slow connection): its own cart must still answer its keys at once.
+const GUEST_LAG := 0.15
+
 var failures := 0
 var net: NetSession
 var out := ""
@@ -76,7 +79,7 @@ func _run() -> void:
 	else:
 		_check("hosts", net.host(port), "port %d" % port)
 	var guest_args := ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-		"-s", "res://tests/multiplayer_guest.gd", "--", where, out]
+		"-s", "res://tests/multiplayer_guest.gd", "--", where, out, "--lag=%.2f" % GUEST_LAG]
 	if online:
 		guest_args.append("--rendezvous=" + net.rendezvous_url)
 	var pid := OS.create_process(OS.get_executable_path(), guest_args)
@@ -139,7 +142,10 @@ func _run() -> void:
 		_check("guest sees the host's cart where it is", host_err < 0.05, "%.3f m off" % host_err)
 		_check("guest saw the host's cart move", _vec(p.host_end).distance_to(_vec(p.host_start)) > 1.0,
 			"%.1f m, %d snapshots" % [_vec(p.host_end).distance_to(_vec(p.host_start)), p.snapshots])
-		_check("guest's own cart stays frozen there", p.own_frozen, "")
+		_check("guest's own cart comes to rest there", p.own_frozen, "")
+		_check("guest's cart answers its keys at once, %d ms lag" % roundi(GUEST_LAG * 1000.0),
+			p.response <= r.offline_response + 0.05, "%.2f s, %.2f s offline" % [p.response, r.offline_response])
+		_check("guest's prediction stays close to the host", p.own_error < 0.3, "largest error %.3f m" % p.own_error)
 		_check("guest sees both flags, in the host's colours", p.flags[0][0] and int(p.flags[0][1]) == guest_flag.color
 			and p.flags[1][0] and int(p.flags[1][1]) == 0, str(p.flags))
 	# Endless sandbox: the guest drives off on its own (its cart is moved 320 m out, onto a flat chunk seam). The

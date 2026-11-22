@@ -61,7 +61,7 @@ it). Version 1:
 
 | Data | Direction | How often | Size |
 | --- | --- | --- | --- |
-| Keys held (6 bits) + the level the guest has loaded | guest -> host | on change and 30 times a second, unreliable | 3 bytes |
+| Keys held (6 bits) + the level the guest has loaded + a clock stamp | guest -> host | on change and 30 times a second, unreliable | 5 bytes |
 | Each player cart: hand power L/R, a flags byte (fallen, and the player's slot, which colours the cart's pennant flag), frame velocity and turn rate (for the HUD and rolling sound), and the pose of all 16 bodies (frame, gate, child seat, seat flap, seat plastic, 2 forks, 4 wheels, 5 groceries) | host -> guests | 30 Hz, unreliable | about 450 bytes |
 | Level loose bodies (boxes, product cases, oil drums, spare and bot carts): every body that is awake, plus 24 resting ones in turn so a lost packet can't leave one stale | host -> guests | 30 Hz, unreliable | 30 bytes each |
 | Joins, level changes, leaving, reset requests | both | when they happen, reliable | small |
@@ -80,10 +80,16 @@ Loose bodies are matched by order: every machine lists the level's `RigidBody3D`
 cart) sorted by node path. The host sends the count in WELCOME/LEVEL and a guest warns if its build differs. For
 the browser, `export_mobile_levels_cli.gd` will write the same ordered list into each level's JSON.
 
-**Guests show the past.** A guest moves every body between the two snapshots around (newest - 100 ms), so motion
-is smooth through jitter and a lost packet. The cost is latency: the guest's own cart responds after the round trip
-plus ~130 ms. The hand power ramps up over a second anyway, so this should be playable for a first version; if it
-isn't, phase 4 adds prediction for the guest's own cart.
+**Guests show the past, except their own cart.** A guest moves every other body between the two snapshots around
+(newest - 80 ms), so motion is smooth through jitter and a lost packet. Its own cart is predicted (added 2026-11-22,
+after the first playtest felt laggy on the joiner's side): it drives at once with real physics on the guest, from
+the same keys it sends. Each INPUT carries a stamp of the guest's clock; the host echoes the newest stamp with its
+pose of that guest's cart and how many ms it simulated since. The guest compares that pose with its own cart's pose
+at stamp + those ms (it keeps 2 s of history), and eases the difference out over 0.2 s, moving every body of the rig
+and the history alike; more than 2.5 m off (a reset, a race grid) it jumps there. Locally its cart passes through
+the frozen copies of loose bodies and other carts (the host's cart does the pushing, and the correction follows).
+The host's `locked` flag (race and sweep countdowns) holds it as on the host. With 150 ms of added lag the test
+cart answers as fast as offline and the largest correction on a straight push is about 6 cm.
 
 **Races.** The host runs a race (the console's `race`; the garage has one) and guests only show it. The host lines
 every player up on the race's grid (each guest gets a fresh cart in its slot), waits until every guest has loaded
@@ -139,7 +145,7 @@ cart's own groceries, as the host does.
 - Join by code from the browser menu; itch.io serves over HTTPS, which WebRTC needs.
 
 **Phase 4: feel and polish.**
-- Prediction for the guest's own cart if the delay feels bad (simulate it locally, blend toward the host).
+- Prediction for the guest's own cart: done (see "Guests show the past, except their own cart").
 - Player names and a colour per cart (handle or paint), player spawn markers in the levels that still lack them
   (the supermarket has `PlayerSpawns/Spawn1..7`; elsewhere guests line up beside `CartSpawn`), bots filling empty slots, pose quantisation, host migration is out of scope (the game ends with the host).
 
