@@ -31,6 +31,25 @@ func _run() -> void:
 	var sound: ContactSound = cart.frame.get_node("ContactSound")
 	_check("cart at rest", cart.frame.freeze, "frozen=%s" % cart.frame.freeze)
 
+	# The plastic plate on the child seat sits behind the wire gate and seat; the cursor picks it through them.
+	var plate := cart.seat_plastic
+	var on_plate := plate.global_transform * Vector3(-0.01, 0.094, 0)
+	for from in [Vector3(3, 2.5, 1), Vector3(-1.5, 1, 1.5), on_plate + Vector3(0, 2.4, 0)]:
+		var hit: Dictionary = bench.pick(from, (on_plate - from).normalized())
+		_check("cursor from %s picks the seat plastic" % from, not hit.is_empty() and hit.collider == plate,
+			"picked %s" % (hit.collider.name if hit else "nothing"))
+	# Pull it into the basket: it lies folded against the gate, so the gate swings up with it.
+	bench.grab(plate, on_plate)
+	var pull := on_plate + cart.frame.global_basis.x * 0.2
+	for i in int(0.8 * Engine.physics_ticks_per_second):
+		bench.hand = on_plate.lerp(pull, minf(1.0, i / 60.0))
+		await physics_frame
+	var moved := (plate.global_transform * Vector3(-0.01, 0.094, 0)).distance_to(on_plate)
+	bench.release()
+	_check("grabbed seat plastic follows the hand", moved > 0.04 and cart.gate.rotation.z > 0.5,
+		"moved %.2f m, gate up %.0f deg" % [moved, rad_to_deg(cart.gate.rotation.z)])
+	await _wait(2.0)
+
 	# Lift the block by its top and carry it up and over the basket, slowly, like a person would.
 	bench.grab(block, block.global_position + Vector3(0, 0.095, 0))
 	var start: Vector3 = bench.hand

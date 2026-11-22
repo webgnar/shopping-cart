@@ -12,8 +12,9 @@ extends Node
 ## snapshots of every moving body: all player carts (whole rigs and groceries) and the level's loose bodies (boxes,
 ## spare and bot carts). Resting bodies are resent a few at a time, so a lost packet can't leave one stale for long.
 ## Guest: loads the host's level, freezes every body in it and shows the host's world: each body is moved between
-## the two snapshots around (newest - interp_delay). Its own keys go to the host; its own cart is one of the
-## snapshot carts. Bot carts' bots don't run on a guest.
+## the two snapshots around (newest - interp_delay). Bot carts' bots don't run on a guest. Its own keys go to the
+## host, and its own cart is predicted: it drives here at once with real physics (passing through the frozen bodies,
+## which the host's cart pushes), and each snapshot nudges it toward where the host has it (see _correct_own).
 ##
 ## Start it from the Multiplayer menu (M), the console (`online`, `host`, `join <code or address>`, `games`,
 ## `leave`, `net`) or the command line:
@@ -36,11 +37,17 @@ const CART_SCENE := preload("res://scenes/cart/cart.tscn")
 @export var max_guests := 7
 @export var snapshot_rate := 30.0         ## snapshots a second the host sends
 @export var input_rate := 30.0            ## a guest resends its keys this often even when nothing changes
-@export var interp_delay := 0.1           ## s a guest shows the world behind the newest snapshot
+@export var interp_delay := 0.08          ## s a guest shows the world behind the newest snapshot
 @export var refresh_per_snapshot := 24    ## resting bodies resent with each snapshot
 @export var spawn_spacing := 1.2          ## m between guest carts, in a row to the right of CartSpawn
 @export var max_packet := 1100            ## bytes: snapshots are split to stay under one network packet
 @export var connect_timeout := 20.0       ## s a guest waits to reach the host (WebRTC needs a few round trips)
+@export_group("Guest's own cart")
+@export var correction_time := 0.2        ## s over which a guest eases its own cart onto the host's (prediction error)
+@export var snap_distance := 2.5          ## m: an error bigger than this (a reset, a race grid) moves the cart at once
+@export var history_length := 2.0         ## s of its own cart's poses a guest keeps, to compare with late snapshots
+@export_group("Testing")
+@export var test_latency := 0.0           ## s added to every packet this machine sends, to try a slow connection
 @export_group("Online")
 ## The rendezvous service (services/rendezvous), deployed on zack's Cloudflare account. For a local one
 ## (`npm run dev` there): --rendezvous=http://127.0.0.1:8787 on the command line.
@@ -62,7 +69,8 @@ var level_bodies: Array[RigidBody3D] = []   ## the level's loose bodies, in the 
 ## Player id -> ShoppingCart. Host: guests' carts. Guest: every player's cart as shown here, its own included.
 var carts := {}
 ## What has gone through, for the status line and tests.
-var stats := {"snapshots_sent": 0, "snapshots_received": 0, "inputs_received": 0, "packets_in": 0, "chunk_poses": 0}
+var stats := {"snapshots_sent": 0, "snapshots_received": 0, "inputs_received": 0, "packets_in": 0, "chunk_poses": 0,
+	"own_error": 0.0}   ## own_error: the biggest prediction error a guest has had to ease out, m
 
 @onready var _overlay: CanvasLayer = $Overlay
 @onready var _status: Label = %Status
@@ -87,6 +95,13 @@ var _input_clock := 0.0
 var _welcomed := false
 var _connecting_for := 0.0
 var _expected_bodies := -1
+var _own: ShoppingCart = null  ## our own cart, predicted here (the level's `cart`)
+var _own_live := false         ## it has been put where the host has it and drives (until then: frozen, locked)
+var _own_tick := -1            ## host tick of the snapshot that last corrected it
+var _history: Array = []       ## [local ms, frame position, frame rotation] each tick, oldest first
+var _err_pos := Vector3.ZERO   ## what is left to ease out of our cart's error
+var _err_rot := Quaternion.IDENTITY
+var _outbox: Array = []        ## test_latency: [due ms, to, data, reliable]
 
 
 func _ready() -> void:
@@ -281,6 +296,8 @@ func leave() -> void:
 	_samples.clear()
 	_welcomed = false
 	_newest = -1.0
+	_own = null
+	_outbox.clear()
 	join_code = ""
 	if level and is_instance_valid(level):
 		_show_flag(level.get("cart"), -1)
@@ -361,12 +378,28 @@ func level_ready(new_level: Node) -> void:
 				_freeze_all(st.loaded[cell])
 		if own:
 			carts[my_id] = own
+			_own = own
+			_own_live = false
+			_own_tick = -1
+			_history.clear()
+			_err_pos = Vector3.ZERO
+			_err_rot = Quaternion.IDENTITY
+			# Held still until the first snapshot says where the host has it.
+			own.locked = true
+			for b in own.net_bodies():
+				b.freeze = true
+			_ignore_for_own(level_bodies)
+			for st in _streamers:
+				for cell in st.loaded:
+					_ignore_for_own(_chunk_bodies(st.loaded[cell]))
 	_update_status()
 
 
 ## Guest: everything under `root` only shows the host's world: bodies frozen, carts puppets, bots off.
 func _freeze_all(root: Node) -> void:
 	for c in root.find_children("*", "", true, false):
+		if c is ShoppingCart and c == level.get("cart"):
+			continue   # our own: predicted (level_ready)
 		if c is ShoppingCart:
 			c.make_puppet()
 		elif c is CartBot:
@@ -378,6 +411,19 @@ func _freeze_all(root: Node) -> void:
 func _on_chunk_loaded(_cell: Vector2i, chunk: Node3D) -> void:
 	if role == Role.GUEST:
 		_freeze_all(chunk)
+		_ignore_for_own(_chunk_bodies(chunk))
+
+
+## Guest: our predicted cart passes through `bodies` (frozen copies of the host's): the host's cart pushes the
+## real ones, and the correction brings ours along.
+func _ignore_for_own(bodies: Array) -> void:
+	if _own == null or not is_instance_valid(_own):
+		return
+	var mine := _own.net_bodies()
+	for b in bodies:
+		if is_instance_valid(b) and not mine.has(b):
+			for m in mine:
+				m.add_collision_exception_with(b)
 
 
 ## A chunk's loose bodies, in the same order on every machine.
@@ -395,6 +441,7 @@ func _on_level_exiting(old: Node) -> void:
 		carts.clear()
 		_samples.clear()
 		level_bodies.clear()
+		_own = null
 
 
 ## Host: a cart for guest `id`, in a row to the right of CartSpawn.
@@ -460,6 +507,9 @@ func send_to_guests(data: PackedByteArray) -> void:
 func _physics_process(delta: float) -> void:
 	if peer == null:
 		return
+	while not _outbox.is_empty() and _outbox[0][0] <= Time.get_ticks_msec():
+		var o: Array = _outbox.pop_front()
+		_put(o[1], o[2], o[3])
 	peer.poll()
 	if peer == null:   # polling can end the session (the host went away)
 		return
@@ -479,6 +529,13 @@ func _physics_process(delta: float) -> void:
 
 
 func _send(to: int, data: PackedByteArray, reliable: bool) -> void:
+	if test_latency > 0.0:
+		_outbox.append([Time.get_ticks_msec() + test_latency * 1000.0, to, data, reliable])
+		return
+	_put(to, data, reliable)
+
+
+func _put(to: int, data: PackedByteArray, reliable: bool) -> void:
 	peer.set_target_peer(to)
 	peer.transfer_channel = 0 if reliable else 1
 	peer.transfer_mode = MultiplayerPeer.TRANSFER_MODE_RELIABLE if reliable else MultiplayerPeer.TRANSFER_MODE_UNRELIABLE
@@ -527,7 +584,7 @@ func _host_receive(from: int, packet: PackedByteArray) -> void:
 			var slot := 1
 			while slot in used:
 				slot += 1
-			_guests[from] = {"keys": 0, "slot": slot, "serial": -1}
+			_guests[from] = {"keys": 0, "slot": slot, "serial": -1, "stamp": 0, "stamp_at": 0}
 			# ENet slows unreliable traffic to a peer that stalls (a guest loading a level) and is slow to speed back
 			# up; snapshots replace each other, so keep sending them at full rate.
 			if peer is ENetMultiplayerPeer:
@@ -547,6 +604,8 @@ func _host_receive(from: int, packet: PackedByteArray) -> void:
 			if _guests.has(from):
 				_guests[from].serial = b.get_u8()
 				_guests[from].keys = b.get_u8()
+				_guests[from].stamp = b.get_u16()
+				_guests[from].stamp_at = Time.get_ticks_msec()
 				stats.inputs_received += 1
 		NetProtocol.Msg.RESET:
 			if _guests.has(from) and level and carts.has(from) and is_instance_valid(carts[from]):
@@ -606,7 +665,11 @@ func _build_snapshot() -> Array[PackedByteArray]:
 		b.put_16(clampi(roundi(cart.hand_power.R), -32768, 32767))
 		var slot: int = 0 if id == 1 else _guests.get(id, {}).get("slot", 0)
 		_show_flag(cart, slot)
-		b.put_u8((1 if cart.fallen else 0) | (slot & 7) << 1)
+		b.put_u8((1 if cart.fallen else 0) | (slot & 7) << 1 | (16 if cart.locked else 0))
+		# For a guest's own cart: its newest keys' stamp, and how long ago they came (prediction, _correct_own).
+		var g: Dictionary = _guests.get(id, {})
+		b.put_u16(g.get("stamp", 0))
+		b.put_u16(mini(Time.get_ticks_msec() - g.get("stamp_at", 0), 65535) if g else 0)
 		var v := cart.frame_velocity()
 		b.put_float(v.x)
 		b.put_float(v.y)
@@ -750,21 +813,34 @@ func _read_snapshot(b: StreamPeerBuffer) -> void:
 		if _newest < 0.0:
 			_render_time = t - interp_delay
 		_newest = t
+	var tick := roundi(t * Engine.physics_ticks_per_second)
 	for c in b.get_u8():
 		var id := b.get_u32()
 		var cart := _puppet(id)
-		cart.hand_power.L = b.get_16()
-		cart.hand_power.R = b.get_16()
+		var power := Vector2(b.get_16(), b.get_16())
 		var flags := b.get_u8()
-		cart.fallen = flags & 1 != 0
+		var stamp := b.get_u16()
+		var held := b.get_u16()
 		_show_flag(cart, flags >> 1 & 7)
-		cart.puppet_velocity = Vector3(b.get_float(), b.get_float(), b.get_float())
-		cart.puppet_spin = b.get_float()
-		var bodies := cart.net_bodies()
+		var velocity := Vector3(b.get_float(), b.get_float(), b.get_float())
+		var spin := b.get_float()
+		var poses := []
 		for i in b.get_u8():
-			var pose := NetProtocol.get_pose(b)
-			if i < bodies.size():
-				_add_sample(bodies[i], t, pose)
+			poses.append(NetProtocol.get_pose(b))
+		if cart == _own:
+			if tick > _own_tick:
+				_own_tick = tick
+				cart.locked = flags & 16 != 0
+				_correct_own(poses, velocity, stamp, held)
+			continue
+		cart.hand_power.L = power.x
+		cart.hand_power.R = power.y
+		cart.fallen = flags & 1 != 0
+		cart.puppet_velocity = velocity
+		cart.puppet_spin = spin
+		var bodies := cart.net_bodies()
+		for i in mini(poses.size(), bodies.size()):
+			_add_sample(bodies[i], t, poses[i])
 	for k in b.get_u16():
 		var i := b.get_u16()
 		var pose := NetProtocol.get_pose(b)
@@ -794,8 +870,84 @@ func _puppet(id: int) -> ShoppingCart:
 	level.add_child(cart)
 	cart.make_puppet()
 	carts[id] = cart
+	_ignore_for_own(cart.net_bodies())
 	_update_status()
 	return cart
+
+
+## Guest: the host's pose of our own cart (`poses`, every body) has come. Its frame is compared with where ours was
+## when the host had our keys up to `stamp` (our clock, ms) and had simulated `held` ms more: that difference is our
+## prediction error, eased out over correction_time. Too far off (or not driving yet): put it where the host has it.
+func _correct_own(poses: Array, velocity: Vector3, stamp: int, held: int) -> void:
+	var bodies := _own.net_bodies()
+	if poses.size() < bodies.size():
+		return
+	var host_pos: Vector3 = poses[0][0]
+	var host_rot: Quaternion = poses[0][1]
+	var now := Time.get_ticks_msec()
+	var then := now - ((now - stamp) & 0xffff) + held
+	var past := _history_at(then) if _own_live else []
+	if not past.is_empty():
+		var err: Vector3 = host_pos - past[0]
+		var rot: Quaternion = (host_rot * (past[1] as Quaternion).inverse()).normalized()
+		if rot.w < 0.0:
+			rot = -rot   # the short way round
+		stats.own_error = maxf(stats.own_error, err.length())
+		if err.length() < snap_distance and rot.get_angle() < PI / 3.0:
+			_err_pos = err
+			_err_rot = rot
+			return
+	if _own_live and past.is_empty():
+		return   # keys too old to compare with (a stall): wait for the next snapshot
+	for i in bodies.size():
+		bodies[i].global_transform = Transform3D(Basis(poses[i][1]), poses[i][0])
+		bodies[i].linear_velocity = velocity
+		bodies[i].angular_velocity = Vector3.ZERO
+		bodies[i].freeze = false
+	for g in _own.groceries:
+		g.freeze = not g.visible   # groceries out of play (a sweep) stay frozen
+	_own_live = true
+	_history.clear()
+	_err_pos = Vector3.ZERO
+	_err_rot = Quaternion.IDENTITY
+
+
+## Our cart's frame pose [position, rotation] at local time `ms`, from the history (nearest tick), or [].
+func _history_at(ms: int) -> Array:
+	if _history.is_empty() or ms < _history[0][0] - 50 or ms > _history[-1][0] + 50:
+		return []
+	var best: Array = _history[0]
+	for h in _history:
+		if absi(h[0] - ms) < absi(best[0] - ms):
+			best = h
+	return [best[1], best[2]]
+
+
+## Guest, every tick: records our cart's pose and eases a slice of the prediction error out of it (and out of the
+## history, so the next snapshot measures only what is left).
+func _drive_own(delta: float) -> void:
+	if _own == null or not is_instance_valid(_own) or not _own_live:
+		return
+	var f := clampf(delta / correction_time, 0.0, 1.0)
+	var dp := _err_pos * f
+	var dq := Quaternion.IDENTITY.slerp(_err_rot, f)
+	_err_pos -= dp
+	_err_rot = (_err_rot * dq.inverse()).normalized()
+	if dp.length_squared() > 1e-10 or dq.get_angle() > 1e-5:
+		var pivot := _own.frame.global_position
+		var rot := Basis(dq)
+		for b in _own.net_bodies():
+			var tf := b.global_transform
+			b.global_transform = Transform3D(rot * tf.basis, pivot + dp + rot * (tf.origin - pivot))
+			b.linear_velocity = rot * b.linear_velocity
+			b.angular_velocity = rot * b.angular_velocity
+		for h in _history:
+			h[1] += dp
+			h[2] = (dq * (h[2] as Quaternion)).normalized()
+	var now := Time.get_ticks_msec()
+	_history.append([now, _own.frame.global_position, _own.frame.global_transform.basis.get_rotation_quaternion()])
+	while not _history.is_empty() and _history[0][0] < now - history_length * 1000.0:
+		_history.pop_front()
 
 
 func _add_sample(body: RigidBody3D, t: float, pose: Array) -> void:
@@ -833,9 +985,11 @@ func _guest_tick(delta: float) -> void:
 		var b := NetProtocol.writer(NetProtocol.Msg.INPUT)
 		b.put_u8(level_serial)
 		b.put_u8(keys)
+		b.put_u16(Time.get_ticks_msec() & 0xffff)
 		_send(1, b.data_array, false)
 		_keys_sent = keys
 		_input_clock = 0.0
+	_drive_own(delta)
 	if _newest < 0.0:
 		return
 	# Show the world interp_delay behind the newest snapshot; drift back toward that if packets bunch up.
