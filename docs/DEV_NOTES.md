@@ -1656,6 +1656,10 @@ and 36 years, so patches, fills and crack sealant show up. Simulating all 20 sec
 map (FORMAT_RF `.res`) into `assets/asphalt/baked/asphalt_lot/` and sets the section's `color_map`/`height_map`. A
 section with both set skips the simulation: the lot now loads in about 3.5 s. zack plans a parking lot generator
 built on this later.
+Later the same night zack asked for the repaired column between the smoother sections and the rutted ones. The
+columns from the spawn are now 8 and 16 years, then the road crew column, then 24 and 32 years. The bakes are named
+by node, so moving the sections didn't need a re-bake.
+
 
 ## Multiplayer: the joiner's own cart is predicted (2026-11-22)
 
