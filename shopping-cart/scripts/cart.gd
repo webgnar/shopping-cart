@@ -11,6 +11,7 @@ extends Node3D
 ##    the folded seat flap (its 0 stop), so when the gate swings up it carries it up; it opens 30 degrees into the basket.
 ##  - SeatFlap (the seat, wire and plastic): its loops hook round a gate wire and are its hinge. Folded it stands up
 ##    against the gate's front (its 0 stop); pulled down it lies level as a seat at 98 degrees.
+##    Both hinges swing freely (no friction or damping).
 ##  - Groceries: loose bodies in the basket; add or move them under the Groceries node.
 ##  - Model: the rigged model (assets/models/shopping_cart.glb); its pivots follow the physics bodies.
 ## Cart local axes: nose = +X, up = +Y, left = -Z. Units: metres, kg, newtons.
@@ -202,8 +203,8 @@ func _ready() -> void:
 
 
 ## The cart's own bodies never collide with each other (the hinges hold them together), except these pairs: the
-## folded seat flap stands against the gate's front.
-const TOUCHING_PARTS := [["Gate", "SeatFlap"]]
+## backrest lies over the folded seat flap and holds it against the gate.
+const TOUCHING_PARTS := [["ChildSeat", "SeatFlap"]]
 
 func _process(_delta: float) -> void:
 	for l in _links:

@@ -5,6 +5,24 @@ triangle count and file size for new models, judgment calls, what was left out, 
 
 
 
+## 2026-11-22: Backrest and seat swing freely
+
+zack: they're loose hinges, they should swing freely; zack will add friction later. Removed the hinge friction
+(SeatFlapHinge / ChildSeatHinge motors) and the angular_damp 4 on ChildSeat and SeatFlap. The backrest still touches the
+seat (TOUCHING_PARTS). The "seat rides gate" drive check is gone with the friction. Note: the damping was added earlier
+because the seat rattled on a raised gate in a stack and stacks never settled; watch for that.
+
+## 2026-11-22: Folded child seat rides with the gate
+
+zack: when the gate swings in (a hard stop), the seat stays where it was. With nothing holding them, a stop from
+4.5 m/s flung the backrest and seat fully open (30 and 98 degrees) while the gate swung 30 degrees. Now:
+- ChildSeatHinge and SeatFlapHinge have hinge friction: motor on, target velocity 0, max impulse 0.03 (backrest,
+  about 3.6 N m) and 0.005 (seat, about 0.6 N m). A hand (drive_test's 8-10 N pulls) still opens and folds them.
+- The backrest now touches the seat (TOUCHING_PARTS ChildSeat/SeatFlap, replacing Gate/SeatFlap, which the loop
+  hinge made unnecessary), so it holds the folded seat against the gate. Boxes trimmed so they don't overlap folded:
+  backrest 1.2 cm thick, seat box 9 x 0.6 cm on the plastic's gate side (1.4 mm clear of the backrest).
+- drive_test "seat rides gate": a hard stop swings the gate 40 degrees, backrest and seat stay within 1 degree of it.
+
 ## 2026-11-22: metal scrapes per cart material, from zack's pipe-on-concrete recording
 
 zack: "we need a sound for when metal from the cart is scraping against the ground ... different sounds for the
