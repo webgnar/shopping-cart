@@ -6,7 +6,9 @@ extends SceneTree
 ##  - a wheelie: the wheels in the air go quiet while the others roll;
 ##  - a spin on the spot: the wheels slide sideways and scrub;
 ##  - landings, by each wheel's speed into the ground: a wheelie set down slams, a 5 cm drop taps, a 30 cm drop
-##    slams, a cart set down gently is silent.
+##    slams, a cart set down gently is silent;
+##  - the frame (scenes/cart/contact_sound.tscn): silent while the cart rolls on its wheels; tipped over, it hits the
+##    floor and scrapes as it slides, by the friction the physics reports, and goes quiet once it stops.
 ## Run from the Godot project folder:
 ##   godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd
 
@@ -55,7 +57,13 @@ static func playing(cart: ShoppingCart) -> Array:
 		for p in [ws.roll_player, ws.scrub_player]:
 			if p.playing:
 				out.append("%s %s" % [k, p.name])
+	if frame_sound(cart).scrape_player.playing:
+		out.append("frame scrape")
 	return out
+
+
+static func frame_sound(cart: ShoppingCart) -> ContactSound:
+	return cart.frame.get_node("ContactSound")
 
 
 func _hold(actions: Array, seconds: float, each := Callable()) -> void:
@@ -103,8 +111,12 @@ func _run() -> void:
 		var knocks0 := 0
 		for k in ws:
 			knocks0 += ws[k].knocks + ws[k].landings
+		var fs := frame_sound(cart)
+		var frame0 := fs.hits
+		var frame_scrape := 0.0
 		for i in int(0.9 * Engine.physics_ticks_per_second):
 			await physics_frame
+			frame_scrape = maxf(frame_scrape, fs.scrape_gain)
 			for k in ws:
 				max_scrub = maxf(max_scrub, ws[k].scrub_gain)
 		Input.action_release("push_left")
@@ -119,10 +131,10 @@ func _run() -> void:
 		var want: String = c[3]
 		var floor_ok := floors.size() == 1 and (want == "" or floors.has(want))
 		_report(rest_ok and floor_ok and all_rolling and ws.RL.roll_gain > slow.gain and ws.RL.roll_player.pitch_scale > slow.pitch
-			and max_scrub < 0.2 and knocks == 0, c[0],
-			"wheels on %s (want %s), all four rolling %s; RL %.2f m/s gain %.2f pitch %.2f -> %.2f m/s gain %.2f pitch %.2f; scrub %.2f, knocks %d" % [
+			and max_scrub < 0.2 and knocks == 0 and fs.hits == frame0 and frame_scrape == 0.0, c[0],
+			"wheels on %s (want %s), all four rolling %s; RL %.2f m/s gain %.2f pitch %.2f -> %.2f m/s gain %.2f pitch %.2f; scrub %.2f, knocks %d; frame hits %d, scrape %.2f" % [
 			floors.keys(), want if want else "any", all_rolling, slow.speed, slow.gain, slow.pitch, ws.RL.roll_speed,
-			ws.RL.roll_gain, ws.RL.roll_player.pitch_scale, max_scrub, knocks])
+			ws.RL.roll_gain, ws.RL.roll_player.pitch_scale, max_scrub, knocks, fs.hits - frame0, frame_scrape])
 		await _brake_to_rest(level)
 		_report(playing(cart).is_empty(), c[0] + " at rest", "quiet: playing %s" % [playing(cart)])
 		level.queue_free()
@@ -190,6 +202,31 @@ func _run() -> void:
 		var got := "silent" if heard == 0 else ("slam" if slammed >= 4 else ("tap" if slammed == 0 else "mixed"))
 		_report(got == d[1], "drop %d cm" % roundi(d[0] * 100), "%s (want %s): %d landings, %d slams, hit at %.2f m/s" % [
 			got, d[1], heard, slammed, impact])
+
+	# Tipped over: the frame hits the floor, scrapes as it slides (friction power from the contacts), then goes quiet.
+	level.spawn_cart(spawn.global_position, spawn.global_rotation.y)
+	await _wait(1.0)
+	cart = level.cart
+	var fs := frame_sound(cart)
+	await _hold(["push_left", "push_right"], 0.8)
+	cart.frame.apply_torque_impulse(cart.frame.global_transform.basis.x * 80.0)
+	var t := {"scrape": 0, "power": 0.0, "slip": 0.0, "floor": "-"}
+	for i in 3 * Engine.physics_ticks_per_second:
+		await physics_frame
+		if fs.scrape_player.playing and fs.scrape_gain > 0.2:
+			t.scrape += 1
+		if fs.power > t.power:
+			t.power = fs.power
+			t.slip = fs.slip
+			t.floor = fs.floor_sound.resource_path.get_file().get_basename() if fs.floor_sound else "-"
+	_report(fs.slams >= 1 and t.scrape > 10 and cart.frame.global_transform.basis.y.y < 0.5, "tipped over",
+		"frame hit the floor at %.2f m/s (%d hits, %d slams); scraped %d ticks, up to %.0f W sliding %.2f m/s on %s" % [
+		fs.last_hit, fs.hits, fs.slams, t.scrape, t.power, t.slip, t.floor])
+	for i in 6 * Engine.physics_ticks_per_second:
+		await physics_frame
+		if cart.frame.linear_velocity.length() < 0.02 and not fs.scrape_player.playing:
+			break
+	_report(not fs.scrape_player.playing, "tipped over at rest", "scrape playing %s, %.1f W" % [fs.scrape_player.playing, fs.power])
 
 	print("ROLLING SOUND: %s" % ("all passed" if failures == 0 else "%d FAILED" % failures))
 	quit(1 if failures else 0)
