@@ -23,12 +23,14 @@ All paths are under `shopping-cart/`.
 ## Asphalt simulator: the files that matter
 
 The asphalt lab is a 2D prototype for procedural roads. It shows a road section ageing year by year (cracks,
-potholes) and getting repaired, drawn as a colour map and a height map. It's 2D only for now, with no in-game or
-3D work until zack says otherwise.
+potholes) and getting repaired, drawn as a colour map and a height map. In 3D it only goes as far as the lab's
+3D preview and the asphalt test lot, until zack asks for more.
 
 - `scripts/asphalt/asphalt_sim.gd` (`AsphaltSim`): the simulation. `bake_height()` gives real heights in metres.
 - `scripts/asphalt/asphalt_canvas.gd`: draws the maps. `scripts/asphalt/asphalt_lab.gd`: the lab UI.
 - `scenes/asphalt/asphalt_lab.tscn`: the lab scene. `assets/asphalt/`: the surface shader and grain.
+- `scenes/asphalt/asphalt_section.tscn` (`asphalt_section.gd`): a 10 x 10 m section in 3D, displaced and with matching
+  collision. `scenes/levels/asphalt_lot.tscn` (console `asphalt`): a 40 x 40 m test lot of 16 sections aged 8 to 32 years.
 - Test: `godot --headless -s res://tests/asphalt_test.gd`. Screenshots:
   `xvfb-run godot --rendering-method gl_compatibility -s res://tests/asphalt_screenshot.gd -- <out dir>`.
 - Reference: zack's Asphalt Cracking Quick Guide (crack types), in the project files under `asphalt/`.

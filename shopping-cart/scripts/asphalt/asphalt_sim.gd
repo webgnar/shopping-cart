@@ -43,6 +43,7 @@ const HOLE_MAX := 0.09   ## m: a pothole stops deepening at the base course
 
 @export_group("Road layout")
 @export var shoulder := 0.7                             ## m of unsealed gravel shoulder each side
+@export var unsealed_edges := true                      ## the outer edges crack and fret (off where more pavement butts on)
 @export var lane_joint_x := 5.0                         ## m: the longitudinal paving joint between the lanes
 @export var wheel_paths := PackedFloat32Array([1.95, 3.75, 6.25, 8.05])  ## m: centre of each wheel path
 @export var wheel_path_width := 0.35                    ## m: spread of the wheel load either side of a path
@@ -563,7 +564,7 @@ func _initiate(age: float, ox: float) -> void:
 	# Fatigue (crocodile) cells in the wheel paths and block cracking across the road: edges of the networks open.
 	_open_edges(age, ox)
 	# Edge cracking near the unsealed shoulders.
-	if age > 3.0:
+	if unsealed_edges and age > 3.0:
 		var rate := 0.5 * traffic * climate * drainage / structure * clampf((age - 3.0) / 6.0, 0.0, 1.0)
 		if _rng.randf() < rate * DT:
 			var left := _rng.randf() < 0.5
@@ -763,7 +764,7 @@ func _reflect() -> void:
 
 
 func _edges(age: float) -> void:
-	if age < 4.0:
+	if not unsealed_edges or age < 4.0:
 		return
 	# Fretting: traffic on the unsupported edge breaks it off into the shoulder, row by row.
 	var k := 0.025 * traffic * climate * drainage / structure * clampf((age - 4.0) / 6.0, 0.0, 1.0)

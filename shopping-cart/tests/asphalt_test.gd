@@ -92,6 +92,17 @@ func _run() -> void:
 	sim.seek(15.0)
 	_check("seek back replays", is_equal_approx(sim.stats().crack_m, s15.crack_m), "%.1f m" % sim.stats().crack_m)
 	_check("30 years simulate quickly", Time.get_ticks_msec() - t0 < 4000, "years 15-24 in %d ms" % (Time.get_ticks_msec() - t0))
+	# Lot sections butt onto more pavement: no shoulder, so no edge cracks or fretting.
+	var lot := _sim([], 3)
+	lot.shoulder = 0.0
+	lot.unsealed_edges = false
+	lot.reset()
+	lot.advance_to(22.0)
+	var lot_fret := 0.0
+	for i in lot.ny:
+		lot_fret = maxf(lot_fret, maxf(lot.edge_l[i], lot.edge_r[i]))
+	_check("sealed edges don't crack or fret", lot.stats().by_kind[K.EDGE] == 0.0 and lot_fret == 0.0,
+		"%.1f m edge cracks, %.2f m fretted" % [lot.stats().by_kind[K.EDGE], lot_fret])
 
 	# Potholes pluck out whole crocodile cells, and the height map carries real depths.
 	var h18 := _sim_at(18.0)

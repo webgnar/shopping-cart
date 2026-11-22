@@ -1,0 +1,84 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/asphalt/asphalt_section.gd" id="1_section"]
+[ext_resource type="Script" path="res://scripts/asphalt/asphalt_sim.gd" id="2_sim"]
+[ext_resource type="Script" path="res://scripts/asphalt/asphalt_canvas.gd" id="3_canvas"]
+[ext_resource type="Shader" path="res://assets/asphalt/asphalt_base.gdshader" id="4_shader"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/asphalt_grain.tres" id="5_grain"]
+[ext_resource type="Texture2D" uid="uid://c1kl7q3ps6434" path="res://assets/asphalt/textures/fresh_hotmix.png" id="6_hotmix"]
+[ext_resource type="Texture2D" uid="uid://p6r5d5su53f4" path="res://assets/asphalt/textures/cold_mix_fill.png" id="7_coldmix"]
+[ext_resource type="Texture2D" uid="uid://chnpmc4mkdmib" path="res://assets/asphalt/textures/crack_sealant.png" id="8_sealant"]
+[ext_resource type="Texture2D" uid="uid://r2fxfjkqgqib" path="res://assets/asphalt/textures/chip_seal.png" id="9_chip"]
+[ext_resource type="Texture2D" uid="uid://cr15okrvj6njp" path="res://assets/asphalt/textures/pothole_floor.png" id="10_pothole"]
+[ext_resource type="Texture2D" uid="uid://dt607ar3mgodg" path="res://assets/asphalt/textures/broken_asphalt.png" id="11_broken"]
+[ext_resource type="Texture2D" uid="uid://bcfgjyp2yokpn" path="res://assets/asphalt/textures/base_course.png" id="12_base"]
+[ext_resource type="Texture2D" uid="uid://dq4ocup0ey4je" path="res://assets/asphalt/textures/gravel_shoulder.png" id="13_shoulder"]
+[ext_resource type="Shader" path="res://assets/asphalt/asphalt_surface_3d.gdshader" id="14_surface3d"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="15_asphalt"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_color"]
+resource_local_to_scene = true
+shader = ExtResource("4_shader")
+shader_parameter/chip_texture = ExtResource("9_chip")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_surface"]
+resource_local_to_scene = true
+shader = ExtResource("14_surface3d")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_surface"]
+size = Vector2(10, 10)
+subdivide_width = 499
+subdivide_depth = 499
+
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_surface"]
+resource_local_to_scene = true
+
+[node name="AsphaltSection" type="Node3D" node_paths=PackedStringArray("sim", "color_viewport", "surface", "collision")]
+script = ExtResource("1_section")
+sim = NodePath("Sim")
+color_viewport = NodePath("ColorViewport")
+surface = NodePath("Surface")
+collision = NodePath("Body/Shape")
+
+[node name="Sim" type="Node" parent="."]
+script = ExtResource("2_sim")
+shoulder = 0.0
+unsealed_edges = false
+
+[node name="ColorViewport" type="SubViewport" parent="."]
+disable_3d = true
+size = Vector2i(1024, 1024)
+render_target_update_mode = 1
+
+[node name="Base" type="ColorRect" parent="ColorViewport"]
+material = SubResource("ShaderMaterial_color")
+offset_right = 1024.0
+offset_bottom = 1024.0
+mouse_filter = 2
+
+[node name="Damage" type="Node2D" parent="ColorViewport" node_paths=PackedStringArray("sim", "base")]
+texture_filter = 4
+texture_repeat = 2
+script = ExtResource("3_canvas")
+sim = NodePath("../../Sim")
+mode = 0
+px_per_m = 102.4
+base = NodePath("../Base")
+grain = ExtResource("5_grain")
+patch_texture = ExtResource("6_hotmix")
+fill_texture = ExtResource("7_coldmix")
+sealant_texture = ExtResource("8_sealant")
+pothole_texture = ExtResource("10_pothole")
+broken_texture = ExtResource("11_broken")
+base_course_texture = ExtResource("12_base")
+shoulder_texture = ExtResource("13_shoulder")
+
+[node name="Surface" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_surface")
+surface_material_override/0 = SubResource("ShaderMaterial_surface")
+
+[node name="Body" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("15_asphalt")
+
+[node name="Shape" type="CollisionShape3D" parent="Body"]
+shape = SubResource("HeightMapShape3D_surface")
