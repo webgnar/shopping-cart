@@ -1568,3 +1568,10 @@ the heights at 2 cm. The heights drive both the displaced surface and a HeightMa
 divided by 0.02), so the wheels drop into cracks and potholes (down to -9 cm). The sections have no shoulder, and
 the sim's new `unsealed_edges = false` stops edge cracking and fretting where sections meet. Loading takes about
 15 s in the cloud container; most of it is the older sections' simulation.
+
+## Asphalt: repairs come back up in the height map (Nov 22 2026)
+
+`bake_height()` used to cut every crack after stamping patches and fills, so a filled pothole or a new patch
+still showed the old cracks 5 cm deep. Now it keeps the year each pixel was last repaired, and only cracks newer
+than that repair cut it (patch seams and failed fills still come back). Sealed cracks are filled flush, with the
+overband standing `SEAL_PROUD` (1.5 mm) above the road until the sealant debonds.
