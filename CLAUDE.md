@@ -105,6 +105,10 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   exported) under `Displays`, giant `Inflatable`s under `Bonuses` and `BonusStation`s under `Stations`; HUD
   `scenes/ui/sweep_hud.tscn`. The supermarket has one. Console `sweep` (`sweep nobots`, `sweep 60`) loads it and
   starts; in multiplayer the host runs it (SWEEP message). Rebuild its models with `tools/supermarket_models.py`.
+- `scenes/asphalt/asphalt_lab.tscn` — the 2D asphalt lab: a road section ageing year by year (the crack types in
+  zack's Asphalt Cracking Quick Guide, potholes) and being repaired (crack filling, pothole fill, heavy patches, chip
+  seal, overlay), drawn as a colour map and a height map. `scripts/asphalt/asphalt_sim.gd` simulates,
+  `asphalt_canvas.gd` draws, `assets/asphalt/asphalt_base.gdshader` is the surface. Prototype for procedural roads.
 - `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun, and the garage's sky shader
   (`skyline_sky.gdshader`). `assets/manhattan_skyline/` (not in git) — the garage's Manhattan skyline from
   zack's Google Earth tiles, made by `sh tools/manhattan_skyline.sh`; the garage shows it only where it exists.
@@ -150,3 +154,5 @@ From `shopping-cart/`:
 - Race screenshots: `xvfb-run godot --rendering-method gl_compatibility -s res://tests/race_screenshot.gd -- <out dir>`
 - Bot carts drive themselves in every level: `godot --headless --fixed-fps 120 -s res://tests/bot_test.gd`
 - Endless sandbox (chunks load, no holes, flush edges, floors, hill): `godot --headless --fixed-fps 120 -s res://tests/sandbox_test.gd`
+- Asphalt lab (ageing, crack types, repairs, replay): `godot --headless -s res://tests/asphalt_test.gd`
+- Asphalt lab screenshots (stages, close-ups, height maps): `xvfb-run godot --rendering-method gl_compatibility -s res://tests/asphalt_screenshot.gd -- <out dir>`
