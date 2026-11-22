@@ -3,6 +3,49 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-22: Asphalt lab, a 2D prototype of procedural asphalt
+
+zack wants procedural asphalt for the roads and lots, starting in 2D: how cracks and potholes develop and how the
+road gets repaired. Built from the "Asphalt Cracking Quick Guide" (Austroads crack types, in the project files) and a
+note on why asphalt breaks down (oxidation, UV, water and freeze-thaw, heavy traffic, chemicals, poor construction).
+
+`scenes/asphalt/asphalt_lab.tscn` (open it and press F6): a 10 x 10 m road section, two 4.3 m lanes meeting at a
+paving joint at x = 5 m, wheel paths 0.9 m either side of each lane centre, 0.7 m gravel shoulders. One pixel is
+4.9 mm (2048 px), drawn into two SubViewports: a colour map and a height map (0.5 grey = design level, 0.1 m to
+white or black), meant to feed the 3D roads later. A timeline (0 to 40 years), Play, five repair buttons, a road-crew
+toggle, condition sliders (pavement strength, traffic, freeze-thaw and sun, water, surface bond) and a seed.
+
+- `scripts/asphalt/asphalt_sim.gd` (AsphaltSim): the simulation, in 0.2 year steps. Cracks are polylines growing
+  2.5 cm at a time on a 2 cm occupancy grid, so a crack that runs into another joins it (that is what closes
+  fatigue branches into crocodile-skin polygons and block cracks into rectangles). A 10 cm cell grid holds subgrade
+  weakness (noise), wheel load, fatigue, water damage, pothole depth, fills and patches. Crack types: transverse
+  (thermal, spacing 5 m closing to 1.4 m as the binder hardens), lane joint, wheel-path longitudinal (fatigue past
+  1), fatigue branches (past 1.6, until about 30 cm of crack per 10 cm cell), block (after 5 years, off the long
+  cracks, square to the road), edge cracks and fretting (the pavement edge breaks back up to 0.6 m into the
+  shoulder), slippage crescents (sets of 2 to 4 where the bond is poor), reflection and patch seam cracks. Cracks
+  open about 1.6 mm a year while unsealed, up to 30 mm. Water through open cracks in fatigue-cracked asphalt builds
+  damage until a pothole breaks out; potholes deepen to 9 cm and eat into cracked neighbours.
+- Repairs: crack filling (overbanded sealant 6 to 9 cm wide; holds 6 years, then debonds in pieces and the crack
+  opens again), throw-and-roll pothole fill (cold mix blobs; they ravel out again within a few years), heavy
+  patching (saw-cut rectangles round potholes, fills and the worst fatigue, full depth; cracks inside are cut out,
+  each edge cracks open 2 to 6 years later), chip seal and mill-and-overlay (old cracks and patch edges come back as
+  reflection cracks: wide ones first, 0.4 to 2.5 years through a seal, 1.5 to 5 through an overlay). Repairs done by
+  hand are kept as events, so scrubbing back and forward replays them; a new repair drops later ones.
+- `scripts/asphalt/asphalt_canvas.gd` (AsphaltCanvas) draws patches, cracks (each 15 cm piece at the width of its
+  age, spalled edges past 5 mm), sealant, fills, potholes and fretted shoulders; `assets/asphalt/asphalt_base.gdshader`
+  draws the surface: binder from black to grey over about 9 years, 1 to 2 cm aggregate showing and then ravelling
+  out, tyre polish and ruts in the wheel paths, oil drips down the lanes, and a chip seal look.
+- Pacing with default settings: lane joint opens by year 2, transverse cracks from year 3, wheel-path cracks around
+  year 10, crocodile cracking from about 14, potholes from about 17, a failed road by 25. A thin pavement (strength
+  0.6) is at condition 50 at year 12 against 95. The road crew toggle keeps the condition index above 70 for 40
+  years with about 16 repairs.
+- Judgment calls: everything is top-down 2D; no road paint yet; the section doesn't tile; potholes are drawn as
+  overlapping jittered blobs per 10 cm cell; the condition index is a rough deduct score, not real PCI.
+- Speed: 30 years simulate in about 2 s on the cloud box (a failed road has thousands of cracks); scrubbing back
+  replays from year 0, so the lab seeks when you let go of the timeline.
+- Checks: `tests/asphalt_test.gd` (31 checks: ageing, every crack type, repairs, determinism, the lab's buttons) and
+  `tests/asphalt_screenshot.gd` (stages, close-ups, height maps, the lab).
+
 ## 2026-11-21: Cart model from the restructured base model
 
 zack asked to switch the cart to the restructured `ShoppingCart_BaseModel.blend` (commit 9c2994f: parts renamed and
