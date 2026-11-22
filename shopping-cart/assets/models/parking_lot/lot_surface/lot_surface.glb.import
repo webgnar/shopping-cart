@@ -44,7 +44,7 @@ _subresources={
 "asphalt": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/asphalt.tres",
-"use_external/path": "res://assets/parking_lot/materials/asphalt.tres"
+"use_external/path": "uid://nbqmsaws5o7"
 },
 "bollard_yellow": {
 "use_external/enabled": true,
@@ -54,7 +54,7 @@ _subresources={
 "curb_concrete": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/curb_concrete.tres",
-"use_external/path": "res://assets/parking_lot/materials/curb_concrete.tres"
+"use_external/path": "uid://b8gfne205ee65"
 },
 "curb_red": {
 "use_external/enabled": true,
@@ -64,7 +64,7 @@ _subresources={
 "sidewalk": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/sidewalk.tres",
-"use_external/path": "res://assets/parking_lot/materials/sidewalk.tres"
+"use_external/path": "uid://m585ioavo0en"
 }
 }
 }

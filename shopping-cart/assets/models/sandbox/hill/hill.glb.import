@@ -44,7 +44,7 @@ _subresources={
 "asphalt": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/asphalt.tres",
-"use_external/path": "res://assets/parking_lot/materials/asphalt.tres"
+"use_external/path": "uid://nbqmsaws5o7"
 },
 "grass": {
 "use_external/enabled": true,
@@ -59,7 +59,7 @@ _subresources={
 "sidewalk": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/sidewalk.tres",
-"use_external/path": "res://assets/parking_lot/materials/sidewalk.tres"
+"use_external/path": "uid://m585ioavo0en"
 }
 }
 }

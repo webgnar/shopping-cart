@@ -44,7 +44,7 @@ _subresources={
 "concrete": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/concrete.tres",
-"use_external/path": "res://assets/parking_lot/materials/concrete.tres"
+"use_external/path": "uid://u8xys7pxbpo2"
 },
 "dark_metal": {
 "use_external/enabled": true,
@@ -54,12 +54,12 @@ _subresources={
 "facade": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/facade.tres",
-"use_external/path": "res://assets/parking_lot/materials/facade.tres"
+"use_external/path": "uid://8287542tfil0"
 },
 "facade_trim": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/facade_trim.tres",
-"use_external/path": "res://assets/parking_lot/materials/facade_trim.tres"
+"use_external/path": "uid://c4pnc1ffs28jj"
 },
 "led_lens": {
 "use_external/enabled": true,
@@ -79,12 +79,12 @@ _subresources={
 "roof_tile": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/roof_tile.tres",
-"use_external/path": "res://assets/parking_lot/materials/roof_tile.tres"
+"use_external/path": "uid://unf0n2qdihs6"
 },
 "sidewalk": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/sidewalk.tres",
-"use_external/path": "res://assets/parking_lot/materials/sidewalk.tres"
+"use_external/path": "uid://m585ioavo0en"
 },
 "sign_green": {
 "use_external/enabled": true,
@@ -94,7 +94,7 @@ _subresources={
 "soffit": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/soffit.tres",
-"use_external/path": "res://assets/parking_lot/materials/soffit.tres"
+"use_external/path": "uid://nkav4jawnvdc"
 },
 "store_glass": {
 "use_external/enabled": true,

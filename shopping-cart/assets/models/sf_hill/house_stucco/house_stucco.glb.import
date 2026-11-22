@@ -44,7 +44,7 @@ _subresources={
 "concrete": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/concrete.tres",
-"use_external/path": "res://assets/parking_lot/materials/concrete.tres"
+"use_external/path": "uid://u8xys7pxbpo2"
 },
 "dark_metal": {
 "use_external/enabled": true,
@@ -74,7 +74,7 @@ _subresources={
 "roof_tile": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/roof_tile.tres",
-"use_external/path": "res://assets/parking_lot/materials/roof_tile.tres"
+"use_external/path": "uid://unf0n2qdihs6"
 },
 "window_glass": {
 "use_external/enabled": true,
