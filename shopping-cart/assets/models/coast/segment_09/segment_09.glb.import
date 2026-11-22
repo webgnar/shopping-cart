@@ -44,7 +44,7 @@ _subresources={
 "asphalt": {
 "use_external/enabled": true,
 "use_external/fallback_path": "res://assets/parking_lot/materials/asphalt.tres",
-"use_external/path": "res://assets/parking_lot/materials/asphalt.tres"
+"use_external/path": "uid://nbqmsaws5o7"
 },
 "cliff_rock": {
 "use_external/enabled": true,

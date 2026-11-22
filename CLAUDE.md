@@ -1,7 +1,8 @@
 # Shopping Cart
 
-A Godot 4.7 game (Jolt physics, 120 Hz) in `shopping-cart/`. **The work here is the cart's physics.** Start from
-the files below and leave the rest of the repo alone unless the task names it.
+A Godot 4.7 game (Jolt physics, 120 Hz) in `shopping-cart/`. **Until further notice there are only two areas of
+work: the cart's physics and the asphalt simulator.** Start from the files below and leave the rest of the repo
+alone unless the task names it.
 
 ## Cart physics: the files that matter
 
@@ -19,9 +20,22 @@ All paths are under `shopping-cart/`.
 - `tests/drive_test.gd`: presses the real keys and checks that the cart does what the design says.
 - `tools/rig_cart.py` (repo root): builds the cart model and its pivots in Blender. Only touch it for model changes.
 
+## Asphalt simulator: the files that matter
+
+The asphalt lab is a 2D prototype for procedural roads. It shows a road section ageing year by year (cracks,
+potholes) and getting repaired, drawn as a colour map and a height map. It's 2D only for now, with no in-game or
+3D work until zack says otherwise.
+
+- `scripts/asphalt/asphalt_sim.gd` (`AsphaltSim`): the simulation. `bake_height()` gives real heights in metres.
+- `scripts/asphalt/asphalt_canvas.gd`: draws the maps. `scripts/asphalt/asphalt_lab.gd`: the lab UI.
+- `scenes/asphalt/asphalt_lab.tscn`: the lab scene. `assets/asphalt/`: the surface shader and grain.
+- Test: `godot --headless -s res://tests/asphalt_test.gd`. Screenshots:
+  `xvfb-run godot --rendering-method gl_compatibility -s res://tests/asphalt_screenshot.gd -- <out dir>`.
+- Reference: zack's Asphalt Cracking Quick Guide (crack types), in the project files under `asphalt/`.
+
 ## Testing a cart change
 
-Run only the drive test, from `shopping-cart/`:
+Run only the drive test, from `shopping-cart/` (for an asphalt change, run only `asphalt_test.gd`):
 
     godot --headless --fixed-fps 120 -s res://tests/drive_test.gd
 
@@ -31,9 +45,9 @@ when the task changes that part of the game, or when someone asks for it. The fu
 
 ## What to skip
 
-These folders aren't about the cart, so don't read or search them unless the task is about them:
-`scenes/levels`, `scenes/race`, `scenes/sweep`, `scenes/net`, `scenes/asphalt`, `scenes/coast`, `scenes/props`,
-`scripts/net`, `scripts/race`, `scripts/sweep`, `scripts/asphalt`, `scripts/levels`, `scripts/props`, `scripts/cart_bot.gd`,
+These folders aren't about the cart or the asphalt, so don't read or search them unless the task is about them:
+`scenes/levels`, `scenes/race`, `scenes/sweep`, `scenes/net`, `scenes/coast`, `scenes/props`,
+`scripts/net`, `scripts/race`, `scripts/sweep`, `scripts/levels`, `scripts/props`, `scripts/cart_bot.gd`,
 `assets/models`, `assets/textures`, `assets/audio`, `assets/navigation`, `addons/`, `services/`, `Reference Images/`,
 the root `tools/` builders, and the `.blend` files.
 
