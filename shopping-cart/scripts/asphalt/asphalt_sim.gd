@@ -37,6 +37,7 @@ const STEP := 0.025      ## m: spacing of the points along a crack
 const DT := 0.2          ## years per simulation step
 const SEAL_LIFE := 6.0   ## years crack sealant holds before it debonds
 const HOLE_MAX := 0.09   ## m: a pothole stops deepening at the base course
+const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the road
 
 @export var seed := 1
 @export var size := Vector2(10.0, 10.0)                 ## m: X across the road, Y along it
@@ -319,19 +320,47 @@ func bake_height(res := 0.01) -> PackedFloat32Array:
 			row[ix] = v
 		for ix in w:
 			out[iy * w + ix] = row[ix]
-	# Patches and fills sit a few millimetres proud (fresh mix, rolled).
+	# Patches and fills sit a few millimetres proud (fresh mix, rolled). They bury every crack that was there
+	# before them: `covered` holds the year each pixel was last repaired, and only cracks newer than that cut it.
+	var covered := PackedFloat32Array()
+	covered.resize(w * h)
+	covered.fill(-1.0)
 	for p in patches:
 		var rect: Rect2 = p.rect
 		for iy in range(int(ceil(rect.position.y / res)), int(rect.end.y / res) + 1):
 			for ix in range(int(ceil(rect.position.x / res)), int(rect.end.x / res) + 1):
 				if iy >= 0 and iy < h and ix >= 0 and ix < w:
 					out[iy * w + ix] = 0.003
+					covered[iy * w + ix] = maxf(covered[iy * w + ix], p.born)
 	for i in nx * ny:
 		if fill_born[i] >= 0.0:
 			_stamp_disk(out, w, h, res, cell_center(i), 0.1, 0.006, false)
-	# Cracks.
+			_stamp_disk(covered, w, h, res, cell_center(i), 0.1, fill_born[i], false)
+	# Filled cracks: the sealant fills the crack flush and the overband stands a little proud, until it debonds.
+	var surface := PackedFloat32Array(out)
 	for c in cracks:
-		if not c.alive or c.pts.size() < 2:
+		if not c.alive or c.pts.size() < 2 or not c.sealed(time):
+			continue
+		for k in c.pts.size() - 1:
+			var half := 0.03 + c.width(k, c.seal_from)
+			var a := c.pts[k]
+			var b := c.pts[k + 1]
+			var x0 := maxi(0, int((minf(a.x, b.x) - half) / res))
+			var x1 := mini(w - 1, int(ceil((maxf(a.x, b.x) + half) / res)))
+			var y0 := maxi(0, int((minf(a.y, b.y) - half) / res))
+			var y1 := mini(h - 1, int(ceil((maxf(a.y, b.y) + half) / res)))
+			var ab := b - a
+			var len2 := maxf(ab.length_squared(), 1e-10)
+			for iy in range(y0, y1 + 1):
+				for ix in range(x0, x1 + 1):
+					var q := Vector2(ix * res, iy * res)
+					var t := clampf((q - a).dot(ab) / len2, 0.0, 1.0)
+					if q.distance_to(a + ab * t) <= half:
+						var j := iy * w + ix
+						out[j] = maxf(out[j], surface[j] + SEAL_PROUD)
+	# Open cracks.
+	for c in cracks:
+		if not c.alive or c.pts.size() < 2 or c.sealed(time):
 			continue
 		for k in c.pts.size() - 1:
 			var cw := c.width(k, time)
@@ -358,7 +387,7 @@ func bake_height(res := 0.01) -> PackedFloat32Array:
 					elif d <= spall:
 						v = -spall_depth * (1.0 - (d - half) / maxf(spall - half, 1e-4))
 					var j := iy * w + ix
-					if v < out[j]:
+					if v < out[j] and c.born[k + 1] > covered[j]:
 						out[j] = v
 	# Potholes: whole crocodile cells plucked out, steep-sided, down to the hole's depth; a disk where no cell is.
 	for k in plucked.size():

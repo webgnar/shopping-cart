@@ -154,6 +154,14 @@ func _run() -> void:
 		if pf.fill_born[i] >= 0.0:
 			filled += 1
 	_check("pothole fill fills every hole", before > 0 and _holes(pf) == 0 and filled == before, "%d cells filled" % filled)
+	# Repairs bring the surface back up: nothing under a fill or a new patch sits below the road.
+	var fh := pf.bake_height(0.02)
+	var fill_low := 1.0
+	for i in pf.nx * pf.ny:
+		if pf.fill_born[i] >= 0.0:
+			var fc := pf.cell_center(i)
+			fill_low = minf(fill_low, fh[int(round(fc.y / 0.02)) * 501 + int(round(fc.x / 0.02))])
+	_check("pothole fill comes back up", fill_low > 0.0, "lowest fill centre %.1f mm" % (fill_low * 1000.0))
 	pf.advance_to(24.0)
 	_check("throw-and-roll fails again", _holes(pf) > 0, "%d hole cells 4 years on" % _holes(pf))
 
@@ -170,6 +178,14 @@ func _run() -> void:
 				if (p.rect as Rect2).grow(-0.01).has_point(q):
 					inside += 1
 	_check("heavy patch made", hp.patches.size() > 0, "%d patches" % hp.patches.size())
+	var ph := hp.bake_height(0.02)
+	var patch_low := 1.0
+	for p in hp.patches:
+		var r: Rect2 = p.rect
+		for iy in range(int(ceil(r.position.y / 0.02)), int(r.end.y / 0.02) + 1):
+			for ix in range(int(ceil(r.position.x / 0.02)), int(r.end.x / 0.02) + 1):
+				patch_low = minf(patch_low, ph[iy * 501 + ix])
+	_check("new patch is level", patch_low >= 0.0, "lowest %.1f mm" % (patch_low * 1000.0))
 	_check("no cracks inside a new patch", inside == 0, "%d points inside" % inside)
 	hp.advance_to(24.0)
 	_check("patch seams crack", hp.stats().by_kind[K.SEAM] > 0.5, "%.1f m" % hp.stats().by_kind[K.SEAM])
