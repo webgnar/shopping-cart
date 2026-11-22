@@ -5,6 +5,13 @@ triangle count and file size for new models, judgment calls, what was left out, 
 
 
 
+## 2026-11-22: Backrest and seat swing freely
+
+zack: they're loose hinges, they should swing freely; zack will add friction later. Removed the hinge friction
+(SeatFlapHinge / ChildSeatHinge motors) and the angular_damp 4 on ChildSeat and SeatFlap. The backrest still touches the
+seat (TOUCHING_PARTS). The "seat rides gate" drive check is gone with the friction. Note: the damping was added earlier
+because the seat rattled on a raised gate in a stack and stacks never settled; watch for that.
+
 ## 2026-11-22: Folded child seat rides with the gate
 
 zack: when the gate swings in (a hard stop), the seat stays where it was. With nothing holding them, a stop from

@@ -219,7 +219,6 @@ collision_mask = 7
 mass = 0.8
 physics_material_override = SubResource("PhysicsMaterial_i6241")
 can_sleep = false
-angular_damp = 4.0
 contact_monitor = true
 max_contacts_reported = 4
 
@@ -238,7 +237,6 @@ collision_mask = 7
 mass = 0.4
 physics_material_override = SubResource("PhysicsMaterial_i6241")
 can_sleep = false
-angular_damp = 4.0
 contact_monitor = true
 max_contacts_reported = 4
 
@@ -349,9 +347,6 @@ node_b = NodePath("../ChildSeat")
 angular_limit/enable = true
 angular_limit/upper = 0.5235988
 angular_limit/lower = 0.0
-motor/enable = true
-motor/target_velocity = 0.0
-motor/max_impulse = 0.03
 
 [node name="SeatFlapHinge" type="HingeJoint3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1425, 0.7755, 0)
@@ -360,9 +355,6 @@ node_b = NodePath("../SeatFlap")
 angular_limit/enable = true
 angular_limit/upper = 1.7104227
 angular_limit/lower = 0.0
-motor/enable = true
-motor/target_velocity = 0.0
-motor/max_impulse = 0.005
 
 [node name="Axle_RL" type="HingeJoint3D" parent="." unique_id=1989381388]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0685, 0.062, -0.3045)

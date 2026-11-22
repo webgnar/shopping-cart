@@ -404,34 +404,6 @@ func _run() -> void:
 		failures += 1
 	print("%-5s %-18s pulled down level at %.0f deg (98), its loops moved %.1f mm, lifted back up to %.1f deg" % [
 		"PASS" if flap_ok else "FAIL", "seat flap", flap_open, loop_moved * 1000.0, flap_folded])
-	# A hard stop swings the gate in; the folded backrest and seat ride along with it (their hinges have a little
-	# friction, a hinge motor with no target speed), instead of staying put while the gate moves.
-	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
-	await _wait(1.0)
-	cart = main.cart
-	var stop_gate := 0.0
-	var stop_seat := 0.0
-	var stop_flap := 0.0
-	Input.action_press("push_left")
-	Input.action_press("push_right")
-	await _wait(2.0)
-	Input.action_release("push_left")
-	Input.action_release("push_right")
-	Input.action_press("pull_left")
-	Input.action_press("pull_right")
-	for i in 180:
-		if i == 60:
-			Input.action_release("pull_left")
-			Input.action_release("pull_right")
-		await physics_frame
-		stop_gate = maxf(stop_gate, _rel_deg(cart.frame, cart.gate))
-		stop_seat = maxf(stop_seat, _rel_deg(cart.gate, cart.child_seat))
-		stop_flap = maxf(stop_flap, _rel_deg(cart.gate, cart.seat_flap))
-	var stop_ok := stop_gate > 10.0 and stop_seat < 5.0 and stop_flap < 5.0
-	if not stop_ok:
-		failures += 1
-	print("%-5s %-18s hard stop swung the gate %.0f deg; backrest stayed within %.1f deg of it, seat within %.1f" % [
-		"PASS" if stop_ok else "FAIL", "seat rides gate", stop_gate, stop_seat, stop_flap])
 	# A pinned cart still gets knocked when something hits it.
 	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 	await _wait(2.0)
