@@ -148,11 +148,10 @@ func _run() -> void:
 	# Coast to a stop, then yank back with both hands: the player's cart slides out and comes off.
 	_keys([], false)
 	await _wait(4.0)
-	# A hard yank: past what the hands' caps allow (drive_max levels the pull off near 160 N a hand and
-	# reverse_speed stops it at a backward walk), which would only roll the free-standing stack back with the cart.
+	# A hard yank: past what the hands' cap allows (drive_max levels the pull off near 160 N a hand), which would
+	# only roll the free-standing stack back with the cart.
 	cart.power_ramp = 400.0
 	cart.drive_max = 800.0
-	cart.reverse_speed = 5.0
 	_keys(["pull_left", "pull_right"], true)
 	t = 0.0
 	while cart.nested_in != null and t < 4.0:
