@@ -33,6 +33,11 @@ a strip along the crack); the surface shader uses `chip_seal` (1 m) for a chip s
 the aged colour over the texture. Height maps unchanged. Textures are imported with mipmaps (the lab shows 1 m at
 205 px). zack plans better, more "rolled flat" versions; swapping the PNGs is all it takes.
 
+Second round (same day): Claude drove ChatGPT in zack's Chrome for flatter, rolled versions of the hot mix, chip seal
+and cold mix, plus four damage textures that replace flat colour and grain: `pothole_floor` (0.5 m, darkened with
+depth), `broken_asphalt` (0.5 m, pothole rims and spalled crack edges), `base_course` (1 m, fretted edge) and
+`gravel_shoulder` (1 m). zack downloaded and attached them (the browser extension won't hand image data back).
+
 ## 2026-11-22: Asphalt lab, ageing pass: crack networks, real height map, relief view, explainer doc
 
 zack wants the simulator right before it goes in game (later: a colour texture plus a displacement map so the cart

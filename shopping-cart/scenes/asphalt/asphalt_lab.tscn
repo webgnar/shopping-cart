@@ -9,6 +9,10 @@
 [ext_resource type="Texture2D" uid="uid://p6r5d5su53f4" path="res://assets/asphalt/textures/cold_mix_fill.png" id="7_coldmix"]
 [ext_resource type="Texture2D" uid="uid://chnpmc4mkdmib" path="res://assets/asphalt/textures/crack_sealant.png" id="8_sealant"]
 [ext_resource type="Texture2D" uid="uid://r2fxfjkqgqib" path="res://assets/asphalt/textures/chip_seal.png" id="9_chip"]
+[ext_resource type="Texture2D" uid="uid://cr15okrvj6njp" path="res://assets/asphalt/textures/pothole_floor.png" id="10_pothole"]
+[ext_resource type="Texture2D" uid="uid://dt607ar3mgodg" path="res://assets/asphalt/textures/broken_asphalt.png" id="11_broken"]
+[ext_resource type="Texture2D" uid="uid://bcfgjyp2yokpn" path="res://assets/asphalt/textures/base_course.png" id="12_base"]
+[ext_resource type="Texture2D" uid="uid://dq4ocup0ey4je" path="res://assets/asphalt/textures/gravel_shoulder.png" id="13_shoulder"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_color"]
 shader = ExtResource("4_shader")
@@ -112,6 +116,10 @@ grain = ExtResource("5_grain")
 patch_texture = ExtResource("6_hotmix")
 fill_texture = ExtResource("7_coldmix")
 sealant_texture = ExtResource("8_sealant")
+pothole_texture = ExtResource("10_pothole")
+broken_texture = ExtResource("11_broken")
+base_course_texture = ExtResource("12_base")
+shoulder_texture = ExtResource("13_shoulder")
 
 [node name="HeightViewport" type="SubViewport" parent="."]
 disable_3d = true
