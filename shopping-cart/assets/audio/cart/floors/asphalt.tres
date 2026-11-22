@@ -13,3 +13,4 @@ roll = ExtResource("3_roll")
 roll_db = 0.0
 scrub = ExtResource("4_scrub")
 scrub_db = -2.0
+contact_time_scale = 1.4
