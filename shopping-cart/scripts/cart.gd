@@ -11,8 +11,7 @@ extends Node3D
 ##    the folded seat flap (its 0 stop), so when the gate swings up it carries it up; it opens 30 degrees into the basket.
 ##  - SeatFlap (the seat, wire and plastic): its loops hook round a gate wire and are its hinge. Folded it stands up
 ##    against the gate's front (its 0 stop); pulled down it lies level as a seat at 98 degrees.
-##    Both hinges have a little friction (a motor with no target speed), so the folded seat rides with the gate when it
-##    swings, and a hand still opens them.
+##    Both hinges swing freely (no friction or damping).
 ##  - Groceries: loose bodies in the basket; add or move them under the Groceries node.
 ##  - Model: the rigged model (assets/models/shopping_cart.glb); its pivots follow the physics bodies.
 ## Cart local axes: nose = +X, up = +Y, left = -Z. Units: metres, kg, newtons.
