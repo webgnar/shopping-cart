@@ -16,6 +16,14 @@ const CHUNK := 6              ## points per drawn piece of crack (each piece get
 @export var grain: Texture2D                  ## tiling noise for patches, fills, shoulder and pothole floors
 @export var grain_scale := 0.6                ## m the grain texture spans
 
+@export_group("Repair textures")
+@export var patch_texture: Texture2D          ## fresh hot mix for heavy patches (seamless, top-down)
+@export var patch_texture_m := 1.0            ## m the patch texture spans
+@export var fill_texture: Texture2D           ## cold mix for throw-and-roll pothole fills
+@export var fill_texture_m := 1.0
+@export var sealant_texture: Texture2D        ## poured crack sealant
+@export var sealant_texture_m := 0.5
+
 @export_group("Colours")
 @export var fresh_asphalt := Color(0.075, 0.075, 0.08)
 @export var aged_asphalt := Color(0.37, 0.365, 0.35)
@@ -81,6 +89,43 @@ func _poly(pts: PackedVector2Array, c: Color, scale := 1.0) -> void:
 		draw_colored_polygon(pts, c)
 
 
+## How far a repair `age` years old has greyed towards aged_asphalt (fills grey faster: `speed` < 1).
+func _greying(age: float, speed: float) -> float:
+	return 0.85 * (1.0 - exp(-maxf(age, 0.0) * sim.climate / (oxidation_years * speed)))
+
+
+## A polygon (pixels) filled with a tiling texture `metres` across, then washed with `wash` at `amount`.
+func _textured(pts: PackedVector2Array, tex: Texture2D, metres: float, wash: Color, amount: float) -> void:
+	var uvs := PackedVector2Array()
+	for p in pts:
+		uvs.append(p / (metres * px_per_m))
+	draw_colored_polygon(pts, Color.WHITE, uvs, tex)
+	if amount > 0.01:
+		draw_colored_polygon(pts, Color(wash, amount))
+
+
+## The sealant texture along a polyline (pixels) as a strip `width` pixels wide, aged by `amount`. Neighbouring
+## quads share their corners (the side offset at each point is the average of its two segments), so no steps.
+func _textured_band(seg: PackedVector2Array, width: float, amount: float) -> void:
+	var n := seg.size()
+	var side := PackedVector2Array()
+	side.resize(n)
+	for j in n:
+		var d := seg[mini(j + 1, n - 1)] - seg[maxi(j - 1, 0)]
+		side[j] = d.orthogonal().normalized() * width * 0.5 if d.length_squared() > 1e-6 else Vector2.ZERO
+	for j in n - 1:
+		if side[j] == Vector2.ZERO or side[j + 1] == Vector2.ZERO:
+			continue
+		var quad := PackedVector2Array([seg[j] + side[j], seg[j + 1] + side[j + 1], seg[j + 1] - side[j + 1], seg[j] - side[j]])
+		var uvs := PackedVector2Array()
+		for q in quad:
+			uvs.append(q / (sealant_texture_m * px_per_m))
+		# draw_primitive, not a polygon: at a sharp bend the quad can fold over, which polygons refuse.
+		draw_primitive(quad, PackedColorArray([Color.WHITE]), uvs, sealant_texture)
+		if amount > 0.01:
+			draw_primitive(quad, PackedColorArray([Color(sealant_aged, amount * 0.8)]), PackedVector2Array())
+
+
 func _circle_pts(c: Vector2, r: float, seed_n: float, rough: float) -> PackedVector2Array:
 	var pts := PackedVector2Array()
 	var n := 10
@@ -112,7 +157,10 @@ func _draw() -> void:
 		var pts := PackedVector2Array([r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)])
 		for k in 4:
 			pts[k] *= px_per_m
-		_poly(pts, _hc(0.003) if hm else _aged(age).lightened(0.12), 0.4)
+		if patch_texture and not hm:
+			_textured(pts, patch_texture, patch_texture_m, aged_asphalt, _greying(age, 1.0))
+		else:
+			_poly(pts, _hc(0.003) if hm else _aged(age).lightened(0.12), 0.4)
 	# Cracks, oldest part widest; wide ones have broken, ravelled edges.
 	for c in sim.cracks:
 		if not c.alive or c.pts.size() < 2:
@@ -156,6 +204,8 @@ func _draw() -> void:
 					seg[j] *= px_per_m
 				var band := (0.06 + 0.025 * _h(piece + c.pts[0].y) + c.width(k, c.seal_from) * 2.0) * px_per_m
 				draw_polyline(seg, col, band)
+				if sealant_texture and not hm:
+					_textured_band(seg, band, clampf(age / 10.0, 0.0, 1.0))
 			k = e
 	# Throw-and-roll fills: lumpy cold-mix blobs over the cracks they filled, a little proud of the surface.
 	for i in sim.nx * sim.ny:
@@ -163,6 +213,9 @@ func _draw() -> void:
 		if fb < 0.0:
 			continue
 		var c := sim.cell_center(i) + Vector2(_h(i) - 0.5, _h(i + 0.5) - 0.5) * 0.03
+		if fill_texture and not hm:
+			_textured(_circle_pts(c, 0.105, i * 0.37, 0.35), fill_texture, fill_texture_m, aged_asphalt, _greying(t - fb, 0.6))
+			continue
 		var col := _hc(0.006) if hm else cold_mix.lerp(aged_asphalt, 1.0 - exp(-(t - fb) * sim.climate / (oxidation_years * 0.6)))
 		_poly(_circle_pts(c, 0.105, i * 0.37, 0.35), col, 0.3)
 	# Potholes. Where a crocodile cell has been plucked out: its broken rim, then the wet base course below,
