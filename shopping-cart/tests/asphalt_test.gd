@@ -179,6 +179,13 @@ func _run() -> void:
 	await process_frame
 	_check("scrubbing keeps the repair", lsim.log_lines.size() == 1, str(lsim.log_lines))
 
+	(lab.get_node("Panel/Scroll/Box/Timeline") as HSlider).value = 0.0
+	await process_frame
+	(lab.get_node("Panel/Scroll/Box/PlayRow/PlayButton") as Button).button_pressed = true
+	for i in 30:
+		lab._process(1.0 / 60.0)
+	_check("Play runs from year 0 at 60 fps", lsim.time >= 0.8, "year %.1f after half a second" % lsim.time)
+
 	print("\n%s: %d failure(s)" % ["FAIL" if failures else "PASS", failures])
 	quit(1 if failures else 0)
 

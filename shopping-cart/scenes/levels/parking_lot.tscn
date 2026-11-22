@@ -1,20 +1,20 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cb2v0g23awuqy"]
 
-[ext_resource type="Script" path="res://scripts/main.gd" id="1_ias6e"]
+[ext_resource type="Script" uid="uid://he4pe8dyl5ax" path="res://scripts/main.gd" id="1_ias6e"]
 [ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="2_cxr3k"]
-[ext_resource type="PackedScene" path="res://assets/models/parking_lot/lot_surface/lot_surface.glb" id="3_jpqjj"]
+[ext_resource type="PackedScene" uid="uid://bxjafephgsd7v" path="res://assets/models/parking_lot/lot_surface/lot_surface.glb" id="3_jpqjj"]
 [ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="4_jn3cc"]
 [ext_resource type="PackedScene" path="res://scenes/props/parking_lot/store_front.tscn" id="5_d8hlc"]
 [ext_resource type="PackedScene" path="res://scenes/props/parking_lot/parking_row.tscn" id="6_8mco0"]
 [ext_resource type="PackedScene" path="res://scenes/props/parking_lot/cart_corral.tscn" id="7_cqmwp"]
-[ext_resource type="PackedScene" path="res://scenes/cart/cart_stack_3.tscn" id="stack3"]
-[ext_resource type="PackedScene" path="res://scenes/cart/cart_stack_4.tscn" id="stack4"]
 [ext_resource type="PackedScene" path="res://scenes/props/parking_lot/streetlight.tscn" id="8_tyw8w"]
 [ext_resource type="PackedScene" path="res://scenes/props/parking_lot/planter_island.tscn" id="9_l4cx4"]
 [ext_resource type="PackedScene" path="res://scenes/props/parking_lot/parked_car.tscn" id="10_4ealt"]
-[ext_resource type="NavigationMesh" path="res://assets/navigation/parking_lot.tres" id="nav_mesh"]
-[ext_resource type="PackedScene" path="res://scenes/cart/bot_cart.tscn" id="bot_cart"]
 [ext_resource type="AudioStream" uid="uid://c0vrqtbjn4v27" path="res://assets/audio/ambience/parking_lot.ogg" id="ambience"]
+[ext_resource type="PackedScene" path="res://scenes/cart/bot_cart.tscn" id="bot_cart"]
+[ext_resource type="NavigationMesh" path="res://assets/navigation/parking_lot.tres" id="nav_mesh"]
+[ext_resource type="PackedScene" path="res://scenes/cart/cart_stack_3.tscn" id="stack3"]
+[ext_resource type="PackedScene" path="res://scenes/cart/cart_stack_4.tscn" id="stack4"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_14lfg"]
 sky_top_color = Color(0.023529412, 0.03529412, 0.07058824, 1)
@@ -92,7 +92,7 @@ light_energy = 0.12
 [node name="Ground" type="StaticBody3D" parent="." unique_id=375429255]
 physics_material_override = ExtResource("2_cxr3k")
 
-[node name="Model" type="Node3D" parent="Ground" unique_id=1226380899 instance=ExtResource("3_jpqjj")]
+[node name="Model" parent="Ground" unique_id=1226380899 instance=ExtResource("3_jpqjj")]
 
 [node name="AsphaltShape" type="CollisionShape3D" parent="Ground" unique_id=1996769842]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 3)
@@ -140,165 +140,165 @@ shape = SubResource("BoxShape3D_y2fil")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.075, 30.15)
 shape = SubResource("BoxShape3D_k1fgf")
 
-[node name="StoreFront" type="StaticBody3D" parent="." unique_id=1461209329 instance=ExtResource("5_d8hlc")]
+[node name="StoreFront" parent="." unique_id=1461209329 instance=ExtResource("5_d8hlc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -16)
 
 [node name="Stalls" type="Node3D" parent="." unique_id=1881161842]
 
-[node name="Row1WestA" type="Node3D" parent="Stalls" unique_id=635415858 instance=ExtResource("6_8mco0")]
+[node name="Row1WestA" parent="Stalls" unique_id=635415858 instance=ExtResource("6_8mco0")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 0, -6)
 
-[node name="Row1WestB" type="Node3D" parent="Stalls" unique_id=2015099917 instance=ExtResource("6_8mco0")]
+[node name="Row1WestB" parent="Stalls" unique_id=2015099917 instance=ExtResource("6_8mco0")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -13.5, 0, 5)
 
-[node name="Row1EastA" type="Node3D" parent="Stalls" unique_id=741717806 instance=ExtResource("6_8mco0")]
+[node name="Row1EastA" parent="Stalls" unique_id=741717806 instance=ExtResource("6_8mco0")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, -6)
 
-[node name="Row1EastB" type="Node3D" parent="Stalls" unique_id=305976255 instance=ExtResource("6_8mco0")]
+[node name="Row1EastB" parent="Stalls" unique_id=305976255 instance=ExtResource("6_8mco0")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 13.5, 0, 5)
 
-[node name="Row2WestA" type="Node3D" parent="Stalls" unique_id=1306933421 instance=ExtResource("6_8mco0")]
+[node name="Row2WestA" parent="Stalls" unique_id=1306933421 instance=ExtResource("6_8mco0")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 0, 12)
 
-[node name="Row2WestB" type="Node3D" parent="Stalls" unique_id=730815481 instance=ExtResource("6_8mco0")]
+[node name="Row2WestB" parent="Stalls" unique_id=730815481 instance=ExtResource("6_8mco0")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -13.5, 0, 23)
 
-[node name="Row2EastA" type="Node3D" parent="Stalls" unique_id=445585409 instance=ExtResource("6_8mco0")]
+[node name="Row2EastA" parent="Stalls" unique_id=445585409 instance=ExtResource("6_8mco0")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, 12)
 
-[node name="Row2EastB" type="Node3D" parent="Stalls" unique_id=1474303698 instance=ExtResource("6_8mco0")]
+[node name="Row2EastB" parent="Stalls" unique_id=1474303698 instance=ExtResource("6_8mco0")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 13.5, 0, 23)
 
 [node name="CartCorrals" type="Node3D" parent="." unique_id=1648370281]
 
-[node name="Corral1A" type="StaticBody3D" parent="CartCorrals" unique_id=422234247 instance=ExtResource("7_cqmwp")]
+[node name="Corral1A" parent="CartCorrals" unique_id=422234247 instance=ExtResource("7_cqmwp")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3, 0, -3.35)
 
-[node name="Corral1B" type="StaticBody3D" parent="CartCorrals" unique_id=522852930 instance=ExtResource("7_cqmwp")]
+[node name="Corral1B" parent="CartCorrals" unique_id=522852930 instance=ExtResource("7_cqmwp")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.3, 0, 2.35)
 
-[node name="Corral2A" type="StaticBody3D" parent="CartCorrals" unique_id=1299226889 instance=ExtResource("7_cqmwp")]
+[node name="Corral2A" parent="CartCorrals" unique_id=1299226889 instance=ExtResource("7_cqmwp")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.3, 0, 14.65)
 
-[node name="Corral2B" type="StaticBody3D" parent="CartCorrals" unique_id=339653393 instance=ExtResource("7_cqmwp")]
+[node name="Corral2B" parent="CartCorrals" unique_id=339653393 instance=ExtResource("7_cqmwp")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 1.3, 0, 20.35)
 
-[node name="Corral1East" type="StaticBody3D" parent="CartCorrals" unique_id=265291452 instance=ExtResource("7_cqmwp")]
+[node name="Corral1East" parent="CartCorrals" unique_id=265291452 instance=ExtResource("7_cqmwp")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.45, 0, -3.4)
 
 [node name="Streetlights" type="Node3D" parent="." unique_id=1051813243]
 
-[node name="Row1Center" type="StaticBody3D" parent="Streetlights" unique_id=948453127 instance=ExtResource("8_tyw8w")]
+[node name="Row1Center" parent="Streetlights" unique_id=948453127 instance=ExtResource("8_tyw8w")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, -0.5)
 
-[node name="Row2Center" type="StaticBody3D" parent="Streetlights" unique_id=653226714 instance=ExtResource("8_tyw8w")]
+[node name="Row2Center" parent="Streetlights" unique_id=653226714 instance=ExtResource("8_tyw8w")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, 17.5)
 
-[node name="FireLaneWest" type="StaticBody3D" parent="Streetlights" unique_id=1644467971 instance=ExtResource("8_tyw8w")]
+[node name="FireLaneWest" parent="Streetlights" unique_id=1644467971 instance=ExtResource("8_tyw8w")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19, 0, -12.4)
 
-[node name="FireLaneEast" type="StaticBody3D" parent="Streetlights" unique_id=832208627 instance=ExtResource("8_tyw8w")]
+[node name="FireLaneEast" parent="Streetlights" unique_id=832208627 instance=ExtResource("8_tyw8w")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, -12.4)
 
-[node name="BackAisleWest" type="StaticBody3D" parent="Streetlights" unique_id=2041458627 instance=ExtResource("8_tyw8w")]
+[node name="BackAisleWest" parent="Streetlights" unique_id=2041458627 instance=ExtResource("8_tyw8w")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, 29.4)
 
-[node name="BackAisleEast" type="StaticBody3D" parent="Streetlights" unique_id=143438093 instance=ExtResource("8_tyw8w")]
+[node name="BackAisleEast" parent="Streetlights" unique_id=143438093 instance=ExtResource("8_tyw8w")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 29.4)
 
 [node name="PlanterIslands" type="Node3D" parent="." unique_id=1681898170]
 
-[node name="Row1West" type="StaticBody3D" parent="PlanterIslands" unique_id=1808013329 instance=ExtResource("9_l4cx4")]
+[node name="Row1West" parent="PlanterIslands" unique_id=1808013329 instance=ExtResource("9_l4cx4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.8, 0, -0.5)
 
-[node name="Row1East" type="StaticBody3D" parent="PlanterIslands" unique_id=1346693306 instance=ExtResource("9_l4cx4")]
+[node name="Row1East" parent="PlanterIslands" unique_id=1346693306 instance=ExtResource("9_l4cx4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.8, 0, -0.5)
 
-[node name="Row2West" type="StaticBody3D" parent="PlanterIslands" unique_id=858500933 instance=ExtResource("9_l4cx4")]
+[node name="Row2West" parent="PlanterIslands" unique_id=858500933 instance=ExtResource("9_l4cx4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.8, 0, 17.5)
 
-[node name="Row2East" type="StaticBody3D" parent="PlanterIslands" unique_id=495182742 instance=ExtResource("9_l4cx4")]
+[node name="Row2East" parent="PlanterIslands" unique_id=495182742 instance=ExtResource("9_l4cx4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.8, 0, 17.5)
 
 [node name="ParkedCars" type="Node3D" parent="." unique_id=236993187]
 
-[node name="Car1" type="StaticBody3D" parent="ParkedCars" unique_id=158831307 instance=ExtResource("10_4ealt")]
+[node name="Car1" parent="ParkedCars" unique_id=158831307 instance=ExtResource("10_4ealt")]
 transform = Transform3D(-0.99994516, 0, 0.010472019, 0, 1, 0, -0.010472019, 0, -0.99994516, -4.0800004, 0, -2.93)
 paint = Color(0.9098039, 0.9098039, 0.9098039, 1)
 
-[node name="Car2" type="StaticBody3D" parent="ParkedCars" unique_id=653558392 instance=ExtResource("10_4ealt")]
+[node name="Car2" parent="ParkedCars" unique_id=653558392 instance=ExtResource("10_4ealt")]
 transform = Transform3D(-0.99994516, 0, -0.010471955, 0, 1, 0, 0.010471955, 0, -0.99994516, -9.42, 0, -2.93)
 paint = Color(0.1254902, 0.13725491, 0.14901961, 1)
 
-[node name="Car3" type="StaticBody3D" parent="ParkedCars" unique_id=668057005 instance=ExtResource("10_4ealt")]
+[node name="Car3" parent="ParkedCars" unique_id=668057005 instance=ExtResource("10_4ealt")]
 transform = Transform3D(-0.99950653, 0, -0.031410858, 0, 1, 0, 0.031410858, 0, -0.99950653, -17.46, 0, -2.93)
 paint = Color(0.5411765, 0.10980392, 0.10980392, 1)
 
-[node name="Car4" type="StaticBody3D" parent="ParkedCars" unique_id=749698744 instance=ExtResource("10_4ealt")]
+[node name="Car4" parent="ParkedCars" unique_id=749698744 instance=ExtResource("10_4ealt")]
 transform = Transform3D(-0.99978065, 0, 0.0209425, 0, 1, 0, -0.0209425, 0, -0.99978065, 3.9900002, 0, -2.93)
 paint = Color(0.7254902, 0.74509805, 0.7764706, 1)
 
-[node name="Car5" type="StaticBody3D" parent="ParkedCars" unique_id=2126416388 instance=ExtResource("10_4ealt")]
+[node name="Car5" parent="ParkedCars" unique_id=2126416388 instance=ExtResource("10_4ealt")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 6.75, 0, -2.93)
 paint = Color(0.16470589, 0.24705882, 0.4, 1)
 
-[node name="Car6" type="StaticBody3D" parent="ParkedCars" unique_id=1885140985 instance=ExtResource("10_4ealt")]
+[node name="Car6" parent="ParkedCars" unique_id=1885140985 instance=ExtResource("10_4ealt")]
 transform = Transform3D(-0.99978065, 0, -0.020942437, 0, 1, 0, 0.020942437, 0, -0.99978065, 14.910001, 0, -2.93)
 paint = Color(0.9098039, 0.9098039, 0.9098039, 1)
 
-[node name="Car7" type="StaticBody3D" parent="ParkedCars" unique_id=2131094780 instance=ExtResource("10_4ealt")]
+[node name="Car7" parent="ParkedCars" unique_id=2131094780 instance=ExtResource("10_4ealt")]
 transform = Transform3D(-0.99950653, 0, 0.03141092, 0, 1, 0, -0.03141092, 0, -0.99950653, 20.16, 0, -2.93)
 paint = Color(0.29411766, 0.30980393, 0.33333334, 1)
 
-[node name="Car8" type="StaticBody3D" parent="ParkedCars" unique_id=1253070939 instance=ExtResource("10_4ealt")]
+[node name="Car8" parent="ParkedCars" unique_id=1253070939 instance=ExtResource("10_4ealt")]
 transform = Transform3D(0.99994516, 0, -0.010471784, 0, 1, 0, 0.010471784, 0, 0.99994516, -20.28, 0, 1.93)
 paint = Color(0.78039217, 0.7607843, 0.7058824, 1)
 
-[node name="Car9" type="StaticBody3D" parent="ParkedCars" unique_id=1086699085 instance=ExtResource("10_4ealt")]
+[node name="Car9" parent="ParkedCars" unique_id=1086699085 instance=ExtResource("10_4ealt")]
 transform = Transform3D(0.99994516, 0, 0.010471784, 0, 1, 0, -0.010471784, 0, 0.99994516, -12.12, 0, 1.93)
 paint = Color(0.1254902, 0.13725491, 0.14901961, 1)
 
-[node name="Car10" type="StaticBody3D" parent="ParkedCars" unique_id=213224144 instance=ExtResource("10_4ealt")]
+[node name="Car10" parent="ParkedCars" unique_id=213224144 instance=ExtResource("10_4ealt")]
 transform = Transform3D(0.99950653, 0, 0.031410757, 0, 1, 0, -0.031410757, 0, 0.99950653, 17.64, 0, 1.93)
 paint = Color(0.43137255, 0.45490196, 0.5019608, 1)
 
-[node name="Car11" type="StaticBody3D" parent="ParkedCars" unique_id=1496858891 instance=ExtResource("10_4ealt")]
+[node name="Car11" parent="ParkedCars" unique_id=1496858891 instance=ExtResource("10_4ealt")]
 transform = Transform3D(-0.99978065, 0, 0.0209425, 0, 1, 0, -0.0209425, 0, -0.99978065, -4.11, 0, 15.07)
 paint = Color(0.11764706, 0.3019608, 0.22745098, 1)
 
-[node name="Car12" type="StaticBody3D" parent="ParkedCars" unique_id=1653440003 instance=ExtResource("10_4ealt")]
+[node name="Car12" parent="ParkedCars" unique_id=1653440003 instance=ExtResource("10_4ealt")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 12.15, 0, 15.07)
 paint = Color(0.9098039, 0.9098039, 0.9098039, 1)
 
-[node name="Car13" type="StaticBody3D" parent="ParkedCars" unique_id=324498891 instance=ExtResource("10_4ealt")]
+[node name="Car13" parent="ParkedCars" unique_id=324498891 instance=ExtResource("10_4ealt")]
 transform = Transform3D(0.99978065, 0, 0.02094242, 0, 1, 0, -0.02094242, 0, 0.99978065, 6.81, 0, 19.93)
 paint = Color(0.5411765, 0.10980392, 0.10980392, 1)
 
-[node name="Car14" type="StaticBody3D" parent="ParkedCars" unique_id=23355817 instance=ExtResource("10_4ealt")]
+[node name="Car14" parent="ParkedCars" unique_id=23355817 instance=ExtResource("10_4ealt")]
 transform = Transform3D(0.99950653, 0, -0.031410757, 0, 1, 0, 0.031410757, 0, 0.99950653, 3.9600003, 0, 1.93)
 paint = Color(0.7254902, 0.74509805, 0.7764706, 1)
 
 [node name="CartSpawn" type="Marker3D" parent="." unique_id=754083861]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -9.5)
 
-[node name="Navigation" type="NavigationRegion3D" parent="."]
+[node name="Navigation" type="NavigationRegion3D" parent="." unique_id=997983453]
 navigation_mesh = ExtResource("nav_mesh")
 
-[node name="BotCarts" type="Node3D" parent="."]
+[node name="BotCarts" type="Node3D" parent="." unique_id=306202457]
 
-[node name="BotCart1" parent="BotCarts" instance=ExtResource("bot_cart")]
+[node name="BotCart1" parent="BotCarts" unique_id=521101959 instance=ExtResource("bot_cart")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.005, 8)
 
-[node name="BotCart2" parent="BotCarts" instance=ExtResource("bot_cart")]
+[node name="BotCart2" parent="BotCarts" unique_id=807619259 instance=ExtResource("bot_cart")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 10, 0.005, -9.5)
 
-[node name="BotCart3" parent="BotCarts" instance=ExtResource("bot_cart")]
+[node name="BotCart3" parent="BotCarts" unique_id=857895954 instance=ExtResource("bot_cart")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.005, 25)
 
-[node name="CartStacks" type="Node3D" parent="."]
+[node name="CartStacks" type="Node3D" parent="." unique_id=272822983]
 
-[node name="ByTheSpawn" parent="CartStacks" instance=ExtResource("stack3")]
+[node name="ByTheSpawn" parent="CartStacks" unique_id=986822756 instance=ExtResource("stack3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -7.6)
 
-[node name="InCorral2A" parent="CartStacks" instance=ExtResource("stack4")]
+[node name="InCorral2A" parent="CartStacks" unique_id=1679619216 instance=ExtResource("stack4")]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -1.3, 0, 15.4)

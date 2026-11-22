@@ -6,19 +6,19 @@ extends SceneTree
 const SCENARIOS := [
 	# name, actions held, seconds, check
 	["idle", [], 5.0, "still"],
-	["E+Q both push", ["push_left", "push_right"], 1.5, "forward_straight"],
+	["Q+E both push", ["push_left", "push_right"], 1.5, "forward_straight"],
 	["A+D both pull", ["pull_left", "pull_right"], 1.5, "backward"],
-	["Q right push", ["push_right"], 1.5, "turns_left"],
-	["E left push", ["push_left"], 1.5, "turns_right"],
-	["E+D spin", ["push_left", "pull_right"], 1.2, "spins_right"],
+	["E right push", ["push_right"], 1.5, "turns_left"],
+	["Q left push", ["push_left"], 1.5, "turns_right"],
+	["Q+D spin", ["push_left", "pull_right"], 1.2, "spins_right"],
 	["S front up", ["press"], 1.5, "wheelie"],
 	["W back up", ["lift"], 1.5, "rear_up"],
-	["W+Q right side up", ["lift", "push_right"], 1.5, "right_up"],
-	["E+Q short push", ["push_left", "push_right"], 1.2, "flat"],
-	["E+Q hard push", ["push_left", "push_right"], 2.1, "wheelie"],
+	["W+E right side up", ["lift", "push_right"], 1.5, "right_up"],
+	["Q+E short push", ["push_left", "push_right"], 1.2, "flat"],
+	["Q+E hard push", ["push_left", "push_right"], 2.1, "wheelie"],
 	["A+D hard pull", ["pull_left", "pull_right"], 2.6, "rear_up"],
 	["coast then rest", ["coast"], 30.0, "comes_to_rest"],
-	["rested 4 s, then E+Q", ["push_left", "push_right"], 1.5, "wakes_and_moves"],
+	["rested 4 s, then Q+E", ["push_left", "push_right"], 1.5, "wakes_and_moves"],
 ]
 
 var main: Node3D
@@ -76,8 +76,8 @@ func _run() -> void:
 			"still": ok = d.length() < 0.005 and absf(turn) < 0.1 and cart.frame.freeze
 			"forward_straight": ok = along > 1.0 and absf(turn) < 12
 			"backward": ok = along < -0.7 and absf(turn) < 25
-			"turns_left": ok = turn > 30
-			"turns_right": ok = turn < -30
+			"turns_left": ok = turn > 20   # one held hand turns gently (tapping it turns harder, checked below)
+			"turns_right": ok = turn < -20
 			"spins_right": ok = turn < -60 and d.length() < 1.0
 			"wheelie": ok = max_front > 0.12 and max_rear < 0.09
 			"rear_up": ok = max_rear > 0.10 and max_front < 0.09
@@ -131,7 +131,8 @@ func _run() -> void:
 				v0 * 3.6, dist, t, max_pitch, max_front, cart.groceries_in_basket()])
 			if not ok:
 				failures += 1
-	# Pushing and pulling share one base and ramp: compare the first half second from rest.
+	# Pushing and pulling share one base and ramp, but pulling backwards tops out at a backward walk
+	# (reverse_speed): compare the first half second from rest.
 	var accel := {}
 	for pair in [["push", ["push_left", "push_right"]], ["pull", ["pull_left", "pull_right"]]]:
 		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
@@ -143,14 +144,41 @@ func _run() -> void:
 		for a in pair[1]:
 			Input.action_release(a)
 		accel[pair[0]] = absf(cart.frame.linear_velocity.length())
-	var pull_ok: bool = absf(accel.pull - accel.push) < 0.1 * accel.push
+	var rev: float = main.cart.reverse_speed
+	var pull_ok: bool = accel.pull > 0.6 * accel.push and accel.pull < rev
 	if not pull_ok:
 		failures += 1
-	print("%-5s %-18s after 0.5 s from rest: pushing %.2f m/s, pulling %.2f m/s" % ["PASS" if pull_ok else "FAIL", "pull = push", accel.push, accel.pull])
+	print("%-5s %-18s after 0.5 s from rest: pushing %.2f m/s, pulling %.2f m/s (backward walk %.1f m/s)" % [
+		"PASS" if pull_ok else "FAIL", "pull vs push", accel.push, accel.pull, rev])
+
+	# Hand position: tapping a key moves that hand out along the bar, so tapping one hand turns the cart harder
+	# than holding it.
+	var turns := {}
+	for mode in ["held", "tapped"]:
+		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
+		await _wait(0.8)
+		var cart: ShoppingCart = main.cart
+		var h0 := cart.heading()
+		var grip := 0.0
+		for i in int(1.5 * Engine.physics_ticks_per_second):
+			var down: bool = mode == "held" or (i % 20) < 9   # 6 taps a second
+			if down:
+				Input.action_press("push_right")
+			else:
+				Input.action_release("push_right")
+			await physics_frame
+			grip = maxf(grip, cart.hand_grip.R)
+		Input.action_release("push_right")
+		turns[mode] = [rad_to_deg(wrapf(cart.heading() - h0, -PI, PI)), grip]
+	var tap_ok: bool = turns.tapped[0] > 1.2 * turns.held[0] and turns.held[0] > 0.0 and turns.tapped[1] > 0.6
+	if not tap_ok:
+		failures += 1
+	print("%-5s %-18s E held turned %+.0f deg, E tapped 6 a second turned %+.0f deg (hand out to %d%% of the bar)" % [
+		"PASS" if tap_ok else "FAIL", "tapping turns", turns.held[0], turns.tapped[0], roundi(100 * turns.tapped[1])])
 
 	# Countering a spin: pull one hand to spin, then pull with the other hand instead. The second hand works
 	# against the spin, so it grabs the bar and stops it within a second (then turns the cart the other way).
-	for counter in [[["pull_left"], ["pull_right"], "A spin, then D"], [["push_left", "pull_right"], ["pull_left", "push_right"], "E+D spin, then A+Q"]]:
+	for counter in [[["pull_left"], ["pull_right"], "A spin, then D"], [["push_left", "pull_right"], ["pull_left", "push_right"], "Q+D spin, then A+E"]]:
 		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 		await _wait(1.0)
 		var sc_cart: ShoppingCart = main.cart
@@ -180,8 +208,9 @@ func _run() -> void:
 	# pulling hard and the rear wheels lift until it goes over. Let go as soon as an end lifts
 	# and it drops back onto four wheels.
 	for tip in [["push", 4.0, true], ["pull", 4.0, true], ["push", 0.0, false], ["pull", 0.0, false]]:   # [keys, hold after lift, falls]
-		# A long pull runs backwards well over 30 m: face that one west so it runs into the far wall, not off the edge.
-		main.spawn_cart(Vector3(-10, 0, -3), PI if tip[0] == "pull" and tip[1] > 0.0 else 0.0)
+		# Out in the open lot, west of the test strip: a cart let go at a run rolls on for a long way, and the strip's
+		# speed bumps would flip it.
+		main.spawn_cart(Vector3(-80, 0, -3), PI if tip[0] == "pull" and tip[1] > 0.0 else 0.0)
 		await _wait(1.0)
 		var tc: ShoppingCart = main.cart
 		var keys: Array = [tip[0] + "_left", tip[0] + "_right"]
@@ -282,7 +311,7 @@ func _run() -> void:
 		var up_ok := was_fallen and down_up < 0.3 and t_up > 0.0 and rc.wheels_down() == 4 and slid < 3.0   # one it rolls over from upside down travels a little
 		if not up_ok:
 			failures += 1
-		print("%-5s %-18s lying at up %.2f (fallen %s), Q held: %s, moved %.2f m, then %d / 4 wheels down" % [
+		print("%-5s %-18s lying at up %.2f (fallen %s), E held: %s, moved %.2f m, then %d / 4 wheels down" % [
 			"PASS" if up_ok else "FAIL", "get up (" + setup + ")", down_up, was_fallen,
 			("upright in %.2f s" % t_up) if t_up > 0.0 else "still down after 5 s", slid, rc.wheels_down()])
 	# Gate swings into the basket when shoved, and stops at its limit.
