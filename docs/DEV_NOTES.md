@@ -3,6 +3,65 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: hands: tap rhythm sets where each hand holds the bar; Q/E back to left/right push
+
+Keys are back to Q/A left hand push/pull, E/D right (the left hand pushing turns the cart right).
+
+Each hand key now carries two signals (`scripts/cart.gd`, mirrored in `mobile/game/cart.js`):
+
+- **How hard (hold).** Power ramps from `power_base` as before and stays uncapped, so the wrists still lever
+  the cart into a wheelie and over if a hold goes on too long. What the arm puts into the bar levels off
+  toward `drive_max` (160 N a hand, `tanh`). That also puts a ceiling on braking.
+- **Where (tap rate).** `hand_grip` (0 to 1) places the hand between `hand_rest` (0.14 m from the middle) and
+  `hand_end` (0.25 m; the bar is 0.52 m wide). Each press moves the hand out by `tap_step`, a quick press
+  (`tap_fast` after the last) by up to `tap_boost` times that, and the hand drains back in at `grip_drain`.
+  A press only counts as a tap after the key was up `tap_min_gap` (finger speed), so the bots' key pulsing
+  doesn't read as tapping. A press after the first also shoves (`tap_power` × boost). Between taps, while
+  the rhythm lasts (`tap_slow`), the hand stays on the bar and its power leaks away (`tap_hold_leak`), so a
+  steady rhythm settles at a power set by the tap rate instead of growing like a hold.
+- **Steering comes from the physics.** Each hand's force acts at its own position on the bar. With both hands
+  the same way, their common push is capped by running speed, and the difference twists the bar at any speed.
+  A difference in force or position steers even at a run.
+- **Fatigue.** Held hands tire (`fatigue_rate`); a press freshens them (`tap_refresh`). A tired arm's force
+  wanders by up to `wobble` (two slow sines per hand, out of step), and the pair's twist grip weakens
+  (`grip_fatigue_loss`). A cart left on held keys drifts off line.
+- **Backward walk.** Pulling backwards tops out at `reverse_speed` (2 m/s).
+- **Settle fix.** The near-rest brake now waits until every key has been up `settle_delay` (0.4 s). Before
+  this, the gaps between taps stopped the cart dead below 0.15 m/s, so tapping from rest went nowhere
+  (0.11 m/s after 4 s of taps, now 3-4 m/s).
+- **HUD.** A BAR strip shows each hand's position (green push, red pull, fading as the arm tires). The message
+  sign says where each hand is ("PUSHING 120 N AT 18 CM").
+
+Measured in the sandbox (headless probe, from about 3.3 m/s unless noted):
+
+| Input | Result |
+|---|---|
+| One hand held | 5°/s |
+| One hand tapped at 3 / 5 / 7 Hz | 4.8 / 7.2 / 9.3°/s |
+| At 2 m/s: held vs tapped 5 Hz | 11 vs 16°/s |
+| Push one + pull the other | 73°/s (103°/s at 2 m/s) |
+| One push + S | 37°/s, and the speed drops (rear wheels scrub) |
+| Alternating taps at 4 Hz from rest | 4.8 m/s, no tip |
+| Both held from rest | front lifts about 1.8 s, falls about 2.6 s (unchanged) |
+
+Drive test: "tapping turns" (E held 27°, E tapped 43°). One-hand turn threshold lowered to 20° (held hands turn
+gently by design). "pull = push" became "pull vs push" (backward walk).
+
+Judgment calls and open points:
+
+- **Yanking a cart off a stack.** With human caps (about 160 N a hand, 2 m/s backward) a yank only rolls a
+  free-standing stack back with the cart. The stack tests now give the yank `drive_max` 800 and
+  `reverse_speed` 5, extending the old `power_ramp` 400 override. In play, pulling a cart off a free-rolling
+  stack needs a rethink (stack wheels braked, or a yank impulse).
+- **The wheelie checks** now start at x = -80. Let go at a run, the cart rolled into the test strip's first
+  speed bump and the browser cart flipped over it.
+- **Multiplayer.** Guests don't receive `hand_grip` or `hand_fatigue` yet, so their HUD markers stay at rest.
+  Very short taps by a guest could also fall between input packets.
+- **Browser floor fix.** The browser's endless floor used `RAPIER.ColliderDesc.halfspace`, which this Rapier
+  build lacks, so the game crashed on load on `main` since the sandbox merge. It now uses
+  `new ColliderDesc(new HalfSpace(...))`.
+- **Caster damage** (veer from crashes) is deliberately left for later.
+
 ## 2026-11-21: driving HUD restyled as road signs (MUTCD 11th edition)
 
 `scenes/ui/hud.tscn` now follows the US sign manual in `Reference Images/UI/mutcd11thedition.pdf`:

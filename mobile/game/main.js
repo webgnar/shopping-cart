@@ -148,9 +148,9 @@ function respawn() {
 }
 
 // ---------------------------------------------------------------- input
-// Keys: the Godot game's (main.gd). E/A left push/pull, Q/D right push/pull, W/S lean back/front up, P reset.
+// Keys: the Godot game's (main.gd). Q/A left push/pull, E/D right push/pull, W/S lean back/front up, P reset.
 const keys = new Set();
-const KEYS = { push_left: 'KeyE', pull_left: 'KeyA', push_right: 'KeyQ', pull_right: 'KeyD', lift: 'KeyW', press: 'KeyS' };
+const KEYS = { push_left: 'KeyQ', pull_left: 'KeyA', push_right: 'KeyE', pull_right: 'KeyD', lift: 'KeyW', press: 'KeyS' };
 const touchHand = { L: 0, R: 0 }, touchLean = { lift: false, press: false };
 let tiltLean = { lift: false, press: false };
 let testInput = null;   // set by the test hook

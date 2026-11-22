@@ -81,7 +81,7 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   which supplies cart spawning, the follow camera, input and the HUD. A level scene places its own
   `CartSpawn` marker; if it has no `WorldEnvironment`, `Camera` or `HUD` node, `main.gd` adds the
   shared default scene for each.
-- `scenes/cart/cart.tscn` — the cart rig (frame, gate, casters, wheels, hinge joints, groceries, model).
+- `scenes/cart/cart.tscn` — the cart rig (frame, gate, casters, wheels, hinge joints, groceries, model). Keys: Q/A left hand push/pull, E/D right; holding sets how hard, tapping moves the hand out along the bar (see `scripts/cart.gd`).
   `scenes/cart/spare_cart.tscn` — the same cart, empty and not player controlled, to place in levels.
   `scenes/cart/bot_cart.tscn` — a cart driven by a bot (`scripts/cart_bot.gd`) pressing the same keys a player does;
   place instances under a level's `BotCarts` node. Bots need the level's `Navigation` region: re-bake it with

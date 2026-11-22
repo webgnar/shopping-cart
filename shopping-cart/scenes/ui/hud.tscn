@@ -519,7 +519,7 @@ custom_minimum_size = Vector2(84, 64)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_push_dim")
 script = ExtResource("2_bo48s")
-action = &"push_right"
+action = &"push_left"
 idle_style = SubResource("Style_push_dim")
 pressed_style = SubResource("Style_push_lit")
 idle_text_color = Color(1, 1, 1, 0.5)
@@ -539,7 +539,7 @@ horizontal_alignment = 1
 [node name="Caption" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyQ/Text"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
-text = "RIGHT PUSH"
+text = "LEFT PUSH"
 horizontal_alignment = 1
 
 [node name="KeyW" type="PanelContainer" parent="Screen/Controls/Drive/KeyCaps"]
@@ -579,7 +579,7 @@ custom_minimum_size = Vector2(84, 64)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_push_dim")
 script = ExtResource("2_bo48s")
-action = &"push_left"
+action = &"push_right"
 idle_style = SubResource("Style_push_dim")
 pressed_style = SubResource("Style_push_lit")
 idle_text_color = Color(1, 1, 1, 0.5)
@@ -599,7 +599,7 @@ horizontal_alignment = 1
 [node name="Caption" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyE/Text"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
-text = "LEFT PUSH"
+text = "RIGHT PUSH"
 horizontal_alignment = 1
 
 [node name="KeyA" type="PanelContainer" parent="Screen/Controls/Drive/KeyCaps"]
@@ -748,6 +748,63 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(44, 0)
 theme_override_fonts/font = SubResource("SystemFont_cms")
 unique_name_in_owner = true
+
+[node name="BarSign" type="PanelContainer" parent="Screen/Controls"]
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_meter")
+
+[node name="Row" type="HBoxContainer" parent="Screen/Controls/BarSign"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Plaque" type="PanelContainer" parent="Screen/Controls/BarSign/Row"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("Style_plaque")
+
+[node name="Caption" type="Label" parent="Screen/Controls/BarSign/Row/Plaque"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 10
+text = "BAR"
+horizontal_alignment = 1
+
+[node name="Track" type="Control" parent="Screen/Controls/BarSign/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 22)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Rail" type="ColorRect" parent="Screen/Controls/BarSign/Row/Track"]
+offset_top = 9.0
+offset_right = 260.0
+offset_bottom = 13.0
+mouse_filter = 2
+color = Color(1, 1, 1, 0.85)
+
+[node name="Middle" type="ColorRect" parent="Screen/Controls/BarSign/Row/Track"]
+offset_left = 129.0
+offset_top = 3.0
+offset_right = 131.0
+offset_bottom = 19.0
+mouse_filter = 2
+color = Color(1, 1, 1, 0.5)
+
+[node name="LeftHand" type="ColorRect" parent="Screen/Controls/BarSign/Row/Track"]
+unique_name_in_owner = true
+offset_right = 10.0
+offset_bottom = 22.0
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
+
+[node name="RightHand" type="ColorRect" parent="Screen/Controls/BarSign/Row/Track"]
+unique_name_in_owner = true
+offset_right = 10.0
+offset_bottom = 22.0
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
 
 [node name="HandsSign" type="PanelContainer" parent="Screen/Controls"]
 layout_mode = 2
