@@ -341,6 +341,7 @@ func _run() -> void:
 	cart = main.cart
 	var seat_rest := _rel_deg(cart.gate, cart.child_seat)
 	var flap_rest := _rel_deg(cart.gate, cart.seat_flap)
+	var plastic_rest := _rel_deg(cart.seat_flap, cart.seat_plastic)
 	var seat_up := 0.0
 	var flap_up := 0.0
 	var gate_up := 0.0
@@ -357,12 +358,12 @@ func _run() -> void:
 	var seat_lift := rad_to_deg(s_rest.angle_to(cart.child_seat.global_transform.basis.y))
 	await _wait(2.0)
 	var seat_back := _rel_deg(cart.gate, cart.child_seat)
-	var folded_ok := seat_rest < 2.0 and flap_rest < 2.0 and gate_up > 45.0 and absf(seat_lift - gate_up) < 5.0 \
+	var folded_ok := seat_rest < 2.0 and flap_rest < 2.0 and plastic_rest < 3.0 and gate_up > 45.0 and absf(seat_lift - gate_up) < 5.0 \
 		and seat_up < 10.0 and flap_up < 10.0 and seat_back < 2.0
 	if not folded_ok:
 		failures += 1
-	print("%-5s %-18s folded at rest: backrest %.1f deg, flap %.1f deg off their stops; gate up %.0f deg lifts the backrest %.0f deg (stays within %.1f deg of the gate, flap within %.1f)" % [
-		"PASS" if folded_ok else "FAIL", "gate lifts seat", seat_rest, flap_rest, gate_up, seat_lift, seat_up, flap_up])
+	print("%-5s %-18s folded at rest: backrest %.1f deg, flap %.1f deg, plastic %.1f deg off their stops; gate up %.0f deg lifts the backrest %.0f deg (stays within %.1f deg of the gate, flap within %.1f)" % [
+		"PASS" if folded_ok else "FAIL", "gate lifts seat", seat_rest, flap_rest, plastic_rest, gate_up, seat_lift, seat_up, flap_up])
 	# Opening the seat: pull the backrest into the basket (it stays, leaning forward), then pull the flap down about
 	# its loops until it lies level. Lifting the flap folds it back up against the gate; then the backrest goes back.
 	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
@@ -383,6 +384,17 @@ func _run() -> void:
 	await _wait(2.0)
 	var flap_open := _rel_deg(cart.gate, cart.seat_flap)
 	var loop_moved := (cart.seat_flap.global_position - cart.gate.global_position - flap_loop).length()
+	# The plastic lies on the open seat; lifted by its free edge it comes up off the seat, and let go it drops back.
+	var plastic_on := _rel_deg(cart.seat_flap, cart.seat_plastic)
+	var plastic_tip := Vector3(-0.017, 0.123, 0)   # the plastic's free edge, folded (plastic body frame)
+	var plastic_up := 0.0
+	for i in 30:
+		cart.seat_plastic.apply_force(cart.frame.global_transform.basis.y * 3.0, cart.seat_plastic.global_transform.basis * plastic_tip)
+		await physics_frame
+		plastic_up = maxf(plastic_up, _rel_deg(cart.seat_flap, cart.seat_plastic))
+	var flap_still := _rel_deg(cart.gate, cart.seat_flap)
+	await _wait(2.0)
+	var plastic_back := _rel_deg(cart.seat_flap, cart.seat_plastic)
 	for i in 60:
 		cart.seat_flap.apply_force((cart.frame.global_transform.basis.y - cart.frame.global_transform.basis.x) * 8.0,
 			cart.seat_flap.global_transform.basis * flap_tip)
@@ -404,6 +416,11 @@ func _run() -> void:
 		failures += 1
 	print("%-5s %-18s pulled down level at %.0f deg (98), its loops moved %.1f mm, lifted back up to %.1f deg" % [
 		"PASS" if flap_ok else "FAIL", "seat flap", flap_open, loop_moved * 1000.0, flap_folded])
+	var plastic_ok := plastic_on < 3.0 and plastic_up > 30.0 and absf(flap_still - 98.0) < 4.0 and plastic_back < 3.0
+	if not plastic_ok:
+		failures += 1
+	print("%-5s %-18s on the open seat %.1f deg, lifted off it %.0f deg (seat stayed at %.0f), dropped back to %.1f deg" % [
+		"PASS" if plastic_ok else "FAIL", "seat plastic", plastic_on, plastic_up, flap_still, plastic_back])
 	# A pinned cart still gets knocked when something hits it.
 	main.spawn_cart(Vector3(-10, 0, -3), 0.0)
 	await _wait(2.0)
