@@ -2,7 +2,7 @@ extends Node3D
 ## Cart sound bench (scenes/sound_bench.tscn): the real cart on a plain floor, with a cinder block and two boxes to
 ## pick up and drop into it, so you can hear the sounds the cart's physics makes (its ContactSounds, WheelSounds
 ## and ImpactSynth do all of it; this script only holds things and turns the cart).
-##  - Left mouse: grab whatever body is under the cursor (a prop, or any part of the cart) and hold it at the hand,
+##  - Left mouse: grab whatever body is under the cursor (a prop, or any part of the cart, seen through its wire parts) and hold it at the hand,
 ##    a point that follows the cursor at the distance you grabbed it. The hand pulls on the spot you grabbed, like
 ##    a spring with a person's strength, so a heavy block lags, swings and lands with its real weight. Let go to drop.
 ##  - Mouse wheel: while holding, moves the hand nearer or further; otherwise zooms the camera.
@@ -16,11 +16,13 @@ extends Node3D
 @export_group("Grab")
 @export var grab_stiffness := 120.0   ## 1/s^2: the hand's pull on the held spot per metre it trails, as acceleration
 @export var grab_damping := 16.0      ## 1/s: how much the hand resists the held spot's speed, as acceleration
+@export var grab_min_mass := 2.0     ## kg: the spring pulls a lighter body as hard as one this heavy
 @export var grab_max_force := 450.0   ## N: a person's lifting strength; a heavier pull than this lags behind
 @export var grab_angular_damp := 4.0  ## extra angular damping on the held body, so it doesn't spin off the hand
 @export var hold_min := 0.6           ## m from the camera
 @export var hold_max := 8.0
 @export var reach := 30.0             ## m: furthest the cursor can grab
+@export var pick_depth := 0.06        ## m behind the first thing the cursor hits that it can still pick (see pick())
 @export var falling_speed := 0.05     ## m/s (and rad/s): a dropped body moving faster keeps the cart awake to hear it
 
 @export_group("Turn")
@@ -91,8 +93,9 @@ func _physics_process(delta: float) -> void:
 		var p := held.global_transform * _held_point
 		var r := p - held.global_position
 		var v := held.linear_velocity + held.angular_velocity.cross(r)
-		var a := (hand - p) * grab_stiffness - v * grab_damping - held.get_gravity()
-		held.apply_force((a * held.mass).limit_length(grab_max_force), r)
+		# The spring pulls as if on at least grab_min_mass, so a light part hinged to heavier ones still follows.
+		var spring := ((hand - p) * grab_stiffness - v * grab_damping) * maxf(held.mass, grab_min_mass)
+		held.apply_force((spring - held.get_gravity() * held.mass).limit_length(grab_max_force), r)
 	# A cart at rest is pinned (frozen) and hears nothing that lands on it, so it is kept live while what was just
 	# dropped is still moving.
 	if _falling:
@@ -128,11 +131,35 @@ func release() -> void:
 
 func _grab_at_cursor() -> void:
 	var from := camera.project_ray_origin(_mouse)
-	var q := PhysicsRayQueryParameters3D.create(from, from + camera.project_ray_normal(_mouse) * reach,
-		ShoppingCart.LAYER_WORLD | ShoppingCart.LAYER_CART | ShoppingCart.LAYER_CARGO)
-	var hit := get_world_3d().direct_space_state.intersect_ray(q)
-	if hit and hit.collider is RigidBody3D:
+	var hit := pick(from, camera.project_ray_normal(_mouse))
+	if hit:
 		grab(hit.collider, hit.position)
+
+
+## What the cursor ray from `from` along `dir` picks up: the lightest body it meets within pick_depth of the first
+## thing it hits. The cart's wire parts (gate, seat, backrest) have solid collision boxes, but you see through them
+## to what sits on or behind them, like the plastic plate on the child seat, and that is what you meant to grab.
+func pick(from: Vector3, dir: Vector3) -> Dictionary:
+	var q := PhysicsRayQueryParameters3D.create(from, from + dir * reach,
+		ShoppingCart.LAYER_WORLD | ShoppingCart.LAYER_CART | ShoppingCart.LAYER_CARGO)
+	var space := get_world_3d().direct_space_state
+	var best := {}
+	var first := -1.0
+	var skip: Array[RID] = []
+	for i in 6:
+		q.exclude = skip
+		var hit := space.intersect_ray(q)
+		if hit.is_empty():
+			break
+		var d := from.distance_to(hit.position)
+		if first < 0.0:
+			first = d
+		elif d - first > pick_depth:
+			break
+		if hit.collider is RigidBody3D and (best.is_empty() or hit.collider.mass < best.collider.mass):
+			best = hit
+		skip.append(hit.rid)
+	return best
 
 
 func _cursor_point(dist: float) -> Vector3:
