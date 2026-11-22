@@ -1,6 +1,6 @@
 // Headless test for the browser version: the same drive checks as the Godot drive test
 // (shopping-cart/tests/drive_test.gd), plus every level, spare carts, bot carts, cart-to-cart hits, stacked carts, the follow camera,
-// the phone's touch rockers, the keyboard and the console.
+// the race down the garage, the supermarket sweep, the phone's touch rockers, the keyboard and the console.
 //   node mobile/test/drive_test.js [screenshot-dir]
 // Serves mobile/ on a local port (the game fetches its levels, so it can't run from file://).
 const { chromium, devices } = require('playwright');
@@ -185,11 +185,11 @@ const SCENARIOS = [
   }
 
   // Hard push / pull tips the cart: hold on and it may go over, let go as soon as an end lifts and it comes down.
+  // A push starts 25 m further back: let go at a run, the cart coasts about 30 m, and from (-10, -3) that reaches the
+  // sandbox's speed bump at x = 14, which trips it over.
   for (const [dir, after, falls] of [[1, 4.0, true], [-1, 4.0, true], [1, 0.0, false], [-1, 0.0, false]]) {
     const r = await page.evaluate(([dir, after]) => {
-      // Out in the open lot, west of the test strip: a cart let go at a run rolls a long way, and the strip's speed
-      // bumps would flip it.
-      const c = T.c, cart = T.fresh(-80, -3);
+      const c = T.c, cart = T.fresh(dir > 0 ? -35 : -10, -3);
       c.setInput({ L: dir, R: dir });
       let held = 0, lifted = 0, stop = false;
       c.simulate(6, () => {
@@ -278,26 +278,49 @@ const SCENARIOS = [
     out.gateSwing = between(g0, yAxis(gate.rotation()));
     c.simulate(1.5);
     out.gateBack = between(g0, yAxis(gate.rotation()));
-    for (const [name, key, push, dirLocal, force] of [['flap', 'SeatFlap', [0.13, 0, 0], 'up', 6], ['seat', 'ChildSeat', [0.13, 0.47, 0], 'left', 10]]) {
-      cart = T.fresh(-10, -3, 0.5);
-      const body = cart.b[key], b0 = yAxis(body.rotation());
-      const start = angle(cart.gate.rotation(), body.rotation());
-      let maxSwing = 0;
-      const pushAt = () => { const p = body.translation(), v = T.rotq(body.rotation(), push); return { x: p.x + v.x, y: p.y + v.y, z: p.z + v.z }; };
-      c.simulate(30 / 120, () => { maxSwing = Math.max(maxSwing, between(b0, yAxis(body.rotation()))); }, () => {
-        const b = T.basis(), d = dirLocal === 'up' ? b.y : { x: -b.x.x, y: -b.x.y, z: -b.x.z };   // Godot Vector3.LEFT is -X
-        body.applyImpulseAtPoint({ x: d.x * force / 120, y: d.y * force / 120, z: d.z * force / 120 }, pushAt(), true);
-      });
-      c.simulate(2);
-      const stays = between(b0, yAxis(body.rotation()));
-      if (key === 'ChildSeat') { c.simulate(30 / 120, null, () => { const b = T.basis(); body.applyImpulseAtPoint({ x: b.x.x * force / 120, y: b.x.y * force / 120, z: b.x.z * force / 120 }, pushAt(), true); }); c.simulate(2); }
-      out[name] = { start, maxSwing, stays, back: between(b0, yAxis(body.rotation())) };
-    }
+    // Child seat folded on the gate, flap folded between them; the gate swinging up carries both (drive_test.gd).
+    const imp = (body, dir, force, local) => {
+      const p = body.translation(), v = T.rotq(body.rotation(), local);
+      body.applyImpulseAtPoint({ x: dir.x * force / 120, y: dir.y * force / 120, z: dir.z * force / 120 }, { x: p.x + v.x, y: p.y + v.y, z: p.z + v.z }, true);
+    };
+    const neg = v => ({ x: -v.x, y: -v.y, z: -v.z });
+    cart = T.fresh(-10, -3, 1.0);
+    let seat = cart.b.ChildSeat, flap = cart.b.SeatFlap;
+    out.lift = { seatRest: angle(cart.gate.rotation(), seat.rotation()), flapRest: angle(seat.rotation(), flap.rotation()), seatUp: 0, flapUp: 0 };
+    const gy0 = yAxis(cart.gate.rotation()), sy0 = yAxis(seat.rotation());
+    let n = 0;
+    c.simulate(1.0, () => { if (++n > 60) { out.lift.seatUp = Math.max(out.lift.seatUp, angle(cart.gate.rotation(), seat.rotation()));
+      out.lift.flapUp = Math.max(out.lift.flapUp, angle(seat.rotation(), flap.rotation())); } },
+      () => imp(cart.gate, T.basis().x, 60, [0.17, -0.5, 0]));
+    out.lift.gateUp = between(gy0, yAxis(cart.gate.rotation()));
+    out.lift.seatLift = between(sy0, yAxis(seat.rotation()));
+    c.simulate(2);
+    out.lift.seatBack = angle(cart.gate.rotation(), seat.rotation());
+    // Backrest pulls open and stays open; with it open the flap lifts when pushed and drops back; pushed back, it folds.
+    cart = T.fresh(-10, -3, 0.5);
+    seat = cart.b.ChildSeat; flap = cart.b.SeatFlap;
+    const o = { seatMax: 0, flapMax: 0 };
+    c.simulate(40 / 120, () => { o.seatMax = Math.max(o.seatMax, angle(cart.gate.rotation(), seat.rotation())); }, () => imp(seat, T.basis().x, 10, [-0.15, 0.45, 0]));
+    c.simulate(2);
+    o.seatStays = angle(cart.gate.rotation(), seat.rotation());
+    o.flap0 = angle(seat.rotation(), flap.rotation());
+    c.simulate(30 / 120, () => { o.flapMax = Math.max(o.flapMax, angle(seat.rotation(), flap.rotation())); }, () => imp(flap, neg(T.basis().x), 6, [0.03, -0.1, 0]));
+    c.simulate(2);
+    o.flapBack = angle(seat.rotation(), flap.rotation());
+    c.simulate(40 / 120, null, () => imp(seat, neg(T.basis().x), 10, [-0.15, 0.45, 0]));
+    c.simulate(2);
+    o.seatFolded = angle(cart.gate.rotation(), seat.rotation());
+    out.open = o;
     return out;
   });
   report(hinge.gateSwing > 10 && hinge.gateSwing < 75 && hinge.gateBack < 5, 'gate', `swung ${hinge.gateSwing.toFixed(0)} deg when shoved, back to ${hinge.gateBack.toFixed(0)} deg after`);
-  report(hinge.flap.start < 2 && hinge.flap.maxSwing > 20 && hinge.flap.maxSwing < 110 && hinge.flap.back < 3, 'seat flap', `at rest ${hinge.flap.start.toFixed(1)} deg off its stop, swung ${hinge.flap.maxSwing.toFixed(0)} deg when pushed, back to ${hinge.flap.back.toFixed(1)} deg`);
-  report(hinge.seat.start < 2 && hinge.seat.maxSwing > 5 && hinge.seat.maxSwing < 33 && hinge.seat.stays > 25 && hinge.seat.back < 3, 'seat backrest', `at rest ${hinge.seat.start.toFixed(1)} deg, swung ${hinge.seat.maxSwing.toFixed(0)} deg, stayed folded at ${hinge.seat.stays.toFixed(0)} deg, back to ${hinge.seat.back.toFixed(1)} deg`);
+  const SL = hinge.lift, SO = hinge.open;
+  report(SL.seatRest < 2 && SL.flapRest < 3 && SL.gateUp > 45 && Math.abs(SL.seatLift - SL.gateUp) < 5 && SL.seatUp < 10 && SL.flapUp < 10 && SL.seatBack < 2, 'gate lifts seat',
+    `folded at rest: backrest ${SL.seatRest.toFixed(1)} deg off the gate, flap ${SL.flapRest.toFixed(1)}; gate up ${SL.gateUp.toFixed(0)} deg lifts the backrest ${SL.seatLift.toFixed(0)} deg (within ${SL.seatUp.toFixed(1)}, flap ${SL.flapUp.toFixed(1)})`);
+  report(SO.seatMax > 25 && SO.seatMax < 38 && SO.seatStays > 25 && SO.seatFolded < 2, 'seat backrest',
+    `pulled open ${SO.seatMax.toFixed(0)} deg, stayed open at ${SO.seatStays.toFixed(0)} deg, pushed back to ${SO.seatFolded.toFixed(1)} deg`);
+  report(SO.flap0 < 3 && SO.flapMax > 20 && SO.flapMax < 80 && SO.flapBack < 3, 'seat flap',
+    `at rest ${SO.flap0.toFixed(1)} deg off its stop, swung ${SO.flapMax.toFixed(0)} deg when pushed, back to ${SO.flapBack.toFixed(1)} deg`);
 
   // A pinned cart is knocked loose when a box hits it.
   const knock = await page.evaluate(() => {
@@ -367,20 +390,40 @@ const SCENARIOS = [
       c.setInput({ L: 1, R: 1, press: true });
       c.simulate(0.7, () => { if (!sw.FL.grounded && !sw.FR.grounded) { up++; if (sw.FL.roll.gain === 0 && sw.FR.roll.gain === 0 && sw.RL.roll.gain > 0.5) quiet++; } });
       c.setInput({}); c.simulate(1.0);
-      Object.assign(rolling, { up, quiet, landed: sw.FL.landings + sw.FR.landings - l0 });
+      Object.assign(rolling, { up, quiet, landed: sw.FL.landings + sw.FR.landings - l0, impact: Math.max(sw.FL.lastImpact, sw.FR.lastImpact), slammed: sw.FL.slams + sw.FR.slams });
       sound.update(0.1);
+      // Traffic (TrafficLane / TrafficRoute): every car drives on at its lane's speed (0.5 s, so none loops round).
+      const cars = c.level.traffic || [], t0 = cars.map(k => ({ ...k.body.translation() }));
+      c.simulate(0.5);
+      const traffic = cars.map((k, i) => { const t = k.body.translation(); return Math.hypot(t.x - t0[i].x, t.y - t0[i].y, t.z - t0[i].z) / 0.5 / k.speed; });
       return { spawnDrop: s.pos[1] - p.y, wheels, pinned, spares, sparesPinned, fell: p2.y < s.pos[1] - 1,
-        moved: Math.hypot(p2.x - p.x, p2.z - p.z), inside, minGap, rolling, ...c.stats() };
+        moved: Math.hypot(p2.x - p.x, p2.z - p.z), inside, minGap, rolling, traffic, ...c.stats() };
     }, lv);
     const want = { plot: 'asphalt', garage: 'concrete', market: 'tile' }[lv];
     const rs = r.rolling;
     report(rs.floors.length === 1 && (!want || rs.floors[0] === want) && rs.gain > 0.9 && rs.maxScrub < 0.2 && rs.atRest.length === 0
-      && rs.loaded.length === 10 && rs.up > 20 && rs.quiet > 10 && rs.landed > 0, `sound ${lv}`,
-      `every wheel on ${rs.floors}${want ? ' (expected ' + want + ')' : ''} at ${rs.speed.toFixed(1)} m/s, quietest gain ${rs.gain.toFixed(2)}, scrub ${rs.maxScrub.toFixed(2)}, at rest playing [${rs.atRest}]; wheelie: front up ${rs.up} ticks, quiet ${rs.quiet}, landings ${rs.landed}; sounds loaded ${rs.loaded.length}/10`);
+      && rs.loaded.length === 12 && rs.up > 20 && rs.quiet > 10 && rs.landed > 0, `sound ${lv}`,
+      `every wheel on ${rs.floors}${want ? ' (expected ' + want + ')' : ''} at ${rs.speed.toFixed(1)} m/s, quietest gain ${rs.gain.toFixed(2)}, scrub ${rs.maxScrub.toFixed(2)}, at rest playing [${rs.atRest}]; wheelie: front up ${rs.up} ticks, quiet ${rs.quiet}, landings ${rs.landed} (${rs.slammed} slams) at ${rs.impact.toFixed(2)} m/s; sounds loaded ${rs.loaded.length}/12`);
     report(Math.abs(r.spawnDrop) < 0.1 && r.wheels === 4 && r.pinned && !r.fell && r.moved > 1 && r.inside === 0, `level ${lv}`,
       `spawned on 4 wheels and came to rest: ${r.wheels === 4 && r.pinned}, drove ${r.moved.toFixed(1)} m, camera never inside walls (closest ${r.minGap.toFixed(2)} m), ${r.spares} spare carts (${r.sparesPinned} at rest), ${r.meshes} meshes, ${r.drawCalls} draws, ${Math.round(r.triangles / 1000)}k triangles`);
+    if (r.traffic.length) {
+      const ok = r.traffic.filter(f => f > 0.9 && f < 1.1).length;
+      report(ok >= r.traffic.length - 2, `traffic ${lv}`, `${ok} of ${r.traffic.length} cars drove at their lane's speed`);
+    }
     if (shots) await page.screenshot({ path: path.join(shots, `level_${lv}.png`), timeout: 180000 });
   }
+
+  // Background loop: the parking lot plays its loop (as the Godot level's BackgroundMusic), fast travel stops it.
+  const music = await page.evaluate(async () => {
+    const c = window.__cart;
+    await c.loadLevel('plot');
+    for (let i = 0; i < 100 && !(c.musicState().playing && c.musicState().passes >= 1); i++) await new Promise(r => setTimeout(r, 200));
+    const plot = c.musicState();
+    await c.loadLevel('garage');
+    return { plot, garage: c.musicState() };
+  });
+  report(music.plot.playing && music.plot.loaded && music.plot.passes >= 1 && music.plot.nextIn > 400 && music.plot.volumeDb < -6 && !music.garage.playing && !music.garage.file,
+    'background music', `parking lot: ${music.plot.file} playing ${music.plot.playing} at ${music.plot.volumeDb} dB, ${music.plot.passes} pass playing, next in ${Math.round(music.plot.nextIn)} s; garage: playing ${music.garage.playing}`);
 
   // Endless sandbox: the same chunk layout as Godot (its exported check table), chunks around the cart, and after a
   // jump far away the ground is there under a 4 m grid around the cart (shopping-cart/tests/sandbox_test.gd in Godot).
@@ -429,6 +472,113 @@ const SCENARIOS = [
       `${b.moved.toFixed(0)} m, ${JSON.stringify(b.stats)}, fallen ${b.fallen}, lowest y ${b.low.toFixed(2)}`));
     if (shots) { await page.evaluate(() => window.__cart.renderOnce()); await page.screenshot({ path: path.join(shots, `bots_${lv}.png`), timeout: 180000 }); }
   }
+
+  // Race (race.js, as shopping-cart/tests/race_test.gd): `race` goes to the garage and lines you and the bots up on
+  // the roof; nobody moves during 3, 2, 1 even with both hands held; at GO you go. Then your cart is put before the
+  // finish line and pushed over it, and the bots race all ten floors down to it.
+  const rc = await page.evaluate(async () => {
+    const c = window.__cart;
+    await c.loadLevel('sandbox');
+    c.runCommand('race');
+    for (let i = 0; i < 300 && !(c.levelKey === 'garage' && c.race && c.race.phase === 2); i++) await new Promise(r => setTimeout(r, 100));
+    const race = c.race, out = { level: c.levelKey, phase: race && race.phase, racers: race ? race.racers.length : 0 };
+    if (!race) return out;
+    const slotOff = race.racers.map((r, i) => { const p = race.cartOf(r).origin(), s = race.D.slots[i].pos; return Math.hypot(p.x - s[0], p.z - s[2]); });
+    out.slotOff = Math.max(...slotOff);
+    const p0 = { ...c.cart.origin() };
+    c.setInput({ L: 1, R: 1 }); c.simulate(2.9);
+    out.heldMoved = Math.hypot(c.cart.origin().x - p0.x, c.cart.origin().z - p0.z);
+    out.countShown = !document.getElementById('raceCount').hidden;
+    c.simulate(1.2);
+    out.goMoved = Math.hypot(c.cart.origin().x - p0.x, c.cart.origin().z - p0.z); out.phaseAfter = race.phase;
+    c.setInput({}); c.simulate(1);
+    const f = race.D.finish.xf;
+    c.spawn(c.v3(f[9] - 1.6, 0, -3), 0); c.simulate(0.3);
+    c.setInput({ L: 1, R: 1 }); c.simulate(6); c.setInput({});
+    out.myTime = race.racers[0].time;
+    const t0 = performance.now();
+    race.D.finish_grace = 400;
+    for (let s = 0; s < 360 && race.phase !== 4; s += 10) c.simulate(10);
+    out.ms = performance.now() - t0;
+    out.done = race.phase === 4; out.bots = race.racers.slice(1).map(r => r.time); out.puts = race.racers.slice(1).map(r => r.bot.stats.put_back);
+    c.renderOnce();
+    out.results = !document.getElementById('raceResults').hidden && document.getElementById('raceTable').textContent;
+    return out;
+  });
+  report(rc.level === 'garage' && rc.phase === 2 && rc.racers === 4 && rc.slotOff < 0.15, 'race: line-up',
+    `race took us to ${rc.level}, counting down, ${rc.racers} racers, all within ${(rc.slotOff ?? 9).toFixed(2)} m of their slots`);
+  report(rc.heldMoved < 0.05 && rc.countShown && rc.goMoved > 0.3 && rc.phaseAfter === 3, 'race: 3 2 1 GO',
+    `holding both pushes through the count moved ${(rc.heldMoved ?? 9).toFixed(3)} m; after GO ${(rc.goMoved ?? 0).toFixed(2)} m`);
+  report(rc.myTime > 0, 'race: you finish', `your time ${(rc.myTime ?? -1).toFixed(2)} s`);
+  report(rc.done && rc.bots.filter(t => t > 0).length >= 2 && !!rc.results, 'race: bots finish',
+    `bots ${JSON.stringify(rc.bots && rc.bots.map(t => +t.toFixed(1)))} s (put back ${JSON.stringify(rc.puts)}), ${((rc.ms || 0) / 1000).toFixed(0)} s to simulate; results:\n${rc.results}`);
+  if (shots) await page.screenshot({ path: path.join(shots, 'race_results.png'), timeout: 180000 });
+
+  // Supermarket sweep (sweep.js, as shopping-cart/tests/sweep_test.gd): `sweep 40` goes to the supermarket and lines
+  // you and the bots up at the entrance with empty baskets; nobody moves during 3, 2, 1. Parked by the coffee, five
+  // cans drop in and no more; rolling over spills some; bumping the giant soup and holding still at the deli counter
+  // earn their bonuses; the bots shop; `sweep nobots` restocks.
+  const sw = await page.evaluate(async () => {
+    const c = window.__cart;
+    await c.loadLevel('sandbox');
+    c.runCommand('sweep 40');
+    for (let i = 0; i < 300 && !(c.levelKey === 'market' && c.sweep && c.sweep.phase === 2); i++) await new Promise(r => setTimeout(r, 100));
+    const sweep = c.sweep, out = { level: c.levelKey, phase: sweep && sweep.phase, shoppers: sweep ? sweep.shoppers.length : 0 };
+    if (!sweep) return out;
+    out.round = sweep.roundTime; out.products = sweep.products.length; out.displays = sweep.displays.length;
+    out.slotOff = Math.max(...sweep.shoppers.map((s, i) => { const p = sweep.cartOf(s).origin(), q = sweep.D.slots[i].pos; return Math.hypot(p.x - q[0], p.z - q[2]); }));
+    const p0 = { ...c.cart.origin() };
+    c.setInput({ L: 1, R: 1 }); c.simulate(2.9);
+    out.groceries = c.cart.groceries.length;
+    out.heldMoved = Math.hypot(c.cart.origin().x - p0.x, c.cart.origin().z - p0.z);
+    out.countShown = !document.getElementById('sweepCount').hidden;
+    c.setInput({}); c.simulate(0.4);
+    out.phaseAfter = sweep.phase;
+    const me = sweep.shoppers[0];
+    const coffee = sweep.displays.find(d => d.name === 'Coffee');
+    c.spawn(c.v3(coffee.stop[0] - 0.55, 0, coffee.stop[2]), 0); c.simulate(4);
+    out.coffee = sweep.countOf(c.cart, 'Coffee'); out.cents = me.cents; out.left = sweep.left(coffee);
+    c.simulate(2); out.leftLater = sweep.left(coffee);
+    c.sweep.draw(0); out.toast = document.getElementById('sweepToasts').textContent;
+    const before = me.cents, q = c.cart.frame.rotation();
+    const nose = { x: 1 - 2 * (q.y * q.y + q.z * q.z), y: 2 * (q.x * q.y + q.w * q.z), z: 2 * (q.x * q.z - q.w * q.y) };
+    c.cart.wake(); c.cart.frame.setAngvel({ x: -12 * nose.x, y: -12 * nose.y, z: -12 * nose.z }, true); c.cart.frame.setLinvel({ x: 0, y: 3.5, z: 0 }, true);
+    c.simulate(3);
+    // Upside down, the groceries lie under the basket; set the cart back on its wheels beside them (as a reset does).
+    { const o = c.cart.origin(); c.spawn(c.v3(o.x - 3, 0, o.z), 0); c.simulate(0.5); }
+    out.spilled = [before, me.cents];
+    const soup = sweep.bonuses.find(b => b.name === 'Giant soup');
+    c.spawn(c.v3(soup.rest.p.x - 2.2, 0, soup.rest.p.z), 0); c.simulate(0.2);
+    c.setInput({ L: 1, R: 1 }); c.simulate(2.5); c.setInput({});
+    out.soup = [soup.claimed, me.bonus];
+    const deli = sweep.stations.find(s => s.title === 'DELI COUNTER');
+    c.spawn(c.v3(deli.zone.inv.clone().invert().elements[12] - 0.5, 0, deli.zone.inv.clone().invert().elements[14]), 0);
+    c.simulate(4); out.deli = me.bonus; c.simulate(3); out.deliAgain = me.bonus;
+    const t0 = performance.now();
+    for (let s = 0; s < 60 && sweep.phase !== 4; s += 5) c.simulate(5);
+    out.ms = performance.now() - t0;
+    out.done = sweep.phase === 4;
+    out.bots = sweep.shoppers.slice(1).map(s => [s.items, s.cents, JSON.stringify(s.bot.stats)]);
+    c.renderOnce();
+    out.results = !document.getElementById('sweepResults').hidden && document.getElementById('sweepTable').textContent;
+    c.runCommand('sweep nobots');
+    for (let i = 0; i < 50 && sweep.phase !== 2; i++) await new Promise(r => setTimeout(r, 100));
+    out.again = [sweep.phase, sweep.shoppers.length, sweep.left(coffee), soup.claimed, sweep.roundTime];
+    return out;
+  });
+  report(sw.level === 'market' && sw.phase === 2 && sw.shoppers === 4 && sw.slotOff < 0.15 && sw.round === 40, 'sweep: line-up',
+    `sweep took us to ${sw.level}, counting down a ${sw.round} s round, ${sw.shoppers} shoppers within ${(sw.slotOff ?? 9).toFixed(2)} m of their slots, ${sw.displays} displays, ${sw.products} products`);
+  report(sw.groceries === 0 && sw.heldMoved < 0.3 && sw.countShown && sw.phaseAfter === 3, 'sweep: 3 2 1 GO',
+    `empty basket (${sw.groceries} groceries), moved ${(sw.heldMoved ?? 9).toFixed(3)} m during the count, then sweeping`);
+  report(sw.coffee === 5 && sw.cents === 4495 && sw.left === 5 && sw.leftLater === 5 && /Coffee/.test(sw.toast || ''), 'sweep: grab and limit',
+    `${sw.coffee} coffee in the basket, ${sw.cents} cents, ${sw.left} then ${sw.leftLater} left on the table, pop-up "${(sw.toast || '').split('\n')[0]}"`);
+  report(sw.spilled && sw.spilled[1] < sw.spilled[0], 'sweep: spill', `rolled over: ${JSON.stringify(sw.spilled)} cents`);
+  report(sw.soup && sw.soup[0] && sw.soup[1] === 10000 && sw.deli === 15000 && sw.deliAgain === 15000, 'sweep: bonuses',
+    `giant soup ${JSON.stringify(sw.soup)}, then the deli counter: bonus ${sw.deli}, ${sw.deliAgain} after waiting more`);
+  report(sw.done && sw.bots.reduce((n, b) => n + b[0], 0) >= 3 && !!sw.results, 'sweep: bots and checkout',
+    `bots ${JSON.stringify(sw.bots)}, ${((sw.ms || 0) / 1000).toFixed(0)} s to simulate; results:\n${sw.results}`);
+  report(sw.again && sw.again[0] === 2 && sw.again[1] === 1 && sw.again[2] === 10 && !sw.again[3] && sw.again[4] === 90, 'sweep: again', `sweep nobots: ${JSON.stringify(sw.again)}`);
+  if (shots) await page.screenshot({ path: path.join(shots, 'sweep_results.png'), timeout: 180000 });
 
   // Cart-to-cart: roll the player's cart into a spare cart in the supermarket; the spare moves.
   const hit = await page.evaluate(async () => {

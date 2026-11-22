@@ -7,8 +7,11 @@ extends Node3D
 ##  - Front casters: a fork that swivels 360 degrees on a vertical hinge, wheel trailing 3.8 cm behind.
 ##  - Rear wheels: fixed, spin on their axles.
 ##  - Gate: hinged at the top rail, swings into the basket 0 to 70 degrees.
-##  - ChildSeat (backrest) and SeatFlap: hinged on the gate; the backrest folds back 0 to 30 degrees and
-##    the flap folds up 0 to 105 degrees, both resting on their stops under gravity.
+##  - ChildSeat (the wire backrest): hinged on the gate at its bottom bar. It rests folded against the gate's front
+##    (its 0 stop), so when the gate swings up it carries the seat up with it; it opens 35 degrees into the basket.
+##  - SeatFlap (the plastic seat): hinged on the child seat. Folded it hangs between the backrest and the gate,
+##    leaning on the gate (the one pair of the cart's own parts that touch, TOUCHING_PARTS); it opens 74 degrees
+##    to lie level as a seat.
 ##  - Groceries: loose bodies in the basket; add or move them under the Groceries node.
 ##  - Model: the rigged model (assets/models/shopping_cart.glb); its pivots follow the physics bodies.
 ## Cart local axes: nose = +X, up = +Y, left = -Z. Units: metres, kg, newtons.
@@ -71,6 +74,9 @@ var controls := {}
 ## true: this cart only shows a cart simulated on another machine (a multiplayer guest's view, see
 ## scripts/net/net_session.gd). Its bodies stay frozen and the network moves them; nothing here pushes it.
 var puppet := false
+## true: nobody's hands are on the bar (a race countdown, scripts/race/race.gd). Every key reads as let go, the
+## keyboard's and a driver's alike.
+var locked := false
 var puppet_velocity := Vector3.ZERO   ## a puppet's frame velocity on the host (for the HUD and the rolling sound)
 var puppet_spin := 0.0                ## a puppet's turn rate on the host, rad/s
 var hand_power := {"L": 0.0, "R": 0.0}   ## N each hand is putting into the bar: + push, - pull
@@ -156,6 +162,7 @@ var _tilt_dir := 0                  ## +1 S, -1 W, 0 neither
 var _let_go := false                ## the hands slipped off on this W/S hold; it does nothing more until let go
 
 var _links := []           ## [visual node, body, offset] kept in step every frame
+var _frame_rest := Transform3D.IDENTITY   ## the frame's place relative to the cart's origin, as built
 var _own_rids: Array[RID] = []   ## this cart's bodies, which its wheel-on-the-ground rays look past
 
 ## Nesting (a stack of carts, see scripts/cart/cart_nest.gd): the cart this one's nose is tucked into, the cart
@@ -170,6 +177,7 @@ var ghosts := {}
 
 
 func _ready() -> void:
+	_frame_rest = global_transform.affine_inverse() * frame.global_transform
 	for g in $Groceries.get_children():
 		if empty_basket:
 			g.queue_free()
@@ -179,7 +187,7 @@ func _ready() -> void:
 	var parts: Array = [frame, gate, child_seat, seat_flap] + wheels.values() + forks.values()
 	for a in parts:
 		for b in parts:
-			if a != b:
+			if a != b and not _touching(a, b):
 				a.add_collision_exception_with(b)
 	for b in parts + groceries:
 		_own_rids.append(b.get_rid())
@@ -194,6 +202,10 @@ func _ready() -> void:
 		_link(_model.find_child("Wheel_F%s_Axle" % side), wheels["F" + side])
 		_link(_model.find_child("Wheel_R%s_Axle" % side), wheels["R" + side])
 
+
+## The cart's own bodies never collide with each other (the hinges hold them together), except these pairs: the
+## folded seat flap hangs against the gate. The browser game gets them through the cart rig export.
+const TOUCHING_PARTS := [["Gate", "SeatFlap"]]
 
 ## Cart feel as the shared tuning dictionary (same keys as tuning/cart_tuning.json). The values come from this
 ## scene: the exports above and the bodies' masses. tools/export_cart_tuning.gd writes them out for the mobile game.
@@ -241,6 +253,8 @@ func keys_held() -> bool:
 ## Whether a key is held: the player's keyboard (not while typing in a text box), or the driver's `controls` for
 ## any other cart.
 func held(action: String) -> bool:
+	if locked:
+		return false
 	if not player_controlled:
 		return controls.get(action, false)
 	var focus := get_viewport().gui_get_focus_owner()
@@ -693,6 +707,21 @@ func net_bodies() -> Array[RigidBody3D]:
 	return list
 
 
+## Moves the whole rig (and whatever is in its basket) so the handle stands at `at`, upright and facing `yaw`, at
+## rest. A bot cart or a spare one can be put somewhere else this way without being rebuilt.
+func place(at: Vector3, yaw: float) -> void:
+	var to := Transform3D(Basis(Vector3.UP, yaw), at + Vector3(0, 0.005, 0)) * _frame_rest
+	var move := to * frame.global_transform.affine_inverse()
+	for b in net_bodies():
+		b.global_transform = move * b.global_transform
+		b.linear_velocity = Vector3.ZERO
+		b.angular_velocity = Vector3.ZERO
+	fallen = false
+	_wait_release = false
+	hand_power = {"L": 0.0, "R": 0.0}
+	_wake()
+
+
 ## Turns this cart into a puppet: frozen, moved only by the network.
 func make_puppet() -> void:
 	puppet = true
@@ -744,10 +773,42 @@ func ground_slope() -> float:
 func groceries_in_basket() -> int:
 	var n := 0
 	for g in groceries:
-		var p := frame.global_transform.affine_inverse() * g.global_position
-		if p.x > 0.05 and p.x < 1.0 and absf(p.z) < 0.33 and p.y > 0.4 and p.y < 1.2:
+		if g.visible and in_basket(g.global_position):
 			n += 1
 	return n
+
+
+## Whether two of the cart's own bodies touch each other (TOUCHING_PARTS) instead of passing through.
+static func _touching(a: Node, b: Node) -> bool:
+	for pair in TOUCHING_PARTS:
+		if (a.name == pair[0] and b.name == pair[1]) or (a.name == pair[1] and b.name == pair[0]):
+			return true
+	return false
+
+
+## Whether a point (world space) is inside the basket, or heaped on top of it up to 1.2 m off the floor.
+func in_basket(p: Vector3) -> bool:
+	var q := frame.global_transform.affine_inverse() * p
+	return q.x > 0.05 and q.x < 1.0 and absf(q.z) < 0.33 and q.y > 0.4 and q.y < 1.2
+
+
+## Where something dropped into the basket starts (cart-local): over the middle of the basket, a little above the
+## rim, spread a bit by `spread` (-1 to 1 in each of x and z) so a run of drops doesn't land on one spot.
+func basket_drop(spread: Vector2) -> Vector3:
+	return Vector3(0.55 + 0.2 * spread.x, 1.08, 0.15 * spread.y)
+
+
+## The cart's own groceries (the five under Groceries): shown and loose in the basket, or taken out of play
+## (hidden, frozen, touching nothing), as for a supermarket sweep, where every cart starts empty.
+func show_groceries(on: bool) -> void:
+	for g in groceries:
+		if g.visible == on:
+			continue
+		g.visible = on
+		g.collision_layer = LAYER_CARGO if on else 0
+		g.collision_mask = LAYER_WORLD | LAYER_CART | LAYER_CARGO if on else 0
+		if not puppet:
+			g.freeze = not on
 
 
 func _link(node: Node3D, body: RigidBody3D) -> void:

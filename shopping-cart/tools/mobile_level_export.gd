@@ -9,8 +9,10 @@ extends RefCounted
 ##    can move them with their physics body.
 ##  - mobile/levels/<key>.json: what you touch and how it's lit: every collision shape with its friction, the
 ##    loose props (mass, shapes), CartSpawn, the spare carts, the bot carts and the navigation mesh they drive on,
-##    sky/fog/ambient, the sun, lamps and 3D labels, the lanes of moving traffic (TrafficLane: speed, length, each
-##    car's place and shapes; cars are kin_<n>), and for the endless sandbox, the chunk grid ("stream").
+##    sky/fog/ambient, the sun, lamps and 3D labels, the race (grid, finish box, bots' route), the lanes of moving
+##    traffic (TrafficLane: speed, length, each car's place and shapes; cars are kin_<n>; a TrafficRoute also has its
+##    points), the background loop ("music"), and for the endless sandbox, the chunk grid ("stream"). Nodes with
+##    metadata/mobile_skip (the coast's far trees) are left out.
 ##  - mobile/levels/chunks/<name>.glb and .json: each chunk the sandbox streams (scenes/sandbox/chunks/), the same way.
 ## And once for the cart (scenes/cart/cart.tscn): mobile/levels/cart.json with the rig (bodies, masses, shapes,
 ## hinges and their limits), the cart's shared materials (assets/materials/cart/*.tres) and the bot's settings
@@ -27,8 +29,9 @@ const SKYLINE_SKY_SHADER := "res://scenes/environment/skyline_sky.gdshader"
 const CART_MATERIALS_DIR := "res://assets/materials/cart/"
 const OUT_DIR := "../mobile/levels"
 const NAMES := {"sandbox": "Sandbox", "plot": "Parking lot", "garage": "Parking garage", "market": "Supermarket",
-	"hill": "San Francisco hill"}
-const ORDER := ["sandbox", "plot", "garage", "market", "hill"]
+	"hill": "San Francisco hill", "coast": "Coast highway"}
+const ORDER := ["sandbox", "plot", "garage", "market", "hill", "coast"]
+const ROUTE_STEP := 2.0   ## m between the points of an exported TrafficRoute
 
 
 static func out_path(file: String) -> String:
@@ -98,6 +101,20 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 		out["merge_cell"] = float(level.get_meta("mobile_merge_cell"))
 	var spawn := level.get_node_or_null("CartSpawn") as Node3D
 	out.spawn = {"pos": _v(spawn.global_position if spawn else Vector3(2, 0, 0)), "yaw": spawn.global_rotation.y if spawn else 0.0}
+	var sweep: Sweep = null
+	for n in level.find_children("*", "", true, false):
+		if n is Race:
+			out["race"] = _race(n)
+		elif n is Sweep:
+			sweep = n
+	# A sweep's labels that change (a display's "8 left") or move (an inflatable's price) go with the sweep's data.
+	var sweep_labels := {}
+	if sweep:
+		for d in sweep.display_list():
+			sweep_labels[d.left_label] = true
+		for b in sweep.inflatable_list():
+			for l in b.find_children("*", "Label3D", true, false):
+				sweep_labels[l] = true
 
 	# An endless level (ChunkStreamer): its settings go in the JSON and each chunk is exported on its own
 	# (export_chunk); the chunks it has loaded around the cart and its far ground are left out of the level.
@@ -145,10 +162,12 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 			out.lights.append({"type": "spot", "pos": _v(n.global_position), "dir": _v(-n.global_basis.z),
 				"color": _c(n.light_color), "energy": n.light_energy, "range": n.spot_range,
 				"angle": deg_to_rad(n.spot_angle), "attenuation": n.spot_attenuation})
-		elif n is Label3D and n.is_visible_in_tree():
+		elif n is Label3D and n.is_visible_in_tree() and not sweep_labels.has(n):
 			out.labels.append(_label(n))
 		elif n is NavigationRegion3D and n.navigation_mesh and out.navmesh == null:
 			out.navmesh = _navmesh(n)
+		elif n is AudioStreamPlayer and n.autoplay and n.stream:
+			out["music"] = _music(n)
 
 	# Moving traffic: each lane's place, speed and length, and its cars (kin_<n>) with their shapes and their
 	# places in the queue. The phone drives them the same way (TrafficLane).
@@ -171,9 +190,40 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 						shapes.append(sh)
 			entry.cars.append({"node": id, "offset": lane.distance(i, 0.0), "friction": _friction(car), "shapes": shapes})
 		out.traffic.append(entry)
+	# Traffic along a winding road (TrafficRoute): the route as points every ROUTE_STEP m from its start, and the
+	# cars' places along it. The phone samples the points the way Godot samples the curve.
+	for route in level.find_children("*", "Path3D", true, false):
+		if not route is TrafficRoute:
+			continue
+		var pts := []
+		var n := int(ceil(route.length / ROUTE_STEP))
+		for k in n + 1:
+			pts.append(route.global_transform * route.curve.sample_baked(minf(k * ROUTE_STEP, route.length)))
+		var entry := {"route": _flat(pts), "step": ROUTE_STEP, "speed": route.speed, "length": route.length, "cars": []}
+		var cars: Array = route.get("_cars")
+		for i in cars.size():
+			var car: AnimatableBody3D = cars[i]
+			var id := "kin_%d" % moving.size()
+			moving[car] = true
+			car.name = id
+			var shapes := []
+			for s in car.get_children():
+				if s is CollisionShape3D and not s.disabled and s.shape:
+					var sh := _shape(s.shape, s.transform)
+					if not sh.is_empty():
+						shapes.append(sh)
+			entry.cars.append({"node": id, "offset": route.distance(i, 0.0), "friction": _friction(car), "shapes": shapes})
+		out.traffic.append(entry)
+
+	# Things a level marks as too much for a phone (metadata/mobile_skip): left out of the export.
+	for n in level.find_children("*", "", true, false):
+		if is_instance_valid(n) and n.get_meta("mobile_skip", false):
+			n.get_parent().remove_child(n)
+			n.free()
 
 	# Collision: static shapes go in one list, loose props keep their shapes per body.
 	var dyn_count := 0
+	var dyn_ids := {}   # body -> its dyn_<n> name
 	for n in level.find_children("*", "CollisionObject3D", true, false):
 		var body := n as CollisionObject3D
 		if body is Area3D or moving.has(body):
@@ -188,16 +238,20 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 		if shapes.is_empty():
 			continue
 		var friction := _friction(body)
-		if body is RigidBody3D and not body.freeze:
+		if body is RigidBody3D and (not body.freeze or body is Product):
+			# Loose props, and a sweep's products, which sit frozen on their displays until someone takes them.
 			var rb := body as RigidBody3D
 			var id := "dyn_%d" % dyn_count
 			dyn_count += 1
+			dyn_ids[rb] = id
 			rb.name = id
 			var entry := {"node": id, "xf": _xf(rb.global_transform), "mass": rb.mass, "friction": friction,
 				"layer": rb.collision_layer, "mask": rb.collision_mask, "can_sleep": rb.can_sleep,
 				"shapes": shapes.map(func(sh): return _local_shape(sh, rb.global_transform))}
 			if rb.center_of_mass_mode == RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM:
 				entry["com"] = _v(rb.center_of_mass)
+			if rb.freeze:
+				entry["frozen"] = true
 			out.bodies.append(entry)
 		else:
 			var surface := _surface(body)
@@ -206,6 +260,9 @@ static func export_level(tree: SceneTree, key: String, scene_path: String) -> Di
 				if surface:
 					sh["surface"] = surface
 				out.statics.append(sh)
+
+	if sweep:
+		out["sweep"] = _sweep(sweep, dyn_ids, sweep_labels)
 
 	# What's left that the phone draws: meshes only (lights, labels and physics are in the JSON).
 	for n in level.find_children("*", "", true, false):
@@ -455,6 +512,7 @@ static func export_cart() -> Dictionary:
 	out["wheel_sound"] = _wheel_sound(cart.get_node("Wheel_RL/WheelSound"))
 	out["wheel_radius"] = cart.get_node("Wheel_FL/Shape").shape.radius
 	out["hand_position"] = _v(cart.hand_position)
+	out["touching"] = ShoppingCart.TOUCHING_PARTS
 	out["nest"] = _nest_settings(cart.get_node("Frame/NestMouth"))
 	cart.free()
 	out["bot"] = _bot_settings()
@@ -500,6 +558,53 @@ static func _navmesh(region: NavigationRegion3D) -> Dictionary:
 	return {"vertices": _flat(verts), "polygons": polys}
 
 
+## A level's race (scripts/race/race.gd) for mobile/game/race.js: its settings, the grid's slots, the finish box
+## (centre transform and size), the bots' route and the spot past the line they drive to.
+static func _race(r: Race) -> Dictionary:
+	var shape: CollisionShape3D = r.finish.find_children("*", "CollisionShape3D", true, false)[0]
+	var way := []
+	if r.route:
+		for m in r.route.get_children():
+			if m is Marker3D:
+				way.append(_v(m.global_position))
+	return {
+		"countdown": r.countdown, "go_hold": r.go_hold, "bots_race": r.bots_race, "finish_grace": r.finish_grace,
+		"slots": r.slots().map(func(m): return {"pos": _v(m.global_position), "yaw": m.global_basis.get_euler().y}),
+		"finish": {"xf": _xf(shape.global_transform), "size": _v((shape.shape as BoxShape3D).size)},
+		"route": way, "bot_goal": _v(r.bot_goal.global_position),
+	}
+
+
+## A level's supermarket sweep (scripts/sweep/sweep.gd) for mobile/game/sweep.js: its settings, the starting slots,
+## each display (its product, price, the items on it by their dyn_<n> body, where a bot stops, its grab zone and its
+## "left" label), the inflatables (body, bonus, label) and the bonus stations (box, bonus, hold time).
+static func _sweep(sw: Sweep, ids: Dictionary, labels: Dictionary) -> Dictionary:
+	var box := func(area: Area3D) -> Dictionary:
+		var shape: CollisionShape3D = area.find_children("*", "CollisionShape3D", true, false)[0]
+		return {"xf": _xf(shape.global_transform), "size": _v((shape.shape as BoxShape3D).size)}
+	var out := {
+		"duration": sw.duration, "countdown": sw.countdown, "go_hold": sw.go_hold, "item_limit": sw.item_limit,
+		"grab_speed": sw.grab_speed, "grab_interval": sw.grab_interval, "bots_shop": sw.bots_shop,
+		"bot_linger": sw.bot_linger,
+		"slots": sw.slots().map(func(m): return {"pos": _v(m.global_position), "yaw": m.global_basis.get_euler().y}),
+		"displays": [], "bonuses": [], "stations": [],
+	}
+	for d in sw.display_list():
+		var items := d.items()
+		out.displays.append({"name": d.product_name(), "price": d.price(), "stop": _v(d.stop.global_position),
+			"zone": box.call(d.zone), "items": items.map(func(p): return ids[p]),
+			"left_label": _label(d.left_label)})
+	for b in sw.inflatable_list():
+		var l: Array = b.find_children("*", "Label3D", true, false)
+		out.bonuses.append({"node": ids[b], "name": b.bonus_name, "bonus": b.bonus, "stash": _v(b.stash_offset),
+			"label": _label(l[0]) if not l.is_empty() else null,
+			"label_offset": _v(b.global_transform.affine_inverse() * l[0].global_position) if not l.is_empty() else null})
+	for st in sw.station_list():
+		out.stations.append({"title": st.title, "bonus": st.bonus, "hold_time": st.hold_time,
+			"still_speed": st.still_speed, "zone": box.call(st)})
+	return out
+
+
 ## The bot's settings from scenes/cart/bot_cart.tscn: every CartBot export, plus where its NavigationAgent3D sits on
 ## the frame and how close it gets to a path point or the target.
 static func _bot_settings() -> Dictionary:
@@ -517,6 +622,15 @@ static func _bot_settings() -> Dictionary:
 	return out
 
 
+## A level's background loop (an autoplaying AudioStreamPlayer, e.g. the parking lot's BackgroundMusic). The phone
+## plays mobile/audio/<name>.mp3, cut by the same script as the .ogg (tools/audio/make_ambience_loops.py): the loop
+## plus a few seconds of what follows it, which mobile/game/music.js crossfades into the next pass.
+static func _music(p: AudioStreamPlayer) -> Dictionary:
+	var bus := AudioServer.get_bus_index(p.bus)
+	return {"file": "audio/%s.mp3" % p.stream.resource_path.get_file().get_basename(), "loop_length": p.stream.get_length(),
+		"volume_db": p.volume_db + (AudioServer.get_bus_volume_db(bus) if bus >= 0 else 0.0), "bus": String(p.bus)}
+
+
 ## The wheel sound (scenes/cart/wheel_sound.tscn, the same under every wheel): its settings, each floor's roll and
 ## scrub loops, the knocks and the landing. The phone plays mobile/audio/<name>.wav, cut from the same recordings
 ## as the Godot files (tools/audio/make_cart_rolling_loops.py).
@@ -525,19 +639,19 @@ static func _wheel_sound(ws: WheelSound) -> Dictionary:
 	var floor_dict := func(f: CartFloorSound) -> Dictionary: return {"name": f.resource_path.get_file().get_basename(),
 		"floors": f.floors.map(func(m): return m.resource_path.get_file().get_basename()),
 		"roll": wav.call(f.roll), "roll_db": f.roll_db, "scrub": wav.call(f.scrub), "scrub_db": f.scrub_db}
-	var shots := func(p: AudioStreamPlayer3D) -> Dictionary:
-		var r := p.stream as AudioStreamRandomizer
+	var shots := func(source: Variant) -> Dictionary:
+		var r := (source.stream if source is AudioStreamPlayer3D else source) as AudioStreamRandomizer
 		var files := []
 		for i in r.streams_count:
 			files.append(wav.call(r.get_stream(i)))
 		return {"files": files, "random_pitch": r.random_pitch}
 	var out := {"floors": ws.floor_sounds.map(floor_dict), "fallback": ws.fallback.resource_path.get_file().get_basename(),
-		"knock": shots.call(ws.knock_player), "land": shots.call(ws.land_player),
+		"knock": shots.call(ws.knock_player), "land_tap": shots.call(ws.land_tap), "land_slam": shots.call(ws.land_slam),
 		"unit_size": ws.roll_player.unit_size, "max_distance": ws.roll_player.max_distance}
 	for key in ["contact_gap", "wheel_db", "silent_speed", "full_volume_speed", "volume_curve", "recorded_speed",
 			"min_pitch", "max_pitch", "pitch_per_speed", "fade_time", "scrub_start", "scrub_full", "skid_tolerance", "scrub_pitch_low",
 			"scrub_pitch_per_speed", "scrub_max_pitch", "knock_start", "knock_full", "knock_db", "knock_gap",
-			"land_air_time", "land_start", "land_full", "land_db"]:
+			"land_air_time", "land_start", "land_slam_speed", "land_full", "land_curve", "land_db"]:
 		out[key] = ws.get(key)
 	return out
 

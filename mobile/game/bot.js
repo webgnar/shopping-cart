@@ -15,8 +15,53 @@ export class Bot {
     this.agent = new NavAgent(mesh, { pathDesired: S.path_desired_distance, targetDesired: S.target_desired_distance });
     this.state = PAUSE; this.timer = this._range(S.pause_min, S.pause_max);
     this.tripTime = 0; this.tripLimit = 0; this.stuck = 0; this.backoffs = 0;
-    this.stats = { trips: 0, gave_up: 0, backed_off: 0, fell: 0 };
+    this.stats = { trips: 0, gave_up: 0, backed_off: 0, fell: 0, put_back: 0 };
+    this.route = []; this.passed = null;
     this.controls = {};
+    this.racing = false;   // in a race: lined up at the start (holding still), then driving to the finish (raceTo)
+    this.errand = false;   // on an errand (a supermarket sweep): drives where it's sent (driveTo), then holds still there
+  }
+
+  /** Errand: drive to p at cruising pace, slowing to a stop there, and hold still until the next driveTo or
+   *  stopErrand (CartBot.drive_to). atErrand() says when it's standing there. */
+  driveTo(p) {
+    this.errand = true;
+    this.agent.setTarget(p);
+    if (this.state !== GET_UP) this.state = DRIVE;
+    this.tripTime = 0;
+    this.tripLimit = this.S.give_up_slack + 3 * dist(p, this.cart.origin()) / this.S.cruise_speed;
+    this.stuck = 0; this.backoffs = 0;
+  }
+  atErrand() { return this.errand && this.state === PAUSE && !this.cart.fallen; }
+  stopErrand() {
+    this.errand = false;
+    if (this.state !== GET_UP) this.state = PAUSE;
+    this.timer = this._range(this.S.pause_min, this.S.pause_max);
+  }
+
+  /** Race: stand still at the start line until raceTo. */
+  lineUp() { this.racing = true; this.state = PAUSE; this.timer = Infinity; this.controls = {}; }
+  /** Race: drive through route (the race's waypoints, the spot past the finish line last) as fast as it safely
+   *  can, and don't give up on the way (CartBot.race_to). The nav mesh finds the way between waypoints. */
+  raceTo(route) {
+    this.racing = true; this.route = route.map(p => ({ ...p })); this.passed = { ...this.cart.origin() };
+    this.agent.pathDesired = this.S.race_path_distance;
+    this.agent.setTarget(this.route[0]); this.state = DRIVE;
+    this.tripTime = 0; this.tripLimit = Infinity; this.stuck = 0; this.backoffs = 0;
+  }
+  /** Racing: on to the next waypoint once near enough this one (the last one, past the finish, it drives right to). */
+  _nextWaypoint() {
+    if (this.route.length < 2) return;
+    const at = this.navPoint(), w = this.route[0];
+    if (Math.hypot(w.x - at.x, w.z - at.z) < this.S.race_waypoint_radius && Math.abs(w.y - at.y) < 1) {
+      this.passed = this.route.shift(); this.agent.setTarget(this.route[0]); this.backoffs = 0;
+    }
+  }
+  /** Race over: back to wandering after a short rest. */
+  stopRacing() {
+    this.racing = false; this.agent.pathDesired = this.S.path_desired_distance;
+    if (this.state !== GET_UP) this.state = PAUSE;
+    this.timer = this._range(this.S.pause_min, this.S.pause_max);
   }
 
   _range(a, b) { return a + (b - a) * this.rand(); }
@@ -56,7 +101,11 @@ export class Bot {
       if (this.timer <= 0) c = { push_left: true, push_right: true };
       return this._press(c);
     }
-    if (this.state === GET_UP) { this.state = PAUSE; this.timer = 1.0; }
+    if (this.state === GET_UP) {
+      this.state = PAUSE; this.timer = this.racing || this.errand ? Infinity : 1.0;
+      // Back on its wheels mid-race (or mid-errand): carry on.
+      if ((this.errand || this.racing && this.route.length) && !this.agent.isFinished()) { this.state = DRIVE; this.agent.setTarget(this.agent.target); }
+    }
     if (this.state === PAUSE) {
       // Standing still, as a player would: hold the cart against rolling away (down a ramp, or coasting in).
       c = this._hands(-S.speed_gain * this._speed(), 0);
@@ -64,10 +113,18 @@ export class Bot {
       if (this.timer <= 0 && this.pickTarget()) this.state = DRIVE;
     } else if (this.state === DRIVE) {
       this.tripTime += dt;
+      if (this.racing) this._nextWaypoint();
       const done = this.agent.isFinished();
+      if (this.racing && this.backoffs >= S.max_back_offs && !done) {
+        // Racing and wedged (against a parked car, or another cart): back to the last waypoint, facing the next.
+        this.backoffs = 0; this.stats.put_back++;
+        const to = { x: this.route[0].x - this.passed.x, z: this.route[0].z - this.passed.z };
+        this.cart.place(this.passed, Math.hypot(to.x, to.z) > 0.1 ? Math.atan2(-to.z, to.x) : this.cart.heading());
+        this.agent.setTarget(this.route[0]);
+      }
       if (done || this.tripTime > this.tripLimit || this.backoffs >= S.max_back_offs) {
         this.stats[done ? 'trips' : 'gave_up']++;
-        this.state = PAUSE; this.timer = this._range(S.pause_min, S.pause_max);
+        this.state = PAUSE; this.timer = this.racing || this.errand ? Infinity : this._range(S.pause_min, S.pause_max);
       } else c = this._drive(dt);
     } else if (this.state === BACK_OFF) {
       this.timer -= dt;
@@ -93,12 +150,15 @@ export class Bot {
     const S = this.S, speed = this._speed(), yawRate = this.cart.frame.angvel().y, err = this._steerErr();
     // Slow down for corners and for the end of the trip.
     const left = this.agent.distanceToTarget();
-    let want = lerp(S.cruise_speed, S.corner_speed, clamp(Math.abs(err) / S.spin_angle, 0, 1));
-    want = Math.min(want, Math.max(0.4, left * 0.6));
-    const forward = Math.abs(err) > S.spin_angle ? 0 : clamp(S.speed_gain * (want - speed), -S.max_power, S.max_power);
+    const top = this.racing ? S.race_speed : S.cruise_speed, corner = this.racing ? S.race_corner_speed : S.corner_speed;
+    const power = this.racing ? S.race_max_power : S.max_power;
+    let want = lerp(top, corner, clamp(Math.abs(err) / S.spin_angle, 0, 1));
+    if (!this.racing) want = Math.min(want, Math.max(0.4, left * 0.6));   // racing: straight through the finish
+    const forward = Math.abs(err) > S.spin_angle ? 0 : clamp(S.speed_gain * (want - speed), -power, power);
     const steer = S.steer_gain * err - S.steer_damping * yawRate;
-    // Not getting anywhere while pushing: pull back a little, then try again.
-    if (forward > 0 && speed < 0.15 && Math.abs(yawRate) < 0.3) {
+    // Not getting anywhere while pushing (or while trying to spin round, say against the end of a wall): pull back
+    // a little, then try again.
+    if ((forward > 0 || Math.abs(err) > S.spin_angle) && Math.abs(speed) < 0.15 && Math.abs(yawRate) < 0.3) {
       this.stuck += dt;
       if (this.stuck > S.stuck_time) { this.state = BACK_OFF; this.stats.backed_off++; this.backoffs++; this.timer = S.back_off_time; }
     } else this.stuck = Math.max(0, this.stuck - dt);
@@ -107,8 +167,8 @@ export class Bot {
 
   /** The keys for a forward force and a steering force (+ = turn left: the right hand pushes harder). */
   _hands(forward, steer) {
-    const S = this.S, c = {};
-    const want = { L: clamp(forward - steer, -S.max_power, S.max_power), R: clamp(forward + steer, -S.max_power, S.max_power) };
+    const S = this.S, c = {}, cap = this.racing ? S.race_max_power : S.max_power;
+    const want = { L: clamp(forward - steer, -cap, cap), R: clamp(forward + steer, -cap, cap) };
     for (const [side, suffix] of [['L', 'left'], ['R', 'right']]) {
       const w = want[side], p = this.cart.handPower[side];
       if (w > 3 && p < w) c['push_' + suffix] = true;

@@ -1,0 +1,6 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+[resource]
+resource_name = "pack_crimson"
+albedo_color = Color(0.6118, 0.1059, 0.1333, 1)
+roughness = 0.35

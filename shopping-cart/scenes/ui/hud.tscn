@@ -14,8 +14,8 @@ colors = PackedColorArray(0, 0.62, 0.42, 1, 0, 0.62, 0.42, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_push"]
 gradient = SubResource("Gradient_push")
-width = 22
-height = 64
+width = 10
+height = 36
 fill_to = Vector2(0, 1)
 
 [sub_resource type="Gradient" id="Gradient_pushdim"]
@@ -24,8 +24,8 @@ colors = PackedColorArray(0, 0.62, 0.42, 0.22, 0, 0.62, 0.42, 0.22)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_pushdim"]
 gradient = SubResource("Gradient_pushdim")
-width = 22
-height = 64
+width = 10
+height = 36
 fill_to = Vector2(0, 1)
 
 [sub_resource type="Gradient" id="Gradient_pull"]
@@ -34,8 +34,8 @@ colors = PackedColorArray(0.86, 0.22, 0.12, 1, 0.86, 0.22, 0.12, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_pull"]
 gradient = SubResource("Gradient_pull")
-width = 22
-height = 64
+width = 10
+height = 36
 fill_to = Vector2(0, 1)
 
 [sub_resource type="Gradient" id="Gradient_pulldim"]
@@ -44,8 +44,8 @@ colors = PackedColorArray(0.86, 0.22, 0.12, 0.22, 0.86, 0.22, 0.12, 0.22)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_pulldim"]
 gradient = SubResource("Gradient_pulldim")
-width = 22
-height = 64
+width = 10
+height = 36
 fill_to = Vector2(0, 1)
 
 [sub_resource type="StyleBoxFlat" id="Style_guide"]
@@ -129,152 +129,151 @@ corner_radius_bottom_left = 6
 anti_aliasing = true
 
 [sub_resource type="StyleBoxFlat" id="Style_push_lit"]
-content_margin_top = 6.0
-content_margin_bottom = 6.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
 bg_color = Color(0.0000, 0.4235, 0.3137, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
 border_color = Color(1.0000, 1.0000, 1.0000, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 anti_aliasing = true
 
 [sub_resource type="StyleBoxFlat" id="Style_push_dim"]
-content_margin_top = 6.0
-content_margin_bottom = 6.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
 bg_color = Color(0.0000, 0.1694, 0.1255, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
 border_color = Color(1, 1, 1, 0.3)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 anti_aliasing = true
 
 [sub_resource type="StyleBoxFlat" id="Style_pull_lit"]
-content_margin_top = 6.0
-content_margin_bottom = 6.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
 bg_color = Color(0.7373, 0.1882, 0.0941, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
 border_color = Color(1.0000, 1.0000, 1.0000, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 anti_aliasing = true
 
 [sub_resource type="StyleBoxFlat" id="Style_pull_dim"]
-content_margin_top = 6.0
-content_margin_bottom = 6.0
+content_margin_top = 2.0
+content_margin_bottom = 2.0
 bg_color = Color(0.2802, 0.0715, 0.0358, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
 border_color = Color(1, 1, 1, 0.3)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 anti_aliasing = true
 
 [sub_resource type="StyleBoxFlat" id="Style_warn_lit"]
-content_margin_left = 3.0
-content_margin_top = 3.0
-content_margin_right = 3.0
-content_margin_bottom = 3.0
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
 bg_color = Color(0.9882, 0.8000, 0.2667, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
-anti_aliasing = true
-
-[sub_resource type="StyleBoxFlat" id="Style_warn_dim"]
-content_margin_left = 3.0
-content_margin_top = 3.0
-content_margin_right = 3.0
-content_margin_bottom = 3.0
-bg_color = Color(0.4150, 0.3360, 0.1120, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
-anti_aliasing = true
-
-[sub_resource type="StyleBoxFlat" id="Style_warn_border"]
-content_margin_top = 4.0
-content_margin_bottom = 4.0
-bg_color = Color(0, 0, 0, 0)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.0000, 0.0000, 0.0000, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 anti_aliasing = true
 
+[sub_resource type="StyleBoxFlat" id="Style_warn_dim"]
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
+bg_color = Color(0.4150, 0.3360, 0.1120, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="Style_warn_border"]
+content_margin_top = 1.0
+content_margin_bottom = 1.0
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.0000, 0.0000, 0.0000, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+anti_aliasing = true
+
 [sub_resource type="StyleBoxFlat" id="Style_meter"]
-content_margin_left = 8.0
-content_margin_top = 6.0
-content_margin_right = 8.0
-content_margin_bottom = 6.0
+content_margin_left = 4.0
+content_margin_top = 3.0
+content_margin_right = 4.0
+content_margin_bottom = 3.0
 bg_color = Color(0.04, 0.04, 0.04, 0.92)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
 border_color = Color(1, 1, 1, 0.85)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 anti_aliasing = true
 
 [sub_resource type="StyleBoxFlat" id="Style_plaque"]
-content_margin_left = 6.0
-content_margin_right = 6.0
-content_margin_bottom = 1.0
+content_margin_left = 3.0
+content_margin_right = 3.0
 bg_color = Color(1.0000, 1.0000, 1.0000, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.0000, 0.0000, 0.0000, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="Style_cms"]
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 6.0
+content_margin_bottom = 3.0
+bg_color = Color(0.02, 0.02, 0.02, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.32, 0.32, 0.32, 1)
 corner_radius_top_left = 3
 corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
-anti_aliasing = true
-
-[sub_resource type="StyleBoxFlat" id="Style_cms"]
-content_margin_left = 12.0
-content_margin_top = 7.0
-content_margin_right = 12.0
-content_margin_bottom = 7.0
-bg_color = Color(0.02, 0.02, 0.02, 0.92)
-border_width_left = 3
-border_width_top = 3
-border_width_right = 3
-border_width_bottom = 3
-border_color = Color(0.32, 0.32, 0.32, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
 anti_aliasing = true
 
 [node name="HUD" type="CanvasLayer"]
@@ -442,12 +441,12 @@ offset_right = 16.0
 offset_bottom = -16.0
 grow_vertical = 0
 mouse_filter = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 3
 
 [node name="Drive" type="HBoxContainer" parent="Screen/Controls"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 5
 
 [node name="LeftBar" type="PanelContainer" parent="Screen/Controls/Drive"]
 layout_mode = 2
@@ -456,7 +455,7 @@ theme_override_styles/panel = SubResource("Style_meter")
 
 [node name="Lines" type="VBoxContainer" parent="Screen/Controls/Drive/LeftBar"]
 layout_mode = 2
-theme_override_constants/separation = 3
+theme_override_constants/separation = 1
 
 [node name="Plaque" type="PanelContainer" parent="Screen/Controls/Drive/LeftBar/Lines"]
 layout_mode = 2
@@ -466,13 +465,13 @@ theme_override_styles/panel = SubResource("Style_plaque")
 [node name="Caption" type="Label" parent="Screen/Controls/Drive/LeftBar/Lines/Plaque"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 10
-text = "LEFT"
+theme_override_font_sizes/font_size = 8
+text = "L"
 horizontal_alignment = 1
 
 [node name="LeftPush" type="TextureProgressBar" parent="Screen/Controls/Drive/LeftBar/Lines"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(22, 60)
+custom_minimum_size = Vector2(10, 36)
 layout_mode = 2
 size_flags_horizontal = 4
 max_value = 400.0
@@ -482,14 +481,14 @@ texture_under = SubResource("GradientTexture2D_pushdim")
 texture_progress = SubResource("GradientTexture2D_push")
 
 [node name="Zero" type="ColorRect" parent="Screen/Controls/Drive/LeftBar/Lines"]
-custom_minimum_size = Vector2(30, 2)
+custom_minimum_size = Vector2(16, 2)
 layout_mode = 2
 size_flags_horizontal = 4
 color = Color(1, 1, 1, 1)
 
 [node name="LeftPull" type="TextureProgressBar" parent="Screen/Controls/Drive/LeftBar/Lines"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(22, 60)
+custom_minimum_size = Vector2(10, 36)
 layout_mode = 2
 size_flags_horizontal = 4
 max_value = 400.0
@@ -501,21 +500,21 @@ texture_progress = SubResource("GradientTexture2D_pull")
 [node name="LeftNewtons" type="Label" parent="Screen/Controls/Drive/LeftBar/Lines"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1.0000, 0.6900, 0.0000, 1)
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 9
 text = "0 N"
 horizontal_alignment = 1
-custom_minimum_size = Vector2(44, 0)
+custom_minimum_size = Vector2(30, 0)
 theme_override_fonts/font = SubResource("SystemFont_cms")
 unique_name_in_owner = true
 
 [node name="KeyCaps" type="GridContainer" parent="Screen/Controls/Drive"]
 layout_mode = 2
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
 columns = 3
 
 [node name="KeyQ" type="PanelContainer" parent="Screen/Controls/Drive/KeyCaps"]
-custom_minimum_size = Vector2(84, 64)
+custom_minimum_size = Vector2(48, 36)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_push_dim")
 script = ExtResource("2_bo48s")
@@ -527,23 +526,23 @@ pressed_text_color = Color(1, 1, 1, 1)
 
 [node name="Text" type="VBoxContainer" parent="Screen/Controls/Drive/KeyCaps/KeyQ"]
 layout_mode = 2
-theme_override_constants/separation = -4
+theme_override_constants/separation = -3
 alignment = 1
 
 [node name="Letter" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyQ/Text"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 15
 text = "Q"
 horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyQ/Text"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "LEFT PUSH"
+theme_override_font_sizes/font_size = 8
+text = "L PUSH"
 horizontal_alignment = 1
 
 [node name="KeyW" type="PanelContainer" parent="Screen/Controls/Drive/KeyCaps"]
-custom_minimum_size = Vector2(84, 64)
+custom_minimum_size = Vector2(48, 36)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_warn_dim")
 script = ExtResource("2_bo48s")
@@ -559,23 +558,23 @@ theme_override_styles/panel = SubResource("Style_warn_border")
 
 [node name="Text" type="VBoxContainer" parent="Screen/Controls/Drive/KeyCaps/KeyW/Border"]
 layout_mode = 2
-theme_override_constants/separation = -4
+theme_override_constants/separation = -3
 alignment = 1
 
 [node name="Letter" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyW/Border/Text"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 15
 text = "W"
 horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyW/Border/Text"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 8
 text = "BACK UP"
 horizontal_alignment = 1
 
 [node name="KeyE" type="PanelContainer" parent="Screen/Controls/Drive/KeyCaps"]
-custom_minimum_size = Vector2(84, 64)
+custom_minimum_size = Vector2(48, 36)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_push_dim")
 script = ExtResource("2_bo48s")
@@ -587,23 +586,23 @@ pressed_text_color = Color(1, 1, 1, 1)
 
 [node name="Text" type="VBoxContainer" parent="Screen/Controls/Drive/KeyCaps/KeyE"]
 layout_mode = 2
-theme_override_constants/separation = -4
+theme_override_constants/separation = -3
 alignment = 1
 
 [node name="Letter" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyE/Text"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 15
 text = "E"
 horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyE/Text"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "RIGHT PUSH"
+theme_override_font_sizes/font_size = 8
+text = "R PUSH"
 horizontal_alignment = 1
 
 [node name="KeyA" type="PanelContainer" parent="Screen/Controls/Drive/KeyCaps"]
-custom_minimum_size = Vector2(84, 64)
+custom_minimum_size = Vector2(48, 36)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_pull_dim")
 script = ExtResource("2_bo48s")
@@ -615,23 +614,23 @@ pressed_text_color = Color(1, 1, 1, 1)
 
 [node name="Text" type="VBoxContainer" parent="Screen/Controls/Drive/KeyCaps/KeyA"]
 layout_mode = 2
-theme_override_constants/separation = -4
+theme_override_constants/separation = -3
 alignment = 1
 
 [node name="Letter" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyA/Text"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 15
 text = "A"
 horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyA/Text"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "LEFT PULL"
+theme_override_font_sizes/font_size = 8
+text = "L PULL"
 horizontal_alignment = 1
 
 [node name="KeyS" type="PanelContainer" parent="Screen/Controls/Drive/KeyCaps"]
-custom_minimum_size = Vector2(84, 64)
+custom_minimum_size = Vector2(48, 36)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_warn_dim")
 script = ExtResource("2_bo48s")
@@ -647,23 +646,23 @@ theme_override_styles/panel = SubResource("Style_warn_border")
 
 [node name="Text" type="VBoxContainer" parent="Screen/Controls/Drive/KeyCaps/KeyS/Border"]
 layout_mode = 2
-theme_override_constants/separation = -4
+theme_override_constants/separation = -3
 alignment = 1
 
 [node name="Letter" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyS/Border/Text"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 15
 text = "S"
 horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyS/Border/Text"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 8
 text = "FRONT UP"
 horizontal_alignment = 1
 
 [node name="KeyD" type="PanelContainer" parent="Screen/Controls/Drive/KeyCaps"]
-custom_minimum_size = Vector2(84, 64)
+custom_minimum_size = Vector2(48, 36)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_pull_dim")
 script = ExtResource("2_bo48s")
@@ -675,19 +674,19 @@ pressed_text_color = Color(1, 1, 1, 1)
 
 [node name="Text" type="VBoxContainer" parent="Screen/Controls/Drive/KeyCaps/KeyD"]
 layout_mode = 2
-theme_override_constants/separation = -4
+theme_override_constants/separation = -3
 alignment = 1
 
 [node name="Letter" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyD/Text"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 15
 text = "D"
 horizontal_alignment = 1
 
 [node name="Caption" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyD/Text"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "RIGHT PULL"
+theme_override_font_sizes/font_size = 8
+text = "R PULL"
 horizontal_alignment = 1
 
 [node name="RightBar" type="PanelContainer" parent="Screen/Controls/Drive"]
@@ -697,7 +696,7 @@ theme_override_styles/panel = SubResource("Style_meter")
 
 [node name="Lines" type="VBoxContainer" parent="Screen/Controls/Drive/RightBar"]
 layout_mode = 2
-theme_override_constants/separation = 3
+theme_override_constants/separation = 1
 
 [node name="Plaque" type="PanelContainer" parent="Screen/Controls/Drive/RightBar/Lines"]
 layout_mode = 2
@@ -707,13 +706,13 @@ theme_override_styles/panel = SubResource("Style_plaque")
 [node name="Caption" type="Label" parent="Screen/Controls/Drive/RightBar/Lines/Plaque"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 10
-text = "RIGHT"
+theme_override_font_sizes/font_size = 8
+text = "R"
 horizontal_alignment = 1
 
 [node name="RightPush" type="TextureProgressBar" parent="Screen/Controls/Drive/RightBar/Lines"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(22, 60)
+custom_minimum_size = Vector2(10, 36)
 layout_mode = 2
 size_flags_horizontal = 4
 max_value = 400.0
@@ -723,14 +722,14 @@ texture_under = SubResource("GradientTexture2D_pushdim")
 texture_progress = SubResource("GradientTexture2D_push")
 
 [node name="Zero" type="ColorRect" parent="Screen/Controls/Drive/RightBar/Lines"]
-custom_minimum_size = Vector2(30, 2)
+custom_minimum_size = Vector2(16, 2)
 layout_mode = 2
 size_flags_horizontal = 4
 color = Color(1, 1, 1, 1)
 
 [node name="RightPull" type="TextureProgressBar" parent="Screen/Controls/Drive/RightBar/Lines"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(22, 60)
+custom_minimum_size = Vector2(10, 36)
 layout_mode = 2
 size_flags_horizontal = 4
 max_value = 400.0
@@ -742,10 +741,10 @@ texture_progress = SubResource("GradientTexture2D_pull")
 [node name="RightNewtons" type="Label" parent="Screen/Controls/Drive/RightBar/Lines"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1.0000, 0.6900, 0.0000, 1)
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 9
 text = "0 N"
 horizontal_alignment = 1
-custom_minimum_size = Vector2(44, 0)
+custom_minimum_size = Vector2(30, 0)
 theme_override_fonts/font = SubResource("SystemFont_cms")
 unique_name_in_owner = true
 
@@ -757,7 +756,7 @@ theme_override_styles/panel = SubResource("Style_meter")
 
 [node name="Row" type="HBoxContainer" parent="Screen/Controls/BarSign"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 5
 
 [node name="Plaque" type="PanelContainer" parent="Screen/Controls/BarSign/Row"]
 layout_mode = 2
@@ -767,42 +766,42 @@ theme_override_styles/panel = SubResource("Style_plaque")
 [node name="Caption" type="Label" parent="Screen/Controls/BarSign/Row/Plaque"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 8
 text = "BAR"
 horizontal_alignment = 1
 
 [node name="Track" type="Control" parent="Screen/Controls/BarSign/Row"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(260, 22)
+custom_minimum_size = Vector2(160, 14)
 layout_mode = 2
 mouse_filter = 2
 
 [node name="Rail" type="ColorRect" parent="Screen/Controls/BarSign/Row/Track"]
-offset_top = 9.0
-offset_right = 260.0
-offset_bottom = 13.0
+offset_top = 6.0
+offset_right = 160.0
+offset_bottom = 8.0
 mouse_filter = 2
 color = Color(1, 1, 1, 0.85)
 
 [node name="Middle" type="ColorRect" parent="Screen/Controls/BarSign/Row/Track"]
-offset_left = 129.0
-offset_top = 3.0
-offset_right = 131.0
-offset_bottom = 19.0
+offset_left = 79.5
+offset_top = 2.0
+offset_right = 80.5
+offset_bottom = 12.0
 mouse_filter = 2
 color = Color(1, 1, 1, 0.5)
 
 [node name="LeftHand" type="ColorRect" parent="Screen/Controls/BarSign/Row/Track"]
 unique_name_in_owner = true
-offset_right = 10.0
-offset_bottom = 22.0
+offset_right = 6.0
+offset_bottom = 14.0
 mouse_filter = 2
 color = Color(1, 1, 1, 1)
 
 [node name="RightHand" type="ColorRect" parent="Screen/Controls/BarSign/Row/Track"]
 unique_name_in_owner = true
-offset_right = 10.0
-offset_bottom = 22.0
+offset_right = 6.0
+offset_bottom = 14.0
 mouse_filter = 2
 color = Color(1, 1, 1, 1)
 
@@ -815,8 +814,8 @@ theme_override_styles/panel = SubResource("Style_cms")
 [node name="Hands" type="Label" parent="Screen/Controls/HandsSign"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1.0000, 0.6900, 0.0000, 1)
-theme_override_font_sizes/font_size = 14
-text = "LEFT HAND   —\nRIGHT HAND  —"
+theme_override_font_sizes/font_size = 10
+text = "L  —\nR  —"
 horizontal_alignment = 0
 theme_override_fonts/font = SubResource("SystemFont_cms")
 unique_name_in_owner = true
@@ -824,8 +823,9 @@ unique_name_in_owner = true
 [node name="Hint" type="Label" parent="Screen/Controls"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.85)
-theme_override_font_sizes/font_size = 11
-text = "P RESET  ·  M MULTIPLAYER  ·  F11 FULL SCREEN  ·  CLICK TO LOOK, ESC TO RELEASE, SCROLL TO ZOOM"
+theme_override_font_sizes/font_size = 9
+text = "P RESET · M MULTIPLAYER · F11 FULL SCREEN
+CLICK TO LOOK · ESC TO RELEASE · SCROLL TO ZOOM"
 horizontal_alignment = 0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
 theme_override_constants/outline_size = 4

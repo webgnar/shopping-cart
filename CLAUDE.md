@@ -96,6 +96,19 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   (`scripts/net/webrtc_link.gd`, desktop plugin in `addons/webrtc/`) introduced by the rendezvous service in
   `services/rendezvous/` (Cloudflare Worker; `npm run dev` there runs it locally). M opens the Multiplayer menu
   (`scenes/ui/multiplayer_menu.tscn`). Don't deploy the Worker or create Cloudflare resources without asking zack.
+- `scenes/race/race.tscn` — a race (`scripts/race/race.gd`): a `Grid` of start-slot Marker3Ds, a `Finish` Area3D with
+  its painted line and `BotGoal`, a `Route` of Marker3Ds the racing bots follow, and the countdown/results HUD
+  (`scenes/ui/race_hud.tscn`). The parking garage has one (roof to street exit). The console's `race` (or
+  `race nobots`) loads the garage and starts it; in multiplayer the host starts it and guests follow (RACE message).
+- `scenes/sweep/sweep.tscn` — a supermarket sweep (`scripts/sweep/sweep.gd`): a `Grid` of start slots, and the level
+  puts `ProductDisplay`s (sale tables with a stack of `scenes/sweep/products/*.tscn`, each with its name and price
+  exported) under `Displays`, giant `Inflatable`s under `Bonuses` and `BonusStation`s under `Stations`; HUD
+  `scenes/ui/sweep_hud.tscn`. The supermarket has one. Console `sweep` (`sweep nobots`, `sweep 60`) loads it and
+  starts; in multiplayer the host runs it (SWEEP message). Rebuild its models with `tools/supermarket_models.py`.
+- `scenes/asphalt/asphalt_lab.tscn` — the 2D asphalt lab: a road section ageing year by year (the crack types in
+  zack's Asphalt Cracking Quick Guide, potholes) and being repaired (crack filling, pothole fill, heavy patches, chip
+  seal, overlay), drawn as a colour map and a height map. `scripts/asphalt/asphalt_sim.gd` simulates,
+  `asphalt_canvas.gd` draws, `assets/asphalt/asphalt_base.gdshader` is the surface. Prototype for procedural roads.
 - `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun, and the garage's sky shader
   (`skyline_sky.gdshader`). `assets/manhattan_skyline/` (not in git) — the garage's Manhattan skyline from
   zack's Google Earth tiles, made by `sh tools/manhattan_skyline.sh`; the garage shows it only where it exists.
@@ -107,6 +120,9 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
   `tools/audio/make_cart_rolling_loops.py` (also writes the browser's `mobile/audio/*.wav`). Every wheel has a
   `WheelSound` (`scenes/cart/wheel_sound.tscn`) driven by that wheel's spin, slide and contact; the floor's
   physics material picks a `CartFloorSound` (`assets/audio/cart/floors/*.tres`).
+- `assets/audio/ambience/` — level background loops (`tools/audio/make_ambience_loops.py`, also writes
+  `mobile/audio/*.mp3`), played by an autoplaying `AudioStreamPlayer` on the `Music` bus (`default_bus_layout.tres`),
+  e.g. the parking lot's `BackgroundMusic`. The browser export picks it up as the level's `"music"`.
 - `scripts/` — behaviour scripts for the scenes above.
 - `tools/` (repo root) — Blender builder and export scripts. `docs/DEV_NOTES.md` — dev notes.
 
@@ -124,6 +140,8 @@ From `shopping-cart/`:
 - Browser game (from the repo root): `node mobile/test/drive_test.js`
 - Camera never clips into levels (all levels): `godot --headless --fixed-fps 120 -s res://tests/camera_test.gd`
 - Parking lot level test: `godot --headless --fixed-fps 120 -s res://tests/parking_lot_test.gd`
+- Coast highway level test: `godot --headless --fixed-fps 120 -s res://tests/coast_test.gd` (the level is generated
+  by `tools/coast_models.py`; its docstring lists the steps to rebuild it)
 - Stacked carts (nest, herd, pull off, knocks): `godot --headless --fixed-fps 120 -s res://tests/cart_stack_test.gd`
 - Wheel sounds (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
 - Sandbox screenshots (spawn, overview, test strip, 2 km out): `xvfb-run godot -s res://tests/sandbox_screenshot.gd -- <out prefix>`
@@ -131,5 +149,11 @@ From `shopping-cart/`:
 - Multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/multiplayer_test.gd`
 - Rendezvous service, and online play by join code over WebRTC (from `services/rendezvous`, after `npm install`):
   `npm test` and `npm run test:godot`
+- Garage race (console `race`, count, lock until GO, finish, bots race all ten floors): `godot --headless --fixed-fps 120 -s res://tests/race_test.gd`
+- Supermarket sweep (console `sweep`, count, grab, limit, spills, bonuses, bots shop, results): `godot --headless --fixed-fps 120 -s res://tests/sweep_test.gd`
+- Sweep screenshots: `xvfb-run godot --rendering-method gl_compatibility -s res://tests/sweep_screenshot.gd -- <out dir>`
+- Race screenshots: `xvfb-run godot --rendering-method gl_compatibility -s res://tests/race_screenshot.gd -- <out dir>`
 - Bot carts drive themselves in every level: `godot --headless --fixed-fps 120 -s res://tests/bot_test.gd`
 - Endless sandbox (chunks load, no holes, flush edges, floors, hill): `godot --headless --fixed-fps 120 -s res://tests/sandbox_test.gd`
+- Asphalt lab (ageing, crack types, repairs, replay): `godot --headless -s res://tests/asphalt_test.gd`
+- Asphalt lab screenshots (stages, close-ups, height maps): `xvfb-run godot --rendering-method gl_compatibility -s res://tests/asphalt_screenshot.gd -- <out dir>`

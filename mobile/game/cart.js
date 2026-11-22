@@ -25,15 +25,18 @@ export function shapeDesc(RAPIER, s) {
   let d;
   switch (s.type) {
     case 'box': d = RAPIER.ColliderDesc.cuboid(s.size[0] / 2, s.size[1] / 2, s.size[2] / 2); break;
-    case 'plane': d = new RAPIER.ColliderDesc(new RAPIER.HalfSpace({ x: 0, y: 1, z: 0 })); break;   // a world boundary: endless floor
+    case 'plane': d = new RAPIER.ColliderDesc(new RAPIER.HalfSpace({ x: 0, y: 1, z: 0 })); break;   // a world boundary: endless floor (Rapier 0.14 has no ColliderDesc.halfspace)
     case 'sphere': d = RAPIER.ColliderDesc.ball(s.radius); break;
     case 'cylinder': d = RAPIER.ColliderDesc.cylinder(s.height / 2, s.radius); break;
     case 'capsule': d = RAPIER.ColliderDesc.capsule(Math.max(0.001, s.height / 2 - s.radius), s.radius); break;
     case 'convex': d = RAPIER.ColliderDesc.convexHull(new Float32Array(s.points)); break;
     case 'mesh': {
+      // Godot's faces wind clockwise; Rapier's counter-clockwise. With them turned round, Rapier can fix internal edges:
+      // without that, a wheel rolling over the edge between two triangles (every 4 m on the coast highway's deck) can
+      // catch on it and hop. Jolt doesn't.
       const v = new Float32Array(s.faces), idx = new Uint32Array(v.length / 3);
-      for (let i = 0; i < idx.length; i++) idx[i] = i;
-      d = RAPIER.ColliderDesc.trimesh(v, idx); break;
+      for (let i = 0; i < idx.length; i += 3) { idx[i] = i; idx[i + 1] = i + 2; idx[i + 2] = i + 1; }
+      d = RAPIER.ColliderDesc.trimesh(v, idx, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES); break;
     }
   }
   if (!d) return null;
@@ -80,6 +83,8 @@ export class Cart {
     this.handGrip = { L: 0, R: 0 }; this.handFatigue = { L: 0, R: 0 };
     this.handDir = { L: 0, R: 0 }; this.handLast = { L: 0, R: 0 }; this.handUp = { L: 1, R: 1 }; this.handSince = { L: 9, R: 9 };
     this.wobbleT = 0; this.idleTime = 0;
+    // locked: nobody's hands are on the bar (a race countdown, as ShoppingCart.locked): every key reads as let go.
+    this.locked = false;
     this.fallen = false; this.waitRelease = false; this.tiltDir = 0; this.tiltTime = 0; this.letGo = false; this.pinned = false; this.restTime = 0; this.restAnchor = null;
     this.handPos = arr(rig.hand_position || [0, 1, 0.2]);
     this.wheelRadius = rig.wheel_radius;
@@ -91,6 +96,10 @@ export class Cart {
     const MIN = RAPIER.CoefficientCombineRule.Min;
 
     this.b = {}; this.local = {}; this.bodyMass = {};
+    // The cart's own parts pass through each other, except the pairs Godot lets touch (ShoppingCart.TOUCHING_PARTS:
+    // the folded seat flap leans on the gate). Only those parts keep the cart's own bit in their filter, so with a
+    // single pair, exactly that pair collides.
+    const touching = new Set((rig.touching || []).flat());
     for (const bd of rig.bodies) {
       const lp = v3(bd.xf[9], bd.xf[10], bd.xf[11]), wp = at(lp);
       const { com, inertia } = massProps(bd.mass, bd.shapes, bd.com);
@@ -99,10 +108,11 @@ export class Cart {
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(wp.x, wp.y, wp.z).setRotation(qq)
         .setAdditionalMassProperties(bd.mass, com, inertia, { x: 0, y: 0, z: 0, w: 1 })
         .setCanSleep(!player).setLinearDamping(linDamp).setAngularDamping(angDamp));
-      const g = godotGroups(bd.layer, ctx.widen(bd.layer, bd.mask), bit);
+      const touch = touching.has(bd.name);
+      const g = godotGroups(bd.layer, ctx.widen(bd.layer, bd.mask), bit, touch);
       for (const s of bd.shapes) {
         const d = shapeDesc(RAPIER, s);
-        if (d) this.cartColliders.push([world.createCollider(d.setDensity(0).setFriction(bd.friction).setFrictionCombineRule(MIN).setCollisionGroups(g), body), bd.layer, bd.mask]);
+        if (d) this.cartColliders.push([world.createCollider(d.setDensity(0).setFriction(bd.friction).setFrictionCombineRule(MIN).setCollisionGroups(g), body), bd.layer, bd.mask, touch]);
       }
       this.b[bd.name] = body; this.local[bd.name] = lp; this.bodyMass[bd.name] = bd.mass;
       if (bd.name === 'Frame') this.com = com;
@@ -203,6 +213,14 @@ export class Cart {
     if (this.root) scene.remove(this.root);
   }
 
+  /** Takes the groceries out of play (a supermarket sweep starts every cart empty, as ShoppingCart.show_groceries(false)). */
+  dropGroceries() {
+    const { world, scene } = this.ctx;
+    for (const g of this.groceries) world.removeRigidBody(g);
+    for (const [, grp] of this.meshes) { scene.remove(grp); grp.traverse(o => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } }); }
+    this.groceries = []; this.meshes = []; this.grocerySet = new Set();
+  }
+
   // ---------------------------------------------------------------- state
   heading() { const n = rot(this.frame.rotation(), v3(1, 0, 0)); return Math.atan2(-n.z, n.x); }
   origin() { return this.frame.translation(); }
@@ -244,10 +262,11 @@ export class Cart {
   handReach(h) { return this.T.hand_rest + (this.T.hand_end - this.T.hand_rest) * this.handGrip[h]; }
 
   /** Whether this cart's own keys are held (set before any cart steps, so a stack can wake as one). */
-  setKeys(inp) { this.keysHeld = !!inp && (inp.L !== 0 || inp.R !== 0 || !!inp.lift || !!inp.press); }
+  setKeys(inp) { this.keysHeld = !this.locked && !!inp && (inp.L !== 0 || inp.R !== 0 || !!inp.lift || !!inp.press); }
 
   /** inp: {L, R: -1 pull / 0 / +1 push, lift, press} for the player's cart; null for a spare cart. */
   step(inp, dt) {
+    if (this.locked && inp) inp = { L: 0, R: 0, lift: false, press: false };
     for (const b of this.parts) { b.resetForces(false); b.resetTorques(false); }
     // A stack is one herd: a key held on any of its carts keeps them all awake and rolling.
     const anyInput = this.stack().some(c => c.keysHeld);
@@ -471,6 +490,26 @@ export class Cart {
     }
   }
 
+  /** Moves the whole rig (and its groceries) so the handle stands at pos, upright, facing yaw, at rest (ShoppingCart.place). */
+  place(pos, yaw) {
+    const q0 = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0));
+    const qt = { x: q0.x, y: q0.y, z: q0.z, w: q0.w };
+    const pt = add(v3(pos.x, pos.y + 0.005, pos.z), rot(qt, this.local.Frame));
+    // The move that takes the frame from where it is to there, applied to every body.
+    const qf = this.frame.rotation(), pf = this.frame.translation();
+    const qd = new THREE.Quaternion(qt.x, qt.y, qt.z, qt.w).multiply(new THREE.Quaternion(qf.x, qf.y, qf.z, qf.w).invert());
+    const d = { x: qd.x, y: qd.y, z: qd.z, w: qd.w };
+    if (this.pinned) this.wake();
+    for (const b of [...this.parts, ...this.groceries]) {
+      const p = add(pt, rot(d, sub(b.translation(), pf)));
+      const r = b.rotation(), q = qd.clone().multiply(new THREE.Quaternion(r.x, r.y, r.z, r.w));
+      b.setTranslation(p, true); b.setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }, true);
+      b.setLinvel(v3(0, 0, 0), true); b.setAngvel(v3(0, 0, 0), true);
+    }
+    this.fallen = false; this.waitRelease = false; this.handPower = { L: 0, R: 0 };
+    this.restTime = 0; this.restAnchor = null;
+  }
+
   pin() {
     if (this.pinned) return;
     const { RAPIER } = this.ctx;
@@ -502,7 +541,7 @@ export class Cart {
   setBit(bit) {
     if (bit === this.bit) return;
     this.bit = bit;
-    for (const [c, layer, mask] of this.cartColliders) c.setCollisionGroups(godotGroups(layer, this.ctx.widen(layer, mask), bit));
+    for (const [c, layer, mask, touch] of this.cartColliders) c.setCollisionGroups(godotGroups(layer, this.ctx.widen(layer, mask), bit, touch));
     if (this.guard) this.guard.setCollisionGroups(godotGroups(2, 3, bit));
   }
 

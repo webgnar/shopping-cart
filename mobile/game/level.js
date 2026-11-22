@@ -71,19 +71,22 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
       if (d) world.createCollider(d.setDensity(0).setFriction(b.friction).setFrictionCombineRule(MIN).setCollisionGroups(g), body);
     }
     body.sleep();   // loose props start at rest, as in Godot, until something touches them
+    // A sweep's product sits frozen on its display (Godot's freeze) until someone takes it (sweep.js).
+    if (b.frozen) body.setBodyType(RAPIER.RigidBodyType.Fixed, false);
     const node = scene.getObjectByName(b.node);
     if (node) {
       propRoot.attach(node);
       node.position.set(p.x, p.y, p.z); node.quaternion.set(q.x, q.y, q.z, q.w);
       node.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
     }
-    props.push({ body, node });
+    props.push({ body, node, id: b.node });
   }
   // Moving traffic (Godot's TrafficLane): kinematic cars driving along each lane's -Z and coming back round to its
   // start, placed by time exactly as Godot does. Their meshes (kin_<n>) follow their bodies.
   const traffic = [];
   for (const lane of json.traffic || []) {
-    const L = xfMatrix(lane.xf);
+    const L = lane.route ? null : xfMatrix(lane.xf);
+    const route = lane.route ? { pts: lane.route, step: lane.step } : null;
     for (const c of lane.cars) {
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased());
       for (const s of c.shapes) {
@@ -92,7 +95,7 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
       }
       const node = scene.getObjectByName(c.node);
       if (node) { root.attach(node); node.traverse(o => { if (o.isMesh) { o.castShadow = !opts.noShadows; o.receiveShadow = true; } }); }
-      const car = { lane: L, speed: lane.speed, length: lane.length, offset: c.offset, body, node, d: c.offset };
+      const car = { lane: L, route, speed: lane.speed, length: lane.length, offset: c.offset, body, node, d: c.offset };
       placeCar(car, 0, true);
       traffic.push(car);
     }
@@ -130,17 +133,7 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
     const key = JSON.stringify([l.text, l.font_size, l.color, l.outline_color, l.outline_size, l.double_sided, l.h_align]);
     let tex = labelCache.get(key);
     if (!tex) { tex = labelTexture(l); labelCache.set(key, tex); }
-    const w = tex.userData.w * l.pixel_size, h = tex.userData.h * l.pixel_size;
-    let obj;
-    if (l.billboard) {
-      obj = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.05, depthWrite: false }));
-      obj.scale.set(w, h, 1);
-      obj.position.copy(new THREE.Vector3().setFromMatrixPosition(xfMatrix(l.xf)));
-    } else {
-      obj = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.05,
-        depthWrite: false, side: l.double_sided ? THREE.DoubleSide : THREE.FrontSide, polygonOffset: true, polygonOffsetFactor: -2 }));
-      obj.applyMatrix4(xfMatrix(l.xf));
-    }
+    const obj = labelObject(l, tex);
     obj.renderOrder = 1;
     obj.userData.ownMaterial = true;
     root.add(obj);
@@ -160,17 +153,30 @@ export function buildLevel(ctx, { json, gltf }, root, opts = {}) {
   if (lights) ownLamps = lights.add(lamps);
   else lights = new LightPool(root, lamps, opts.lightCount);
   return { props, traffic, lights, ownLamps, drawn, tris, env, sun: json.sun, spawn: json.spawn, spareCarts: json.spare_carts,
-    botCarts: json.bot_carts || [], navmesh: json.navmesh, name: json.name, surfaces, stream: json.stream || null,
+    botCarts: json.bot_carts || [], navmesh: json.navmesh, race: json.race || null, sweep: json.sweep || null, name: json.name, surfaces, stream: json.stream || null,
     fixed, handles, clock: 0 };
 }
 
 const _m = new THREE.Matrix4(), _t = new THREE.Matrix4();
-/** Puts a traffic car where its lane has it at lane time t (TrafficLane.distance). */
+const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0), _o = new THREE.Vector3();
+/** A point d m along an exported TrafficRoute (points every `step` m), into `out`. */
+function routePoint(route, d, length, out) {
+  const n = route.pts.length / 3 - 1, u = Math.min(Math.max(d, 0), length) / route.step;
+  const i = Math.min(n - 1, Math.floor(u)), f = u - i, p = route.pts;
+  return out.set(p[3 * i] + (p[3 * i + 3] - p[3 * i]) * f, p[3 * i + 1] + (p[3 * i + 4] - p[3 * i + 1]) * f,
+    p[3 * i + 2] + (p[3 * i + 5] - p[3 * i + 2]) * f);
+}
+/** Puts a traffic car where its lane has it at lane time t (TrafficLane.distance / TrafficRoute.distance). */
 function placeCar(car, t, teleport) {
   const d = ((car.offset + car.speed * t) % car.length + car.length) % car.length;
   const jump = teleport || Math.abs(d - car.d) > car.length * 0.5;   // came back round to the start
   car.d = d;
-  _m.copy(car.lane).multiply(_t.makeTranslation(0, 0, -d));
+  if (car.route) {   // facing along the route, like Godot's Basis.looking_at(ahead, UP)
+    routePoint(car.route, Math.min(d + 2, car.length), car.length, _a);
+    routePoint(car.route, Math.max(d - 2, 0), car.length, _b);
+    routePoint(car.route, d, car.length, _o);
+    _m.lookAt(_b, _a, _up).setPosition(_o);   // three's lookAt points +Z from target to eye: -Z faces ahead
+  } else _m.copy(car.lane).multiply(_t.makeTranslation(0, 0, -d));
   const { p, q } = xfPose(_m);
   if (jump) { car.body.setTranslation(p, false); car.body.setRotation(q, false); }
   car.body.setNextKinematicTranslation(p); car.body.setNextKinematicRotation(q);
@@ -192,7 +198,23 @@ export function syncTraffic(level) {
 }
 
 /** Draws a Label3D's text the way Godot does: font_size px per line, pixel_size m per px, centred. */
-function labelTexture(l) {
+/** A Label3D as the phone draws it: a textured plane (or a sprite for a billboard) placed at the label's transform. */
+export function labelObject(l, tex = labelTexture(l)) {
+  const w = tex.userData.w * l.pixel_size, h = tex.userData.h * l.pixel_size;
+  let obj;
+  if (l.billboard) {
+    obj = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, alphaTest: 0.05, depthWrite: false }));
+    obj.scale.set(w, h, 1);
+    obj.position.copy(new THREE.Vector3().setFromMatrixPosition(xfMatrix(l.xf)));
+  } else {
+    obj = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.05,
+      depthWrite: false, side: l.double_sided ? THREE.DoubleSide : THREE.FrontSide, polygonOffset: true, polygonOffsetFactor: -2 }));
+    obj.applyMatrix4(xfMatrix(l.xf));
+  }
+  return obj;
+}
+
+export function labelTexture(l) {
   const S = 2;   // drawn at twice the size so it stays sharp up close
   const lines = String(l.text).split('\n');
   const font = `600 ${l.font_size * S}px "Barlow Condensed", "Arial Narrow", Arial, sans-serif`;

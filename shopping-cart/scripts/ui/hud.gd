@@ -47,4 +47,4 @@ func show_cart(cart: ShoppingCart) -> void:
 		col.a = 1.0 - 0.6 * cart.hand_fatigue[side]
 		m.color = col
 	var hs := cart.hand_state
-	_hands.text = "LEFT HAND   %s\nRIGHT HAND  %s" % [hs.L.to_upper() if hs.L else "—", hs.R.to_upper() if hs.R else "—"]
+	_hands.text = "L  %s\nR  %s" % [hs.L.to_upper() if hs.L else "—", hs.R.to_upper() if hs.R else "—"]

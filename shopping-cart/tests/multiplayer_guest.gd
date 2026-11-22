@@ -66,14 +66,48 @@ func _run() -> void:
 		still = 0.0 if moving else still + 1.0 / Engine.physics_ticks_per_second
 	await _wait(0.5)
 	result.phase1.merge({"own_end": _v(own.cart_origin()), "host_end": _v(host_cart.cart_origin()),
-		"own_frozen": own.frame.freeze, "snapshots": net.stats.snapshots_received})
+		"own_frozen": own.frame.freeze, "snapshots": net.stats.snapshots_received,
+		"flags": [_flag(own), _flag(host_cart)]})
 	_write()
 	# Follow the host from level to level until it ends the test. In the endless sandbox the host first moves our
 	# cart far away: report the ground we see there.
 	var seen := current_scene.scene_file_path if current_scene else ""
 	var start_pos := own.cart_origin()
+	var race_seen := {"phases": {}, "counts": {}}
+	var sweep_seen := {"counts": {}, "toast": false}
 	while true:
 		await physics_frame
+		# A race the host starts: what we see of it (the count, our cart held still, the results).
+		var race := get_first_node_in_group("race") as Race
+		if race and race.phase != Race.Phase.IDLE and not result.has("race"):
+			race_seen.phases[race.phase] = true
+			if race.phase == Race.Phase.COUNTDOWN:
+				race_seen.counts[ceili(race.clock)] = true
+				race_seen["hud_shown"] = race.hud.visible and race.hud.get_node("%Countdown").visible
+			if race.phase == Race.Phase.DONE:
+				var me := race.results().filter(func(r): return r.id == net.my_id)
+				result.race = {"phases": race_seen.phases.keys(), "counts": race_seen.counts.keys(),
+					"hud_shown": race_seen.get("hud_shown", false), "racers": race.racers.size(),
+					"my_time": me[0].time if not me.is_empty() else -2.0,
+					"results_shown": race.hud.get_node("%Results").visible}
+				_write()
+		# A sweep the host starts: the count, the items in our basket, our score and pop-ups, the results.
+		var sweep := get_first_node_in_group("sweep") as Sweep
+		if sweep and sweep.phase != Sweep.Phase.IDLE and not result.has("sweep"):
+			if sweep.phase == Sweep.Phase.COUNTDOWN:
+				sweep_seen.counts[ceili(sweep.clock)] = true
+			if "Coffee" in sweep.hud.get_node("%Toasts").text:
+				sweep_seen.toast = true
+			if sweep.phase == Sweep.Phase.DONE:
+				await _wait(1.0)   # the last snapshots settle the cans
+				var mine := sweep.shoppers.filter(func(s): return s.id == net.my_id)
+				var cart: ShoppingCart = net.carts[net.my_id]
+				var n := sweep.products().filter(func(p): return p.product_name == "Coffee" and cart.in_basket(p.global_position)).size()
+				result.sweep = {"counts": sweep_seen.counts.keys(), "toast_seen": sweep_seen.toast, "in_basket": n,
+					"my_cents": mine[0].cents if not mine.is_empty() else -1, "shoppers": sweep.shoppers.size(),
+					"coffee_left": (sweep.displays.get_node("Coffee") as ProductDisplay).left(),
+					"results_shown": sweep.hud.get_node("%Results").visible}
+				_write()
 		if not result.has("far") and is_instance_valid(own) and own.cart_origin().distance_to(start_pos) > 150.0:
 			await _wait(2.5)
 			var streamer: ChunkStreamer = current_scene.get_node("Chunks")
@@ -108,3 +142,9 @@ func _run() -> void:
 			entry.host = _v(net.carts[1].cart_origin())
 		result.levels[path] = entry
 		_write()
+
+
+## A cart's flag as [shown, colour], for the flag checks.
+func _flag(cart: ShoppingCart) -> Array:
+	var f := cart.get_node("Frame/Flag") as CartFlag
+	return [f.visible, f.color]

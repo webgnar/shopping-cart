@@ -53,13 +53,11 @@ Judgment calls and open points:
   free-standing stack back with the cart. The stack tests now give the yank `drive_max` 800 and
   `reverse_speed` 5, extending the old `power_ramp` 400 override. In play, pulling a cart off a free-rolling
   stack needs a rethink (stack wheels braked, or a yank impulse).
-- **The wheelie checks** now start at x = -80. Let go at a run, the cart rolled into the test strip's first
-  speed bump and the browser cart flipped over it.
+- **The wheelie checks** in the Godot drive test now start at x = -80. Let go at a run, the cart rolled into
+  the test strip's first speed bump and flipped over it. The browser test already starts pushes at x = -35
+  (main's fix for the same thing).
 - **Multiplayer.** Guests don't receive `hand_grip` or `hand_fatigue` yet, so their HUD markers stay at rest.
   Very short taps by a guest could also fall between input packets.
-- **Browser floor fix.** The browser's endless floor used `RAPIER.ColliderDesc.halfspace`, which this Rapier
-  build lacks, so the game crashed on load on `main` since the sandbox merge. It now uses
-  `new ColliderDesc(new HalfSpace(...))`.
 - **Caster damage** (veer from crashes) is deliberately left for later.
 
 ## 2026-11-21: driving HUD restyled as road signs (MUTCD 11th edition)
@@ -86,6 +84,359 @@ Judgment calls and open points:
 - `hud.gd` fills the separate labels (`%Speed`, `%Turn`, `%Wheels`, `%Groceries`, `%Hands`). Node names of the
   meters are unchanged.
 - Not done: the browser game's HTML HUD (`mobile/index.html`) still has the old look.
+
+## 2026-11-22: Asphalt lab, a 2D prototype of procedural asphalt
+
+zack wants procedural asphalt for the roads and lots, starting in 2D: how cracks and potholes develop and how the
+road gets repaired. Built from the "Asphalt Cracking Quick Guide" (Austroads crack types, in the project files) and a
+note on why asphalt breaks down (oxidation, UV, water and freeze-thaw, heavy traffic, chemicals, poor construction).
+
+`scenes/asphalt/asphalt_lab.tscn` (open it and press F6): a 10 x 10 m road section, two 4.3 m lanes meeting at a
+paving joint at x = 5 m, wheel paths 0.9 m either side of each lane centre, 0.7 m gravel shoulders. One pixel is
+4.9 mm (2048 px), drawn into two SubViewports: a colour map and a height map (0.5 grey = design level, 0.1 m to
+white or black), meant to feed the 3D roads later. A timeline (0 to 40 years), Play, five repair buttons, a road-crew
+toggle, condition sliders (pavement strength, traffic, freeze-thaw and sun, water, surface bond) and a seed.
+
+- `scripts/asphalt/asphalt_sim.gd` (AsphaltSim): the simulation, in 0.2 year steps. Cracks are polylines growing
+  2.5 cm at a time on a 2 cm occupancy grid, so a crack that runs into another joins it (that is what closes
+  fatigue branches into crocodile-skin polygons and block cracks into rectangles). A 10 cm cell grid holds subgrade
+  weakness (noise), wheel load, fatigue, water damage, pothole depth, fills and patches. Crack types: transverse
+  (thermal, spacing 5 m closing to 1.4 m as the binder hardens), lane joint, wheel-path longitudinal (fatigue past
+  1), fatigue branches (past 1.6, until about 30 cm of crack per 10 cm cell), block (after 5 years, off the long
+  cracks, square to the road), edge cracks and fretting (the pavement edge breaks back up to 0.6 m into the
+  shoulder), slippage crescents (sets of 2 to 4 where the bond is poor), reflection and patch seam cracks. Cracks
+  open about 1.6 mm a year while unsealed, up to 30 mm. Water through open cracks in fatigue-cracked asphalt builds
+  damage until a pothole breaks out; potholes deepen to 9 cm and eat into cracked neighbours.
+- Repairs: crack filling (overbanded sealant 6 to 9 cm wide; holds 6 years, then debonds in pieces and the crack
+  opens again), throw-and-roll pothole fill (cold mix blobs; they ravel out again within a few years), heavy
+  patching (saw-cut rectangles round potholes, fills and the worst fatigue, full depth; cracks inside are cut out,
+  each edge cracks open 2 to 6 years later), chip seal and mill-and-overlay (old cracks and patch edges come back as
+  reflection cracks: wide ones first, 0.4 to 2.5 years through a seal, 1.5 to 5 through an overlay). Repairs done by
+  hand are kept as events, so scrubbing back and forward replays them; a new repair drops later ones.
+- `scripts/asphalt/asphalt_canvas.gd` (AsphaltCanvas) draws patches, cracks (each 15 cm piece at the width of its
+  age, spalled edges past 5 mm), sealant, fills, potholes and fretted shoulders; `assets/asphalt/asphalt_base.gdshader`
+  draws the surface: binder from black to grey over about 9 years, 1 to 2 cm aggregate showing and then ravelling
+  out, tyre polish and ruts in the wheel paths, oil drips down the lanes, and a chip seal look.
+- Pacing with default settings: lane joint opens by year 2, transverse cracks from year 3, wheel-path cracks around
+  year 10, crocodile cracking from about 14, potholes from about 17, a failed road by 25. A thin pavement (strength
+  0.6) is at condition 50 at year 12 against 95. The road crew toggle keeps the condition index above 70 for 40
+  years with about 16 repairs.
+- Judgment calls: everything is top-down 2D; no road paint yet; the section doesn't tile; potholes are drawn as
+  overlapping jittered blobs per 10 cm cell; the condition index is a rough deduct score, not real PCI.
+- Speed: 30 years simulate in about 2 s on the cloud box (a failed road has thousands of cracks); scrubbing back
+  replays from year 0, so the lab seeks when you let go of the timeline.
+- Checks: `tests/asphalt_test.gd` (31 checks: ageing, every crack type, repairs, determinism, the lab's buttons) and
+  `tests/asphalt_screenshot.gd` (stages, close-ups, height maps, the lab).
+
+## 2026-11-21: Cart model from the restructured base model
+
+zack asked to switch the cart to the restructured `ShoppingCart_BaseModel.blend` (commit 9c2994f: parts renamed and
+joined, e.g. Frame.Base, Frame.Handle, Basket.Main, Caster.Bracket/Cap/Washer, BallBearing, Screw, Nut, Washer).
+`tools/rig_cart.py` now reads those names; the gate -> child seat -> flap chain, hinge positions and limits are
+unchanged, so cart.tscn didn't change.
+
+- **Front-left caster:** the new file has only the front-right caster (collection `Wheel.Front.Right > Caster`) and
+  the front-left wheel (`Wheel`, hub `Bolt`, no indent). The rig mirrors the right caster's fork, bearing, plate
+  hardware and wheel indent across the centre line (modifiers applied, mirror baked in, faces kept outward) and
+  names each copy `<part>.L`. The fork parts turn with the swivel; screw, washer and nut stay on the frame, as before.
+- **Materials:** new name prefixes added (Wheel rubber, Bolt hub, Caster/BallBearing/Screw/Washer/Nut steel).
+- **Size:** shopping_cart.glb 12.9 MB, 424k triangles (was 14.3 MB, 504k: the 60 separate ball bearings are now one
+  mesh per caster). Mobile cart.glb 2.4 MB, 77.9k faces; the mobile export drops BallBearing(.L) as it dropped the
+  bearings before.
+- **Renders:** old and new side by side (casters, back, gate up) look the same (tests/cart_rig_screenshot.gd now also
+  shoots the casters).
+- **Z-fighting:** the mirrored caster is the right one reflected; nothing new sits flush.
+
+## 2026-11-21: Cart gate, child seat and seat flap as a chain of hinged parts
+
+zack: the rig wasn't finished. The child seat and the plastic seat flap should be separate parts with their own
+physics, gate -> child seat -> flap, and a gate swinging up should push the child seat up with it.
+
+- **Before:** the child seat (wire backrest) and the flap both hung on the gate, side by side. The model's built pose
+  is the seat set up for a toddler, so the backrest stood leaning 16 degrees forward into the basket from its
+  bottom bar, crossing the gate in an X and poking above the rim (zack's screenshot), and nothing ever folded it.
+  The gate's collision box was also mirrored (its top 17 cm in front of the hinge, its bottom under it).
+- **Now (tools/rig_cart.py, scenes/cart/cart.tscn):** the rig folds the seat away and that is the rest pose.
+  - ChildSeat hangs on the gate (ChildSeatHinge, node_a Gate) at its bottom bar, on a bracket 4.5 cm in front of
+    the gate. Folded it lies along the gate's front face, which is its 0 stop, so the gate swinging up (a cart
+    nesting in behind) lifts it with it. It opens 34.6 degrees into the basket (the original built pose) and stays
+    open, since it then leans forward, until pushed back.
+  - SeatFlap hangs on the child seat (SeatFlapHinge, node_a ChildSeat) at its front edge, 2.5 cm behind the
+    backrest. Folded it hangs between the backrest and the gate; it opens 73.6 degrees to lie level as a seat.
+  - Model hierarchy matches: Gate_Hinge > ChildSeat_Hinge > SeatFlap_Hinge. The scene's bodies stay side by side
+    under Cart: a RigidBody3D under another RigidBody3D gets teleported with its parent node, which breaks the hinge.
+  - The flap leans on the gate under gravity, so Gate and SeatFlap are the one pair of the cart's own bodies that
+    collide (ShoppingCart.TOUCHING_PARTS; the browser gives just those two the cart's own collision bit).
+  - Hinge friction: ChildSeat and SeatFlap have angular_damp 4. Without it the flap rattled on a raised gate in a
+    stack and the stack never froze (cart_stack_test "stacks stand still").
+  - Gate collision box un-mirrored to follow the gate wires.
+- **Sizes:** gate leans 18.2 degrees back, backrest 0.495 m tall, flap 14 x 48 cm (plastic 25 cm wide).
+  Clearances folded: backrest wire (+-1.3 cm) to flap (+-1.0 cm) 2 mm, flap to gate wire (+-0.8 cm) 2 mm, so no
+  coplanar faces and no z-fighting. The backrest's top loops end 3.5 cm above the gate's top rail, clear of the
+  handlebar.
+- **Model:** same meshes, re-posed only (shopping_cart.glb 14.3 MB, mobile cart.glb 2.5 MB, 84.7k faces).
+  Re-exported with bpy 5.0 (cloud).
+- **Checks:** drive_test (new "gate lifts seat", "seat backrest", "seat flap"), cart_stack_test, all other suites
+  pass; garage_test "floor 10" fails as it did before this change (the cart creeps down the ramp, less now).
+  Browser drive test mirrors the three seat checks (pass); its "hard push", "console: garage" and "touch rockers"
+  fail on main as well.
+  Renders: tests/cart_rig_screenshot.gd (`-- <prefix> tint` colours gate red, seat green, flap blue).
+- **Left out:** nothing opens the seat in play (no toddler); the open flap doesn't reach the gate (the bracket moves
+  the seat 4.5 cm forward), so a flap lifted level drops back.
+
+## 2026-11-21: wheel landings by impact speed; garage test without bots
+
+zack asked for the slam to follow how fast each wheel hits the ground.
+
+- **Impact speed:** each WheelSound takes the wheel's velocity into the ground along the floor's normal as it
+  touches down (its last tick in the air, or the touching tick if it is still closing in), after at least 0.03 s
+  off the ground. Under 0.3 m/s it touches down silently; 0.3 to 1.0 m/s is a tap; 1.0 m/s and up (about a 5 cm
+  drop) is the full slam. Volume = ((impact - 0.3) / (3.0 - 0.3))^0.8, full at 3 m/s (a 45 cm drop), -1 dB at full.
+- **Measured** (supermarket floor): S wheelie set down from standing 2.3 m/s, W back-up set down 1.7, a rolling
+  wheelie 1.9, a hard-push wheelie 1.8; drops of 5 / 10 / 30 / 60 cm hit at 0.9 / 1.3 / 2.3 / 3.4 m/s, and the
+  small rebounds after a drop at 0.2 to 0.4. So wheelies and drops slam, rebounds and small hops tap or stay quiet.
+- **Sounds:** the slam is the drop recording's main hit with its bounces (`land.wav`, as before); the taps are the
+  bounce (1.165 to 1.5 s) and the settle (1.545 to 1.85 s) of the same recording cut on their own and decayed
+  (`land_tap_1/2.wav`, `land_taps.tres`, random pitch 1.1). Exports on WheelSound: `land_tap`, `land_slam`,
+  `land_start`, `land_slam_speed`, `land_full`, `land_curve`, `land_db`. Ported to the browser.
+- **Garage test:** `garage_test` failed now and then at floor 10 ("rolled 12 m downhill") before and after the
+  wheel sounds. The cause is the level's three bot carts: they wander on unseeded random routes from near the roof
+  and sometimes cross the test cart's aisle. The test now takes them out of the level before it starts; with them
+  out it rolls the same 29.7 m on every run.
+
+## 2026-11-21: Coast highway level (prototype)
+
+`scenes/levels/coast_highway.tscn` (root script `main.gd`, console `coast`): a first playable pass at a long, winding
+two-lane mountain road down the coast, after California's Highway 1 at Big Sur. 1.5 km of road from a tunnel at the
+top (y = 106.5 m) to a tunnel at the bottom (6 m over the sea), 100 m of drop. Ocean cliffs and a steel guardrail on
+the right going down, a road cut and a hillside of Monterey pines, cypresses and coyote brush on the left, and
+mountains behind. You start on the right shoulder just below the top tunnel, facing down.
+
+- **Road plan** (`tools/coast_models.py`, `PIECES` and `GRADES`): 17 pieces of straight and curve (radius 86 m and
+  up, curvature eased over 40 m so there are no kinks), heading in and out of coves and round headlands. Grade 0 at
+  both tunnels, 8 % then 10 %, 7 %, 10 % and 8 %, eased between, so there are no seams to flip the cart. The road is
+  one continuous surface: the deck's collision is one trimesh for the whole length (no seams between bodies).
+- **Cross-section**: two 3.6 m lanes with a double yellow line and white edge lines, a 1.8 m paved shoulder and
+  1.4 m of gravel on the cliff side, a 1.4 m shoulder and a gravel ditch on the hill side. W-beam guardrail (rail
+  top 79 cm, 15 cm blockouts, 15 x 20 cm wood posts every 1.9 m, the California standard). Road cut at about 42
+  degrees to 5.5 m, then the hillside up to about 32 m, 60 m out. The cliff drops from a 2 m scrub verge at about
+  62 degrees into the sea, with bulges along it.
+- **Traffic**: a lane each way (`Traffic/Downhill` 11 m/s with 12 cars, `Traffic/Uphill` 10 m/s with 12 cars). New
+  `TrafficRoute` (`scripts/props/traffic_route.gd`): `TrafficLane` for a curve. A Path3D whose child cars (the SF
+  hill's `traffic_car.tscn`) each keep their place along the curve, facing along it, so they lean into the grade.
+  Each route runs from tunnel to tunnel and the cars come back round inside the dark tunnels, out of sight. They
+  don't stop for carts: the shoulder is the safe place.
+- **Performance** (zack's laptop ran hot): the road is cut into ten 150 m segments (`scenes/coast/segment_NN.tscn`:
+  the segment's model, its trees, its terrain collision). The whole road is about 76k triangles, so it stays
+  loaded (less than the SF hill). The trees are what costs, so they are MultiMeshes (`MultiMeshInstance3D`, one
+  per segment and kind, about 2,700 instances) with visibility ranges: pines and cypresses 360 m, shrubs 140 m,
+  the trees on the far mountains 800 m. Tree meshes have LODs. The mountains are one 29k-triangle backdrop with no
+  collision. Shadows only reach 90 m (two splits), no SSAO, and light fog (0.0012) hides the far ends.
+  Streaming the segments in and out like the sandbox's chunks wasn't needed at this size. If the road grows a lot
+  longer, the segments are ready to be streamed.
+- **How it's built**: `tools/coast_models.py` (Blender primitives) lays out the road and writes the segment,
+  collision, backdrop, headland and tree models and `assets/models/coast/coast_plan.json`.
+  `tools/make_coast_resources_cli.gd` turns that into trimesh shapes, tree meshes and the MultiMeshes, and
+  `tools/coast_scenes.py` writes the scenes. After that the scenes can be edited in Godot. Re-running the tools
+  overwrites them, so re-run them only to change the road itself. Materials are in `assets/coast/materials/`, and
+  the parking lot's and SF hill's are reused (asphalt, paint, rail metal, concrete, bark).
+- **Browser version**: the export writes each `TrafficRoute` as points every 2 m and the phone drives the cars
+  along them. Nodes with `metadata/mobile_skip` (the far-mountain trees) are left out for phones. The phone gets
+  the near trees as plain meshes, merged per 100 m cell.
+
+| Model | Tris | KB | Size chosen | Notes |
+| --- | --- | --- | --- | --- |
+| segment_01 .. 10 | 6,100 - 7,800 | 190 - 245 | 150 m of road each | Asphalt, gravel, lines (3 mm proud), guardrail rail, posts, blockouts, road cut, hillside, verge, cliff |
+| collision | 18,026 | 341 | 4 m between cross-sections | Deck, rail face, terrain per segment, headlands, tunnels (made into trimesh shapes) |
+| backdrop | 29,394 | 540 | 12 m grid, out to about 800 m, up to 460 m high | Hidden under the hillside near the road, under the sea on the ocean side |
+| headland_top / bottom | 670 | 20 | 110 m deep, 200 m wide, 15 m rock face over the portal | Rock, a concrete portal (11.8 m opening, arch from 3.2 m) and a 38 m dark tube |
+| pine | 272 | 12 | 15 m | Monterey pine: tall trunk, two limbs, six crown clumps |
+| cypress | 282 | 12 | 9 m, 12 m wide | Monterey cypress: short trunk, three leaning leaders, flat windswept top |
+| shrub | 78 | 4 | 1.4 m | Coyote brush |
+
+Judgment calls:
+- The tree models are two objects (trunk, crown), one material each. The resources tool merges them into one
+  two-surface mesh for the MultiMesh.
+- The guardrail, posts and road paint are built into each segment model, not about 750 instanced post scenes.
+- PCH's ocean stays on one side, so the road winds along the coast instead of switchbacking. There are no hairpins:
+  at 6 m/s a hairpin would end in the guardrail. The curve radius doesn't go under 86 m.
+- No collision on trees (they're off the road). The far trees and the backdrop have no collision.
+
+Left out for now: bridges (Bixby Creek!), turnouts and vista points, road signs, cars slowing for carts, oncoming
+cars swerving, bots, and the lighthouse.
+
+Z-fighting: the builder's scan (bucketed by plane and 30 m cell for these big models, overlaps over 1 % of a face)
+reports 0 on every model. It found the tunnel lining inside the portal's opening, which was fixed (the lining now
+starts behind the portal). Lines sit 3 mm over the asphalt. `tests/coast_test.gd` checks the road surface is under
+every lane point.
+
+Tests: `godot --headless --fixed-fps 120 -s res://tests/coast_test.gd` (built, spawn, road everywhere, rolling on
+10 %, guardrail holds, traffic both ways). Renders: `xvfb-run godot -s res://tests/coast_screenshot.gd -- <prefix>`.
+The camera, console and rolling sound tests cover the level.
+
+## 2026-11-21: Supermarket sweep
+
+zack asked for a timed game mode in the supermarket in the spirit of TV grocery-sweep shows (the mechanics only: no
+show name, host, branding or music). The console's `sweep` loads the supermarket (from anywhere), restocks it and
+lines everyone up at the entrance; `sweep nobots` leaves the bot carts out, `sweep 60` plays a 60 s round (the
+default is 1:30). In the browser it's the same command, or Level › Supermarket sweep on a phone.
+
+- **Rules:** 3, 2, 1, GO (carts held with `ShoppingCart.locked`, as in the race), then the clock counts down. Every
+  cart starts with an empty basket (`ShoppingCart.show_groceries(false)` takes its five groceries out of play: hidden,
+  frozen, colliding with nothing, so the network's body lists stay the same). Roll slower than 1.4 m/s (a walk)
+  with your cart's frame in a display's GrabZone and its items drop into your basket one every 0.35 s, top of the
+  stack first; at most 5 of one product per cart (a pop-up says so once). Items are ordinary loose bodies once
+  taken: they ride in the basket, spill when you crash or roll over, and can even land in someone else's cart. A
+  cart's score is the price of what's in its basket (the same box `groceries_in_basket` uses, heaped up to 1.2 m,
+  capped at 5 per product) plus its bonuses, counted in cents. When time's up the checkout table ranks everyone
+  (ties: fewer items wins). A reset (P) mid-sweep leaves your basket's contents on the floor: that's the price.
+- **Bonuses:** three giant inflatables (soda bottle $250 in the front corner by the produce, cereal box $150 in the
+  back corner, soup can $100 by the meat): the first cart to touch one claims it and it's put away under the floor
+  until the next sweep. Two bonus stations (deli counter and coffee grinder, $50 each, in the back aisle): stop in the
+  taped 2 x 2 m box and hold still (under 0.25 m/s) for 3 s; once per cart.
+- **Scenes:** `scenes/sweep/sweep.tscn` (`scripts/sweep/sweep.gd`, all the rules) with a 12-slot `Grid`;
+  `product_display.tscn` (`ProductDisplay`: table, Title and Left labels on its price board, `Stock`, `GrabZone`
+  2.6 x 1.6 x 3.2 m reaching 1.6 m into the aisle in front, `Stop` 0.95 m out for bots); 12 product scenes in
+  `scenes/sweep/products/` (`Product`: name and price exported, a pack plus a label band, frozen until taken);
+  `inflatable_bottle/cereal/can.tscn` (`Inflatable`, light 2 to 2.5 kg bodies with a floating BONUS price);
+  `bonus_station.tscn` (`BonusStation`, an Area3D box, floor tape, a sign on a pole); the HUD
+  `scenes/ui/sweep_hud.tscn` (clock, basket total, pop-ups, standings, checkout table). The supermarket instances
+  the sweep and places 12 displays, 3 inflatables and 2 stations under it (104 products).
+- **Products and prices** (pack sizes in metres, stock per table): cereal $4.79 (0.19 x 0.28 x 0.07, 10), coffee
+  can $8.99 (r 0.065 x 0.16, 10), olive oil $12.49 (r 0.04 x 0.28, 8), detergent $13.99 (0.24 x 0.26 x 0.13, 8),
+  steak $16.99 (0.22 x 0.05 x 0.15, 8), soda 12-pack $6.49 (0.40 x 0.13 x 0.27, 8), paper towels $9.99
+  (0.30 x 0.28 x 0.20, 8), pasta $1.89 (10), soup $2.29 (10), cheese wheel $11.49 (r 0.11 x 0.08, 8), batteries
+  $14.49 (0.12 x 0.17 x 0.035, 8), ham $19.99 (0.22 x 0.13 x 0.15, 8). Small, dear things (steak, batteries, ham)
+  against big cheap ones that fill the basket (soda, towels) is the choice the round is about. Displays sit against
+  the gondolas in the aisles (leaving 2.1 m of aisle), at the back against the meat fridges, by the dairy case, by
+  the produce and in the front corner; the nav mesh was re-baked around them.
+- **Models** (`tools/supermarket_models.py`, Blender primitives, shared materials): `sweep_table` 1.0 x 0.5 m tray at
+  0.72 m on chrome legs, red skirts, price board on a pole at 1.62 to 1.92 m (204 tris, 15 KB);
+  `inflatable_bottle` 1.7 m tall, 0.64 m across (24 KB); `inflatable_cereal` 0.9 x 1.4 x 0.35 m (72 tris, 7 KB);
+  `inflatable_can` 1.0 m tall, 0.7 m across (432 tris, 21 KB). New shared materials: `vinyl_*` (glossy inflatables)
+  and `pack_*` (the products, which are Godot BoxMesh/CylinderMesh: a box or a can plus a label band).
+- **Z-fighting:** the builder's coplanar check passes for the new models (the tray rim stands 3 to 4 mm proud of the
+  tray's edge, the can's rims overlap its ends instead of sharing them); the label bands are 1 mm proud of their
+  packs; items sit 1.5 mm above the tray and 2 mm apart in a stack; the station's tape is 1.5 mm off the floor and
+  its four strips butt without overlapping; the labels are 1.5 mm off the board.
+- **Bots:** `CartBot` got an errand mode (`drive_to`, `at_errand`, `stop_errand`): drive somewhere, stop and hold
+  still. In a sweep each bot heads for the display worth most to it (price times what it can still take, over the
+  distance, cut to 30 % if another bot is already headed there), waits up to 6 s while its items drop in, then moves
+  on. They fill $40 to $110 of cart in 45 s, so a decent run beats them.
+- **Multiplayer:** the host runs the sweep; products and inflatables are level bodies, so snapshots move them. SWEEP
+  (protocol version 5, after the cart flags took 4) carries scores, items left per display and a guest's own pop-ups (docs/MULTIPLAYER.md).
+- **Browser:** `mobile/game/sweep.js` ports it (no multiplayer there). The level export now writes a sweep's products
+  as loose props marked `frozen` (Rapier fixed bodies until taken) and a "sweep" section in `levels/market.json`
+  (settings, slots, displays with their items, zones and "left" label, inflatables, stations); the live labels
+  (items left, inflatable prices) are drawn by sweep.js instead of as static labels. `cart.js` got
+  `dropGroceries()`, `bot.js` the errand mode, `level.js` exports `labelObject`. Zones are tested at three points
+  along the frame (handle, basket, nose) and an inflatable claims on a Rapier contact with the frame.
+- **Tests:** `tests/sweep_test.gd` (console, line-up, empty baskets, the count, grabbing to the limit, a spill,
+  both bonus kinds, bots shop, results, restock), a sweep step at the end of `tests/multiplayer_test.gd` (the guest's
+  cart is parked at the coffee: the guest sees the cans in its basket, its score, pop-ups, the sign and results), and
+  a sweep block in `mobile/test/drive_test.js`. Renders: `tests/sweep_screenshot.gd`.
+- **Left out for now:** a question round to earn extra time, the hidden-product bonus round, carrying the inflatables
+  in the cart (touching one claims it), scooping spilled items back up off the floor, sounds for grabs and bonuses.
+
+## 2026-11-21: Pennant flags on player carts in multiplayer
+
+Every cart now carries a pennant flag on a tall pole, like a kids' store cart, hidden until a multiplayer game
+starts; then every player's cart flies it in that player's colour so you can tell whose cart is whose.
+
+- **Model:** `tools/blender/flag_models.py` (reuses the garage builder's `Model` and z-fighting scan) writes
+  `assets/models/flag/flag.glb`: **192 tris, 11.6 KB**, z-fighting: none. Objects: `Pole` (12 mm tube, 1.75 m,
+  `cart_handle` blue, as the coated steel poles on real cart flags), `Fittings` (two 40 mm clip sleeves with a jaw
+  that grips the basket wire, and a top cap; `cart_plastic`) and `Pennant` (a 1.5 mm thick triangle, 0.28 m hoist by
+  0.42 m fly, standing 1.5 mm clear of the tube; `flag_pennant`). Origin at the bottom of the pole.
+- **Sizes:** the pole starts 0.5 m up at the basket's lower wires and its top is 2.25 m off the ground, about a head
+  above the handle (1.0 m), so a flag shows over a shelf (1.8 m) or a parked car (1.4 m) from across the level.
+- **Scene:** `scenes/cart/flag.tscn` (`CartFlag`, `scripts/cart/cart_flag.gd`): `colors` is the pennant palette
+  (`assets/materials/flag/pennant_*.tres`: red, yellow, green, orange, purple, cyan, pink, white) and `color` picks
+  one. It is instanced as `Cart/Frame/Flag` on the rear-left corner of the basket, outside the side wall, turned so
+  the pennant trails behind the cart, with `visible` off. The pole leans back 14 degrees, along the basket's rear
+  corner tube (measured from the cart model: that tube runs from x 0.22 at 0.44 m up to x 0.10 at 0.94 m, a
+  1-in-4 slope), 1.5 cm outside it, so both clips sit on the tube (zack asked for it to line up with what it's
+  clipped to). Spare and bot carts inherit it and stay without a flag.
+- **No physics:** it is a plain Node3D with meshes, no body and no collision shape, under the Frame (which already
+  sets its centre of mass by hand), so the cart's mass, centre of mass and tipping don't change; the camera's wall
+  checks and the nest mouth never see it.
+- **Net:** the host shows its own flag (slot 0) as soon as it hosts and each guest's in that guest's slot; the slot
+  rides in the snapshot's per-cart flags byte (bits 1-3), so guests colour every cart the same way.
+  `NetProtocol.VERSION` is 4. Leaving hides the host's flag again.
+- **Browser:** the browser game has no multiplayer yet, so it shows no flag; the cart and level exports were re-run.
+- Checked: `tests/multiplayer_test.gd` (host and guest see both flags, different colours, no collision), renders by
+  `tests/flag_screenshot.gd`.
+
+## 2026-11-21: Parking garage race
+
+zack: "the parking garage should be a race. 3..2..1.. go. should be able to start race from console - goes to
+parking garage". The console's `race` loads the garage (from anywhere) and lines everyone up on the roof; `race
+nobots` races without the bot carts; `race` inside the garage starts over. In the browser it's the same command, or
+Level › Race down the garage on a phone.
+
+- **Scenes:** `scenes/race/race.tscn` (root script `scripts/race/race.gd`) is instanced at the end of
+  `parking_garage.tscn` (its ext_resource is near the top of the file and the nodes at the bottom, away from the
+  scene root and the Sun, which the unmerged Manhattan skyline branch edits). Its children are moved in the level:
+  `Grid` (12 start-slot Marker3Ds, 3 abreast 1.8 m apart, rows 2.2 m apart, facing +X on the roof at x 2.7 to
+  9.3, the middle column on the floor 10 aisle's centre line z = -3.3), a white start line (0.15 x 6.2 m, the aisle's
+  width) and START painted ahead of the front row; `Finish`, an Area3D (2 x 3 x 22.8 m, carts' frames are layer 2)
+  across the whole exit apron at x 93.1, with a chequered line (1 x 22.5 m PlaneMesh, 0.5 m squares) and FINISH
+  painted past it; `BotGoal` 2.2 m past the line; `Route`, 24 Marker3Ds the racing bots drive through (three at
+  each of the eight hairpin landings: in, across, and back onto the next aisle's centre line); and the HUD,
+  `scenes/ui/race_hud.tscn` (a CanvasLayer: the count in the middle, the clock and a status line at the top, the
+  results table). The finish chequer is painted by `tools/textures/make_race_textures.py` (64 x 1440 px PNG,
+  `assets/materials/race/finish_checker.tres`); the start line uses the garage's `paint_white`.
+- **Holding the carts:** `ShoppingCart.locked` makes every key read as let go, the keyboard's and a driver's
+  (`controls`) alike, so the player, guests and bots are all held the same way through 3, 2, 1. `ShoppingCart.place()`
+  moves a whole rig (bot carts are lined up with it, so they aren't rebuilt and the network's body lists stay valid);
+  the player and guests get fresh carts on their slots.
+- **Finishing:** the race ends when everyone is over the line, or 60 s (`finish_grace`) after the winner; the rest
+  are DNF. Times are m:ss.cc.
+- **Multiplayer:** the host runs it and sends RACE (protocol version 3) on each change and twice a second; it waits
+  (up to 10 s) for every guest to load the garage before counting, so the count is shared. See docs/MULTIPLAYER.md.
+- **Bots:** `CartBot` got a racing mode (`line_up`, `race_to(route)`, `stop_racing`): 4.5 m/s on the straights (the
+  wanderers do 1.6), 90 N a hand, no slowing for the end of a trip, never gives up. Judgment calls from watching them:
+  following the nav mesh's straight shortest path down a whole floor ran them along the centre wall until they
+  stuck, so the route puts them back on each aisle's centre line after every hairpin; a 1.2 m path-point distance
+  stops them overshooting a point and turning back for it; stuck detection now also counts trying to spin round with
+  no room (against a wall end), for wandering bots too; and a racing bot that backs off three times on one leg
+  (wedged against a parked car by another bot) is put back at the last waypoint facing the next, as racing games
+  do. Three bots finish the ten floors in about 3:00 (2:57 to 3:02 in the test), so a good run beats them.
+- **Browser:** `mobile/game/race.js` ports it (no multiplayer there); the race's grid, finish box, route and settings
+  are in `levels/garage.json` ("race"); `cart.js` got `locked` and `place`, `bot.js` the racing mode.
+- **Tests:** `tests/race_test.gd` (console, line-up, nobody moves through the count with keys held, GO, finishing,
+  bots race all the way down, results, starting over), a race step at the end of `tests/multiplayer_test.gd`, and a
+  race block in `mobile/test/drive_test.js`. `tests/garage_test.gd` now removes the bot carts first: one wandering on
+  the roof was blocking the floor 10 roll check (it failed on main too). Renders: `tests/race_screenshot.gd`.
+- **Z-fighting:** the start line sits 1.5 mm over the roof deck, the finish line 0.3 mm over the exit apron (which
+  is itself 9 mm over the street), the painted words 2 cm up like EXIT; nothing else shares those planes
+  (`garage_zfight_test` passes).
+- **Left out:** live race positions (1st, 2nd...) while racing, a start gantry or finish banner, lap or checkpoint
+  checks (the only way down is the ramps, so there's no shortcut to guard against), a best-time record.
+
+## 2026-11-21: Parking lot background loop
+
+The parking lot level plays zack's field recording ("parking lot back ground.wav": 9:15, stereo, 24-bit 48 kHz,
+REAPER, 160 MB; kept in the project's shared files, not the repo) as a background loop.
+
+- **Cut:** `tools/audio/make_ambience_loops.py` (numpy + ffmpeg). The recording clips (hits 0 dBFS) at 4 s, 70 s
+  and 323-328 s, the last a loud event right by the mic, so the loop keeps 75-320.5 s and 332-553.5 s (the end of
+  the file is 1.5 s of silence), spliced with a 4 s equal-power crossfade in a quiet stretch, and crossfaded 4 s from
+  its end back into its start. DC removed, levelled to peak at -1 dBFS (RMS -23.8 dBFS). Loop: **459.0 s (7:39)**.
+  The seam was checked by decoding the .ogg: the sample step across it is 0.004, smaller than ordinary steps in
+  the recording, and the level either side is -30 / -29 dBFS.
+- **Files:** `assets/audio/ambience/parking_lot.ogg` (Vorbis q2, 44.1 kHz stereo, 5.3 MB, imported with loop on;
+  Ogg Vorbis loops sample-exact in Godot). Browser: `mobile/audio/parking_lot.mp3` (64 kb/s, 3.5 MB), the loop
+  plus the 4 s that follow it, unfaded: `mobile/game/music.js` starts a copy every 459 s and crossfades the
+  copies over that tail, so MP3 encoder padding can't leave a gap and Safari plays it.
+- **Scene:** `ParkingLot/BackgroundMusic` (AudioStreamPlayer, autoplay, bus `Music`, `volume_db` -12, process mode
+  Always so it keeps going with the console open). The `Music` bus (0 dB, into Master) is new, in
+  `default_bus_layout.tres`. -12 dB is meant to sit under the wheel sounds; tune it on the node.
+  Fast travel changes scene, which frees the level and its player, so it stops (tests/parking_lot_test.gd checks).
+- **Browser:** the level export writes an autoplaying AudioStreamPlayer as the level's `"music"` (file, loop length,
+  player + bus volume); main.js stops it on any level change and starts the new level's.
+- Left as recorded: the low rumble (most of the energy is 20-200 Hz, traffic) and a faint 14 kHz whine from 5:30 on
+  at about -80 dB.
 
 ## 2026-11-21: sandbox is an endless parking lot (lot-only chunks); Q and E push keys swapped
 
@@ -197,6 +548,7 @@ nested row, each cart about 25 to 30 cm behind the one ahead, gates swung up, ev
   if the trays flicker in motion, lift each nested cart's tray a few mm in the model.
 - **Left out**: no stack in the garage, market or hill yet; no way to start a level already pushing a stack (push your
   cart into one); bots don't avoid stacks.
+
 ## 2026-11-21: wheel sounds driven by each wheel's physics
 
 zack wanted the cart sound to come from the wheels themselves. The one cart-wide RollingSound (a ray under the
@@ -1021,7 +1373,6 @@ the builder. The SpotLight shadows show some shadow acne on the store fascia in 
   `ShoppingCart.wheels_down()` compares wheel height with y = 0. The decks are plain grey with no
   texture or grime yet. There's no ticket booth or barrier at the exit. Cloud renders use the
   Compatibility renderer.
-
 
 ## 2026-11-16: existing content rebuilt as scenes
 

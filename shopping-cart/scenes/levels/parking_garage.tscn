@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/parking_garage.gd" id="1_j6fqj"]
+[ext_resource type="PackedScene" path="res://scenes/race/race.tscn" id="race_scene"]
 [ext_resource type="PhysicsMaterial" path="res://assets/physics/concrete.tres" id="2_51tw1"]
 [ext_resource type="Material" path="res://assets/materials/garage/asphalt.tres" id="3_ec7b1"]
 [ext_resource type="Material" path="res://assets/materials/garage/paint_white.tres" id="4_eritt"]
@@ -3577,3 +3578,89 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30.1, 13.865, 2)
 
 [node name="BotCart3" parent="BotCarts" instance=ExtResource("bot_cart")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.14, 11.395, -3)
+
+[node name="Race" parent="." instance=ExtResource("race_scene")]
+
+[node name="Grid" parent="Race" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.3, 16, -3.3)
+
+[node name="Finish" parent="Race" index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 93.6, 0, -11.4)
+
+[node name="Paint" parent="Race/Finish" index="2"]
+transform = Transform3D(-4.371139e-08, 1, 4.371139e-08, 0, -4.371139e-08, 1, 1, 4.371139e-08, 1.9106855e-15, 1.6, 0.02, 8.4)
+
+[node name="BotGoal" parent="Race/Finish" index="3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 0, 8.4)
+
+[node name="Turn10to9In" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47, 14.4, -3)
+
+[node name="Turn10to9Out" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47, 14.4, 3)
+
+[node name="Turn10to9Lane" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 14.4, 3)
+
+[node name="Turn9to8In" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 12.8, 3)
+
+[node name="Turn9to8Out" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 12.8, -3)
+
+[node name="Turn9to8Lane" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 12.8, -3)
+
+[node name="Turn8to7In" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47, 11.2, -3)
+
+[node name="Turn8to7Out" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47, 11.2, 3)
+
+[node name="Turn8to7Lane" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 11.2, 3)
+
+[node name="Turn7to6In" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 9.6, 3)
+
+[node name="Turn7to6Out" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 9.6, -3)
+
+[node name="Turn7to6Lane" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 9.6, -3)
+
+[node name="Turn5to4In" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 89, 6.4, -3)
+
+[node name="Turn5to4Out" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 89, 6.4, -14.4)
+
+[node name="Turn5to4Lane" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 6.4, -14.4)
+
+[node name="Turn4to3In" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 49, 4.8, -14.4)
+
+[node name="Turn4to3Out" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 49, 4.8, -3)
+
+[node name="Turn4to3Lane" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 4.8, -3)
+
+[node name="Turn3to2In" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 89, 3.2, -3)
+
+[node name="Turn3to2Out" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 89, 3.2, -14.4)
+
+[node name="Turn3to2Lane" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 3.2, -14.4)
+
+[node name="Turn2to1In" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 49, 1.6, -14.4)
+
+[node name="Turn2to1Out" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 49, 1.6, -3)
+
+[node name="Turn2to1Lane" type="Marker3D" parent="Race/Route"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 1.6, -3)
