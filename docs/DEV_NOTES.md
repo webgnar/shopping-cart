@@ -3,6 +3,30 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-22: Asphalt lab, ageing pass: crack networks, real height map, relief view, explainer doc
+
+zack wants the simulator right before it goes in game (later: a colour texture plus a displacement map so the cart
+hits the cracks), and diagrams of how it works. Repairs wait for zack's textures. Explainer doc with the pipeline
+diagram, charts and stage pictures: "How the asphalt simulator works" (Claude Docs, linked in the PR); its images are
+also in the project files under `asphalt/doc/`.
+
+- **Crocodile and block cracks are Voronoi networks** now, built at reset from a Delaunay triangulation of jittered
+  grids (`_build_networks`): cells about 14 x 20 cm over each wheel path (`fatigue_cell`) and 1.6 x 2.2 m over the
+  whole road (`block_cell`). Each edge has a random threshold and opens (as a guided crack along a slightly wobbly
+  path) when the fatigue under it, or the binder's oxidation, passes it, growing from an end that already touches a
+  crack. Before, fatigue branches wandered and rarely closed into polygons, and block cracks branched off long cracks.
+- **Potholes pluck whole crocodile cells** (`plucked`, drawn as the cell polygon with a broken rim) instead of
+  round blobs per 10 cm cell. Water damage only builds where the asphalt is broken up (fatigue past 1.4).
+- **`bake_height(res)`**: real heights in metres (ruts, shoulders, fretted edge, patches, fills, cracks at real
+  width and 4 x width deep, spalls, potholes), outer 15 cm feathered to 0. Exports in a Displacement group.
+- **Lab:** the view menu has "Colour + relief", the real height map shaded from the top left at 2 cm (about 150 ms,
+  redrawn a moment after the road changes).
+- Pacing with defaults: joint by year 2, thermal cracks from 3, block cracks from 9, crocodile cells from 11, first
+  pothole at 15, condition under 10 by 21.
+- Speed: `_open_edges` caches each edge's cell and works out the block threshold once a step; years 15 to 24 take
+  about 3.4 s here (the test allows 4).
+- Checks: `tests/asphalt_test.gd` now 36 (adds plucked cells, height map depths, shoulders and flush edges, relief view).
+
 ## 2026-11-22: Asphalt lab, a 2D prototype of procedural asphalt
 
 zack wants procedural asphalt for the roads and lots, starting in 2D: how cracks and potholes develop and how the
