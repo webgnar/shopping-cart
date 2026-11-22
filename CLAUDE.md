@@ -99,7 +99,8 @@ opened and edited in the editor. Do not build content procedurally in GDScript.
 - `scenes/props/` — reusable props. `scenes/environment/` — shared sky and sun, and the garage's sky shader
   (`skyline_sky.gdshader`). `assets/manhattan_skyline/` (not in git) — the garage's Manhattan skyline from
   zack's Google Earth tiles, made by `sh tools/manhattan_skyline.sh`; the garage shows it only where it exists.
-  `scenes/ui/hud.tscn` — the driving HUD. `scenes/ui/console.tscn` — the debug console autoload
+  `scenes/ui/hud.tscn` — the driving HUD, styled after US road signs (MUTCD, `Reference Images/UI/`; fonts and
+  colours in `assets/ui/road_sign_theme.tres` and the scene's styleboxes). `scenes/ui/console.tscn` — the debug console autoload
   (tilde key; fast-travel destinations are its `destinations` export). `scenes/cart_camera.tscn` — the follow camera (`scripts/cart_camera.gd` lifts it over walls, see its exports).
 - `assets/physics/*.tres` — shared physics materials (tile, asphalt, solid).
 - `assets/audio/cart/` — the cart's wheel sounds (rolls, scrubs, knocks, landing), cut from zack's recordings by

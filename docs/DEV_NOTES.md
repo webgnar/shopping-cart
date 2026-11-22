@@ -3,10 +3,35 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-21: driving HUD restyled as road signs (MUTCD 11th edition)
+
+`scenes/ui/hud.tscn` now follows the US sign manual in `Reference Images/UI/mutcd11thedition.pdf`:
+
+- Colours sampled from the manual's figures: guide green `#006C50`, warning yellow `#FCCC44`, stop red `#BC3018`.
+  Legends are white on green and red, black on yellow and white.
+- Borders follow Section 2A.10: a light border runs to the edge of a dark sign; a dark border on a light sign
+  is set in from the edge (a white or yellow rim panel around a bordered inner panel). Corners are rounded.
+- Lettering follows Section 2A.08: mixed case for names ("Shopping Cart", "Groceries"), capitals for everything
+  else. The Standard Alphabets (Highway Gothic) aren't bundled. `assets/ui/road_sign_theme.tres` is a
+  SystemFont asking for Overpass (an open Highway Gothic look-alike), then Bahnschrift (Windows), then Arial
+  Narrow, then the default.
+- Layout:
+  - Title: a guide sign with an exit-style "PROTOTYPE" tab.
+  - Speed: a white regulatory plaque (SPEED / number / KM/H).
+  - Turn rate, wheels down and groceries: a guide sign laid out like the E9 interchange sequence sign, names
+    left, numbers right.
+  - Keys are signs by meaning: push green, pull red, the W/S leans yellow warning signs. A held key is lit at
+    the full sign colour; idle keys are the same sign at about 40 % brightness (the sign without headlights).
+  - The hands' power meters are black panels with a white LEFT/RIGHT plaque.
+  - What each hand is doing shows on a changeable message sign: amber monospace capitals on black.
+- `hud.gd` fills the separate labels (`%Speed`, `%Turn`, `%Wheels`, `%Groceries`, `%Hands`). Node names of the
+  meters are unchanged.
+- Not done: the browser game's HTML HUD (`mobile/index.html`) still has the old look.
+
 ## 2026-11-21: sandbox is an endless parking lot (lot-only chunks); Q and E push keys swapped
 
 The sandbox (`scenes/main.tscn`) is now an open daytime parking lot that never ends, so the cart's physics can be
-worked on with room to run. Reference: the aerial photos in `Level Reference Images/` (big, mostly empty lots,
+worked on with room to run. Reference: the aerial photos in `Reference Images/Levels/` (big, mostly empty lots,
 double rows of painted stalls, light poles on the stall heads, planter islands with trees at the row ends).
 
 - **Built on the chunk streamer.** This started as a separate endless grid (78 x 37 m blocks following the
