@@ -3,6 +3,27 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+
+## 2026-11-22: cart sound from the physics only; frame friction and hits
+
+zack: "for the sound, we want it to be determined by the physics ... like friction of one thing to another should
+generate sound in a certain way."
+
+- **Audit.** Already physics-driven: wheel roll (spin about the axle x radius, on the floor's physics material),
+  scrub (sliding along the axle and skid against spin), landing speed. Not: landings needed 0.03 s in the air, every
+  knock or landing was rate-limited to one per 0.12 s, and loops faded over 0.15 s.
+- **Wheels.** A hit is now the jump in the wheel's velocity along the floor normal while it touches, summed over the
+  ticks it lasts (`hit_floor` 0.15 m/s per tick); coming out of the air makes it a landing, otherwise a knock. No air
+  time, no knock gap; loops ramp over 0.03 s only to avoid clicks. Measured: wheelie set down 1.93 m/s, 5 cm drop
+  0.98, 30 cm 2.36 (unchanged tiers).
+- **Frame.** New `ContactSound` (`scenes/cart/contact_sound.tscn` under `Frame`, `max_contacts_reported` 4 -> 16 since
+  the groceries filled the 4 slots). From Jolt's contact reports each tick, skipping the cart's own parts: scrape
+  loop volume = friction power, the friction impulse / dt x sliding speed summed over contacts (5 W silent, 300 W
+  full), pitch = sliding speed, loop = the floor of the contact rubbing hardest; hits = normal impulse / mass beyond
+  holding the weight, knock under 1.2 m/s, slam above. Measured: tipped on asphalt, it hits at 3.1 m/s and scrapes
+  at 80-430 W sliding 1-2 m/s. Placeholder sounds: the wheel scrub loops and knock/slam (no metal scrape recording
+  yet). Metal on metal (cart against cart) has no physics material of its own yet, so it uses the fallback.
+
 ## 2026-11-22: Asphalt lab repairs use zack's textures
 
 zack made four ChatGPT textures (`assets/asphalt/textures/`, 1024 px, made seamless here by blending each with

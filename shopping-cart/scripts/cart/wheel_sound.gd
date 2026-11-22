@@ -12,6 +12,10 @@ extends Node3D
 ##    is silent, a soft one a light tap (the bounce of zack's drop recording), a hard one the full slam (its
 ##    main hit), louder the faster it came down.
 ##  - Knock: a sudden upward jolt of a wheel that stayed on the ground (a kerb, a joint, a bump): a slab clack.
+## Landings and knocks are the same physics: the ground stopping the wheel, measured as how much the wheel's velocity
+## along the floor's normal jumps while it touches (summed over the ticks the hit lasts, so one hit is one sound).
+## Whether the wheel came out of the air picks landing or knock. There are no timers: a sound plays only when the
+## physics says the wheel was hit that hard.
 ## A multiplayer guest's cart is frozen and moved by the network: its wheels' motion is read from how they moved
 ## between frames instead.
 
@@ -33,7 +37,7 @@ extends Node3D
 @export var min_pitch := 0.7          ## pitch at a crawl
 @export var max_pitch := 1.5          ## pitch at a run
 @export var pitch_per_speed := 0.2    ## pitch change per m/s away from recorded_speed
-@export var fade_time := 0.15         ## s to fade a sound fully in or out (floor changes, lift-off, landing)
+@export var fade_time := 0.03         ## s to ramp a loop in or out: just long enough not to click
 @export_group("Scrub")
 @export var scrub_start := 0.25       ## m/s of slide before the wheel starts to scrub
 @export var scrub_full := 1.5         ## m/s of slide for full scrub volume
@@ -47,11 +51,12 @@ extends Node3D
 @export var knock_start := 0.6        ## m/s: an upward jolt of the wheel bigger than this knocks
 @export var knock_full := 2.5         ## m/s: full knock volume
 @export var knock_db := -4.0          ## knock volume at full
-@export var knock_gap := 0.12         ## s: at most one knock or landing per wheel this often
+## m/s per tick: the ground pushing the wheel's velocity up by more than this in one tick is part of a hit (resting
+## and rolling stay near 0; gravity alone is -0.08 at 120 ticks)
+@export var hit_floor := 0.15
 @export_group("Landing")
 @export var land_tap: AudioStream      ## a soft landing: a light tap
 @export var land_slam: AudioStream     ## a hard landing: the full slam
-@export var land_air_time := 0.03     ## s off the ground before touching down counts as a landing
 @export var land_start := 0.3         ## m/s into the ground: slower than this the wheel touches down silently
 @export var land_slam_speed := 1.0    ## m/s into the ground from which it slams instead of tapping (a 5 cm drop)
 @export var land_full := 3.0          ## m/s into the ground for full volume (a 45 cm drop)
@@ -67,18 +72,17 @@ var scrub_gain := 0.0
 var knocks := 0                         ## knocks so far (for tests)
 var landings := 0                       ## landings heard so far (for tests)
 var slams := 0                          ## of those, hard ones
-var last_impact := 0.0                  ## m/s into the ground at the last touchdown, heard or not
+var last_impact := 0.0                  ## m/s the ground took out of the wheel at the last touchdown, heard or not
 
 @onready var _wheel := get_parent() as RigidBody3D
 @onready var _cart := _wheel.get_parent() as ShoppingCart
 var _roll_sound: CartFloorSound = null   ## the floor whose loop the Roll player has now
 var _scrub_sound: CartFloorSound = null
 var _prev_xf := Transform3D()
-var _prev_vy := 0.0
+var _prev_v := Vector3.ZERO
 var _have_prev := false
-var _since_knock := 1.0
-var _air_time := 0.0
-var _air_velocity := Vector3.ZERO   ## the wheel's velocity on its last tick in the air
+var _hit := 0.0          ## m/s of velocity the ground has taken out of the wheel so far in the hit going on now
+var _from_air := false   ## the wheel was off the ground since it last settled: its next hit is a landing
 
 
 func _ready() -> void:
@@ -125,34 +129,19 @@ func _physics_process(delta: float) -> void:
 			var skid := maxf(0.0, absf(over - roll_speed) - skid_tolerance * maxf(over, roll_speed))
 			slide = sqrt(sideways * sideways + skid * skid)
 
-	# Landing: back on the ground after a moment in the air. Knock: jolted upward while on the ground.
-	_since_knock += delta
-	var jolt := v.y - _prev_vy
-	_prev_vy = v.y
+	# Hits: the ground pushing the wheel's velocity up along its normal (off the ground: plain up).
+	var up: Vector3 = hit.normal if grounded else Vector3.UP
+	var dv := (v - _prev_v).dot(up) if _have_prev else 0.0
+	_prev_v = v
 	if not grounded:
-		_air_time += delta
-		_air_velocity = v
-	else:
-		if _air_time >= land_air_time:
-			# Speed into the ground as it touches: the last tick in the air, or this one if it is still closing in.
-			var n: Vector3 = hit.normal
-			last_impact = maxf(0.0, maxf(-_air_velocity.dot(n), -v.dot(n)))
-			if last_impact > land_start and _since_knock >= knock_gap:
-				_since_knock = 0.0
-				landings += 1
-				var slam := last_impact >= land_slam_speed
-				if slam:
-					slams += 1
-				land_player.stream = land_slam if slam else land_tap
-				var g := pow(clampf((last_impact - land_start) / (land_full - land_start), 0.0, 1.0), land_curve)
-				land_player.volume_db = land_db + linear_to_db(maxf(g, 0.02))
-				land_player.play()
-		elif jolt > knock_start and _since_knock >= knock_gap:
-			_since_knock = 0.0
-			knocks += 1
-			knock_player.volume_db = knock_db + linear_to_db(clampf((jolt - knock_start) / (knock_full - knock_start), 0.1, 1.0))
-			knock_player.play()
-		_air_time = 0.0
+		_from_air = true
+	if grounded and dv > hit_floor:
+		_hit += dv
+	elif _hit > 0.0:
+		_play_hit(_hit)
+		_hit = 0.0
+	elif grounded and absf(v.dot(up)) < hit_floor:
+		_from_air = false   # settled on the ground: what comes next is a knock, not a landing
 
 	var step := delta / fade_time
 	var roll_t := 0.0
@@ -164,6 +153,27 @@ func _physics_process(delta: float) -> void:
 	roll_player.pitch_scale = clampf(1.0 + (roll_speed - recorded_speed) * pitch_per_speed, min_pitch, max_pitch)
 	scrub_player.pitch_scale = clampf(scrub_pitch_low + (slide - scrub_start) * scrub_pitch_per_speed, scrub_pitch_low,
 		scrub_max_pitch)
+
+
+## One hit, done: a landing if the wheel came out of the air (silent, tap or slam by how hard), else a knock.
+func _play_hit(speed: float) -> void:
+	if _from_air:
+		_from_air = false
+		last_impact = speed
+		if speed <= land_start:
+			return
+		landings += 1
+		var slam := speed >= land_slam_speed
+		if slam:
+			slams += 1
+		land_player.stream = land_slam if slam else land_tap
+		var g := pow(clampf((speed - land_start) / (land_full - land_start), 0.0, 1.0), land_curve)
+		land_player.volume_db = land_db + linear_to_db(maxf(g, 0.02))
+		land_player.play()
+	elif speed > knock_start:
+		knocks += 1
+		knock_player.volume_db = knock_db + linear_to_db(clampf((speed - knock_start) / (knock_full - knock_start), 0.1, 1.0))
+		knock_player.play()
 
 
 ## Fades one player toward target on this floor's loop. A new floor fades the old loop out first, then swaps.
