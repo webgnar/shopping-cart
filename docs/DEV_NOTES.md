@@ -1549,3 +1549,10 @@ the builder. The SpotLight shadows show some shadow acne on the store fascia in 
 - **Judgment calls.** The spot (Bryant Park: about the size of the level's 170 x 90 m slab, open sky over it);
   ground level -52.5 in tile coordinates (the lawn's lowest points); 250 m as the near/far split; panorama eye
   8 m (halfway up the garage), so from the roof or the street the far skyline is up to ~2 degrees off.
+
+## Asphalt lab: 3D preview (Nov 22 2026)
+
+The lab's View menu has a "3D preview": a 10×10 m road mesh (500×500 subdivisions) in its own world, displaced by
+`AsphaltSim.bake_height(0.01)` in `assets/asphalt/asphalt_surface_3d.gdshader`. Normals come from the height map plus a
+small bump from the colour map's brightness. The albedo is a copy of the colour map (`get_image()` + mipmaps), not the
+ViewportTexture, so it decodes from sRGB the same way on every renderer. Drag to orbit, wheel to zoom.
