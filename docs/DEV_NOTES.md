@@ -3,6 +3,28 @@
 Newest first. One entry per change to models, levels or scenes: what was built, sizes chosen,
 triangle count and file size for new models, judgment calls, what was left out, z-fighting check.
 
+## 2026-11-22: Child seat folds like a real cart (seat plate folds up, not down)
+
+zack: the child seat was still rigged wrong (screenshot: the plastic seat hung at an odd angle by the backrest).
+Checked against real carts (patents US2891801, US7766347, US8991836): the gate hangs from the top rail, the wire
+backrest is hinged low on the gate, and the seat plate folds UP flat against the gate when the seat is shut; opened,
+the plate lies level with one edge on the gate and the other on the backrest, which props the backrest open.
+
+- **Before:** the flap (plastic seat plate) folded DOWN from its hinge on the backrest and hung between backrest and
+  gate, and the backrest opened 34.6 degrees about its 4.5 cm bracket, leaving the level plate 3 cm short of the gate.
+- **Now (tools/rig_cart.py, scenes/cart/cart.tscn):** the hierarchy is unchanged (Gate > ChildSeat > SeatFlap, same
+  hinge points). The flap folds UP along the back of the backrest (covering the leg openings, seen through the gate),
+  so its hinge range is -98.8..0 degrees (opening is now the other way). The backrest opens 27 degrees (SEAT_OPEN),
+  where the level flap's free edge rests on the gate; the backrest then leans 9 degrees into the basket instead of
+  the base model's 16. To fold it you lift the flap first, then push the backrest back, as on a real cart.
+- **Diagram:** side view of the three poses (open, folded, gate up) drawn from the model's own vertices:
+  project files `cart-rig/child_seat_diagram.png`.
+- **Clearances** are the same as before (flap mid-plane 2.5 cm behind the backrest, 2 cm in front of the gate), so no
+  coplanar faces. Model re-posed only, same triangle count.
+- **Checks:** drive_test "seat flap" now checks the flap drops level (99 degrees) with the backrest open, lifts when
+  pushed up, drops back, and folds back up when the backrest is shut; the browser drive test mirrors it.
+  `tests/cart_rig_screenshot.gd` adds a "seat_open" set of views.
+
 ## 2026-11-22: Asphalt lab, a 2D prototype of procedural asphalt
 
 zack wants procedural asphalt for the roads and lots, starting in 2D: how cracks and potholes develop and how the

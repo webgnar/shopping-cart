@@ -8,10 +8,11 @@ extends Node3D
 ##  - Rear wheels: fixed, spin on their axles.
 ##  - Gate: hinged at the top rail, swings into the basket 0 to 70 degrees.
 ##  - ChildSeat (the wire backrest): hinged on the gate at its bottom bar. It rests folded against the gate's front
-##    (its 0 stop), so when the gate swings up it carries the seat up with it; it opens 35 degrees into the basket.
-##  - SeatFlap (the plastic seat): hinged on the child seat. Folded it hangs between the backrest and the gate,
-##    leaning on the gate (the one pair of the cart's own parts that touch, TOUCHING_PARTS); it opens 74 degrees
-##    to lie level as a seat.
+##    (its 0 stop), so when the gate swings up it carries the seat up with it; it opens 27 degrees into the basket.
+##  - SeatFlap (the plastic seat): hinged on the child seat. Folded it stands up between the backrest and the gate,
+##    leaning on the gate (the one pair of the cart's own parts that touch, TOUCHING_PARTS). With the backrest open
+##    it drops 99 degrees to lie level as a seat, its free edge on the gate, which props the backrest open: lift the
+##    flap before pushing the backrest shut, as on a real cart.
 ##  - Groceries: loose bodies in the basket; add or move them under the Groceries node.
 ##  - Model: the rigged model (assets/models/shopping_cart.glb); its pivots follow the physics bodies.
 ## Cart local axes: nose = +X, up = +Y, left = -Z. Units: metres, kg, newtons.
@@ -169,7 +170,7 @@ func _ready() -> void:
 
 
 ## The cart's own bodies never collide with each other (the hinges hold them together), except these pairs: the
-## folded seat flap hangs against the gate. The browser game gets them through the cart rig export.
+## seat flap leans on the gate, folded or open. The browser game gets them through the cart rig export.
 const TOUCHING_PARTS := [["Gate", "SeatFlap"]]
 
 ## Cart feel as the shared tuning dictionary (same keys as tuning/cart_tuning.json). The values come from this

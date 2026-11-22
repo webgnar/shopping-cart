@@ -1,5 +1,6 @@
 extends SceneTree
-## Close-ups of the cart's back end: gate, child seat and seat flap, at rest and with the gate swung up.
+## Close-ups of the cart's back end: gate, child seat and seat flap, at rest, with the seat opened and with the gate
+## swung up.
 ## Needs a display:  xvfb-run godot -s res://tests/cart_rig_screenshot.gd -- <output_prefix> [tint]
 ## With "tint" the gate is drawn red, the child seat green and the seat flap blue.
 
@@ -67,6 +68,21 @@ func _run(tint: bool) -> void:
 		_tint(model.find_child("ChildSeat_Hinge"), Color(0.1, 0.8, 0.2))
 		_tint(model.find_child("SeatFlap_Hinge"), Color(0.15, 0.3, 0.95))
 	await _views(cart, "rest")
+	# Open the child seat: pull the backrest into the basket; the flap drops level onto the gate.
+	for i in 40:
+		cart.child_seat.apply_force(cart.frame.global_basis.x * 10.0, cart.child_seat.global_basis * Vector3(-0.15, 0.45, 0))
+		await physics_frame
+	for i in 240:
+		await physics_frame
+	await _views(cart, "seat_open")
+	# Fold it again as on a real cart: lift the flap, push the backrest back.
+	for i in 60:
+		cart.seat_flap.apply_force(cart.frame.global_basis.y * 8.0, cart.seat_flap.global_basis * Vector3(-0.03, 0.09, 0))
+		if i > 20:
+			cart.child_seat.apply_force(-cart.frame.global_basis.x * 10.0, cart.child_seat.global_basis * Vector3(-0.15, 0.45, 0))
+		await physics_frame
+	for i in 240:
+		await physics_frame
 	# Swing the gate up from behind (what a cart nesting into this one does) and let the seat and flap follow.
 	var lever := cart.frame.global_transform * Vector3(0.2, 0.55, 0)
 	for i in 240:
