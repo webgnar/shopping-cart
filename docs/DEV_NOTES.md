@@ -1556,3 +1556,15 @@ The lab's View menu has a "3D preview": a 10×10 m road mesh (500×500 subdivisi
 `AsphaltSim.bake_height(0.01)` in `assets/asphalt/asphalt_surface_3d.gdshader`. Normals come from the height map plus a
 small bump from the colour map's brightness. The albedo is a copy of the colour map (`get_image()` + mipmaps), not the
 ViewportTexture, so it decodes from sRGB the same way on every renderer. Drag to orbit, wheel to zoom.
+
+## Asphalt test lot (Nov 22 2026)
+
+`scenes/levels/asphalt_lot.tscn` (console `asphalt`) is a 40 x 40 m test lot for driving the cart on simulated
+asphalt. It is a 4 x 4 grid of `scenes/asphalt/asphalt_section.tscn`, each with its own seed. The columns are aged
+8, 16, 24 and 32 years, so pushing from the spawn (+X) goes from young to old. It sits in a flat concrete apron.
+
+Each section runs its AsphaltSim on load, draws the colour map once (1024 px, then the viewport is freed) and bakes
+the heights at 2 cm. The heights drive both the displaced surface and a HeightMapShape3D (scaled by 0.02, heights
+divided by 0.02), so the wheels drop into cracks and potholes (down to -9 cm). The sections have no shoulder, and
+the sim's new `unsealed_edges = false` stops edge cracking and fretting where sections meet. Loading takes about
+15 s in the cloud container; most of it is the older sections' simulation.
