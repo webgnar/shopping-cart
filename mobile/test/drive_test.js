@@ -27,19 +27,19 @@ function serve() {
 // name, input held {L, R: -1/0/1, lift, press}, seconds, check  (sandbox, asphalt at (-10, 0, -3))
 const SCENARIOS = [
   ['idle', {}, 5.0, 'still'],
-  ['E+Q both push', { L: 1, R: 1 }, 1.5, 'forward_straight'],
+  ['Q+E both push', { L: 1, R: 1 }, 1.5, 'forward_straight'],
   ['A+D both pull', { L: -1, R: -1 }, 1.5, 'backward'],
-  ['Q right push', { R: 1 }, 1.5, 'turns_left'],
-  ['E left push', { L: 1 }, 1.5, 'turns_right'],
-  ['E+D spin', { L: 1, R: -1 }, 1.2, 'spins_right'],
+  ['E right push', { R: 1 }, 1.5, 'turns_left'],
+  ['Q left push', { L: 1 }, 1.5, 'turns_right'],
+  ['Q+D spin', { L: 1, R: -1 }, 1.2, 'spins_right'],
   ['S front up', { press: true }, 1.5, 'wheelie'],
   ['W back up', { lift: true }, 1.5, 'rear_up'],
-  ['W+Q right side up', { lift: true, R: 1 }, 1.5, 'right_up'],
-  ['E+Q short push', { L: 1, R: 1 }, 1.2, 'flat'],
-  ['E+Q hard push', { L: 1, R: 1 }, 2.1, 'wheelie'],
+  ['W+E right side up', { lift: true, R: 1 }, 1.5, 'right_up'],
+  ['Q+E short push', { L: 1, R: 1 }, 1.2, 'flat'],
+  ['Q+E hard push', { L: 1, R: 1 }, 2.1, 'wheelie'],
   ['A+D hard pull', { L: -1, R: -1 }, 2.6, 'rear_up'],
   ['coast then rest', { coast: true }, 30.0, 'comes_to_rest'],
-  ['rested 4 s, then E+Q', { L: 1, R: 1 }, 1.5, 'wakes_and_moves'],
+  ['rested 4 s, then Q+E', { L: 1, R: 1 }, 1.5, 'wakes_and_moves'],
 ];
 
 (async () => {
@@ -105,7 +105,7 @@ const SCENARIOS = [
       still: r.d < 0.005 && Math.abs(r.turn) < 0.1 && r.pinned,
       forward_straight: r.along > 1.0 && Math.abs(r.turn) < 12,
       backward: r.along < -0.7 && Math.abs(r.turn) < 25,
-      turns_left: r.turn > 30, turns_right: r.turn < -30,
+      turns_left: r.turn > 20, turns_right: r.turn < -20,   // one held hand turns gently; tapping it turns harder (below)
       spins_right: r.turn < -60 && r.d < 1.0,
       wheelie: r.maxFront > 0.12 && r.maxRear < 0.09,
       rear_up: r.maxRear > 0.10 && r.maxFront < 0.09,
@@ -139,16 +139,38 @@ const SCENARIOS = [
     report(ok, `${pushS} s push, ${mode === 'brake' ? 'pull' : 'let go'}`, `from ${(r.v0 * 3.6).toFixed(1)} km/h: stopped in ${r.dist.toFixed(2)} m and ${r.t.toFixed(2)} s, nose up ${r.maxPitch.toFixed(0)} deg, groceries ${r.groceries}/5`);
   }
 
-  // Pushing and pulling build power the same way.
+  // Pushing and pulling build power the same way, but pulling backwards tops out at a backward walk (reverse_speed).
   const acc = await page.evaluate(() => {
     const out = {};
     for (const [k, d] of [['push', 1], ['pull', -1]]) { T.fresh(-10, -3, 0.5); T.hold({ L: d, R: d }, 0.5); const lv = T.c.cart.frame.linvel(); out[k] = Math.hypot(lv.x, lv.z); }
     return out;
   });
-  report(Math.abs(acc.pull - acc.push) < 0.1 * acc.push, 'pull = push', `after 0.5 s from rest: pushing ${acc.push.toFixed(2)} m/s, pulling ${acc.pull.toFixed(2)} m/s`);
+  const rev = await page.evaluate(() => T.c.cart.T.reverse_speed);
+  report(acc.pull > 0.6 * acc.push && acc.pull < rev, 'pull vs push', `after 0.5 s from rest: pushing ${acc.push.toFixed(2)} m/s, pulling ${acc.pull.toFixed(2)} m/s (backward walk ${rev} m/s)`);
+
+  // Hand position: tapping a key moves that hand out along the bar, so tapping one hand turns harder than holding it.
+  const taps = await page.evaluate(() => {
+    const out = {};
+    for (const mode of ['held', 'tapped']) {
+      const cart = T.fresh(-10, -3, 0.8), h0 = cart.heading();
+      let grip = 0;
+      for (let i = 0; i < 180; i++) {   // 1.5 s; tapped: 6 taps a second, each 9 ticks down
+        T.c.setInput({ R: mode === 'held' || i % 20 < 9 ? 1 : 0 });
+        T.c.simulate(1 / 120);
+        grip = Math.max(grip, cart.handGrip.R);
+      }
+      T.c.setInput({});
+      let d = (cart.heading() - h0) * 57.2958;
+      d = ((d + 540) % 360) - 180;
+      out[mode] = [d, grip];
+    }
+    return out;
+  });
+  report(taps.tapped[0] > 1.2 * taps.held[0] && taps.held[0] > 0 && taps.tapped[1] > 0.6, 'tapping turns',
+    `E held turned ${taps.held[0].toFixed(0)} deg, E tapped 6 a second turned ${taps.tapped[0].toFixed(0)} deg (hand out to ${Math.round(100 * taps.tapped[1])}% of the bar)`);
 
   // Countering a spin with the other hand stops it.
-  for (const [first, then, label] of [[{ L: -1 }, { R: -1 }, 'A spin, then D'], [{ L: 1, R: -1 }, { L: -1, R: 1 }, 'E+D spin, then A+Q']]) {
+  for (const [first, then, label] of [[{ L: -1 }, { R: -1 }, 'A spin, then D'], [{ L: 1, R: -1 }, { L: -1, R: 1 }, 'Q+D spin, then A+E']]) {
     const r = await page.evaluate(([first, then]) => {
       const c = T.c, cart = T.fresh();
       T.hold(first, 1.5);
@@ -236,7 +258,7 @@ const SCENARIOS = [
       return { downUp, wasFallen, tUp, slid, wheels: cartNow.wheelsDown() };
     }, setup);
     report(r.wasFallen && r.downUp < 0.3 && r.tUp > 0 && r.wheels === 4 && r.slid < 3.0, `get up (${setup})`,
-      `lying at up ${r.downUp.toFixed(2)} (fallen ${r.wasFallen}), Q held: ${r.tUp > 0 ? 'upright in ' + r.tUp.toFixed(2) + ' s' : 'still down after 5 s'}, moved ${r.slid.toFixed(2)} m, ${r.wheels}/4 wheels down`);
+      `lying at up ${r.downUp.toFixed(2)} (fallen ${r.wasFallen}), E held: ${r.tUp > 0 ? 'upright in ' + r.tUp.toFixed(2) + ' s' : 'still down after 5 s'}, moved ${r.slid.toFixed(2)} m, ${r.wheels}/4 wheels down`);
   }
 
   // Gate, seat flap and backrest hinges (limits and resting on their stops).
@@ -593,6 +615,8 @@ const SCENARIOS = [
     let fastest = 0;
     for (const s of c.cart.stack()) for (const b of s.parts) { const v = b.linvel(); fastest = Math.max(fastest, Math.hypot(v.x, v.y, v.z)); }
     c.setInput({}); c.simulate(4);
+    // A hard yank: past the hands' caps (drive_max, reverse_speed), which would only roll the stack back with the cart.
+    Object.assign(c.cart.T, { power_ramp: 400, drive_max: 800, reverse_speed: 5 });
     c.setInput({ L: -1, R: -1 });
     let u = 0;
     while (c.cart.nestedIn && u < 5) { c.simulate(0.05); u += 0.05; }

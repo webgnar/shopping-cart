@@ -536,7 +536,7 @@ OPEN_LOT_POLE_X = -6.2               # streetlight on the stall heads, on the 6t
 
 def open_lot():
     """One 40 x 40 m chunk of the sandbox's endless parking lot, laid out from the aerial reference photos
-    (Level Reference Images/): two double rows of 11 stalls (2.7 x 5.5 m) along X with a 9 m drive aisle down
+    (Reference Images/Levels/): two double rows of 11 stalls (2.7 x 5.5 m) along X with a 9 m drive aisle down
     the middle (z = 0) and half an aisle along each Z edge, so neighbouring chunks meet in a full aisle; each
     double row ends at +X in a planter island (streetlight, two palms) and a 7.3 m cross aisle runs from there to
     the +X edge. A second streetlight stands on the stall heads of each double row. Nothing but 2 mm paint comes

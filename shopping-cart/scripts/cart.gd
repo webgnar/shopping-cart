@@ -20,16 +20,42 @@ extends Node3D
 
 
 @export_group("Hands")
-## Hand power: holding a hand's key (E/A left push/pull, Q/D right; the left-hand keys turn the cart left) ramps that hand's push or pull from power_base, with no
-## cap. The HUD shows it as that hand's bar. Pushing and pulling share the same base and ramp. As the arms strain,
-## the wrists lever the bar (wrist_lever): pushing hard presses it down and the front wheels come up (a wheelie);
-## pulling hard lifts it and the rear wheels come up onto the front casters, which breaks the back loose for a
-## drift. W/S lean the cart on purpose (see "Lean keys"). Once the cart has fallen over and come to rest, any hand
-## key hauls it back onto its wheels (see "Getting back up").
+## Each hand has two things the player controls with one key (Q/A left push/pull, E/D right):
+##  - How hard: holding the key ramps the hand's power from power_base, with no cap (hand_power, the HUD's meter).
+##    The push it puts into the bar levels off toward drive_max, but the wrists keep levering the bar by the full
+##    power (wrist_lever): push hard for long and the front wheels come up and the cart goes over backwards; pull
+##    hard and the rear wheels come up onto the front casters, which breaks the back loose for a drift.
+##  - Where: tapping the key moves the hand out along the bar (hand_grip, 0 = hand_rest near the middle, 1 = the
+##    end). Each press moves it out by tap_step, a quick press (tap_fast after the last) by up to tap_boost times
+##    that, and it slides back in at grip_drain. Each press after the first is also a shove (tap_power on top of
+##    the power), and between taps the hand stays on the bar, its power leaking away (tap_hold_leak).
+## Each hand pushes or pulls where it holds the bar, so the turn comes from the physics: right force times its
+## distance from the middle, minus the left's. A hand out at the end turns the cart harder; a push with one hand
+## and a pull with the other turns it hardest. Held hands tire (fatigue): the arm's force wanders (wobble) and its
+## grip on the cart's twist weakens, so a cart left on held keys drifts off line; a press freshens the arm.
+## W/S lean the cart on purpose (see "Lean keys"). Once the cart has fallen over and come to rest, any hand key
+## hauls it back onto its wheels (see "Getting back up").
 @export var power_base := 25.0      ## N per hand the moment a key goes down
 @export var power_ramp := 120.0     ## N per second the hand's power grows while its key stays held
 @export var power_relax := 400.0    ## N per second the bar falls back to zero once the key is let go
-@export var sprint_speed := 5.0     ## m/s: a running player can't push (or pull) the cart faster than this
+@export var drive_max := 160.0      ## N per hand: the push (or pull) levels off toward this however hard the hand strains
+@export var sprint_speed := 5.0     ## m/s: a running player can't push the cart faster than this
+@export var reverse_speed := 2.0    ## m/s: nor pull it backwards faster than a backward walk
+@export var hand_rest := 0.14       ## m from the middle of the bar a hand slides back to
+@export var hand_end := 0.25        ## m from the middle at the end of the bar (it is 0.52 m wide)
+@export var tap_step := 0.15        ## how far out (of hand_rest to hand_end) one press moves the hand
+@export var tap_boost := 2.5        ## a press tap_fast after the last moves it this many times further
+@export var tap_fast := 0.12        ## s between presses for the full boost
+@export var tap_slow := 0.6         ## s between presses for no boost
+@export var tap_min_gap := 0.05     ## s a key must be up before the next press counts as a tap (no faster than a finger)
+@export var grip_drain := 0.6       ## per second: how fast a hand slides back in toward hand_rest
+@export var tap_power := 15.0       ## N a press within tap_slow of the last adds to the hand's power (a shove), times the same boost as tap_step
+@export var tap_hold_leak := 1.2    ## per second: between taps, while the rhythm keeps going, the hand stays on the bar and its power leaks away by this fraction of itself, so a steady rhythm settles at a power set by how fast you tap
+@export var fatigue_rate := 0.25    ## per second a held hand tires (1 = spent)
+@export var fatigue_recover := 0.5  ## per second a released hand recovers
+@export var tap_refresh := 0.12     ## fatigue a press takes off
+@export var wobble := 0.15          ## a spent hand's force wanders by up to this fraction
+@export var grip_fatigue_loss := 0.5   ## fraction of grip_yaw_damping a spent pair of arms loses
 ## m: the wrists' lever on the bar. Each hand twists the cart about its axle line by its power times this, whether
 ## or not the cart can speed up (a strained arm levers just as hard at a run). Push: nose up. Pull: nose down.
 ## The bigger it is, the less power it takes to lift an end. The push and pull themselves act at the height of
@@ -54,6 +80,14 @@ var locked := false
 var puppet_velocity := Vector3.ZERO   ## a puppet's frame velocity on the host (for the HUD and the rolling sound)
 var puppet_spin := 0.0                ## a puppet's turn rate on the host, rad/s
 var hand_power := {"L": 0.0, "R": 0.0}   ## N each hand is putting into the bar: + push, - pull
+var hand_grip := {"L": 0.0, "R": 0.0}    ## where each hand holds the bar: 0 at hand_rest, 1 at hand_end
+var hand_fatigue := {"L": 0.0, "R": 0.0} ## how tired each arm is, 0 fresh to 1 spent
+var _hand_dir := {"L": 0, "R": 0}        ## each hand's key last step (+1 push, -1 pull, 0 up)
+var _hand_last := {"L": 0, "R": 0}       ## each hand's last push (+1) or pull (-1)
+var _hand_up := {"L": 1.0, "R": 1.0}     ## s each hand's key has been up
+var _hand_since := {"L": 9.0, "R": 9.0}  ## s since each hand's last counted press
+var _wobble_t := 0.0                     ## s of hand time, for the arms' wobble
+var _idle_time := 0.0                    ## s since the last key on this cart's stack
 @export_group("Lean keys")
 ## W tips the back up, S tips the front up, at any speed, toward a lean held by the wrists (capped torque). Keep
 ## holding past tip_delay and the lean keeps growing until the cart passes its balance point; then the hands slip
@@ -96,6 +130,7 @@ var arm_extension := {"L": 0.0, "R": 0.0}   ## m each arm is currently stretched
 @export var hand_position := Vector3(0.0, 1.0, 0.2)   ## where the right hand grips the bar (cart local); the left is mirrored
 @export var arm_relax_rate := 1.0   ## m/s an arm bends back in once the player stops braking
 @export_group("Coming to rest")
+@export var settle_delay := 0.4     ## s every key must be up before the cart starts settling (a rolling wheel has no static friction; only a cart left alone stops)
 @export var settle_brake := 40.0    ## how hard the cart brakes itself below settle_speed (per kg, and N*m per rad/s)
 @export var stop_delay := 0.25      ## s of creeping below stop_speed before the cart stops dead
 @export var settle_max_slope := 0.04   ## rise per run: on anything steeper the cart never settles, it rolls away
@@ -174,12 +209,14 @@ const TOUCHING_PARTS := [["Gate", "SeatFlap"]]
 
 ## Cart feel as the shared tuning dictionary (same keys as tuning/cart_tuning.json). The values come from this
 ## scene: the exports above and the bodies' masses. tools/export_cart_tuning.gd writes them out for the mobile game.
-const TUNING_KEYS := ["power_base", "power_ramp", "power_relax", "sprint_speed", "wrist_lever",
+const TUNING_KEYS := ["power_base", "power_ramp", "power_relax", "drive_max", "sprint_speed", "reverse_speed",
+	"hand_rest", "hand_end", "tap_step", "tap_boost", "tap_fast", "tap_slow", "tap_min_gap", "grip_drain", "tap_power", "tap_hold_leak",
+	"fatigue_rate", "fatigue_recover", "tap_refresh", "wobble", "grip_fatigue_loss", "wrist_lever",
 	"lift_pitch", "press_pitch", "side_roll", "tilt_kp", "tilt_kd", "tilt_max", "tip_delay", "tip_rate", "let_go_pitch",
 	"fallen_upright", "fallen_still", "stood_upright",
 	"rolling_resistance", "grip_yaw_damping", "spin_grip", "spin_grip_min",
 	"settle_speed", "settle_spin", "stop_speed", "stop_spin",
-	"arm_reach", "brake_spring", "brake_damping", "brake_max", "arm_relax_rate", "settle_brake", "stop_delay",
+	"arm_reach", "brake_spring", "brake_damping", "brake_max", "arm_relax_rate", "settle_delay", "settle_brake", "stop_delay",
 	"settle_max_slope"]
 
 
@@ -239,7 +276,8 @@ func _physics_process(delta: float) -> void:
 	if player_controlled or driver != null:
 		_apply_hands(delta)
 	_apply_rolling_resistance(delta)
-	if not any_input:
+	_idle_time = 0.0 if any_input else _idle_time + delta
+	if _idle_time >= settle_delay:
 		_settle(delta)
 	else:
 		_rest_time = 0.0
@@ -430,6 +468,7 @@ func _apply_hands(delta: float) -> void:
 		fallen = false
 		_wait_release = any_key
 		hand_power = {"L": 0.0, "R": 0.0}
+		hand_grip = {"L": 0.0, "R": 0.0}
 	if not any_key:
 		_wait_release = false
 	# The push and pull drive the cart along the floor only while it stands: they fade out as it tips past 45
@@ -452,20 +491,79 @@ func _apply_hands(delta: float) -> void:
 		hand_yaw[side] = (-1.0 if side == "L" else 1.0) * dirs[side]
 	var yaw_cmd: float = hand_yaw.L + hand_yaw.R
 
+	_wobble_t += delta
+	var drives := {}
+	for side in ["L", "R"]:
+		var dir: int = dirs[side]
+		# A press: the key goes down (or switches between push and pull). It counts as a tap only after the key
+		# was up for tap_min_gap, as fast as a finger can go: a tap moves the hand out along the bar (more the
+		# sooner it follows the last tap), shoves the bar (tap_power) and freshens the arm.
+		var p: float = hand_power[side]
+		var tapped := false
+		if dir != 0 and dir != _hand_dir[side]:
+			tapped = _hand_up[side] >= tap_min_gap or _hand_dir[side] != 0
+		_hand_up[side] = _hand_up[side] + delta if dir == 0 else 0.0
+		_hand_dir[side] = dir
+		_hand_since[side] += delta
+		var boost := 1.0
+		var shove := 0.0
+		if tapped:
+			# Only a press that follows another within tap_slow shoves the bar; the first press just grabs it.
+			shove = tap_power if _hand_since[side] < tap_slow else 0.0
+			var quick := clampf((tap_slow - _hand_since[side]) / (tap_slow - tap_fast), 0.0, 1.0)
+			boost = lerpf(1.0, tap_boost, quick)
+			hand_grip[side] = minf(1.0, hand_grip[side] + tap_step * boost)
+			hand_fatigue[side] = maxf(0.0, hand_fatigue[side] - tap_refresh)
+			_hand_since[side] = 0.0
+		hand_grip[side] = maxf(0.0, hand_grip[side] - grip_drain * delta)
+		hand_fatigue[side] = clampf(hand_fatigue[side] + (fatigue_rate if dir != 0 else -fatigue_recover) * delta, 0.0, 1.0)
+		if dir != 0:
+			_hand_last[side] = dir
+		# Between taps, while the rhythm keeps going (the last tap under tap_slow ago), the hand stays on the bar and
+		# keeps pushing (or pulling) the way it last did; its power only leaks away (tap_hold_leak).
+		var in_rhythm: bool = dir == 0 and _hand_since[side] < tap_slow and _hand_last[side] != 0 and not _wait_release
+		if in_rhythm:
+			dirs[side] = _hand_last[side]
+		# The hand's power: from power_base the moment its key goes down (plus the tap's shove), growing for as long
+		# as it's held. Switching from push to pull starts again from the base; letting go relaxes it back to zero.
+		if in_rhythm:
+			p = move_toward(p, 0.0, absf(p) * tap_hold_leak * delta)
+		elif dir == 0:
+			p = move_toward(p, 0.0, power_relax * delta)
+		else:
+			p = maxf(p * dir, power_base) * dir + dir * (shove * boost + power_ramp * delta)
+		hand_power[side] = p
+		var strength := absf(p)
+		# What the arm actually puts into the bar: it levels off toward drive_max, and a tired arm wanders (two
+		# slow swells per hand, out of step with the other hand's, so the cart drifts off line over a few seconds).
+		var phase := 0.0 if side == "L" else 2.1
+		var wander := 0.6 * sin(TAU * 0.23 * _wobble_t + phase) + 0.4 * sin(TAU * 0.61 * _wobble_t + 2.0 * phase)
+		drives[side] = drive_max * tanh(strength / drive_max) * (1.0 + wobble * hand_fatigue[side] * wander)
+
+	pushing_any = dirs.L > 0 or dirs.R > 0
+	for side in ["L", "R"]:
+		hand_yaw[side] = (-1.0 if side == "L" else 1.0) * dirs[side]
+	yaw_cmd = hand_yaw.L + hand_yaw.R
+
+	# Both hands the same way (and not braking): the body carries the bar along and the arms twist it. What the two
+	# hands push in common (their average) is what moves the cart, and a running player can only add that up to
+	# their running speed; the difference between them twists the bar, which the arms can do at any speed. So at
+	# a run, two hands still steer by how hard each pushes and where it holds the bar.
+	var together: bool = dirs.L != 0 and dirs.L == dirs.R and not (dirs.L < 0 and not pushing_any and cart_along > 0.05)
+	var common: float = 0.5 * (drives.L + drives.R) if together else 0.0
+	var common_k := 1.0
+	if together:
+		common_k = clampf(1.0 - dirs.L * cart_along / (sprint_speed if dirs.L > 0 else reverse_speed), 0.0, 1.0)
+
 	for side in ["L", "R"]:
 		var s := -1.0 if side == "L" else 1.0
 		var dir: int = dirs[side]
-		# The hand's power: from power_base the moment its key goes down, growing for as long as it's held.
-		# Switching from push to pull starts again from the base; letting go relaxes the bar back to zero.
-		var p: float = hand_power[side]
-		if dir == 0:
-			p = move_toward(p, 0.0, power_relax * delta)
-		else:
-			p = maxf(p * dir, power_base) * dir + dir * power_ramp * delta
-		hand_power[side] = p
-		var strength := absf(p)
-		var hand_g := xf * Vector3(hand_position.x, hand_position.y, s * hand_position.z)
-		var drive_g := xf * Vector3(hand_position.x, frame.center_of_mass.y, s * hand_position.z)   # where the push acts
+		var strength := absf(hand_power[side])
+		var drive: float = drives[side]
+		# Where the hand holds the bar: the push acts there, so a hand out at the end turns the cart harder.
+		var reach := hand_reach(side)
+		var hand_g := xf * Vector3(hand_position.x, hand_position.y, s * reach)
+		var drive_g := xf * Vector3(hand_position.x, frame.center_of_mass.y, s * reach)   # where the push acts
 		var r := hand_g - com_g
 		var v_hand := frame.linear_velocity + frame.angular_velocity.cross(r)
 		var along := v_hand.dot(fwd)
@@ -474,21 +572,29 @@ func _apply_hands(delta: float) -> void:
 			# Stopping a rolling cart: the body plants its feet and the arms straighten as the cart carries on.
 			# Bent arms give a little; the further they straighten the harder they hold, up to leaning back
 			# with full body weight. Out of reach, the player is dragged at that full force. A hand pulling
-			# harder than that (its power) wins out, and a hard enough yank lifts the rear wheels.
+			# harder than that wins out, and a hard enough yank lifts the rear wheels.
 			arm_extension[side] = minf(arm_reach, arm_extension[side] + along * delta)
 			var f := minf(brake_max, brake_spring * arm_extension[side] + brake_damping * along)
 			if arm_extension[side] >= arm_reach:
 				f = brake_max
-			frame.apply_force(-fwd * maxf(f, strength) * drive_scale, drive_g - frame.global_position)
-			st = "braking %d N (arm %d%%)" % [roundi(maxf(f, strength)), roundi(100.0 * arm_extension[side] / arm_reach)]
+			frame.apply_force(-fwd * maxf(f, drive) * drive_scale, drive_g - frame.global_position)
+			st = "braking %d N (arm %d%%)" % [roundi(maxf(f, drive)), roundi(100.0 * arm_extension[side] / arm_reach)]
 		else:
 			# Not braking: the body steps back in to its relaxed distance from the handle.
 			arm_extension[side] = maxf(0.0, arm_extension[side] - arm_relax_rate * delta)
-			if dir != 0:
-				# A running person can only add force up to their running speed.
-				var k := clampf(1.0 - dir * along / sprint_speed, 0.0, 1.0)
-				frame.apply_force(fwd * dir * strength * k * drive_scale, drive_g - frame.global_position)
-				st = ("pushing %d N" if dir > 0 else "pulling %d N") % roundi(strength)
+			if together:
+				# The common part, capped by running speed, plus this hand's share of the twist.
+				var f := common * common_k + (drive - common)
+				frame.apply_force(fwd * dir * f * drive_scale, drive_g - frame.global_position)
+				st = ("pushing %d N" if dir > 0 else "pulling %d N") % roundi(drive)
+			elif dir != 0:
+				# One hand: a running person can only add force up to their running speed (a backward walk when
+				# pulling), at the speed the hand moves.
+				var k := clampf(1.0 - dir * along / (sprint_speed if dir > 0 else reverse_speed), 0.0, 1.0)
+				frame.apply_force(fwd * dir * drive * k * drive_scale, drive_g - frame.global_position)
+				st = ("pushing %d N" if dir > 0 else "pulling %d N") % roundi(drive)
+		if dir != 0 or hand_grip[side] > 0.05:
+			st = (st + " " if st else "") + "at %d cm" % roundi(100.0 * reach)
 		# Countering a spin: when the hands as a whole work against the way the cart is spinning, a hand doing so
 		# grabs the bar and braces it, like a planted arm. The bar is a lever about half a metre behind the basket's
 		# centre, so a hand holding up to brake_max there stops a spin within a fraction of a second. It acts as a
@@ -521,9 +627,11 @@ func _apply_hands(delta: float) -> void:
 		hand_state[side] = st
 
 	# Grip: with both hands moving the same way the player resists the cart twisting (keeps it tracking when
-	# pulled back). Opposite hands (spin) or one hand (turn) twist it freely.
+	# pulled back); a difference between the hands' pushes, or where they hold the bar, still turns it. Tired
+	# arms hold the twist less (grip_fatigue_loss). Opposite hands (spin) or one hand (turn) twist it freely.
 	if dirs.L != 0 and dirs.L == dirs.R:
-		frame.apply_torque(Vector3.UP * -grip_yaw_damping * yaw_rate)
+		var tired: float = 0.5 * (hand_fatigue.L + hand_fatigue.R)
+		frame.apply_torque(Vector3.UP * -grip_yaw_damping * (1.0 - grip_fatigue_loss * tired) * yaw_rate)
 
 	# Lean keys: W tips the back up, S the front, toward a lean with capped torque. Held on, the lean grows
 	# (tip_rate) until the cart passes its balance point and the hands slip off (let_go_pitch). One hand key held
@@ -564,6 +672,11 @@ func _apply_hands(delta: float) -> void:
 		for side in ["L", "R"]:
 			var st: String = hand_state[side]
 			hand_state[side] = (st + " + " if st else "") + ("leaning back up" if lift else "leaning front up")
+
+
+## m from the middle of the bar where a hand holds it (side "L" or "R").
+func hand_reach(side: String) -> float:
+	return lerpf(hand_rest, hand_end, hand_grip[side])
 
 
 ## Cart origin (on the ground under the handle) in world space.

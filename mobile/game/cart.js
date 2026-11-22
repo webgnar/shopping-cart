@@ -9,7 +9,10 @@ import { v3, add, sub, scale, dot, cross, len, norm, clamp, moveToward, arr, rot
 const DEFAULTS = { arm_relax_rate: 1.0, settle_brake: 40.0, stop_delay: 0.25, power_base: 25, power_ramp: 120,
   power_relax: 400, sprint_speed: 5, wrist_lever: 0.3, lift_pitch: -0.2, press_pitch: 0.3, side_roll: 0.22,
   tilt_kp: 1400, tilt_kd: 80, tilt_max: 200, tip_delay: 0.6, tip_rate: 0.7, let_go_pitch: 0.95, fallen_upright: 0.3, fallen_still: 1.0, stood_upright: 0.95,
-  settle_max_slope: 0.04, max_angular_velocity: 0.25 * Math.PI * 60 };
+  settle_max_slope: 0.04, max_angular_velocity: 0.25 * Math.PI * 60, drive_max: 160, reverse_speed: 2, hand_rest: 0.14,
+  hand_end: 0.25, tap_step: 0.15, tap_boost: 2.5, tap_fast: 0.12, tap_slow: 0.6, tap_min_gap: 0.05, grip_drain: 0.6,
+  tap_power: 15, tap_hold_leak: 1.2, fatigue_rate: 0.25, fatigue_recover: 0.5, tap_refresh: 0.12, wobble: 0.15,
+  grip_fatigue_loss: 0.5, settle_delay: 0.4 };
 const PROJECT_LINEAR_DAMP = 0.02, PROJECT_ANGULAR_DAMP = 0.05;   // Godot project settings
 // Visual model pivots (mobile/models/cart.glb, same names as the Godot model) for each physics body.
 const PIVOTS = { Frame: 'Frame', Gate: 'Gate_Hinge', ChildSeat: 'ChildSeat_Hinge', SeatFlap: 'SeatFlap_Hinge',
@@ -76,6 +79,10 @@ export class Cart {
     this.cartColliders = [];   // [collider, layer, mask] of every cart part, to regroup when carts pass through each other
     this.T = Object.assign({}, DEFAULTS, ctx.tune);
     this.handPower = { L: 0, R: 0 }; this.armExt = { L: 0, R: 0 }; this.handState = { L: '', R: '' };
+    // Where each hand holds the bar (0 at hand_rest, 1 at hand_end), how tired each arm is, and the tap tracking.
+    this.handGrip = { L: 0, R: 0 }; this.handFatigue = { L: 0, R: 0 };
+    this.handDir = { L: 0, R: 0 }; this.handLast = { L: 0, R: 0 }; this.handUp = { L: 1, R: 1 }; this.handSince = { L: 9, R: 9 };
+    this.wobbleT = 0; this.idleTime = 0;
     // locked: nobody's hands are on the bar (a race countdown, as ShoppingCart.locked): every key reads as let go.
     this.locked = false;
     this.fallen = false; this.waitRelease = false; this.tiltDir = 0; this.tiltTime = 0; this.letGo = false; this.pinned = false; this.restTime = 0; this.restAnchor = null;
@@ -251,6 +258,9 @@ export class Cart {
   }
 
   // ---------------------------------------------------------------- one physics step (before world.step)
+  /** m from the middle of the bar where a hand ('L' or 'R') holds it. */
+  handReach(h) { return this.T.hand_rest + (this.T.hand_end - this.T.hand_rest) * this.handGrip[h]; }
+
   /** Whether this cart's own keys are held (set before any cart steps, so a stack can wake as one). */
   setKeys(inp) { this.keysHeld = !this.locked && !!inp && (inp.L !== 0 || inp.R !== 0 || !!inp.lift || !!inp.press); }
 
@@ -264,7 +274,9 @@ export class Cart {
     if (this.pinned) return;
     if (inp) this._applyHands(inp, dt);
     this._applyRollingResistance(dt);
-    if (!anyInput) this._settle(dt); else { this.restTime = 0; this.restAnchor = null; }
+    // Only a cart left alone settles: every key up for settle_delay (a rolling wheel has no static friction).
+    this.idleTime = anyInput ? 0 : this.idleTime + dt;
+    if (this.idleTime >= this.T.settle_delay) this._settle(dt); else { this.restTime = 0; this.restAnchor = null; }
   }
 
   _applyHands(inp, dt) {
@@ -279,7 +291,7 @@ export class Cart {
       this.fallen = true; this.waitRelease = anyKey;
     } else if (this.fallen && upright > T.stood_upright) {
       // Back on its wheels: the hands rest until the keys are let go, so the haul doesn't throw it over again.
-      this.fallen = false; this.waitRelease = anyKey; this.handPower = { L: 0, R: 0 };
+      this.fallen = false; this.waitRelease = anyKey; this.handPower = { L: 0, R: 0 }; this.handGrip = { L: 0, R: 0 };
     }
     if (!anyKey) this.waitRelease = false;
     // The push and pull only drive the cart while it stands: they fade out as it tips past 45 degrees.
@@ -293,36 +305,84 @@ export class Cart {
     for (const [h, s] of SIDES) { dirs[h] = this.waitRelease ? 0 : inp[h]; handYaw[h] = s * dirs[h]; }
     const yawCmd = handYaw.L + handYaw.R;
 
+    // Each hand (as cart.gd): a press counts as a tap after the key was up tap_min_gap; a tap moves the hand out
+    // along the bar (more the sooner it follows the last), shoves it and freshens the arm. Between taps, while the
+    // rhythm keeps going, the hand stays on the bar and its power leaks away. The push levels off toward drive_max
+    // and a tired arm wanders.
+    this.wobbleT += dt;
+    const drives = {};
+    for (const [h] of SIDES) {
+      const dir = dirs[h];
+      let pw = this.handPower[h];
+      let tapped = false;
+      if (dir !== 0 && dir !== this.handDir[h]) tapped = this.handUp[h] >= T.tap_min_gap || this.handDir[h] !== 0;
+      this.handUp[h] = dir === 0 ? this.handUp[h] + dt : 0;
+      this.handDir[h] = dir;
+      this.handSince[h] += dt;
+      let boost = 1, shove = 0;
+      if (tapped) {
+        shove = this.handSince[h] < T.tap_slow ? T.tap_power : 0;   // the first press just grabs the bar
+        const quick = clamp((T.tap_slow - this.handSince[h]) / (T.tap_slow - T.tap_fast), 0, 1);
+        boost = 1 + (T.tap_boost - 1) * quick;
+        this.handGrip[h] = Math.min(1, this.handGrip[h] + T.tap_step * boost);
+        this.handFatigue[h] = Math.max(0, this.handFatigue[h] - T.tap_refresh);
+        this.handSince[h] = 0;
+      }
+      this.handGrip[h] = Math.max(0, this.handGrip[h] - T.grip_drain * dt);
+      this.handFatigue[h] = clamp(this.handFatigue[h] + (dir !== 0 ? T.fatigue_rate : -T.fatigue_recover) * dt, 0, 1);
+      if (dir !== 0) this.handLast[h] = dir;
+      const inRhythm = dir === 0 && this.handSince[h] < T.tap_slow && this.handLast[h] !== 0 && !this.waitRelease;
+      if (inRhythm) dirs[h] = this.handLast[h];
+      if (inRhythm) pw = moveToward(pw, 0, Math.abs(pw) * T.tap_hold_leak * dt);
+      else if (dir === 0) pw = moveToward(pw, 0, T.power_relax * dt);
+      else pw = Math.max(pw * dir, T.power_base) * dir + dir * (shove * boost + T.power_ramp * dt);
+      this.handPower[h] = pw;
+      const phase = h === 'L' ? 0 : 2.1;
+      const wander = 0.6 * Math.sin(2 * Math.PI * 0.23 * this.wobbleT + phase) + 0.4 * Math.sin(2 * Math.PI * 0.61 * this.wobbleT + 2 * phase);
+      drives[h] = T.drive_max * Math.tanh(Math.abs(pw) / T.drive_max) * (1 + T.wobble * this.handFatigue[h] * wander);
+    }
+    const pushingNow = dirs.L > 0 || dirs.R > 0;
+    for (const [h, s] of SIDES) handYaw[h] = s * dirs[h];
+    const yawNow = handYaw.L + handYaw.R;
+    // Both hands the same way (not braking): what they push in common moves the cart, capped by running speed;
+    // the difference twists the bar at any speed.
+    const together = dirs.L !== 0 && dirs.L === dirs.R && !(dirs.L < 0 && !pushingNow && cartAlong > 0.05);
+    const common = together ? 0.5 * (drives.L + drives.R) : 0;
+    const commonK = together ? clamp(1 - dirs.L * cartAlong / (dirs.L > 0 ? T.sprint_speed : T.reverse_speed), 0, 1) : 1;
+
     for (const [h, s] of SIDES) {
       const dir = dirs[h];
-      // The hand's power: power_base the moment it goes on, growing while it's held; letting go relaxes it.
-      let pw = this.handPower[h];
-      pw = dir === 0 ? moveToward(pw, 0, T.power_relax * dt) : Math.max(pw * dir, T.power_base) * dir + dir * T.power_ramp * dt;
-      this.handPower[h] = pw;
-      const strength = Math.abs(pw);
-      const handG = add(p, rot(q, v3(this.handPos.x, this.handPos.y, s * this.handPos.z)));
-      const driveG = add(p, rot(q, v3(this.handPos.x, this.com.y, s * this.handPos.z)));   // where the push acts
+      const strength = Math.abs(this.handPower[h]);
+      const drive = drives[h];
+      const reach = this.handReach(h);   // where the hand holds the bar: the push acts there
+      const handG = add(p, rot(q, v3(this.handPos.x, this.handPos.y, s * reach)));
+      const driveG = add(p, rot(q, v3(this.handPos.x, this.com.y, s * reach)));
       const r = sub(handG, comG);
       const along = dot(add(lin, cross(ang, r)), fwd);
       let st = '';
-      if (dir < 0 && !pushingAny && cartAlong > 0.05 && along > 0) {
+      if (dir < 0 && !pushingNow && cartAlong > 0.05 && along > 0) {
         // Stopping a rolling cart: the body plants its feet and the arms straighten as the cart carries on,
         // holding harder the further they stretch, up to leaning back with full body weight.
         this.armExt[h] = Math.min(T.arm_reach, this.armExt[h] + along * dt);
         let F = Math.min(T.brake_max, T.brake_spring * this.armExt[h] + T.brake_damping * along);
         if (this.armExt[h] >= T.arm_reach) F = T.brake_max;
-        f.addForceAtPoint(scale(fwd, -Math.max(F, strength) * driveScale), driveG, true);
-        st = `braking ${Math.round(Math.max(F, strength))} N (arm ${Math.round(100 * this.armExt[h] / T.arm_reach)}%)`;
+        f.addForceAtPoint(scale(fwd, -Math.max(F, drive) * driveScale), driveG, true);
+        st = `braking ${Math.round(Math.max(F, drive))} N (arm ${Math.round(100 * this.armExt[h] / T.arm_reach)}%)`;
       } else {
         this.armExt[h] = Math.max(0, this.armExt[h] - T.arm_relax_rate * dt);
-        if (dir !== 0) {
-          const k = clamp(1 - dir * along / T.sprint_speed, 0, 1);   // a running person tops out at sprint_speed
-          f.addForceAtPoint(scale(fwd, dir * strength * k * driveScale), driveG, true);
-          st = `${dir > 0 ? 'pushing' : 'pulling'} ${Math.round(strength)} N`;
+        if (together) {
+          f.addForceAtPoint(scale(fwd, dir * (common * commonK + drive - common) * driveScale), driveG, true);
+          st = `${dir > 0 ? 'pushing' : 'pulling'} ${Math.round(drive)} N`;
+        } else if (dir !== 0) {
+          // One hand: a running person tops out at sprint_speed (a backward walk when pulling).
+          const k = clamp(1 - dir * along / (dir > 0 ? T.sprint_speed : T.reverse_speed), 0, 1);
+          f.addForceAtPoint(scale(fwd, dir * drive * k * driveScale), driveG, true);
+          st = `${dir > 0 ? 'pushing' : 'pulling'} ${Math.round(drive)} N`;
         }
       }
+      if (dir !== 0 || this.handGrip[h] > 0.05) st = (st ? st + ' ' : '') + `at ${Math.round(100 * reach)} cm`;
       // Countering a spin: a hand working against the spin grabs the bar and braces it, like a planted arm.
-      if (handYaw[h] * yawRate < 0 && yawCmd * yawRate < 0 && Math.abs(yawRate) > T.spin_grip_min) {
+      if (handYaw[h] * yawRate < 0 && yawNow * yawRate < 0 && Math.abs(yawRate) > T.spin_grip_min) {
         const lever = Math.hypot(r.x, r.z);
         const t = Math.min(T.brake_max * lever, T.spin_grip * lever * lever * Math.abs(yawRate));
         f.addTorque(v3(0, -Math.sign(yawRate) * t, 0), true);
@@ -345,8 +405,11 @@ export class Cart {
       }
       this.handState[h] = st;
     }
-    // Grip: both hands the same way resist the cart twisting (keeps it tracking).
-    if (dirs.L !== 0 && dirs.L === dirs.R) f.addTorque(v3(0, -T.grip_yaw_damping * yawRate, 0), true);
+    // Grip: both hands the same way resist the cart twisting (keeps it tracking); tired arms hold it less.
+    if (dirs.L !== 0 && dirs.L === dirs.R) {
+      const tired = 0.5 * (this.handFatigue.L + this.handFatigue.R);
+      f.addTorque(v3(0, -T.grip_yaw_damping * (1 - T.grip_fatigue_loss * tired) * yawRate, 0), true);
+    }
 
     // Lean keys: lift tips the back up, press the front, toward a lean with capped torque. Held on, the lean grows
     // (tip_rate) until the cart passes its balance point and the hands slip off (let_go_pitch). With one hand held
