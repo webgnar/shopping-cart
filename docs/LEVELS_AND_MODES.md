@@ -5,7 +5,7 @@ of this to work on how the cart drives.
 
 ## Layout of the whole game
 
-- `scenes/main.tscn` — the sandbox level: an endless parking lot to work out the cart's physics in, with a test
+- `scenes/main.tscn` — the old sandbox (still what drive_test and most tests load; the console `sandbox` and the game start now go to `lot90.tscn`): an endless parking lot to work out the cart's physics in, with a test
   strip (speed bumps, a curb, a ramp up to a ledge, boxes) down the spawn aisle and `CartSpawn`. Its `Chunks` node
   (`scripts/sandbox/chunk_streamer.gd`) fills a 40 m grid around the cart with terrain chunks from
   `scenes/sandbox/chunks/`, picked by a hash of the square so the layout never changes. The sandbox uses only
@@ -65,6 +65,9 @@ of this to work on how the cart drives.
   aisles) — a parking lot laid out on load by `LotGenerator` (`scenes/lot_gen/lot_generator.tscn`): stall rows,
   aisles, curbed end islands, wheel stops, striping, a perimeter curb and cart corrals. `CartSpawn` is just outside
   the entrance on the lot's -X edge.
+- `scenes/levels/lot90.tscn` (console `sandbox`; the game starts here) — a 60 x 40 m 90 degree lot from the same generator, paved with 24
+  aged asphalt sections (year 12) whose sims paint, wear and crack the stall lines; the traffic's wheel paths run down
+  the aisles. Baked into the scene: re-run `tools/bake_lot_cli.gd` and the asphalt section bake after changing it.
 - `scenes/asphalt/asphalt_lab.tscn` — the 2D asphalt lab: a road section ageing year by year (the crack types in
   zack's Asphalt Cracking Quick Guide, potholes) and being repaired (crack filling, pothole fill, heavy patches, chip
   seal, overlay), drawn as a colour map and a height map (`AsphaltSim.bake_height()` gives real heights in metres for displacement;
