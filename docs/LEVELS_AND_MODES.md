@@ -68,6 +68,9 @@ of this to work on how the cart drives.
 - `scenes/levels/lot90.tscn` (console `sandbox`; the game starts here) — a 60 x 40 m 90 degree lot from the same generator, paved with 24
   aged asphalt sections (year 12) whose sims paint, wear and crack the stall lines; the traffic's wheel paths run down
   the aisles. Baked into the scene: re-run `tools/bake_lot_cli.gd` and the asphalt section bake after changing it.
+- `scenes/lot_gen/lot_lab.tscn` (console `lotlab`) — the parking lot lab: the LotGenerator's settings (angle,
+  aisles, lot size, islands, stops, curb, corrals, seed) on a panel, rebuilt live, top view or 3D orbit, with the
+  sizes used next to Table 1 of the parking lot PDF.
 - `scenes/asphalt/asphalt_lab.tscn` — the 2D asphalt lab: a road section ageing year by year (the crack types in
   zack's Asphalt Cracking Quick Guide, potholes) and being repaired (crack filling, pothole fill, heavy patches, chip
   seal, overlay), drawn as a colour map and a height map (`AsphaltSim.bake_height()` gives real heights in metres for displacement;

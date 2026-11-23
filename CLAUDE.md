@@ -51,8 +51,11 @@ sized from `References/Levels/c620content.pdf` Table 1, out of the curb, wheel s
 Level `scenes/levels/generated_lot.tscn`, console `lotgen [angle] [seed] [oneway]`. With `section_scene` set it paves
 the lot with aged AsphaltSections whose sims paint the stall lines: `scenes/levels/lot90.tscn` (console `sandbox`, and the game's start scene), baked
 with `tools/bake_lot_cli.gd` then `tools/bake_asphalt_sections_cli.gd` (steps in the first's header).
+The lab, `scenes/lot_gen/lot_lab.tscn` (console `lotlab`), puts every setting on a panel, rebuilds as you change
+them, and lists the sizes used next to Table 1.
 Test: `godot --headless -s res://tests/lot_generator_test.gd`. Screenshots:
-`xvfb-run godot --rendering-method gl_compatibility -s res://tests/lot_generator_screenshot.gd -- <out dir>`.
+`xvfb-run godot --rendering-method gl_compatibility -s res://tests/lot_generator_screenshot.gd -- <out dir>`
+(`lot_lab_screenshot.gd` for the lab).
 
 ## Testing a cart change
 

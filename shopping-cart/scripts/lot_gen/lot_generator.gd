@@ -51,6 +51,9 @@ const TWO_WAY_AISLE_FT := 24.0
 @export var section_scene: PackedScene      ## scenes/asphalt/asphalt_section.tscn, or none for the flat surface
 @export var asphalt_year := 12.0            ## age of the sections' asphalt
 @export var road_crew := false              ## the sections' road crew repairs them as they age
+## Sections' traffic load (AsphaltSim.traffic): a lot's cars are slow and few, so less than a road's 1.0. It sets
+## how deep the aisles rut and how fast the wheel paths crack and wear the paint.
+@export_range(0.0, 2.0, 0.05) var asphalt_traffic := 0.35
 
 @export_group("Nodes")
 @export var surface: Node3D                 ## the asphalt: a 1 x 1 m plane, scaled to the lot
@@ -124,31 +127,45 @@ func generate() -> void:
 	var x0 := end_drive
 	var x1 := size.x - end_drive
 	var stalls: Array[Dictionary] = []      # double-row stalls, where corrals may go
+	var aisle_z := PackedFloat32Array()      # each aisle's -Z edge
 	var z := -size.y * 0.5 + margin
 	for j in aisles:
-		# Rows either side of aisle j: the head of the row behind it, then the aisle, then the row in front.
-		var dir := 1.0 if (two_way or j % 2 == 0) else -1.0
-		var za := z + d                     # this aisle's -Z edge
-		var zb := za + e                    # and its +Z edge
+		var za := z + d
+		aisle_z.append(za)
 		for lane in ([0.25, 0.75] if two_way else [0.5]):   # wheels 1.7 m apart, either side of each lane's middle
 			_wheel_z.append_array([za + e * lane - 0.85, za + e * lane + 0.85])
-		var inner_lo := j > 0
-		var inner_hi := j < aisles - 1
-		var xs_lo := x0 + (island_length if (end_islands and inner_lo) else 0.0)
-		var xe_lo := x1 - (island_length if (end_islands and inner_lo) else 0.0)
-		var xs_hi := x0 + (island_length if (end_islands and inner_hi) else 0.0)
-		var xe_hi := x1 - (island_length if (end_islands and inner_hi) else 0.0)
-		var lo := _row(xs_lo, xe_lo, za, -1.0, dir)
-		var hi := _row(xs_hi, xe_hi, zb, 1.0, dir)
-		if inner_lo:
-			stalls.append_array(lo)
-		if inner_hi:
-			stalls.append_array(hi)
-		# Islands at the ends of the double row beyond this aisle's +Z side.
-		if end_islands and inner_hi:
-			_island(Rect2(x0, zb, island_length, 2.0 * d))
-			_island(Rect2(x1 - island_length, zb, island_length, 2.0 * d))
-		z = zb + d
+		z = za + e + d
+	var a := deg_to_rad(stall_angle)
+	var run := d * cos(a) / sin(a)           # how far along X a stripe goes as it crosses its row
+	var pitch := stall_width / sin(a)         # along the aisle (Table 1, C)
+	# Row k lies between aisle k - 1 (its +Z side) and aisle k (its -Z side): the first and last are single rows
+	# against the lot edge, the rest double rows. Both halves of a double row share their head line's stripe
+	# ends, so at an angle the stripes run straight on across it.
+	for k in aisles + 1:
+		var halves: Array[Dictionary] = []
+		if k > 0:
+			halves.append({ za = aisle_z[k - 1] + e, side = 1.0, dir = _dir(k - 1, 1.0) })
+		if k < aisles:
+			halves.append({ za = aisle_z[k], side = -1.0, dir = _dir(k, -1.0) })
+		var double := halves.size() == 2
+		var inset := island_length if (end_islands and double) else 0.0
+		var lo := x0 + inset                 # head-line ends: each stripe's aisle end must stay in the row too
+		var hi := x1 - inset
+		for half in halves:
+			if half.dir > 0.0:
+				lo = maxf(lo, x0 + inset + run)
+			else:
+				hi = minf(hi, x1 - inset - run)
+		var n := int(floor((hi - lo) / pitch))
+		if n >= 1:
+			var h0 := lo + (hi - lo - n * pitch) * 0.5
+			for half in halves:
+				var row := _row(half.za, half.side, half.dir, h0, n)
+				if double:
+					stalls.append_array(row)
+		if end_islands and double:
+			_island(Rect2(x0, aisle_z[k - 1] + e, island_length, 2.0 * d))
+			_island(Rect2(x1 - island_length, aisle_z[k - 1] + e, island_length, 2.0 * d))
 	if perimeter_curb:
 		var h := size.y * 0.5
 		var g := entrance_width * 0.5
@@ -170,10 +187,19 @@ func generate() -> void:
 		_pave()
 
 
-## Stripes one row of stalls along X from xs to xe. The aisle edge is at z = za and the stalls go off it toward
-## `side` (+1: +Z). Cars drive along the aisle toward `dir` (+1: +X) and turn into the stalls. Returns the stalls
-## as { center, yaw (turns local +Z onto the stall axis), stop (its wheel stop or null) }.
-func _row(xs: float, xe: float, za: float, side: float, dir: float) -> Array[Dictionary]:
+## Which way cars go along aisle j past its `side` (+1: +Z) row, +1 for +X. Two-way aisles drive on the right, so
+## each side's stalls lean with the traffic on that side; one-way aisles alternate, so cars snake up the lot.
+func _dir(j: int, side: float) -> float:
+	if two_way:
+		return side
+	return 1.0 if j % 2 == 0 else -1.0
+
+
+## Stripes one row of n stalls. The aisle edge is at z = za and the stalls go off it toward `side` (+1: +Z). Cars
+## drive along the aisle toward `dir` (+1: +X) and turn into the stalls. Stripe i ends on the head line at
+## x = h0 + i * pitch. Returns the stalls as { center, yaw (turns local +Z onto the stall axis), stop (its wheel
+## stop or null) }.
+func _row(za: float, side: float, dir: float, h0: float, n: int) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var a := deg_to_rad(stall_angle)
 	var d := stall_depth()
@@ -181,11 +207,7 @@ func _row(xs: float, xe: float, za: float, side: float, dir: float) -> Array[Dic
 	var run := d * cos(a) / sin(a)               # how far along X a stripe goes as it crosses the row
 	var u := Vector3(dir * cos(a), 0.0, side * sin(a))   # stall axis, aisle to head
 	var g := d / sin(a)                          # stripe length (Table 1, G)
-	var n := int(floor((xe - xs - run) / pitch))
-	if n < 1:
-		return out
-	# Stripes start on the aisle edge at first + i * pitch; their head ends lean `run` toward dir.
-	var first := xs + (xe - xs - n * pitch - run) * 0.5 + (run if dir < 0.0 else 0.0)
+	var first := h0 - dir * run                  # stripe 0's aisle end
 	for i in n + 1:
 		var p := Vector3(first + i * pitch, 0.0, za)
 		_stripe(p, p + u * g)
@@ -255,6 +277,7 @@ func _pave() -> void:
 			s.seed = seed * 1000 + i * 37 + k + 1
 			s.year = asphalt_year
 			s.road_crew = road_crew
+			s.sim.traffic = asphalt_traffic
 			var lines := PackedVector2Array()
 			for j in range(0, _paint.size(), 2):
 				var ends := _clip(_to_sim(_paint[j], c), _to_sim(_paint[j + 1], c), SECTION)
