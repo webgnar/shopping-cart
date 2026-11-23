@@ -43,6 +43,15 @@ func add_command(name: String, run: Callable, help: String) -> void:
 	_commands[name] = {"run": run, "help": help}
 
 
+## Every command name, in the order they were added (the pause menu makes a button per command).
+func command_names() -> Array:
+	return _commands.keys()
+
+
+func command_help(name: String) -> String:
+	return _commands[name].help if _commands.has(name) else ""
+
+
 func is_open() -> bool:
 	return visible
 
