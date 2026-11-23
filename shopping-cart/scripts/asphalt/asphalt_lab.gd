@@ -14,7 +14,7 @@ extends Control
 @export var preview_pivot: Node3D            ## drag on the preview to orbit it, wheel to zoom
 @export var preview_camera: Camera3D
 @export var preview_res := 0.01              ## m per height-map pixel in the 3D preview
-@export var max_years := 40.0
+@export var max_years := 30.0
 @export var years_per_second := 2.0
 
 var playing := false

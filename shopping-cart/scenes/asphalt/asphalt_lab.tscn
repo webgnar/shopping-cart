@@ -309,7 +309,7 @@ text = "Year 0.0"
 [node name="Timeline" type="HSlider" parent="Panel/Scroll/Box"]
 unique_name_in_owner = true
 layout_mode = 2
-max_value = 40.0
+max_value = 30.0
 step = 0.1
 
 [node name="PlayRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
@@ -341,7 +341,7 @@ popup/item_4/id = 4
 [node name="StartHere" type="Button" parent="Panel/Scroll/Box"]
 unique_name_in_owner = true
 layout_mode = 2
-tooltip_text = "Start the timeline at this year, so it runs 40 more years on from here and you can watch your repairs age. Press again to go back to the road's own years."
+tooltip_text = "Start the timeline at this year, so it runs 30 more years on from here and you can watch your repairs age. Press again to go back to the road's own years."
 toggle_mode = true
 text = "Start timeline here"
 
