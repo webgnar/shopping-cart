@@ -10,7 +10,6 @@ uniform vec2 size_m = vec2(10.0, 10.0);
 uniform float surface_age = 0.0;
 uniform float ravel = 0.0;          // 0..1 how far the surface has ravelled
 uniform float rut_depth = 0.0;      // m
-uniform float chip_seal = 0.0;      // 1 = sprayed seal with a single layer of chips
 uniform vec4 wheel_paths = vec4(1.95, 3.75, 6.25, 8.05);
 uniform float lane_joint = 5.0;
 uniform float shoulder = 0.7;
@@ -19,10 +18,6 @@ uniform float age_scale = 6.0;      // years for the binder to go most of the wa
 uniform vec3 fresh_color : source_color = vec3(0.075, 0.075, 0.08);
 uniform vec3 aged_color : source_color = vec3(0.37, 0.365, 0.35);
 uniform vec3 stone_color : source_color = vec3(0.50, 0.49, 0.46);
-uniform vec3 chip_color : source_color = vec3(0.46, 0.44, 0.40);
-uniform sampler2D chip_texture : source_color, repeat_enable, filter_linear_mipmap;  // chip seal photo, seamless
-uniform float chip_texture_m = 1.0;  // m the chip texture spans
-uniform bool use_chip_texture = true;
 uniform sampler2D fresh_texture : source_color, repeat_enable, filter_linear_mipmap;  // fresh rolled hot mix, seamless
 uniform float fresh_texture_m = 1.0;
 uniform bool use_fresh_texture = true;
@@ -88,10 +83,9 @@ void fragment() {
 	float lane_mid = band(m.x, (wheel_paths.x + wheel_paths.y) * 0.5, 0.35)
 		+ band(m.x, (wheel_paths.z + wheel_paths.w) * 0.5, 0.35);
 
-	// Aggregate: 1-2 cm stones (chip seal: one even layer of bigger chips).
-	float cells = mix(70.0, 48.0, chip_seal);
-	vec2 st = stones(sp * cells);
-	float stone_r = mix(0.42, 0.55, chip_seal) * (0.75 + 0.5 * st.y);
+	// Aggregate: 1-2 cm stones.
+	vec2 st = stones(sp * 70.0);
+	float stone_r = 0.42 * (0.75 + 0.5 * st.y);
 	float stone = smoothstep(stone_r, stone_r - 0.12, st.x);
 	// Fines between the stones.
 	float fines = vnoise(sp * 260.0);
@@ -102,7 +96,7 @@ void fragment() {
 
 	if (height_mode) {
 		float h = 0.0;
-		h += stone * mix(0.0008, 0.002, max(ox, chip_seal)) - pit * 0.004 + (fines - 0.5) * 0.0006;
+		h += stone * mix(0.0008, 0.002, ox) - pit * 0.004 + (fines - 0.5) * 0.0006;
 		h -= rut_depth * (band(m.x, wheel_paths.x, 0.35) + band(m.x, wheel_paths.y, 0.35)
 			+ band(m.x, wheel_paths.z, 0.35) + band(m.x, wheel_paths.w, 0.35));
 		float v = clamp(0.5 + h / 0.2, 0.0, 1.0);
@@ -110,21 +104,15 @@ void fragment() {
 	} else {
 		vec3 binder = mix(fresh_color, aged_color, ox) * (1.0 + mottle * 0.18) * (0.92 + 0.16 * fines);
 		// Stones show more once the binder film wears off them.
-		float show = mix(0.08 + 0.45 * ox + 0.4 * ravel, 0.7 + 0.2 * ox, chip_seal);
-		vec3 rock = mix(stone_color, chip_color, chip_seal) * (0.8 + 0.4 * st.y);
+		float show = 0.08 + 0.45 * ox + 0.4 * ravel;
+		vec3 rock = stone_color * (0.8 + 0.4 * st.y);
 		vec3 col = mix(binder, mix(binder, rock, show), stone);
 		col = mix(col, binder * 0.55, pit);
-		if (use_fresh_texture && chip_seal < 1.0) {
+		if (use_fresh_texture) {
 			// A new hot-mix surface (or overlay): the rolled mix photo, fading into the procedural surface as the
 			// binder greys and the stones show.
 			vec3 fresh = texture(fresh_texture, sp / fresh_texture_m).rgb;
-			col = mix(col, fresh * (1.0 + mottle * 0.12), pow(1.0 - ox, 1.5) * 0.85 * (1.0 - chip_seal));
-		}
-		if (use_chip_texture && chip_seal > 0.0) {
-			// The chip seal photo, its binder dulling towards grey with age as the chips wear clean.
-			vec3 chip = texture(chip_texture, sp / chip_texture_m).rgb;
-			chip = mix(chip, aged_color * (0.7 + 0.6 * chip), ox * 0.5);
-			col = mix(col, chip, chip_seal);
+			col = mix(col, fresh * (1.0 + mottle * 0.12), pow(1.0 - ox, 1.5) * 0.85);
 		}
 		// Tyre polish and rubber in the wheel paths; oil and fuel drips down the middle of the lane.
 		col *= 1.0 - 0.10 * clamp(wheel, 0.0, 1.0) * min(surface_age / 3.0, 1.0);

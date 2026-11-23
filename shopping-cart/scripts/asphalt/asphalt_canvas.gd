@@ -49,6 +49,7 @@ const CHUNK := 6              ## points per drawn piece of crack (each piece get
 @export var loose_stone := Color(0.42, 0.4, 0.37)      ## stones crumbled out of wide cracks
 @export var sealant_fresh := Color(0.02, 0.02, 0.025)
 @export var sealant_aged := Color(0.16, 0.16, 0.16)
+@export var sealcoat_color := Color(0.03, 0.03, 0.035)   ## spot sealcoat: flat black
 @export var pothole_rim := Color(0.40, 0.37, 0.33)
 @export var pothole_floor := Color(0.27, 0.23, 0.19)      ## wet base course
 @export var base_course := Color(0.50, 0.45, 0.38)        ## where the edge has fretted away
@@ -72,7 +73,6 @@ func _refresh() -> void:
 			m.set_shader_parameter("surface_age", age * sim.climate)
 			m.set_shader_parameter("ravel", clampf((age * sim.climate - 6.0) / 18.0, 0.0, 1.0))
 			m.set_shader_parameter("rut_depth", sim.rut_depth())
-			m.set_shader_parameter("chip_seal", 1.0 if sim.surface_kind == AsphaltSim.Surface.CHIP_SEAL else 0.0)
 			m.set_shader_parameter("height_mode", mode == Mode.HEIGHT)
 			m.set_shader_parameter("age_scale", oxidation_years)
 			m.set_shader_parameter("seed", float(sim.seed % 97) * 3.17 + sim.surface_born * 7.3)
@@ -176,30 +176,7 @@ func _draw() -> void:
 		return
 	var t := sim.time
 	var hm := mode == Mode.HEIGHT
-	# Paint lines, worn away in patches (patches and fills are drawn over them, cracks through them).
-	var paint_dirt := clampf(sim.surface_age() / 20.0, 0.0, 1.0) * 0.3
-	for k in range(0, sim.paint_lines.size() - 1, 2):
-		var a := sim.paint_lines[k]
-		var b := sim.paint_lines[k + 1]
-		var along := (b - a).normalized()
-		var side := along.orthogonal() * sim.paint_width * 0.5
-		var n := maxi(1, int(ceil(a.distance_to(b) / PAINT_PIECE)))
-		for i in n:
-			var p0 := a.lerp(b, float(i) / n)
-			var p1 := a.lerp(b, float(i + 1) / n)
-			var left := sim.paint_left((p0 + p1) * 0.5)
-			if left <= 0.02:
-				continue
-			var quad := PackedVector2Array([(p0 + side) * px_per_m, (p1 + side) * px_per_m, (p1 - side) * px_per_m, (p0 - side) * px_per_m])
-			if hm:
-				draw_primitive(quad, PackedColorArray([_hc(sim.paint_thickness * left)]), PackedVector2Array())
-			elif paint_texture:
-				var uvs := PackedVector2Array()
-				for q in quad:
-					uvs.append(q / (paint_texture_m * px_per_m))
-				draw_primitive(quad, PackedColorArray([Color(Color.WHITE.lerp(aged_asphalt, paint_dirt), left)]), uvs, paint_texture)
-			else:
-				draw_primitive(quad, PackedColorArray([Color(paint_color.lerp(aged_asphalt, paint_dirt), left)]), PackedVector2Array())
+	_draw_paint(false)
 	# Heavy patches: fresh full-depth asphalt in a saw-cut rectangle, greying with its own age.
 	for p in sim.patches:
 		var r: Rect2 = p.rect
@@ -334,6 +311,9 @@ func _draw() -> void:
 			var at := shape[int(hs * shape.size()) % shape.size()] / px_per_m
 			at += (at - centre).normalized() * 0.03 * _h(hs * 7.0)
 			draw_circle(at * px_per_m, (0.002 + 0.004 * _h(hs * 13.0)) * px_per_m, crumb)
+	if not hm and not sim.seal_spots.is_empty():
+		_draw_seal_spots()
+		_draw_paint(true)
 	# Potholes. Where a crocodile cell has been plucked out: its broken rim, then the wet base course below,
 	# darker the deeper it goes. Elsewhere a ragged hole round the 10 cm cell.
 	for k in sim.plucked.size():
@@ -377,3 +357,77 @@ func _draw() -> void:
 		dirt_poly.append_array(dirt)
 		dirt_poly.append(Vector2(x0, sim.size.y) * px_per_m)
 		_surface(dirt_poly, _hc(-0.04) if hm else shoulder_color, 0.2, shoulder_texture, shoulder_texture_m)
+
+## Paint lines, worn away in patches (patches and fills are drawn over them, cracks through them). `restriped`:
+## only the pieces over a spot sealcoat, drawn again on top of it (the crew restripes after sealing).
+func _draw_paint(restriped: bool) -> void:
+	var hm := mode == Mode.HEIGHT
+	var paint_dirt := clampf(sim.surface_age() / 20.0, 0.0, 1.0) * 0.3
+	for k in range(0, sim.paint_lines.size() - 1, 2):
+		var a := sim.paint_lines[k]
+		var b := sim.paint_lines[k + 1]
+		var along := (b - a).normalized()
+		var side := along.orthogonal() * sim.paint_width * 0.5
+		var n := maxi(1, int(ceil(a.distance_to(b) / PAINT_PIECE)))
+		for i in n:
+			var p0 := a.lerp(b, float(i) / n)
+			var p1 := a.lerp(b, float(i + 1) / n)
+			var mid := (p0 + p1) * 0.5
+			if restriped and not _in_spot(mid):
+				continue
+			var left := sim.paint_left(mid)
+			if left <= 0.02:
+				continue
+			var quad := PackedVector2Array([(p0 + side) * px_per_m, (p1 + side) * px_per_m, (p1 - side) * px_per_m, (p0 - side) * px_per_m])
+			if hm:
+				draw_primitive(quad, PackedColorArray([_hc(sim.paint_thickness * left)]), PackedVector2Array())
+			elif paint_texture:
+				var uvs := PackedVector2Array()
+				for q in quad:
+					uvs.append(q / (paint_texture_m * px_per_m))
+				draw_primitive(quad, PackedColorArray([Color(Color.WHITE.lerp(aged_asphalt, paint_dirt), left)]), uvs, paint_texture)
+			else:
+				draw_primitive(quad, PackedColorArray([Color(paint_color.lerp(aged_asphalt, paint_dirt), left)]), PackedVector2Array())
+
+
+func _in_spot(p: Vector2) -> bool:
+	for sp in sim.seal_spots:
+		if Geometry2D.is_point_in_polygon(p, sp.poly):
+			return true
+	return false
+
+
+## Spot sealcoat: flat black, so only the relief under it reads. Drawn on a 5 cm grid with the coat's cover at
+## each corner, so as it greys and wears (the wheel paths first) the road under it shows through in soft patches.
+func _draw_seal_spots() -> void:
+	const STEP := 0.05
+	for sp in sim.seal_spots:
+		var age: float = sim.time - sp.born
+		var col := sealcoat_color.lerp(aged_asphalt.darkened(0.35), clampf(age / (sim.sealcoat_life * 2.0), 0.0, 1.0))
+		var poly: PackedVector2Array = sp.poly
+		var bb := Rect2(poly[0], Vector2.ZERO)
+		for q in poly:
+			bb = bb.expand(q)
+		for y in range(int(bb.position.y / STEP), int(ceil(bb.end.y / STEP))):
+			for x in range(int(bb.position.x / STEP), int(ceil(bb.end.x / STEP))):
+				var sq := PackedVector2Array([Vector2(x, y) * STEP, Vector2(x + 1, y) * STEP, Vector2(x + 1, y + 1) * STEP, Vector2(x, y + 1) * STEP])
+				var inside := 0
+				for q in sq:
+					if Geometry2D.is_point_in_polygon(q, poly):
+						inside += 1
+				var parts := [sq]
+				if inside < 4:
+					parts = Geometry2D.intersect_polygons(sq, poly)
+				for part: PackedVector2Array in parts:
+					if part.size() < 3:
+						continue
+					var cols := PackedColorArray()
+					var any := false
+					for k in part.size():
+						var q := part[k]
+						var a := smoothstep(0.25, 0.45, sim.sealcoat_left(q, sp.born) - 0.2 * _h(q.x * 61.7 + q.y * 37.3))
+						any = any or a > 0.01
+						cols.append(Color(col, a))
+						part[k] = q * px_per_m
+					if any and not Geometry2D.triangulate_polygon(part).is_empty():
+						draw_polygon(part, cols)

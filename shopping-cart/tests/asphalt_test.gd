@@ -28,6 +28,13 @@ func _sim(events := [], seed := 1) -> AsphaltSim:
 	return sim
 
 
+func _area(poly: PackedVector2Array) -> float:
+	var a := 0.0
+	for k in poly.size():
+		a += poly[k].cross(poly[(k + 1) % poly.size()])
+	return a * 0.5
+
+
 func _near(pts: PackedVector2Array, p: Vector2, r: float) -> bool:
 	for q in pts:
 		if q.distance_squared_to(p) < r * r:
@@ -300,10 +307,23 @@ func _run() -> void:
 	wet.reset()
 	wet.advance_to(20.0)
 	_check("standing water makes more potholes", _holes(wet) > _holes(dry), "%d hole cells wet, %d dry" % [_holes(wet), _holes(dry)])
+	# Spot sealcoat: a few black spots over the roughest areas; a coat only, so the cracks stay; wears off the
+	# wheel paths first.
 	var cs := _sim()
 	cs.advance_to(16.0)
+	var cracked: float = cs.stats().crack_m
 	cs.do_action(A.SURFACE_SEAL)
-	_check("chip seal is the new surface", cs.surface_kind == AsphaltSim.Surface.CHIP_SEAL and cs.stats().crack_m == 0.0, "")
+	var spot_area := 0.0
+	for sp in cs.seal_spots:
+		spot_area += absf(_area(sp.poly))
+	_check("spot sealcoat lays a few spots", cs.seal_spots.size() == cs.sealcoat_spots and spot_area > 3.0 and spot_area < 40.0,
+		"%d spots, %.1f m2" % [cs.seal_spots.size(), spot_area])
+	_check("sealcoat leaves the cracks", is_equal_approx(cs.stats().crack_m, cracked), "%.0f m" % cs.stats().crack_m)
+	var spot0: Dictionary = cs.seal_spots[0]
+	cs.advance_to(16.0 + cs.sealcoat_life)
+	var wheel_left := cs.sealcoat_left(Vector2(cs.wheel_paths[0], 5.0), spot0.born)
+	var mid_left := cs.sealcoat_left(Vector2(cs.lane_joint_x - 0.6, 5.0), spot0.born)
+	_check("sealcoat wears off the wheel paths first", wheel_left < mid_left and wheel_left < 0.5, "%.2f in a wheel path, %.2f between" % [wheel_left, mid_left])
 
 	# A road crew keeps the road usable.
 	var crew := _sim()

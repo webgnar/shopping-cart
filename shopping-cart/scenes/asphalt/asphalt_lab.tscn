@@ -8,7 +8,6 @@
 [ext_resource type="Texture2D" uid="uid://c1kl7q3ps6434" path="res://assets/asphalt/textures/fresh_hotmix.png" id="6_hotmix"]
 [ext_resource type="Texture2D" uid="uid://p6r5d5su53f4" path="res://assets/asphalt/textures/cold_mix_fill.png" id="7_coldmix"]
 [ext_resource type="Texture2D" uid="uid://chnpmc4mkdmib" path="res://assets/asphalt/textures/crack_sealant.png" id="8_sealant"]
-[ext_resource type="Texture2D" uid="uid://r2fxfjkqgqib" path="res://assets/asphalt/textures/chip_seal.png" id="9_chip"]
 [ext_resource type="Texture2D" uid="uid://cr15okrvj6njp" path="res://assets/asphalt/textures/pothole_floor.png" id="10_pothole"]
 [ext_resource type="Texture2D" uid="uid://dt607ar3mgodg" path="res://assets/asphalt/textures/broken_asphalt.png" id="11_broken"]
 [ext_resource type="Texture2D" uid="uid://bcfgjyp2yokpn" path="res://assets/asphalt/textures/base_course.png" id="12_base"]
@@ -17,7 +16,6 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_color"]
 shader = ExtResource("4_shader")
-shader_parameter/chip_texture = ExtResource("9_chip")
 shader_parameter/fresh_texture = ExtResource("6_hotmix")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_height"]
@@ -373,8 +371,8 @@ text = "Heavy patch (saw cut)"
 [node name="Repair3" type="CheckBox" parent="Panel/Scroll/Box"]
 unique_name_in_owner = true
 layout_mode = 2
-tooltip_text = "Spray bitumen and roll in a layer of chips over the whole road. Seals it, but the old cracks reflect back through soon."
-text = "Surface seal (chip seal)"
+tooltip_text = "Squeegee black sealer over a few of the roughest spots. Flat black, so only the texture under it shows; it greys and wears off the wheel paths in a few years, and the cracks show back through."
+text = "Spot sealcoat"
 
 [node name="Repair4" type="CheckBox" parent="Panel/Scroll/Box"]
 unique_name_in_owner = true

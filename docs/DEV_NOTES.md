@@ -1841,3 +1841,15 @@ round it that weakens over time, and every repair should age.
   road and its repairs further; press again to go back to road years.
 - asphalt_lot's crew column re-baked. The "30 years simulate quickly" check runs 4.1 to 4.6 s on this machine
   with or without this change (limit 4 s).
+
+## Asphalt: spot sealcoat replaces chip seal (Nov 23 2026)
+
+zack wants small repairs that make lots interesting, and surface seal to be "that black liquid stuff": a sealcoat,
+pure flat black so the texture under it reads (by relief, not colour). Surface seal is now a spot sealcoat
+(`AsphaltSim._spot_seal`, lab "Spot sealcoat"): `sealcoat_spots` (3) ragged blobs of `sealcoat_size` (0.6 to 1.3 m)
+radius over the roughest areas (most cracking, no potholes), stored in `seal_spots`. It is only a coat: cracks,
+patches and fills stay. `sealcoat_left(p, born)` wears it off over `sealcoat_life` (3 years) in the wheel paths and
+much slower between them; it also greys. AsphaltCanvas draws it flat black (`sealcoat_color`) on a 5 cm grid with
+the cover at each corner, so the wear shows the road in soft patches, and restripes paint lines over it. Height is
+unchanged (the coat is under a millimetre), so the 3D preview shows the stones through the black. Chip seal is gone
+from the sim, the base shader and the scenes (the chip_seal.png texture stays in assets/asphalt/textures).

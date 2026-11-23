@@ -81,9 +81,8 @@ func _update_ui() -> void:
 	for k in AsphaltSim.Kind.size():
 		if s.by_kind[k] > 0.05:
 			kinds.append("  %s %.1f m" % [AsphaltSim.KIND_NAMES[k], s.by_kind[k]])
-	var surface := "chip seal" if sim.surface_kind == AsphaltSim.Surface.CHIP_SEAL else "asphalt"
-	_stats.text = "Surface: %s, %.1f years old\nCondition index: %.0f / 100\nOpen cracks: %.0f m (%.0f m wider than 3 mm)\n%s\nFatigue cells: %.1f %% of the road\nPotholes: %d (%.1f %%)\nFilled %.1f %%, patched %.1f %%" % [
-		surface, s.surface_age, s.pci, s.crack_m, s.wide_crack_m, "\n".join(kinds), s.alligator_pct,
+	_stats.text = "Surface: %.1f years old\nCondition index: %.0f / 100\nOpen cracks: %.0f m (%.0f m wider than 3 mm)\n%s\nFatigue cells: %.1f %% of the road\nPotholes: %d (%.1f %%)\nFilled %.1f %%, patched %.1f %%" % [
+		s.surface_age, s.pci, s.crack_m, s.wide_crack_m, "\n".join(kinds), s.alligator_pct,
 		s.potholes, s.pothole_pct, s.filled_pct, s.patched_pct]
 	var lines := sim.log_lines
 	_history.text = "\n".join(lines.slice(maxi(0, lines.size() - 8))) if lines.size() > 0 else "No repairs yet."

@@ -25,11 +25,10 @@ signal changed
 
 enum Kind { TRANSVERSE, JOINT, WHEELPATH, FATIGUE, BLOCK, EDGE, SLIPPAGE, REFLECTION, SEAM }
 enum Action { CRACK_FILL, POTHOLE_FILL, HEAVY_PATCH, SURFACE_SEAL, OVERLAY }
-enum Surface { HOT_MIX, CHIP_SEAL }
 
 const KIND_NAMES := ["transverse", "lane joint", "wheel path", "fatigue", "block", "edge", "slippage",
 	"reflection", "patch seam"]
-const ACTION_NAMES := ["Crack filling", "Pothole fill", "Heavy patch", "Surface seal", "Mill & overlay"]
+const ACTION_NAMES := ["Crack filling", "Pothole fill", "Heavy patch", "Spot sealcoat", "Mill & overlay"]
 
 const CELL := 0.1        ## m: cell grid for fatigue, water damage and potholes
 const GRID := 0.02       ## m: crack occupancy grid (cracks that run into another one join it)
@@ -95,6 +94,11 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 @export var paint_life := 8.0                           ## years for the paint to wear off under a wheel path
 ## The lines are repainted with every surface seal or overlay; patches and fills cover them.
 
+@export_group("Spot sealcoat")
+@export var sealcoat_life := 3.0                        ## years for a spot sealcoat to wear through in the wheel paths
+@export var sealcoat_spots := 3                         ## spots per sealcoat, over the roughest areas
+@export var sealcoat_size := Vector2(0.6, 1.3)          ## m radius of a spot, smallest to largest
+
 @export_group("Maintenance")
 @export var auto_maintain := false                      ## a road crew repairs the road on its own (see _auto_maintain)
 
@@ -102,9 +106,9 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 var time := 0.0
 ## When the current wearing surface went down (overlay or seal) and what it is.
 var surface_born := 0.0
-var surface_kind := Surface.HOT_MIX
 var rut_born := 0.0
 var cracks: Array[Crack] = []
+var seal_spots: Array[Dictionary] = []    ## spot sealcoats: { poly: PackedVector2Array (m), born: float }
 var patches: Array[Dictionary] = []       ## { rect: Rect2, born: float, seams_at: PackedFloat32Array }
 var events: Array[Dictionary] = []        ## repairs asked for by hand: { t, action }
 var log_lines: PackedStringArray = []     ## every repair done, in order, for the lab's history
@@ -227,10 +231,10 @@ func reset() -> void:
 	_rng.seed = seed
 	time = 0.0
 	surface_born = 0.0
-	surface_kind = Surface.HOT_MIX
 	rut_born = 0.0
 	cracks.clear()
 	patches.clear()
+	seal_spots.clear()
 	log_lines.clear()
 	_latent.clear()
 	_transverse_y.clear()
@@ -1286,9 +1290,9 @@ func _apply(action: int) -> void:
 		Action.HEAVY_PATCH:
 			note = _heavy_patch()
 		Action.SURFACE_SEAL:
-			note = _resurface(Surface.CHIP_SEAL)
+			note = _spot_seal()
 		Action.OVERLAY:
-			note = _resurface(Surface.HOT_MIX)
+			note = _resurface()
 	log_lines.append("Year %.1f  %s: %s" % [time, ACTION_NAMES[action], note])
 	_rebuild_lengths()
 
@@ -1531,10 +1535,76 @@ func _edge_point(outside: Vector2, inside: Vector2, rect: Rect2) -> Vector2:
 	return a
 
 
-## Surface seal or cold plane and overlay: a new wearing surface over everything. Potholes are filled first.
+## Spot sealcoat: the crew squeegees black sealer over a few of the roughest areas (most cracking, no potholes),
+## a blob a couple of metres across each. It is only a coat: the cracks stay, it greys, and traffic wears it off
+## the wheel paths first (see sealcoat_left). Cracks that open later show through it.
+func _spot_seal() -> String:
+	var score := PackedFloat32Array()
+	score.resize(nx * ny)
+	for i in nx * ny:
+		var p := cell_center(i)
+		score[i] = crack_len[i] + 0.3 * open_len[i] if paved(p) and hole[i] <= 0.0 else -1.0
+	var made := 0
+	for n in sealcoat_spots:
+		# The roughest 10 cm cell, smoothed over its 1 m neighbourhood, not already under a spot from this pass.
+		var best := -1
+		var best_v := 0.0
+		for tries in 400:
+			var i := _rng.randi_range(0, nx * ny - 1)
+			if score[i] < 0.0:
+				continue
+			var c := cell_center(i)
+			var taken := false
+			for sp in seal_spots:
+				if sp.born == time and Geometry2D.is_point_in_polygon(c, sp.poly):
+					taken = true
+					break
+			if taken:
+				continue
+			var v := 0.0
+			for dy in range(-5, 6, 2):
+				for dx in range(-5, 6, 2):
+					var j := cell_index(c + Vector2(dx, dy) * CELL)
+					v += maxf(score[j], 0.0)
+			if v > best_v:
+				best_v = v
+				best = i
+		if best < 0:
+			break
+		var centre := cell_center(best)
+		var r := _rng.randf_range(sealcoat_size.x, sealcoat_size.y)
+		var stretch := _rng.randf_range(0.7, 1.3)
+		var poly := PackedVector2Array()
+		var wob := _rng.randf() * TAU
+		for k in 72:
+			var a := TAU * k / 72.0
+			var rr := r * (1.0 + 0.18 * sin(a * 3.0 + wob) + 0.1 * sin(a * 7.0 + wob * 2.0) + 0.04 * sin(a * 19.0 + wob * 3.0)
+				+ _rng.randf_range(-0.03, 0.03))
+			var q := centre + Vector2(cos(a) * rr * stretch, sin(a) * rr / stretch)
+			q.x = clampf(q.x, shoulder + 0.05, size.x - shoulder - 0.05)
+			q.y = clampf(q.y, 0.0, size.y)
+			poly.append(q)
+		seal_spots.append({ poly = poly, born = time })
+		made += 1
+	return "%d spots" % made
+
+
+## How much of a spot sealcoat born at `born` is left at p, 0..1: it wears off the wheel paths first, in patches.
+func sealcoat_left(p: Vector2, born: float) -> float:
+	var wear := (time - born) * traffic * (0.08 + load[cell_index(p)]) / sealcoat_life
+	if wear <= 0.0:
+		return 1.0
+	var q := p * 8.0
+	var i := q.floor()
+	var f := q - i
+	f = f * f * (Vector2(3.0, 3.0) - 2.0 * f)
+	var n := lerpf(lerpf(_hash2(i), _hash2(i + Vector2(1, 0)), f.x), lerpf(_hash2(i + Vector2(0, 1)), _hash2(i + Vector2(1, 1)), f.x), f.y)
+	return clampf(1.0 - wear * (0.5 + n), 0.0, 1.0)
+
+
+## Cold plane and overlay: a new wearing surface over everything. Potholes are filled first.
 ## The old cracks and the patch edges stay in the layer below and come back through it as reflection cracks.
-func _resurface(kind: int) -> String:
-	var overlay := kind == Surface.HOT_MIX
+func _resurface() -> String:
 	var buried := 0
 	for c in cracks:
 		if not c.alive or c.pts.size() < 3:
@@ -1542,9 +1612,9 @@ func _resurface(kind: int) -> String:
 			continue
 		var w := c.width(0, time)
 		# Hairlines mostly stay buried; wide, working cracks come back first.
-		var chance := clampf(w / 0.006, 0.15, 1.0) * (0.75 if overlay else 1.0)
+		var chance := clampf(w / 0.006, 0.15, 1.0) * 0.75
 		if _rng.randf() < chance:
-			var delay := (_rng.randf_range(1.5, 5.0) * structure if overlay else _rng.randf_range(0.4, 2.5)) \
+			var delay := _rng.randf_range(1.5, 5.0) * structure \
 				* lerpf(1.6, 0.6, clampf(w / 0.015, 0.0, 1.0))
 			_latent.append({ path = c.pts.duplicate(), at = time + delay })
 			buried += 1
@@ -1572,13 +1642,12 @@ func _resurface(kind: int) -> String:
 		fill_born[i] = -1.0
 		patch_of[i] = -1
 		damage[i] *= 0.3
-		fatigue[i] *= 0.45 if overlay else 0.9
-	if overlay:
-		edge_l.fill(0.0)
-		edge_r.fill(0.0)
-		rut_born = time
+		fatigue[i] *= 0.45
+	edge_l.fill(0.0)
+	edge_r.fill(0.0)
+	rut_born = time
 	surface_born = time
-	surface_kind = kind
+	seal_spots.clear()
 	_rebuild_grid()
 	return "%d cracks will reflect through" % buried
 
