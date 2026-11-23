@@ -5,6 +5,12 @@ triangle count and file size for new models, judgment calls, what was left out, 
 
 
 
+## 2026-11-23: Downhill highway: straight and 30 %
+
+zack: "much steeper and straight down please no curved road". The road is now dead straight at 30 % (from 15 % with
+S-bends) for about 400 m, still easing in and out of flat at the top and bottom; drop 121 m. Collision re-baked. The test
+driver, braking to 3.5 m/s, gets down in 2:16.
+
 ## 2026-11-23: Downhill highway race (console `downhill`, `race downhill`)
 
 zack: "need a simple downhill map for a multiplayer race. fairly steep. two lane highway."

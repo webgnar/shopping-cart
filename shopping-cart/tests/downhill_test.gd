@@ -57,7 +57,7 @@ func _run() -> void:
 	var top_y := curve.sample_baked(0.0).y
 	var bottom_y := curve.sample_baked(length).y
 	print("      road %.0f m long, drops %.1f m" % [length, top_y - bottom_y])
-	_check(top_y - bottom_y > 50.0, "the highway drops more than 50 m")
+	_check(top_y - bottom_y > 100.0, "the highway drops more than 100 m")
 	while race.phase != Race.Phase.RACING:
 		await physics_frame
 	var t := 0.0
