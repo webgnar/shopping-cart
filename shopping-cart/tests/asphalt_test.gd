@@ -165,6 +165,40 @@ func _run() -> void:
 		var w1 := sealed.width(0, 14.0)
 		var w2 := sealed.width(0, 20.0)
 		_check("sealed crack stops opening", is_equal_approx(w0, w1) and w2 > w1, "%.1f, %.1f, %.1f mm" % [w0 * 1000, w1 * 1000, w2 * 1000])
+	# Sealant ages by its material: pieces debond and pull out over the years (5-9 year life), and the overband
+	# wears down fastest under the wheels.
+	var sa := _sim([[10.0, A.CRACK_FILL]])
+	var held := PackedFloat32Array()
+	var band_in := 0.0
+	var band_out := 0.0
+	for y in [10.5, 13.0, 17.0, 24.0]:
+		sa.advance_to(y)
+		var pieces := 0
+		var good := 0
+		var bi := [0.0, 0]
+		var bo := [0.0, 0]
+		for c in sa.cracks:
+			if not c.alive or c.seal_from < 0.0:
+				continue
+			for k in range(0, c.pts.size() - 1, 6):
+				if c.born[k] > c.seal_from:
+					continue
+				pieces += 1
+				var st := sa.sealant_at(c, k)
+				if st.x > 0.0 and st.y == 0.0:
+					good += 1
+				if is_equal_approx(y, 13.0) and st.x > 0.0:
+					var on := sa.load[sa.cell_index(c.pts[k])] > 0.8
+					var b: Array = bi if on else bo
+					b[0] += st.x
+					b[1] += 1
+		held.append(float(good) / maxf(pieces, 1))
+		if is_equal_approx(y, 13.0):
+			band_in = bi[0] / maxf(bi[1], 1)
+			band_out = bo[0] / maxf(bo[1], 1)
+	_check("sealant fails a piece at a time", held[0] > 0.95 and held[1] > held[3] + 0.3 and held[2] > held[3] and held[3] < 0.5,
+		"%.0f, %.0f, %.0f, %.0f %% intact at 0.5, 3, 7, 14 years" % [held[0] * 100, held[1] * 100, held[2] * 100, held[3] * 100])
+	_check("overband wears down in the wheel paths", band_in < band_out * 0.7, "%.0f mm in the wheel paths, %.0f mm between, 3 years on" % [band_in * 1000, band_out * 1000])
 
 	# Pothole fill.
 	var pf := _sim()

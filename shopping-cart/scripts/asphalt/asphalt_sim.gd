@@ -34,7 +34,7 @@ const CELL := 0.1        ## m: cell grid for fatigue, water damage and potholes
 const GRID := 0.02       ## m: crack occupancy grid (cracks that run into another one join it)
 const STEP := 0.025      ## m: spacing of the points along a crack
 const DT := 0.2          ## years per simulation step
-const SEAL_LIFE := 6.0   ## years crack sealant holds before it debonds
+const SEAL_LIFE := 6.0   ## years a patch's tar band holds; crack sealant draws its own life (Crack.seal_life)
 const HOLE_MAX := 0.09   ## m: a pothole stops deepening at the base course
 const FILL_PROUD := 0.004     ## m a fresh tamped cold patch stands above the road
 const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the road
@@ -187,6 +187,7 @@ class Crack:
 	var guide_i := 0
 	var seal_from := -1.0             ## year it was filled, -1 for never
 	var sealed_before := 0.0          ## opening it missed while sealed before seal_from (see _g)
+	var seal_life := SEAL_LIFE        ## years until half its sealant has failed and it counts as open (set when filled)
 	var alive := true
 	var local := 1.0                  ## how fast it opens where it is: traffic, support, standing water, climate
 	var surf0 := 0.0                  ## when the surface it is in was laid
@@ -203,10 +204,10 @@ class Crack:
 		return 1.3 * (t1 - t0) - 0.9 * (e0 - e1) / ox_k
 
 	func seal_to() -> float:
-		return seal_from + SEAL_LIFE if seal_from >= 0.0 else -1.0
+		return seal_from + seal_life if seal_from >= 0.0 else -1.0
 
 	func sealed(t: float) -> bool:
-		return seal_from >= 0.0 and t >= seal_from and t < seal_from + SEAL_LIFE
+		return seal_from >= 0.0 and t >= seal_from and t < seal_from + seal_life
 
 	## Width of the crack at point i at year t, m: it opens while it is not sealed, at its local rate. Width is
 	## separate from growth: the tip grows on its own, the opening comes from cycling, traffic and water.
@@ -214,7 +215,7 @@ class Crack:
 		var b := born[i]
 		var open := _g(b, t)
 		if seal_from >= 0.0:
-			open -= _g(maxf(seal_from, b), minf(t, seal_from + SEAL_LIFE))
+			open -= _g(maxf(seal_from, b), minf(t, seal_from + seal_life))
 			if b < seal_from:
 				open -= sealed_before
 		var rate := 0.0016 * widen * local
@@ -383,6 +384,24 @@ func mix_weakness(p: Vector2) -> float:
 	return clampf(0.5 + mix_variation * (0.6 * _mix_low.get_noise_2d(p.x, p.y) + 0.5 * _mix_fine.get_noise_2d(p.x, p.y)), 0.0, 1.0)
 
 
+## The crack sealant on the piece of crack c starting at point k, now. Sealant fails piece by piece: it loses its
+## bond to a crack wall (the crack shows again down it), then traffic pulls it out; the overband wears down to the
+## crack under tyres first. The crack counts as open again once half its pieces have let go (Crack.seal_life).
+## x: band width m (0: none left), y: 1 once debonded.
+func sealant_at(c: Crack, k: int) -> Vector2:
+	if c.seal_from < 0.0 or time < c.seal_from or c.born[k] > c.seal_from:
+		return Vector2.ZERO
+	var age := time - c.seal_from
+	var p := c.pts[k]
+	var fail_age := c.seal_life * (0.333 + 1.333 * _hash2(p * 3.1))
+	if age >= fail_age + 0.8 + 2.0 * _hash2(p * 7.7):
+		return Vector2.ZERO
+	var w0 := c.width(k, c.seal_from)
+	var full := 0.06 + 2.0 * w0 + 0.02 * _hash2(p * 1.7)
+	var wear := clampf(age * traffic * (0.06 + 0.3 * load[cell_index(p)]), 0.0, 1.0)
+	return Vector2(lerpf(full, w0 + 0.01, wear), 1.0 if age >= fail_age else 0.0)
+
+
 ## How much paint is left at p, 0..1: it wears with age and traffic (fastest in the wheel paths), in patches.
 func paint_left(p: Vector2) -> float:
 	var wear := (time - paint_born) * traffic * (0.15 + load[cell_index(p)]) / paint_life
@@ -543,10 +562,12 @@ func bake_height(res := 0.01) -> PackedFloat32Array:
 	# Filled cracks: the sealant fills the crack flush and the overband stands a little proud, until it debonds.
 	var surface := PackedFloat32Array(out)
 	for c in cracks:
-		if not c.alive or c.pts.size() < 2 or not c.sealed(time):
+		if not c.alive or c.pts.size() < 2 or c.seal_from < 0.0:
 			continue
 		for k in c.pts.size() - 1:
-			var half := 0.03 + c.width(k, c.seal_from)
+			var half := sealant_at(c, k).x * 0.5
+			if half <= 0.0:
+				continue
 			var a := c.pts[k]
 			var b := c.pts[k + 1]
 			var x0 := maxi(0, int((minf(a.x, b.x) - half) / res))
@@ -1315,9 +1336,16 @@ func _crack_fill() -> String:
 		if c.seal_from >= 0.0:
 			c.sealed_before += c._g(c.seal_from, minf(time, c.seal_to()))
 		c.seal_from = time
+		# Rubberised overband in a working crack lasts 5 to 9 years to 75 % sealed (FHWA-RD-99-147 3.2; failures spread
+		# evenly from a third of seal_life, so half has gone at 1.5 x that). Cracks that move more (thermal cracks in a
+		# harsh climate, wide cracks) and cracks under wheels fail sooner.
+		var mid := c.pts[c.pts.size() / 2]
+		var moving := climate if c.kind == Kind.TRANSVERSE or c.kind == Kind.BLOCK or c.kind == Kind.JOINT else 0.5
+		c.seal_life = 1.5 * _rng.randf_range(5.0, 9.0) / (0.7 + 0.3 * moving) / (1.0 + 0.25 * load[cell_index(mid)] * traffic) \
+			* lerpf(1.1, 0.75, clampf(c.width(0, time) / 0.01, 0.0, 1.0))
 		n += 1
 		m += c.length
-		_seal_check = minf(_seal_check, time + SEAL_LIFE)
+		_seal_check = minf(_seal_check, time + c.seal_life)
 	return "%d cracks, %.0f m" % [n, m]
 
 
@@ -1509,6 +1537,7 @@ func _cut_cracks(rect: Rect2) -> void:
 			n.ox_k = c.ox_k
 			n.seal_from = c.seal_from
 			n.sealed_before = c.sealed_before
+			n.seal_life = c.seal_life
 			n.growing = false
 			for k: int in run:
 				n.pts.append(c.pts[k])

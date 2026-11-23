@@ -246,29 +246,29 @@ func _draw() -> void:
 					var off := Vector2(_h(hs * 91.0) - 0.5, _h(hs * 57.0) - 0.5) * (w * 3.0 + 0.02) * px_per_m
 					draw_circle(at + off, (0.002 + 0.004 * _h(hs * 33.0)) * px_per_m, loose_stone.darkened(0.3 * _h(hs * 17.0)))
 			k = e
-	# Crack sealant: a band of rubberised bitumen poured over each filled crack, worn and debonding with age.
+	# Crack sealant: a band of rubberised bitumen poured over each filled crack. It hardens and greys, the overband
+	# wears down under tyres, and piece by piece it debonds (the crack shows down it again) and pulls out.
 	for c in sim.cracks:
 		if not c.alive or c.seal_from < 0.0 or c.seal_from > t or c.pts.size() < 2:
 			continue
 		var age := t - c.seal_from
-		var col := _hc(0.002) if hm else sealant_fresh.lerp(sealant_aged, clampf(age / 10.0, 0.0, 1.0))
-		var failing := clampf((age - AsphaltSim.SEAL_LIFE) / AsphaltSim.SEAL_LIFE, 0.0, 0.7)
+		var grey := clampf(age / 6.0, 0.0, 1.0)
+		var col := _hc(0.002) if hm else sealant_fresh.lerp(sealant_aged, grey)
 		var n := c.pts.size()
 		var k := 0
-		var piece := 0
 		while k < n - 1:
 			var e := mini(k + CHUNK, n - 1)
-			if c.born[e] > c.seal_from:
-				break
-			piece += 1
-			if _h(floorf(piece / 3.0) * 3.1 + c.pts[0].x) >= failing:
+			var st := sim.sealant_at(c, k)
+			if st.x > 0.0:
 				var seg := c.pts.slice(k, e + 1)
 				for j in seg.size():
 					seg[j] *= px_per_m
-				var band := (0.06 + 0.025 * _h(piece + c.pts[0].y) + c.width(k, c.seal_from) * 2.0) * px_per_m
+				var band := st.x * px_per_m
 				draw_polyline(seg, col, band)
 				if sealant_texture and not hm:
-					_textured_band(seg, band, sealant_texture, sealant_texture_m, sealant_aged, clampf(age / 10.0, 0.0, 1.0) * 0.8)
+					_textured_band(seg, band, sealant_texture, sealant_texture_m, sealant_aged, grey * 0.8)
+				if st.y > 0.0 and not hm:
+					draw_polyline(seg, crack_color, maxf(0.003 * px_per_m, 1.5), true)
 			k = e
 	# Cold patch (throw and roll): black cold mix shovelled into each hole and tamped flat, so it takes the hole's
 	# own shape: the plucked crocodile cell, or the ragged round hole. A few crumbs spill round the edge.

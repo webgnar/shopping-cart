@@ -1860,3 +1860,15 @@ zack: a repaint repair, and spot sealcoat should cover the paint. `Action.REPAIN
 (an overlay does too); paint wear (`paint_left`) and its dirt count from it. Spot sealcoat no longer restripes.
 AsphaltCanvas draws the paint under everything, then again on top of the sealcoat spots, patches and fills made
 before the last repaint; `bake_height` paints over repairs no newer than `paint_born`. Lab: "Repaint stripes".
+
+## Asphalt: crack sealant ages by its material (Nov 23 2026)
+
+zack: filled cracks didn't age. Sealant used to hold fully for SEAL_LIFE (6 years), then all go at once. Now, from
+FHWA-RD-99-147 (rubberised overband in working cracks: 5 to 9 years to 75 % still sealed; failure by adhesion loss,
+cohesion loss and pull-out): each filled crack draws `Crack.seal_life` (1.5 x 5-9 years, shorter for thermal and
+joint cracks in a harsh climate, wide cracks and cracks under wheels). `AsphaltSim.sealant_at(c, k)` gives each 15 cm
+piece its state: failures spread evenly from a third of seal_life, so 25 % have failed at the FHWA life and half at
+seal_life, when the crack counts as open again; a failed piece shows the crack down the sealant (debonded), then
+pulls out 0.8 to 2.8 years later; the overband wears down to the crack under tyres in a few years (traffic x load)
+and much slower between the wheel paths. The sealant greys over 6 years. Canvas and bake_height both use
+sealant_at. SEAL_LIFE now only times a patch's tar band.
