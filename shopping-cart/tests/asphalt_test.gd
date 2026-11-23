@@ -35,6 +35,14 @@ func _near(pts: PackedVector2Array, p: Vector2, r: float) -> bool:
 	return false
 
 
+## Whether p is within r of the polyline (a crack can join another between its points).
+func _near_line(pts: PackedVector2Array, p: Vector2, r: float) -> bool:
+	for i in range(1, pts.size()):
+		if Geometry2D.get_closest_point_to_segment(p, pts[i - 1], pts[i]).distance_squared_to(p) < r * r:
+			return true
+	return false
+
+
 func _holes(sim: AsphaltSim) -> int:
 	var n := 0
 	for i in sim.nx * sim.ny:
@@ -188,7 +196,7 @@ func _run() -> void:
 	var ph := hp.bake_height(0.02)
 	var patch_low := 1.0
 	for p in hp.patches:
-		var r: Rect2 = p.rect
+		var r: Rect2 = (p.rect as Rect2).grow(-0.02)   # the edge row can be a pothole just outside it
 		for iy in range(int(ceil(r.position.y / 0.02)), int(r.end.y / 0.02) + 1):
 			for ix in range(int(ceil(r.position.x / 0.02)), int(r.end.x / 0.02) + 1):
 				patch_low = minf(patch_low, ph[iy * 501 + ix])
@@ -231,6 +239,7 @@ func _run() -> void:
 	var n_on := 0
 	var ends := 0
 	var joined := 0
+	var t_angle := 0.0
 	var branches := 0
 	for c in mx.cracks:
 		if not c.alive or c.guide.size() > 0 or c.kind == K.SLIPPAGE:
@@ -244,8 +253,17 @@ func _run() -> void:
 			ends += 1
 			var tip := c.pts[c.pts.size() - 1]
 			for o in mx.cracks:
-				if o != c and o.alive and o.pts.size() > 1 and _near(o.pts, tip, 0.006):
+				if o != c and o.alive and o.pts.size() > 1 and _near_line(o.pts, tip, 0.006):
 					joined += 1
+					# the angle they meet at: the last 7.5 cm of this crack against the other one there
+					var k := 1
+					for j in range(1, o.pts.size()):
+						if o.pts[j].distance_squared_to(tip) < o.pts[k].distance_squared_to(tip):
+							k = j
+					var a := (tip - c.pts[maxi(0, c.pts.size() - 4)]).angle()
+					var b := (o.pts[k] - o.pts[k - 1]).angle()
+					var ang := absf(angle_difference(a, b))
+					t_angle += rad_to_deg(minf(ang, PI - ang))
 					break
 	var anywhere := 0.0
 	var rng := RandomNumberGenerator.new()
@@ -256,13 +274,15 @@ func _run() -> void:
 	_check("cracks follow the weaker mix", on_crack > anywhere + 0.03, "%.2f on cracks, %.2f anywhere" % [on_crack, anywhere])
 	_check("cracks branch", branches > 5, "%d branches" % branches)
 	var share := float(joined) / maxf(ends, 1)
+	var mean_angle := t_angle / maxf(joined, 1)
+	_check("cracks meet about square on", mean_angle > 65.0, "mean %.0f degrees at %d junctions" % [mean_angle, joined])
 	_check("not every crack ends at a T", share > 0.3 and share < 0.9, "%d of %d ends join another crack" % [joined, ends])
 	var wide_far := _sim()
-	wide_far.thermal_spacing = Vector2(12.0, 9.0)
+	wide_far.base_shear_strength = 0.025e6     # a slippery base: the cracks space out 4x wider
 	wide_far.reset()
 	wide_far.advance_to(18.0)
 	_check("thermal spacing sets the cross cracks", wide_far.stats().by_kind[K.TRANSVERSE] < mx.stats().by_kind[K.TRANSVERSE],
-		"%.1f m at 9-12 m spacing, %.1f m at the default" % [wide_far.stats().by_kind[K.TRANSVERSE], mx.stats().by_kind[K.TRANSVERSE]])
+		"%.1f m on a slippery base, %.1f m at the default" % [wide_far.stats().by_kind[K.TRANSVERSE], mx.stats().by_kind[K.TRANSVERSE]])
 	# Standing water: more potholes where the lot holds water.
 	var dry := _sim()
 	dry.ponding = 0.0

@@ -56,8 +56,19 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 @export_range(0.0, 2.0, 0.05) var drainage := 1.0      ## how much water gets in and stays (1 = typical)
 @export_range(0.0, 1.0, 0.05) var bond := 0.7          ## bond of the wearing course to the layer below (low = slippage)
 @export var oxidation_years := 9.0                      ## years for the binder to go most of the way to grey
-@export var thermal_spacing := Vector2(5.0, 1.4)        ## m between thermal cracks: new binder, fully aged (colder and thinner: closer)
 @export_range(0.0, 2.0, 0.05) var ponding := 1.0       ## how much water sits in low spots (poor grading)
+
+@export_group("Pavement")
+## Real pavement numbers. The crack spacings and cell sizes are worked out from them (thermal_spacing(),
+## block_cell(), fatigue_cell()), as the spring-mesh experiment (CrackLattice) showed: a shrinking layer that slides
+## on its base cracks about every 2 x strength x thickness / base shear strength, and a wheel's bending breaks the
+## wheel path into cells about Westergaard's radius across.
+@export var thickness := 0.076                          ## m of asphalt (3 in over gravel: c620 parking lot tables)
+@export var stiffness_warm := 3.0e9                     ## Pa: asphalt's modulus on a mild day, when traffic bends it
+@export var poisson := 0.35
+@export var subgrade_modulus := 60.0e6                  ## Pa/m: how firm the ground is (CBR 3..9 is about 30..80e6)
+@export var base_shear_strength := 0.1e6                ## Pa: past this the asphalt slides on its base
+@export var tensile_strength := 3.0e6                   ## Pa: the asphalt's cold tensile strength
 
 @export_group("Mix and crack paths")
 @export_range(0.0, 1.0, 0.05) var mix_variation := 0.5 ## how uneven the asphalt's strength is (compaction, segregation)
@@ -68,8 +79,6 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 @export_range(0.0, 1.0, 0.05) var stop_short := 0.25   ## share that die out just short of it (the rest turn and run along it)
 
 @export_group("Crack networks")
-@export var fatigue_cell := Vector2(0.14, 0.2)          ## m: size of a crocodile-skin cell (across, along the road)
-@export var block_cell := Vector2(1.6, 2.2)             ## m: size of a block in block cracking
 @export_range(0.0, 1.0, 0.05) var block_onset := 0.55   ## oxidation (0..1) at which the first blocks crack
 
 @export_group("Displacement")
@@ -140,6 +149,15 @@ var _net_edges: Array[Dictionary] = []          ## { a, b, kind, thr, on, ci (ce
 var _last := { }                      ## year each repair was last done (auto maintenance)
 var _seal_check := INF                ## next year a crack's sealant gives out
 
+## Ratios from the CrackLattice runs: thermal cracks start about two slip lengths apart in new binder and close in
+## to about 0.6 of one as it hardens and fatigues; blocks are about a slip length; crocodile cells about Westergaard's
+## radius (a bit narrower across the road, where the wheel bends it hardest).
+const THERMAL_SPACING := Vector2(2.0, 0.6)
+const BLOCK_CELL := Vector2(0.7, 1.0)
+const FATIGUE_CELL := Vector2(0.7, 1.0)
+const REF_THICKNESS := 0.076   ## m the fatigue rate was tuned for (a 3 in lot)
+const T_LOOK := 0.08      ## m ahead a growing crack feels another crack's stress shadow ...
+const T_TURN := 0.35      ## ... and turns this share of the way per step to meet it square on
 const FATIGUE_CELLS := 1.2            ## fatigue past which the wheel paths break up into crocodile cells
 
 
@@ -322,6 +340,31 @@ func repair_year(action: int) -> float:
 		if e.action == action:
 			return e.t
 	return -1.0
+
+
+## m over which friction on the base builds the layer back up to full strength once it slides.
+func slip_length() -> float:
+	return tensile_strength * thickness / base_shear_strength
+
+
+## m: Westergaard's radius of relative stiffness, how far a wheel's bending spreads in the layer.
+func wheel_spread() -> float:
+	return pow(stiffness_warm * pow(thickness, 3.0) / (12.0 * (1.0 - poisson * poisson) * subgrade_modulus), 0.25)
+
+
+## m between thermal cracks: new binder, fully aged.
+func thermal_spacing() -> Vector2:
+	return THERMAL_SPACING * slip_length()
+
+
+## m: size of a block in block cracking (across, along the road).
+func block_cell() -> Vector2:
+	return BLOCK_CELL * slip_length()
+
+
+## m: size of a crocodile-skin cell (across, along the road).
+func fatigue_cell() -> Vector2:
+	return FATIGUE_CELL * wheel_spread()
 
 
 func surface_age() -> float:
@@ -634,7 +677,8 @@ func _step() -> void:
 
 
 func _fatigue_and_water(ox: float) -> void:
-	var k_f := 0.085 * traffic / structure
+	# A wheel bends the layer harder the thinner it is (Westergaard: stress ~ load / thickness^2).
+	var k_f := 0.085 * traffic / structure * pow(REF_THICKNESS / thickness, 2.0)
 	var k_d := 0.6 * drainage * climate
 	for i in nx * ny:
 		if load[i] <= 0.0:
@@ -689,7 +733,8 @@ func _initiate(age: float, ox: float) -> void:
 		var rate := 0.8 * climate * ox * (1.4 - 0.4 * structure)
 		if _rng.randf() < rate * DT:
 			# Colder climates and thinner pavement crack closer together.
-			var spacing := lerpf(thermal_spacing.x, thermal_spacing.y, ox) * sqrt(structure) / sqrt(maxf(climate, 0.25))
+			var ts := thermal_spacing()
+			var spacing := lerpf(ts.x, ts.y, ox) * sqrt(structure) / sqrt(maxf(climate, 0.25))
 			var ys := PackedFloat32Array(_transverse_y)
 			ys.sort()
 			# The section is part of a longer road: its ends count as half a spacing from the last crack.
@@ -839,6 +884,18 @@ func _grow(ci: int, dist: float) -> void:
 						best = score
 						pick = d + o
 				d = pick
+			# Next to another crack the stress left runs along it, so a tip coming up to one turns to meet it square
+			# on (shrinkage crack patterns join at about 90 degrees: Bohn et al. 2005, Shorlin et al. 2000).
+			if c.kind != Kind.SLIPPAGE:
+				var ahead := _hit(p + Vector2.from_angle(d) * T_LOOK, ci, c)
+				if ahead.x >= 0 and cracks[ahead.x].pts.size() >= 2:
+					var o := cracks[ahead.x]
+					var k := clampi(ahead.y, 1, o.pts.size() - 1)
+					var along := (o.pts[k] - o.pts[k - 1]).angle()
+					var square := along + PI * 0.5
+					if absf(angle_difference(d, square)) > PI * 0.5:
+						square += PI
+					d = lerp_angle(d, square, T_TURN)
 			c.dir = d
 			q = p + Vector2.from_angle(c.dir) * STEP
 		if not paved(q) or patch_of[cell_index(q)] != patch_of[cell_index(p)] and c.kind != Kind.SEAM:
@@ -850,8 +907,15 @@ func _grow(ci: int, dist: float) -> void:
 				var other := cracks[hit.x]
 				var r := _rng.randf()
 				if r < t_junctions or c.deflects >= 3 or other.pts.size() < 2:
-					# Runs into it and stops at a T: the other crack's free edge takes the stress off.
-					q = other.pts[mini(hit.y, other.pts.size() - 1)]
+					# Runs into it and stops at a T: the other crack's free edge takes the stress off. It joins at the
+					# nearest point of the other crack, so the last step meets it square on.
+					var hk := mini(hit.y, other.pts.size() - 1)
+					q = other.pts[hk]
+					for j in [hk - 1, hk]:
+						if j >= 0 and j + 1 < other.pts.size():
+							var f := Geometry2D.get_closest_point_to_segment(p, other.pts[j], other.pts[j + 1])
+							if f.distance_squared_to(p) < q.distance_squared_to(p):
+								q = f
 					_append(c, ci, q)
 					c.growing = false
 					break
@@ -999,37 +1063,39 @@ func _edges(age: float) -> void:
 func _build_networks() -> void:
 	_net_edges.clear()
 	net_cells.clear()
-	# Fatigue cells: about 14 x 20 cm (crocodile skin has a longitudinal grain), over each wheel path.
+	var fc := fatigue_cell()
+	var bc := block_cell()
+	# Fatigue cells: about 15 x 21 cm on a 3 in lot (crocodile skin has a longitudinal grain), over each wheel path.
 	var seeds := PackedVector2Array()
 	for wp in wheel_paths:
 		var x0 := wp - wheel_path_width * 1.3
-		var cols := int(round(wheel_path_width * 2.6 / fatigue_cell.x))
-		var rows := int(ceil(size.y / fatigue_cell.y)) + 1
+		var cols := int(round(wheel_path_width * 2.6 / fc.x))
+		var rows := int(ceil(size.y / fc.y)) + 1
 		for r in rows:
 			for c in cols + 1:
-				var p := Vector2(x0 + c * fatigue_cell.x, (r - 0.5) * fatigue_cell.y) \
-					+ Vector2(_rng.randf_range(-0.4, 0.4) * fatigue_cell.x, _rng.randf_range(-0.4, 0.4) * fatigue_cell.y)
+				var p := Vector2(x0 + c * fc.x, (r - 0.5) * fc.y) \
+					+ Vector2(_rng.randf_range(-0.4, 0.4) * fc.x, _rng.randf_range(-0.4, 0.4) * fc.y)
 				if paved(p):
 					seeds.append(p)
 	net_seeds = seeds
 	plucked.resize(seeds.size())
 	plucked.fill(0.0)
-	_add_network(seeds, Kind.FATIGUE, fatigue_cell.y * 2.2, true)
-	# Block cells: about 1.6 x 2.2 m, little jitter so they come out nearly rectangular.
+	_add_network(seeds, Kind.FATIGUE, fc.y * 2.2, true)
+	# Block cells: about 1.6 x 2.3 m on a 3 in lot, little jitter so they come out nearly rectangular.
 	var bs := PackedVector2Array()
-	var bcols := int(ceil((size.x - 2.0 * shoulder) / block_cell.x)) + 1
-	var brows := int(ceil(size.y / block_cell.y)) + 2
+	var bcols := int(ceil((size.x - 2.0 * shoulder) / bc.x)) + 1
+	var brows := int(ceil(size.y / bc.y)) + 2
 	for r in brows:
 		for c in bcols:
-			bs.append(Vector2(shoulder + (c + _rng.randf_range(-0.12, 0.12)) * block_cell.x,
-				(r - 1 + _rng.randf_range(-0.12, 0.12)) * block_cell.y))
-	_add_network(bs, Kind.BLOCK, block_cell.y * 2.5, false)
+			bs.append(Vector2(shoulder + (c + _rng.randf_range(-0.12, 0.12)) * bc.x,
+				(r - 1 + _rng.randf_range(-0.12, 0.12)) * bc.y))
+	_add_network(bs, Kind.BLOCK, bc.y * 2.5, false)
 	# Which fatigue cell is over each 10 cm cell (potholes pluck whole cells out).
 	_cell_seed.resize(nx * ny)
 	_cell_seed.fill(-1)
 	for k in seeds.size():
 		var q := seeds[k]
-		var r := int(ceil(maxf(fatigue_cell.x, fatigue_cell.y) / CELL))
+		var r := int(ceil(maxf(fc.x, fc.y) / CELL))
 		var cx := int(q.x / CELL)
 		var cy := int(q.y / CELL)
 		for dy in range(-r, r + 1):
@@ -1044,7 +1110,7 @@ func _build_networks() -> void:
 					_cell_seed[i] = k
 	for i in nx * ny:
 		var k := _cell_seed[i]
-		if k >= 0 and (cell_center(i).distance_to(seeds[k]) > maxf(fatigue_cell.x, fatigue_cell.y) or net_cells[k].is_empty()):
+		if k >= 0 and (cell_center(i).distance_to(seeds[k]) > maxf(fc.x, fc.y) or net_cells[k].is_empty()):
 			_cell_seed[i] = -1
 
 

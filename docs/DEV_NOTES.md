@@ -1809,3 +1809,19 @@ area * (2/sqrt 3) / slip_length, re-solved when the winter's scale changes). On 
 spread of spacing * sqrt(k / kb) (the earlier factor 3 was wrong). Result: one cross crack over the 2 m patch by year 5,
 large blocks, a lengthwise wheel-path crack; no crocodile cells with the old wheel_stress. Sliding makes the
 relaxation slow (often hits its 2M-node limit): ~25 min for 30 years. Test `tests/crack_lattice_test.gd`; renders next to the lab `tests/crack_lattice_screenshot.gd`.
+
+## Asphalt sim: taught what the crack lattice learned (Nov 23 2026)
+
+`AsphaltSim` now has a Pavement group (thickness, warm stiffness, Poisson's ratio, subgrade modulus, base shear
+strength, tensile strength) instead of the hand-set `thermal_spacing`, `fatigue_cell` and `block_cell`:
+
+- Cross crack spacing and block size scale with the slip length σ_t·h/τ (about 2.3 m at the 3 in default), as the
+  lattice and the drying-crack papers show (spacing ∝ thickness, set by how well the layer is held by the base).
+- Crocodile cells scale with the Westergaard radius (E h³/(12(1−ν²)k))^¼ (about 0.21 m), so soft ground gives bigger
+  cells.
+- Fatigue speed goes with 1/h² (bending stress), so 2 in asphalt fatigues much faster and 8 in barely does.
+- A crack that is about to hit another one turns towards square on (look-ahead `T_LOOK`, `T_TURN`) and joins at the
+  nearest point of the other crack, so junctions are T's: mean meeting angle went from 56° to 69° (new test check).
+
+At the 3 in default the spacings and cells are the old hand values, so the look is nearly unchanged. Both baked lots
+(`asphalt_lot`, `lot90`) are re-baked.
