@@ -265,14 +265,24 @@ func reset() -> void:
 	changed.emit()
 
 
-## Run the simulation forward to year t.
+## Run the simulation forward to year t (repairs made at t included).
 func advance_to(t: float) -> void:
 	var stepped := false
 	while time + DT * 0.5 <= t:
 		_step()
 		stepped = true
-	if stepped:
+	if _apply_due() or stepped:
 		changed.emit()
+
+
+## Do the repairs that are due now; true if there were any.
+func _apply_due() -> bool:
+	var any := false
+	while _next_event < events.size() and events[_next_event].t <= time + DT * 0.25:
+		_apply(events[_next_event].action)
+		_next_event += 1
+		any = true
+	return any
 
 
 ## Show the road at year t (replays from year 0 when going back).
@@ -284,6 +294,7 @@ func seek(t: float) -> void:
 
 ## Do a repair now and remember it, so it is replayed when scrubbing. Later repairs are dropped (a new timeline).
 func do_action(action: int) -> void:
+	_apply_due()
 	while events.size() > _next_event:
 		events.pop_back()
 	events.append({ t = time, action = action })
@@ -576,9 +587,7 @@ func stats() -> Dictionary:
 # --- Simulation step ------------------------------------------------------------------------------------------
 
 func _step() -> void:
-	while _next_event < events.size() and events[_next_event].t <= time + DT * 0.25:
-		_apply(events[_next_event].action)
-		_next_event += 1
+	_apply_due()
 	if auto_maintain:
 		_auto_maintain()
 	var age := surface_age()

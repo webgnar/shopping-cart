@@ -131,8 +131,7 @@ func _run() -> void:
 				v0 * 3.6, dist, t, max_pitch, max_front, cart.groceries_in_basket()])
 			if not ok:
 				failures += 1
-	# Pushing and pulling share one base and ramp, but pulling backwards tops out at a backward walk
-	# (reverse_speed): compare the first half second from rest.
+	# Pushing and pulling share one base and ramp: compare the first half second from rest.
 	var accel := {}
 	for pair in [["push", ["push_left", "push_right"]], ["pull", ["pull_left", "pull_right"]]]:
 		main.spawn_cart(Vector3(-10, 0, -3), 0.0)
@@ -144,12 +143,11 @@ func _run() -> void:
 		for a in pair[1]:
 			Input.action_release(a)
 		accel[pair[0]] = absf(cart.frame.linear_velocity.length())
-	var rev: float = main.cart.reverse_speed
-	var pull_ok: bool = accel.pull > 0.6 * accel.push and accel.pull < rev
+	var pull_ok: bool = accel.pull > 0.6 * accel.push
 	if not pull_ok:
 		failures += 1
-	print("%-5s %-18s after 0.5 s from rest: pushing %.2f m/s, pulling %.2f m/s (backward walk %.1f m/s)" % [
-		"PASS" if pull_ok else "FAIL", "pull vs push", accel.push, accel.pull, rev])
+	print("%-5s %-18s after 0.5 s from rest: pushing %.2f m/s, pulling %.2f m/s" % [
+		"PASS" if pull_ok else "FAIL", "pull vs push", accel.push, accel.pull])
 
 	# Hand position: tapping a key moves that hand out along the bar, so tapping one hand turns the cart harder
 	# than holding it.

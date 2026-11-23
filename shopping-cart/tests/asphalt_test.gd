@@ -135,7 +135,7 @@ func _run() -> void:
 
 	# Crack filling: no water in, no widening while the sealant holds.
 	var cf := _sim([[10.0, A.CRACK_FILL]])
-	cf.advance_to(10.0)
+	cf.advance_to(9.8)   # a repair made at year 10 is already done at year 10
 	var open_before: float = cf.stats().crack_m
 	cf.advance_to(10.2)
 	var sealed: AsphaltSim.Crack = null
@@ -298,11 +298,19 @@ func _run() -> void:
 	_check("timeline scrubs the lab", is_equal_approx(lsim.time, 12.0), "year %.1f" % lsim.time)
 	(lab.get_node("Panel/Scroll/Box/Repair0") as Button).pressed.emit()
 	_check("repair button records a repair", lsim.events.size() == 1 and lsim.events[0].action == A.CRACK_FILL, str(lsim.events))
-	(lab.get_node("Panel/Scroll/Box/Timeline") as HSlider).value = 5.0
+	var tl := lab.get_node("Panel/Scroll/Box/Timeline") as HSlider
+	_check("repair starts the timeline again", tl.value == 0.0 and is_equal_approx(lsim.time, 12.0), "slider %.1f, year %.1f" % [tl.value, lsim.time])
+	tl.value = 5.0
 	await process_frame
-	(lab.get_node("Panel/Scroll/Box/Timeline") as HSlider).value = 14.0
+	_check("slider counts years since the repair", is_equal_approx(lsim.time, 17.0) and lsim.log_lines.size() == 1,
+		"year %.1f, %s" % [lsim.time, lsim.log_lines])
+	tl.value = 0.0
 	await process_frame
-	_check("scrubbing keeps the repair", lsim.log_lines.size() == 1, str(lsim.log_lines))
+	(lab.get_node("Panel/Scroll/Box/Repair2") as Button).pressed.emit()
+	tl.value = 3.0
+	await process_frame
+	_check("repairs stack up", lsim.events.size() == 2 and is_equal_approx(lsim.time, 15.0) and lsim.log_lines.size() == 2,
+		"year %.1f, %s" % [lsim.time, lsim.log_lines])
 
 	(lab.get_node("Panel/Scroll/Box/Timeline") as HSlider).value = 0.0
 	await process_frame

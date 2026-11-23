@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/cart/cart.tscn" id="1_cart"]
+[ext_resource type="Script" path="res://scripts/ball/ball_bot.gd" id="2_bot"]
+
+[node name="BallBotCart" instance=ExtResource("1_cart")]
+player_controlled = false
+empty_basket = true
+
+[node name="Bot" type="Node" parent="." node_paths=PackedStringArray("cart")]
+process_physics_priority = -1
+script = ExtResource("2_bot")
+cart = NodePath("..")
