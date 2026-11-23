@@ -47,6 +47,7 @@ destinations = Dictionary[String, String]({
 "coast": "res://scenes/levels/coast_highway.tscn",
 "asphalt": "res://scenes/levels/asphalt_lot.tscn",
 "ball": "res://scenes/levels/cart_ball_arena.tscn",
+"chain": "res://scenes/levels/chain_lot.tscn",
 "sandbox": "res://scenes/main.tscn"
 })
 

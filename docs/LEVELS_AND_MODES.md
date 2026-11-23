@@ -52,6 +52,9 @@ of this to work on how the cart drives.
   it), then a new kickoff. First to `goals_to_win` (5) wins; the clock counts up unless `match_time` sets a limit.
   Console `ball` loads the arena and starts a match. The score runs on the host only, and multiplayer guests get no
   team yet.
+- `scenes/levels/chain_lot.tscn` (console `chain`) — a blank asphalt lot for testing long chains of nested carts:
+  a line of 10 single spare carts straight ahead of `CartSpawn` (3 m apart, facing +X, push into their backs) and 16
+  more scattered at random headings under `Carts/Scattered`. Uses `scripts/main.gd`; no other props.
 - `scenes/asphalt/asphalt_lab.tscn` — the 2D asphalt lab: a road section ageing year by year (the crack types in
   zack's Asphalt Cracking Quick Guide, potholes) and being repaired (crack filling, pothole fill, heavy patches, chip
   seal, overlay), drawn as a colour map and a height map (`AsphaltSim.bake_height()` gives real heights in metres for displacement;
@@ -85,6 +88,7 @@ From `shopping-cart/`:
 - Coast highway level test: `godot --headless --fixed-fps 120 -s res://tests/coast_test.gd` (the level is generated
   by `tools/coast_models.py`; its docstring lists the steps to rebuild it)
 - Stacked carts (nest, herd, pull off, knocks): `godot --headless --fixed-fps 120 -s res://tests/cart_stack_test.gd`
+- Long cart chains in the chain lot (plough the line, turn, rest, pull off): `godot --headless --fixed-fps 120 -s res://tests/chain_lot_test.gd`
 - Wheel sounds (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
 - Sandbox screenshots (spawn, overview, test strip, 2 km out): `xvfb-run godot -s res://tests/sandbox_screenshot.gd -- <out prefix>`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
