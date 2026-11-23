@@ -4,7 +4,7 @@ extends SceneTree
 ## With an out dir it also saves pause_menu.png of the open menu (needs a real renderer):
 ##   xvfb-run godot --rendering-method gl_compatibility -s res://tests/pause_menu_test.gd -- <out dir>
 
-var menu: PauseMenu
+var menu: PauseScreen
 var console: DebugConsole
 var failures := 0
 
@@ -43,7 +43,7 @@ func _button(text: String) -> Button:
 
 
 func _run() -> void:
-	menu = root.get_node_or_null("PauseMenu")
+	menu = root.get_node_or_null("Pause")
 	console = root.get_node_or_null("Console")
 	_check("autoload present", menu != null and console != null, str(menu))
 	if menu == null or console == null:
