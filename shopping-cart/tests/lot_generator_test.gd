@@ -19,6 +19,7 @@ func _run() -> void:
 		for two_way in [true, false]:
 			await _check_layout(angle, two_way)
 	await _check_collision()
+	_check_paved()
 	print("lot_generator_test: %s" % ("PASS" if _fails == 0 else "%d FAILED" % _fails))
 	quit(1 if _fails else 0)
 
@@ -104,6 +105,33 @@ func _check_collision() -> void:
 	_near("island fill top", fill_top, 0.13, 0.002)
 	g.free()
 	ground.free()
+
+
+## Paved with asphalt sections: 10 m tiles over the lot, each given the stall lines over it in its sim's space.
+func _check_paved() -> void:
+	var g: LotGenerator = GEN.instantiate()
+	g.size = Vector2(60, 40)
+	g.section_scene = load("res://scenes/asphalt/asphalt_section.tscn")
+	g.generate()   # out of the tree, so the sections don't simulate
+	_check("paved: 24 sections", g.sections.get_child_count() == 24, str(g.sections.get_child_count()))
+	_check("paved: no stripe meshes", g.stripes.get_child_count() == 0)
+	var inside := true
+	var total := 0.0
+	for s: AsphaltSection in g.sections.get_children():
+		var lines := s.sim.paint_lines
+		for k in range(0, lines.size(), 2):
+			total += lines[k].distance_to(lines[k + 1])
+			for p in [lines[k], lines[k + 1]]:
+				inside = inside and p.x > -0.001 and p.x < 10.001 and p.y > -0.001 and p.y < 10.001
+			# Back in lot space, a 90 degree stall line runs along Z.
+			var a := s.transform * Vector3(lines[k].x - 5.0, 0, lines[k].y - 5.0)
+			var b := s.transform * Vector3(lines[k + 1].x - 5.0, 0, lines[k + 1].y - 5.0)
+			inside = inside and absf(a.x - b.x) < 0.001
+	_check("paved: lines inside their sections, along Z in the lot", inside)
+	# (stalls + one more stripe per row) stripes, each a stall depth long.
+	var want := (g.stall_count + 4) * g.stall_depth()
+	_near("paved: total line length", total, want, 0.05)
+	g.free()
 
 
 func _down(space: PhysicsDirectSpaceState3D, from: Vector3) -> float:

@@ -11,6 +11,10 @@ extends Node3D
 ## size.y deep, centred on Z. Rows run along X. Across Z it goes: a single row against the edge, then
 ## aisle / double row / aisle ... and a single row against the far edge. Round the row ends is an end drive.
 ##
+## With `section_scene` set, the lot is paved with 10 x 10 m AsphaltSections aged to `asphalt_year`, and the stall
+## lines are painted by the asphalt sim (AsphaltSim.paint_lines) so they wear and crack with the road; size must
+## then be a multiple of 10 m. Otherwise the asphalt is `surface` and the stripes are `stripe_scene` meshes.
+##
 ## Everything is built from the piece scenes below and put under the group nodes. If they are all empty when the
 ## scene loads, the lot is generated then. In the editor, Generate builds it into the scene (saved, hand-editable);
 ## Clear empties it again so it is generated on load.
@@ -43,6 +47,11 @@ const TWO_WAY_AISLE_FT := 24.0
 @export var entrance_width := 24.0 * FT     ## gap in the perimeter curb, middle of the -X edge
 @export var corrals := 2                    ## cart corrals, each in a stall of a double row
 
+@export_group("Asphalt")
+@export var section_scene: PackedScene      ## scenes/asphalt/asphalt_section.tscn, or none for the flat surface
+@export var asphalt_year := 12.0            ## age of the sections' asphalt
+@export var road_crew := false              ## the sections' road crew repairs them as they age
+
 @export_group("Nodes")
 @export var surface: Node3D                 ## the asphalt: a 1 x 1 m plane, scaled to the lot
 @export var stripes: Node3D                 ## generated pieces go under these
@@ -50,6 +59,7 @@ const TWO_WAY_AISLE_FT := 24.0
 @export var curbs: Node3D
 @export var islands: Node3D
 @export var corral_group: Node3D
+@export var sections: Node3D
 
 @export_group("Pieces")
 @export var stripe_scene: PackedScene       ## a 1 x 1 m painted stripe, scaled to length and width
@@ -62,7 +72,9 @@ const TWO_WAY_AISLE_FT := 24.0
 static var next_options := {}
 
 var stall_count := 0                        ## stalls laid out last time (corral stalls included)
-var _baking := false                        ## Generate in the editor: pieces are saved with the scene
+var _bake_owner: Node                       ## set while baking: pieces get this owner, so they save with the scene
+var _paint := PackedVector3Array()          ## stall lines (start, end pairs, lot space) for the asphalt sections
+var _wheel_z := PackedFloat32Array()        ## lot z of every aisle's wheel paths, where the sections wear and rut
 
 
 func _ready() -> void:
@@ -100,6 +112,9 @@ func generate() -> void:
 	clear()
 	surface.position = Vector3(size.x * 0.5, 0.0, 0.0)
 	surface.scale = Vector3(size.x, 1.0, size.y)
+	surface.visible = section_scene == null
+	_paint.clear()
+	_wheel_z.clear()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed
 	var d := stall_depth()
@@ -115,6 +130,8 @@ func generate() -> void:
 		var dir := 1.0 if (two_way or j % 2 == 0) else -1.0
 		var za := z + d                     # this aisle's -Z edge
 		var zb := za + e                    # and its +Z edge
+		for lane in ([0.25, 0.75] if two_way else [0.5]):   # wheels 1.7 m apart, either side of each lane's middle
+			_wheel_z.append_array([za + e * lane - 0.85, za + e * lane + 0.85])
 		var inner_lo := j > 0
 		var inner_hi := j < aisles - 1
 		var xs_lo := x0 + (island_length if (end_islands and inner_lo) else 0.0)
@@ -149,6 +166,8 @@ func generate() -> void:
 		if s.stop:
 			stops.remove_child(s.stop)
 			s.stop.free()
+	if section_scene:
+		_pave()
 
 
 ## Stripes one row of stalls along X from xs to xe. The aisle edge is at z = za and the stalls go off it toward
@@ -188,6 +207,9 @@ func _row(xs: float, xe: float, za: float, side: float, dir: float) -> Array[Dic
 
 
 func _stripe(from: Vector3, to: Vector3) -> void:
+	if section_scene:
+		_paint.append_array([from, to])
+		return
 	var s: Node3D = stripe_scene.instantiate()
 	var v := to - from
 	# The stripe's mesh is 1 m along X and 1 m along Z: X becomes the stripe's length, Z its width.
@@ -211,16 +233,84 @@ func _island(r: Rect2) -> void:
 
 
 func _groups() -> Array[Node3D]:
-	return [stripes, stops, curbs, islands, corral_group]
+	return [stripes, stops, curbs, islands, corral_group, sections]
+
+
+## Tiles the lot with asphalt sections. Each is turned so its sim's along-the-road axis (Y) runs along the aisles
+## (lot X), and gets the stall lines that cross it and the wheel paths of the nearest aisle, in its sim's metres,
+## so the traffic wears and ruts the aisles rather than running through the stalls.
+func _pave() -> void:
+	const SECTION := 10.0
+	var nx := int(round(size.x / SECTION))
+	var nz := int(round(size.y / SECTION))
+	if not is_equal_approx(nx * SECTION, size.x) or not is_equal_approx(nz * SECTION, size.y):
+		push_warning("LotGenerator: size %s isn't a multiple of 10 m; the asphalt sections won't fit" % size)
+	var turn := Basis(Vector3.UP, PI * 0.5)       # local +Z (sim Y) onto lot +X; local +X (sim X) onto lot -Z
+	for i in nx:
+		for k in nz:
+			var c := Vector3((i + 0.5) * SECTION, 0.0, -size.y * 0.5 + (k + 0.5) * SECTION)
+			var s: AsphaltSection = section_scene.instantiate()
+			s.name = "Section_%d_%d" % [i, k]
+			s.transform = Transform3D(turn, c)
+			s.seed = seed * 1000 + i * 37 + k + 1
+			s.year = asphalt_year
+			s.road_crew = road_crew
+			var lines := PackedVector2Array()
+			for j in range(0, _paint.size(), 2):
+				var ends := _clip(_to_sim(_paint[j], c), _to_sim(_paint[j + 1], c), SECTION)
+				lines.append_array(ends)
+			s.sim.paint_lines = lines
+			var paths := Array(_wheel_z)
+			paths.sort_custom(func(a: float, b: float) -> bool: return absf(a - c.z) < absf(b - c.z))
+			paths = paths.slice(0, 4).map(func(z: float) -> float: return 5.0 - (z - c.z))
+			paths.sort()
+			s.sim.wheel_paths = PackedFloat32Array(paths)
+			_add(sections, s)
+			if _bake_owner:
+				_bake_owner.set_editable_instance(s, true)   # so the sim's paint lines are saved
+
+
+## A lot point in the sim space of the section centred at c (sim X across, Y along; 0..10 m).
+static func _to_sim(q: Vector3, c: Vector3) -> Vector2:
+	return Vector2(5.0 - (q.z - c.z), (q.x - c.x) + 5.0)
+
+
+## The part of segment a-b inside [0, s] x [0, s], as a start, end pair (empty if none).
+static func _clip(a: Vector2, b: Vector2, s: float) -> PackedVector2Array:
+	var t0 := 0.0
+	var t1 := 1.0
+	var d := b - a
+	for axis in 2:
+		var p := a[axis]
+		var v := d[axis]
+		if absf(v) < 1e-9:
+			if p < 0.0 or p > s:
+				return PackedVector2Array()
+			continue
+		var ta := (0.0 - p) / v
+		var tb := (s - p) / v
+		t0 = maxf(t0, minf(ta, tb))
+		t1 = minf(t1, maxf(ta, tb))
+	if t1 - t0 < 1e-4:
+		return PackedVector2Array()
+	return PackedVector2Array([a + d * t0, a + d * t1])
 
 
 func _add(parent: Node, child: Node) -> void:
 	parent.add_child(child, true)
-	if Engine.is_editor_hint() and _baking:
-		child.owner = get_tree().edited_scene_root
+	if _bake_owner:
+		child.owner = _bake_owner
+
+
+## Generates the lot as part of `scene_root`'s scene, so it is saved with it (the Generate button, and
+## tools/bake_lot_cli.gd).
+func generate_into(scene_root: Node) -> void:
+	if scene_root != self:
+		scene_root.set_editable_instance(self, true)   # pieces go under this scene's own group nodes
+	_bake_owner = scene_root
+	generate()
+	_bake_owner = null
 
 
 func _generate_in_editor() -> void:
-	_baking = true
-	generate()
-	_baking = false
+	generate_into(get_tree().edited_scene_root)

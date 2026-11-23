@@ -12,7 +12,7 @@
 material = ExtResource("2_asphalt")
 size = Vector2(1, 1)
 
-[node name="LotGenerator" type="Node3D" node_paths=PackedStringArray("surface", "stripes", "stops", "curbs", "islands", "corral_group")]
+[node name="LotGenerator" type="Node3D" node_paths=PackedStringArray("surface", "stripes", "stops", "curbs", "islands", "corral_group", "sections")]
 script = ExtResource("1_gen")
 surface = NodePath("Surface")
 stripes = NodePath("Stripes")
@@ -20,6 +20,7 @@ stops = NodePath("WheelStops")
 curbs = NodePath("Curbs")
 islands = NodePath("Islands")
 corral_group = NodePath("Corrals")
+sections = NodePath("Sections")
 stripe_scene = ExtResource("3_stripe")
 curb_scene = ExtResource("4_curb")
 wheel_stop_scene = ExtResource("5_stop")
@@ -29,6 +30,8 @@ corral_scene = ExtResource("7_corral")
 [node name="Surface" type="MeshInstance3D" parent="."]
 transform = Transform3D(70, 0, 0, 0, 1, 0, 0, 0, 60, 35, 0, 0)
 mesh = SubResource("PlaneMesh_lot")
+
+[node name="Sections" type="Node3D" parent="."]
 
 [node name="Stripes" type="Node3D" parent="."]
 

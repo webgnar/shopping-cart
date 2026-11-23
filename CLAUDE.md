@@ -48,7 +48,9 @@ swept along a Path3D, for the parking lot generator. Test: `godot --headless -s 
 `@export`s (size, stall angle 90/60/45/30, two-way or one-way aisles, islands, wheel stops, perimeter curb, corrals),
 sized from `References/Levels/c620content.pdf` Table 1, out of the curb, wheel stop, corral, `stripe.tscn` and
 `island_fill.tscn` scenes. Its Generate button bakes the lot into the scene; left empty, it generates on load.
-Level `scenes/levels/generated_lot.tscn`, console `lotgen [angle] [seed] [oneway]`.
+Level `scenes/levels/generated_lot.tscn`, console `lotgen [angle] [seed] [oneway]`. With `section_scene` set it paves
+the lot with aged AsphaltSections whose sims paint the stall lines: `scenes/levels/lot90.tscn` (console `lot90`), baked
+with `tools/bake_lot_cli.gd` then `tools/bake_asphalt_sections_cli.gd` (steps in the first's header).
 Test: `godot --headless -s res://tests/lot_generator_test.gd`. Screenshots:
 `xvfb-run godot --rendering-method gl_compatibility -s res://tests/lot_generator_screenshot.gd -- <out dir>`.
 
