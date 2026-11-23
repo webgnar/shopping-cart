@@ -7,8 +7,10 @@ extends Node
 ##   - cold: the asphalt wants to shrink each winter night, more as the binder ages and hardens. The base holds it
 ##     back, so the springs go into tension; the road is long, so the pull along it is stronger than across it.
 ##   - wheels: each axle bends the layer over the wheel path, stretching its underside, mostly across the road.
-## Each load is solved for its own displacement field (they superpose), with its own base stiffness: the base holds
-## the shrinking layer over a long distance and a bending plate over a short one (about its thickness).
+## Each load is solved for its own displacement field (they superpose), with its own base stiffness, worked out from
+## the pavement (see the Pavement group): a shrinking layer is held by its bond to the base over sqrt(E h / K) and
+## slides once the pull passes the bond's shear strength; a bending plate spreads a wheel over Westergaard's radius
+## (E h^3 / (12 (1 - nu^2) k))^(1/4).
 ## Every winter each spring's tension adds fatigue (Miner's rule, damage ~ (stress / strength)^m); a spring snaps
 ## when its peak tension passes its strength left after fatigue. When one snaps the mesh around it is relaxed again,
 ## which can snap the next one along (a crack running), so crack spacing, T-junctions, crocodile cells and paths
@@ -34,6 +36,17 @@ const OVER_RELAX := 1.5    ## successive over-relaxation: settles the mesh in fe
 @export var spacing := 0.02                       ## m between mesh nodes
 @export var dt := 0.25                            ## years per step
 
+@export_group("Pavement")
+## Real-world numbers; the mesh's two spread lengths and the base's slip are worked out from them.
+@export var thickness := 0.076                    ## m of asphalt (3 in over gravel: c620 parking lot tables)
+@export var stiffness_cold := 10.0e9              ## Pa: asphalt's modulus on a cold night
+@export var stiffness_warm := 3.0e9               ## Pa: and on a mild day, when the traffic bends it
+@export var poisson := 0.35
+@export var subgrade_modulus := 60.0e6            ## Pa/m: how firm the ground is (CBR 3..9 is about 30..80e6)
+@export var base_bond := 2.0e9                    ## Pa/m: shear stiffness of the asphalt's bond to its base
+@export var base_shear_strength := 0.1e6          ## Pa: past this the asphalt slides on its base
+@export var tensile_strength := 3.0e6             ## Pa: the mastic's cold strength (stress 1.0 in the mesh)
+
 @export_group("Mix")
 ## Coarse aggregate gradation: [sieve mm, share of the patch area that is stones between this sieve and the next
 ## size down]. A dense 19 mm mix; the fines (< 4.75 mm) are part of the mastic.
@@ -50,7 +63,6 @@ const OVER_RELAX := 1.5    ## successive over-relaxation: settles the mesh in fe
 @export var across_share := 0.7                   ## ... and across it (the lane's free edges let it give a bit)
 @export var oxidation_years := 9.0                ## years for the binder to harden most of the way
 @export var hardening := 1.7                      ## fully aged binder carries this much more cold tension
-@export var cold_transfer := 0.45                 ## m over which the base takes up the pull of a shrinking layer
 @export var cold_life := 40.0                    ## winters a spring lasts at half its strength
 
 @export_group("Traffic")
@@ -58,7 +70,6 @@ const OVER_RELAX := 1.5    ## successive over-relaxation: settles the mesh in fe
 @export var wheel_path_width := 0.22              ## m: spread (one sigma) of where the wheels run
 @export var wheel_stress := 0.12                  ## underside tension of one heavy axle across the road ...
 @export var wheel_along := 0.55                   ## ... and along it, as a share of that
-@export var wheel_transfer := 0.07                ## m: how far a bending plate spreads its load (about its thickness)
 @export var traffic_life := 10.0                  ## years of traffic a spring lasts when each axle pulls it to a quarter of its strength
 @export var fatigue_exponent := 4.0               ## m in damage ~ (stress / strength)^m
 @export var fatigue_weakening := 0.8              ## share of its strength a spring has lost when fully fatigued
@@ -115,6 +126,7 @@ var _sgy := 0
 var broken := PackedInt32Array()                  ## springs in the order they snapped
 var _kb_cold := 0.0
 var _kb_wheel := 0.0
+var _slip_cap := INF       ## most a node's base spring can hold under the unit cold load before it slides
 var _rng := RandomNumberGenerator.new()
 var _queued := PackedByteArray()
 var _touched := PackedInt32Array()
@@ -130,13 +142,31 @@ func reset() -> void:
 	broken.clear()
 	_place_stones()
 	_build_mesh()
+	_slip_cap = INF
 	_solve_all()
+	_update_slip(cold_scale(0.0))
 	changed.emit()
 
 
 ## How hard the binder has become, 0 (new) .. 1 (fully oxidised).
 func oxidation(t := time) -> float:
 	return 1.0 - exp(-t / oxidation_years)
+
+
+## m over which the base takes up the pull of the shrinking layer, while it holds: sqrt(E h / K).
+func cold_spread() -> float:
+	return sqrt(stiffness_cold * thickness / base_bond)
+
+
+## m: Westergaard's radius of relative stiffness, how far a wheel's bending spreads in the layer.
+func wheel_spread() -> float:
+	return pow(stiffness_warm * pow(thickness, 3.0) / (12.0 * (1.0 - poisson * poisson) * subgrade_modulus), 0.25)
+
+
+## m over which friction on the base builds the layer up to its full strength once it slides (crack spacing is
+## about twice the stress / strength share of this).
+func slip_length() -> float:
+	return tensile_strength * thickness / base_shear_strength
 
 
 func cold_scale(t := time) -> float:
@@ -185,6 +215,7 @@ func _wheel_load(x: float) -> float:
 func _step() -> void:
 	var sc := cold_scale(time + dt)
 	var sw := wheel_scale(time + dt)
+	_update_slip(sc)
 	var m := fatigue_exponent
 	# damage per year at the reference stress ratio r is 1 / life, so rate = 1 / (life * r^m)
 	var rc := 1.0 / (cold_life * pow(0.5, m))
@@ -202,6 +233,23 @@ func _step() -> void:
 	time += dt
 	if not over.is_empty():
 		_cascade(over, sc, sw)
+
+
+## The base slides where it would have to hold more than base_shear_strength. In the mesh's units a node's base
+## spring holds at most area * (2 / sqrt 3) / slip_length (the triangular mesh carries 2 / sqrt 3 of a spring's
+## tension per metre of section); the cold field is solved for a unit load, so that is divided by this winter's
+## scale. When it changes the whole cold field settles again, from where it was.
+func _update_slip(sc: float) -> void:
+	var area := size.x * size.y / pos.size()
+	var cap := area * 2.0 / sqrt(3.0) / slip_length() / maxf(sc, 1e-6)
+	if absf(cap - _slip_cap) < 0.01 * cap:
+		return
+	_slip_cap = cap
+	var all := PackedInt32Array()
+	all.resize(pos.size())
+	for i in pos.size():
+		all[i] = i
+	_relax(all, u_cold, e_cold, kinv_cold, _kb_cold, 50000000, _slip_cap)
 
 
 ## Snaps the most overloaded spring, relaxes the mesh round it, and repeats while any spring is past its strength.
@@ -255,13 +303,13 @@ func _snap(s: int) -> void:
 	_update_kinv(sb[s])
 	_touched.clear()
 	var seeds := PackedInt32Array([sa[s], sb[s]])
-	_relax(seeds, u_cold, e_cold, kinv_cold, _kb_cold)
+	_relax(seeds, u_cold, e_cold, kinv_cold, _kb_cold, 2000000, _slip_cap)
 	_relax(seeds, u_wheel, e_wheel, kinv_wheel, _kb_wheel)
 
 
 ## Gauss-Seidel on the nodes that are out of balance, spreading outward from `seeds` until everything is still.
 func _relax(seeds: PackedInt32Array, u: PackedVector2Array, e: PackedFloat32Array, kinv: PackedFloat32Array,
-		kb: float, limit := 400000) -> void:
+		kb: float, limit := 2000000, cap := INF) -> void:
 	var queue := PackedInt32Array(seeds)
 	for n in seeds:
 		_queued[n] = 1
@@ -271,7 +319,10 @@ func _relax(seeds: PackedInt32Array, u: PackedVector2Array, e: PackedFloat32Arra
 		var n := queue[head]
 		head += 1
 		_queued[n] = 0
-		var f := -kb * u[n]
+		var fb := kb * u[n]
+		if fb.length() > cap:
+			fb *= cap / fb.length()
+		var f := -fb
 		for j in 6:
 			var ad := adj[n * 6 + j]
 			if ad < 0:
@@ -308,7 +359,7 @@ func _solve_all() -> void:
 	all.resize(pos.size())
 	for i in pos.size():
 		all[i] = i
-	_relax(all, u_cold, e_cold, kinv_cold, _kb_cold, 50000000)
+	_relax(all, u_cold, e_cold, kinv_cold, _kb_cold, 50000000, _slip_cap)
 	_relax(all, u_wheel, e_wheel, kinv_wheel, _kb_wheel, 50000000)
 
 
@@ -538,8 +589,9 @@ func _build_mesh() -> void:
 		e_cold[s] = along_share * d.y * d.y + across_share * d.x * d.x
 		e_wheel[s] = _wheel_load(mid[s].x) * (d.x * d.x + wheel_along * d.y * d.y)
 	# base springs per node, from the stress transfer length: l ~ spacing * sqrt(k / kb)
-	_kb_cold = pow(spacing / cold_transfer, 2.0) * 3.0
-	_kb_wheel = pow(spacing / wheel_transfer, 2.0) * 3.0
+	# a base spring of kb under every node makes the stress die away over spacing * sqrt(k / kb) on this mesh
+	_kb_cold = pow(spacing / cold_spread(), 2.0)
+	_kb_wheel = pow(spacing / wheel_spread(), 2.0)
 	u_cold.resize(n)
 	u_cold.fill(Vector2.ZERO)
 	u_wheel.resize(n)

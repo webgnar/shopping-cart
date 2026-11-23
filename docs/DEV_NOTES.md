@@ -1801,4 +1801,11 @@ Findings: transverse cracks, T-junctions and blocks come out of the cold load; t
 cracks and ladders of short cross cracks. Gotchas: node jitter above ~3 % of the spacing makes the mesh itself carry
 very uneven loads (diffuse damage instead of cracks); fatigue that drives strength to zero does the same, so it only
 takes 80 %. Most stones are smaller than the 2 cm mesh, so routing round stones is done when drawing. Runs ~5 min for
-30 years in GDScript. Test `tests/crack_lattice_test.gd`; renders next to the lab `tests/crack_lattice_screenshot.gd`.
+30 years in GDScript.
+Pavement numbers (zack, Nov 23): the spreads now come from real inputs (Pavement group): cold spread sqrt(E h / K_bond)
+(10 GPa, 76 mm, 2 GPa/m: 0.62 m), wheel spread Westergaard (E h^3 / (12 (1 - nu^2) k))^(1/4) (3 GPa, k 60 MPa/m:
+0.21 m), and the base slides past base_shear_strength (slip length strength * h / tau = 2.3 m; node cap
+area * (2/sqrt 3) / slip_length, re-solved when the winter's scale changes). On this mesh a base spring kb gives a
+spread of spacing * sqrt(k / kb) (the earlier factor 3 was wrong). Result: one cross crack over the 2 m patch by year 5,
+large blocks, a lengthwise wheel-path crack; no crocodile cells with the old wheel_stress. Sliding makes the
+relaxation slow (often hits its 2M-node limit): ~25 min for 30 years. Test `tests/crack_lattice_test.gd`; renders next to the lab `tests/crack_lattice_screenshot.gd`.
