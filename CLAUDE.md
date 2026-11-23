@@ -37,6 +37,11 @@ potholes) and getting repaired, drawn as a colour map and a height map. In 3D it
   `xvfb-run godot --rendering-method gl_compatibility -s res://tests/asphalt_screenshot.gd -- <out dir>`.
 - Reference: zack's Asphalt Cracking Quick Guide (crack types), in the project files under `asphalt/`.
 
+## Curbs
+
+`scenes/curb/curb.tscn` (`scripts/curb/curb.gd`, `Curb`): the Type C curb from `References/Props/type_c_doweled_curb.png`,
+swept along a Path3D, for the future parking lot generator. Test: `godot --headless -s res://tests/curb_test.gd`.
+
 ## Testing a cart change
 
 Run only the drive test, from `shopping-cart/` (for an asphalt change, run only `asphalt_test.gd`):
