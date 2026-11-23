@@ -340,6 +340,13 @@ popup/item_3/id = 3
 popup/item_4/text = "3D preview"
 popup/item_4/id = 4
 
+[node name="StartHere" type="Button" parent="Panel/Scroll/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Start the timeline at this year, so it runs 40 more years on from here and you can watch your repairs age. Press again to go back to the road's own years."
+toggle_mode = true
+text = "Start timeline here"
+
 [node name="RepairsHeader" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.62, 0.25, 1)
@@ -530,6 +537,7 @@ autowrap_mode = 3
 [connection signal="drag_started" from="Panel/Scroll/Box/Timeline" to="." method="_on_timeline_drag_started"]
 [connection signal="drag_ended" from="Panel/Scroll/Box/Timeline" to="." method="_on_timeline_drag_ended"]
 [connection signal="toggled" from="Panel/Scroll/Box/PlayRow/PlayButton" to="." method="_on_play_toggled"]
+[connection signal="toggled" from="Panel/Scroll/Box/StartHere" to="." method="_on_start_here_toggled"]
 [connection signal="item_selected" from="Panel/Scroll/Box/PlayRow/View" to="." method="_on_view_selected"]
 [connection signal="gui_input" from="Views/PreviewView" to="." method="_on_preview_input"]
 [connection signal="value_changed" from="Panel/Scroll/Box/SeedRow/Seed" to="." method="_on_seed_changed"]

@@ -293,27 +293,47 @@ func _draw() -> void:
 				if sealant_texture and not hm:
 					_textured_band(seg, band, sealant_texture, sealant_texture_m, sealant_aged, clampf(age / 10.0, 0.0, 1.0) * 0.8)
 			k = e
-	# Throw-and-roll fills: lumpy cold-mix blobs over the cracks they filled, a little proud of the surface.
+	# Cold patch (throw and roll): black cold mix shovelled into each hole and tamped flat, so it takes the hole's
+	# own shape: the plucked crocodile cell, or the ragged round hole. A few crumbs spill round the edge.
+	var drawn := { }
 	for i in sim.nx * sim.ny:
 		var fb := sim.fill_born[i]
 		if fb < 0.0:
 			continue
-		var c := sim.cell_center(i) + Vector2(_h(i) - 0.5, _h(i + 0.5) - 0.5) * 0.03
-		if fill_texture and not hm:
-			# A lumpy mound of cold mix shovelled a little past the hole and packed by tyres: a darker, crushed
-			# rim, the mix itself (darker than the road until it greys), and crumbs kicked out round it.
-			var fage := t - fb
-			_poly(_circle_pts(c, 0.135, i * 0.71, 0.55), cold_mix.lerp(aged_asphalt, _greying(fage, 0.6)).darkened(0.25), 0.3)
-			_textured(_circle_pts(c, 0.12, i * 0.37, 0.5), fill_texture, fill_texture_m, aged_asphalt, _greying(fage, 0.6))
-			if fage < 3.0:
-				_poly(_circle_pts(c, 0.12, i * 0.37, 0.5), Color(cold_mix, 0.35 * (1.0 - fage / 3.0)), 0.3)
-			for s in 3:
-				var hs := _h(i * 5.3 + s * 1.7)
-				var at := c + Vector2.from_angle(hs * TAU) * (0.13 + 0.06 * _h(hs * 7.0))
-				draw_circle(at * px_per_m, (0.003 + 0.005 * _h(hs * 13.0)) * px_per_m, cold_mix.lerp(aged_asphalt, _greying(fage, 0.6)))
+		var k := sim._cell_seed[i]
+		if k >= 0 and drawn.has(k):
 			continue
-		var col := _hc(0.006) if hm else cold_mix.lerp(aged_asphalt, 1.0 - exp(-(t - fb) * sim.climate / (oxidation_years * 0.6)))
-		_poly(_circle_pts(c, 0.105, i * 0.37, 0.35), col, 0.3)
+		drawn[k] = true
+		var shape: PackedVector2Array
+		var centre: Vector2
+		if k >= 0 and not sim.net_cells[k].is_empty():
+			shape = _scaled(sim.net_cells[k], sim.net_seeds[k], 1.14, k)
+			centre = sim.net_seeds[k]
+		else:
+			centre = sim.cell_center(i) + Vector2(_h(i * 1.3) - 0.5, _h(i * 2.1) - 0.5) * 0.03
+			shape = _circle_pts(centre, 0.125, i * 0.91, 0.5)
+		var fage := t - fb
+		if hm:
+			draw_colored_polygon(shape, _hc(sim.fill_proud(fage)))
+			continue
+		var grey := _greying(fage, 0.6)
+		if fill_texture:
+			# Fresh cold mix is near black and glossy with binder; it greys as it dries and ravels.
+			_textured(shape, fill_texture, fill_texture_m, Color.BLACK, 0.55 * (1.0 - grey))
+			if grey > 0.01:
+				draw_colored_polygon(shape, Color(aged_asphalt, grey * 0.6))
+		else:
+			_poly(shape, cold_mix.lerp(aged_asphalt, grey), 0.3)
+		# The cold joint where the mix meets the old edge (it opens into a seam crack later).
+		var joint := shape.duplicate()
+		joint.append(shape[0])
+		draw_polyline(joint, Color(crack_color, 0.6), maxf(0.002 * px_per_m, 1.0))
+		var crumb := cold_mix.lerp(aged_asphalt, grey)
+		for s2 in 7:
+			var hs := _h(i * 5.3 + s2 * 1.7)
+			var at := shape[int(hs * shape.size()) % shape.size()] / px_per_m
+			at += (at - centre).normalized() * 0.03 * _h(hs * 7.0)
+			draw_circle(at * px_per_m, (0.002 + 0.004 * _h(hs * 13.0)) * px_per_m, crumb)
 	# Potholes. Where a crocodile cell has been plucked out: its broken rim, then the wet base course below,
 	# darker the deeper it goes. Elsewhere a ragged hole round the 10 cm cell.
 	for k in sim.plucked.size():

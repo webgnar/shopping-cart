@@ -177,6 +177,12 @@ func _run() -> void:
 			var fc := pf.cell_center(i)
 			fill_low = minf(fill_low, fh[int(round(fc.y / 0.02)) * 501 + int(round(fc.x / 0.02))])
 	_check("pothole fill comes back up", fill_low > 0.0, "lowest fill centre %.1f mm" % (fill_low * 1000.0))
+	pf.advance_to(22.6)
+	var joints := 0
+	for c in pf.cracks:
+		if c.alive and c.kind == AsphaltSim.Kind.SEAM:
+			joints += 1
+	_check("cold patch joints open into seams", joints > 0, "%d seam cracks 2.6 years on" % joints)
 	pf.advance_to(24.0)
 	_check("throw-and-roll fails again", _holes(pf) > 0, "%d hole cells 4 years on" % _holes(pf))
 
@@ -193,6 +199,7 @@ func _run() -> void:
 				if (p.rect as Rect2).grow(-0.01).has_point(q):
 					inside += 1
 	_check("heavy patch made", hp.patches.size() > 0, "%d patches" % hp.patches.size())
+	_check("heavy patches stay small", hp.stats().patched_pct < 12.0, "%.1f %% of the road" % hp.stats().patched_pct)
 	var ph := hp.bake_height(0.02)
 	var patch_low := 1.0
 	for p in hp.patches:
@@ -335,6 +342,17 @@ func _run() -> void:
 	await process_frame
 	_check("scrubbing before a repair shows the road without it", lsim.log_lines.is_empty() and
 		(lab.get_node("Panel/Scroll/Box/Repair2") as CheckBox).button_pressed, str(lsim.log_lines))
+	tl.value = 17.0
+	await process_frame
+	var start := lab.get_node("Panel/Scroll/Box/StartHere") as Button
+	start.button_pressed = true
+	_check("timeline can start at this year", tl.value == 0.0 and is_equal_approx(lsim.time, 17.0), "slider %.1f, year %.1f" % [tl.value, lsim.time])
+	tl.value = 30.0
+	await process_frame
+	_check("and run on from it", is_equal_approx(lsim.time, 47.0) and lsim.log_lines.size() == 1, "year %.1f, %s" % [lsim.time, lsim.log_lines])
+	start.button_pressed = false
+	tl.value = 10.0
+	await process_frame
 	var panel := lab.get_node("Panel") as Control
 	_check("side panel keeps its width", panel.size.x <= 331.0, "%.0f px" % panel.size.x)
 

@@ -20,6 +20,7 @@ extends Control
 var playing := false
 var _dragging := false
 var _play_t := 0.0     ## years: where Play has got to (the sim catches up a step at a time)
+var _epoch := 0.0      ## road year the timeline starts at ("Start timeline here"); it runs max_years on from it
 var _replay_at := -1   ## msec: replay once the condition sliders settle
 var _relief_at := -1   ## msec: redraw the relief view (it takes a moment, so not every frame)
 
@@ -28,6 +29,7 @@ var _relief_at := -1   ## msec: redraw the relief view (it takes a moment, so no
 @onready var _play: Button = %PlayButton
 @onready var _stats: Label = %Stats
 @onready var _history: Label = %History
+@onready var _start_here: Button = %StartHere
 @onready var _repairs: Array[CheckBox] = [%Repair0, %Repair1, %Repair2, %Repair3, %Repair4]   ## by AsphaltSim.Action
 @onready var _seed: SpinBox = %Seed
 
@@ -61,20 +63,20 @@ func _process(delta: float) -> void:
 	# would never reach the next step.
 	if absf(_play_t - sim.time) > AsphaltSim.DT:
 		_play_t = sim.time   # scrubbed or replayed while playing
-	_play_t = minf(_play_t + years_per_second * delta, max_years)
+	_play_t = minf(_play_t + years_per_second * delta, _epoch + max_years)
 	sim.advance_to(_play_t)
-	if _play_t >= max_years:
+	if _play_t >= _epoch + max_years:
 		_play.button_pressed = false
 
 
 func _update_ui() -> void:
-	_timeline.set_value_no_signal(sim.time)
+	_timeline.set_value_no_signal(sim.time - _epoch)
 	for a in _repairs.size():
 		var at := sim.repair_year(a)
 		_repairs[a].set_pressed_no_signal(at >= 0.0)
 		_repairs[a].text = _repairs[a].get_meta("name") + ("  (year %.1f)" % at if at >= 0.0 else "")
 	var s := sim.stats()
-	_year.text = "Year %.1f" % sim.time
+	_year.text = _year_text(sim.time - _epoch)
 	var kinds := PackedStringArray()
 	for k in AsphaltSim.Kind.size():
 		if s.by_kind[k] > 0.05:
@@ -100,9 +102,9 @@ func _label_condition(slider: Range) -> void:
 
 
 func _on_timeline_value_changed(value: float) -> void:
-	_year.text = "Year %.1f" % value
+	_year.text = _year_text(value)
 	if not _dragging:
-		sim.seek(value)
+		sim.seek(_epoch + value)
 
 
 func _on_timeline_drag_started() -> void:
@@ -111,15 +113,28 @@ func _on_timeline_drag_started() -> void:
 
 func _on_timeline_drag_ended(_changed: bool) -> void:
 	_dragging = false
-	sim.seek(_timeline.value)
+	sim.seek(_epoch + _timeline.value)
 
 
 func _on_play_toggled(on: bool) -> void:
 	playing = on
 	_play.text = "Pause" if on else "Play"
-	if on and sim.time >= max_years - 0.01:
-		sim.seek(0.0)
+	if on and sim.time >= _epoch + max_years - 0.01:
+		sim.seek(_epoch)
 	_play_t = sim.time
+
+
+## The slider counts years from where the timeline starts.
+func _year_text(value: float) -> String:
+	return "Year %.1f" % value if _epoch <= 0.0 else "Year %.1f (road year %.1f)" % [value, _epoch + value]
+
+
+## Pressed: the timeline starts at this year and runs max_years on, to age the road (and its repairs) further.
+## Released: back to the road's own years.
+func _on_start_here_toggled(on: bool) -> void:
+	_epoch = sim.time if on else 0.0
+	_start_here.text = "Timeline starts at road year %.1f" % _epoch if on else "Start timeline here"
+	_update_ui()
 
 
 ## Ticked: that repair is done at the slider's year. Unticked: it never happened.

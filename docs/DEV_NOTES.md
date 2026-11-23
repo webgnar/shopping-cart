@@ -1825,3 +1825,19 @@ strength, tensile strength) instead of the hand-set `thermal_spacing`, `fatigue_
 
 At the 3 in default the spacings and cells are the old hand values, so the look is nearly unchanged. Both baked lots
 (`asphalt_lot`, `lot90`) are re-baked.
+
+## Asphalt: cold patch in the hole's shape, smaller heavy patches, start the timeline here (Nov 23 2026)
+
+zack: heavy patch covered too much, and small holes want cold patch that takes the shape of the hole, with a line
+round it that weakens over time, and every repair should age.
+- Fill potholes is now a cold patch: black cold mix tamped flat (FILL_PROUD 4 mm, packed down to 30 % of that over
+  two years, `fill_proud()`), drawn in the hole's own outline (the plucked crocodile cell grown 12 %, or the ragged
+  round hole), with a few crumbs and a thin cold joint round it. The joint is a latent SEAM crack that opens 0.8 to
+  2.5 years on, only along the patch's outer edge. The mix greys and ravels out as before.
+- Heavy patch cuts a tight rectangle (12 cm margin) round each pothole or failed fill only, no longer round whole
+  fatigue areas (about 7 % of the road at year 16 instead of most of the wheel paths). Joints of fills it digs out
+  are dropped.
+- Lab: "Start timeline here" makes the slider start at the current year and run 40 more years from it, to age the
+  road and its repairs further; press again to go back to road years.
+- asphalt_lot's crew column re-baked. The "30 years simulate quickly" check runs 4.1 to 4.6 s on this machine
+  with or without this change (limit 4 s).

@@ -37,6 +37,7 @@ const STEP := 0.025      ## m: spacing of the points along a crack
 const DT := 0.2          ## years per simulation step
 const SEAL_LIFE := 6.0   ## years crack sealant holds before it debonds
 const HOLE_MAX := 0.09   ## m: a pothole stops deepening at the base course
+const FILL_PROUD := 0.004     ## m a fresh tamped cold patch stands above the road
 const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the road
 
 @export var seed := 1
@@ -390,6 +391,11 @@ func paint_left(p: Vector2) -> float:
 	return clampf(1.0 - wear * (0.4 + 1.2 * n), 0.0, 1.0)
 
 
+## m a cold patch stands proud: tamped a few millimetres high, then packed down by traffic over a couple of years.
+func fill_proud(age: float) -> float:
+	return FILL_PROUD * (1.0 - 0.7 * clampf(age / 2.0, 0.0, 1.0))
+
+
 func _hash2(v: Vector2) -> float:
 	return fposmod(sin(v.x * 127.1 + v.y * 311.7 + seed * 17.3) * 43758.5453, 1.0)
 
@@ -478,11 +484,34 @@ func bake_height(res := 0.01) -> PackedFloat32Array:
 				var q := Vector2(ix * res, iy * res)
 				if outer.has_point(q) and not inner.has_point(q):
 					out[iy * w + ix] += SEAL_PROUD
+	# Cold patch, tamped flat in the shape of its hole: the plucked crocodile cell, or a disk.
+	var filled_cells := { }
 	for i in nx * ny:
-		if fill_born[i] >= 0.0:
-			# Lumpy: each shovelful packed down a different amount.
-			var lump := 0.004 + 0.004 * fposmod(sin(i * 12.9898) * 43758.5453, 1.0)
-			_stamp_disk(out, w, h, res, cell_center(i), 0.12, lump, false)
+		if fill_born[i] < 0.0:
+			continue
+		var k := _cell_seed[i]
+		if k >= 0 and not net_cells[k].is_empty():
+			# The 10 cm cells of the hole can reach past the crocodile cell's outline: fill those too.
+			_stamp_disk(out, w, h, res, cell_center(i), 0.075, fill_proud(time - fill_born[i]), false)
+			_stamp_disk(covered, w, h, res, cell_center(i), 0.075, fill_born[i], false)
+			if filled_cells.has(k):
+				continue
+			filled_cells[k] = true
+			var poly := PackedVector2Array()
+			for q in net_cells[k]:
+				poly.append(net_seeds[k] + (q - net_seeds[k]) * 1.12)
+			var bb := Rect2(poly[0], Vector2.ZERO)
+			for q in poly:
+				bb = bb.expand(q)
+			var up := fill_proud(time - fill_born[i])
+			for iy in range(maxi(0, int(bb.position.y / res)), mini(h - 1, int(ceil(bb.end.y / res))) + 1):
+				for ix in range(maxi(0, int(bb.position.x / res)), mini(w - 1, int(ceil(bb.end.x / res))) + 1):
+					if Geometry2D.is_point_in_polygon(Vector2(ix * res, iy * res), poly):
+						var j := iy * w + ix
+						out[j] = up
+						covered[j] = maxf(covered[j], fill_born[i])
+		else:
+			_stamp_disk(out, w, h, res, cell_center(i), 0.12, fill_proud(time - fill_born[i]), false)
 			_stamp_disk(covered, w, h, res, cell_center(i), 0.1, fill_born[i], false)
 	# Paint stands a hair proud where it is left (not under a patch or fill); cracks still cut through it.
 	var half_w := paint_width * 0.5
@@ -1302,18 +1331,49 @@ func _pothole_fill() -> String:
 			var j: int = i + o
 			if j >= 0 and j < nx * ny and hole[j] <= 0.0:
 				damage[j] = minf(damage[j], 0.6)
+	# The cold joint round each patch, where the mix meets the old edge: it opens into a crack a year or two on.
+	var outlined := { }
+	for i in filled:
+		var k := _cell_seed[i]
+		if outlined.has(k if k >= 0 else -1 - i):
+			continue
+		outlined[k if k >= 0 else -1 - i] = true
+		var ring := PackedVector2Array()
+		if k >= 0 and not net_cells[k].is_empty():
+			for q in net_cells[k]:
+				ring.append(net_seeds[k] + (q - net_seeds[k]) * 1.12)
+		else:
+			for a in 12:
+				ring.append(cell_center(i) + Vector2.from_angle(TAU * a / 12.0) * 0.12)
+		ring.append(ring[0])
+		# Only the outer edge of the patch is a joint: skip stretches that run inside the next filled cell.
+		var at := time + _rng.randf_range(0.8, 2.5)
+		var path := PackedVector2Array()
+		for e in ring.size() - 1:
+			var m := maxi(1, int(ring[e].distance_to(ring[e + 1]) / STEP))
+			for s in m + (1 if e == ring.size() - 2 else 0):
+				var q := ring[e].lerp(ring[e + 1], float(s) / m)
+				var j := cell_index(q)
+				var inner := fill_born[j] >= 0.0 and j != i and (k < 0 or _cell_seed[j] != k)
+				if not inner and paved(q):
+					path.append(q)
+				elif path.size() > 0:
+					if path.size() >= 3:
+						_latent.append({ path = path, at = at, kind = Kind.SEAM, speed = 1.0, widen = 1.3 })
+					path = PackedVector2Array()
+		if path.size() >= 3:
+			_latent.append({ path = path, at = at, kind = Kind.SEAM, speed = 1.0, widen = 1.3 })
 	return "%d potholes" % n
 
 
-## Heavy patching: saw-cut a rectangle round each area of fatigue cells and potholes, dig out the failed asphalt
+## Heavy patching: saw-cut a tight rectangle round each pothole or failed fill, dig out the failed asphalt
 ## and base, and replace it full depth. Cracks inside are gone; the cut edges are joints that crack open later.
 func _heavy_patch() -> String:
-	# The crew cuts round the failed spots (potholes, fills, the worst crocodile cracking), not whole wheel paths.
+	# The crew cuts a tight rectangle round each pothole or failed fill, not round whole cracked areas.
 	var bad := PackedByteArray()
 	bad.resize(nx * ny)
 	for i in nx * ny:
-		if load[i] > 0.0 and (hole[i] > 0.0 or fill_born[i] >= 0.0 \
-				or fatigue[i] > FATIGUE_CELLS + 0.7 and crack_len[i] > 0.15):
+		if load[i] > 0.0 and (hole[i] > 0.0 or fill_born[i] >= 0.0):
 			bad[i] = 1
 	var rects: Array[Rect2] = []
 	var seen := PackedByteArray()
@@ -1338,9 +1398,7 @@ func _heavy_patch() -> String:
 					if x >= 0 and y >= 0 and x < nx and y < ny and bad[y * nx + x] == 1 and seen[y * nx + x] == 0:
 						seen[y * nx + x] = 1
 						stack.append(y * nx + x)
-		if count < 2:
-			continue
-		rects.append(r.grow(0.3))
+		rects.append(r.grow(0.12))
 	# Merge overlapping cuts into one, square to the road and on a 5 cm grid, inside the pavement.
 	var merged := true
 	while merged:
@@ -1383,6 +1441,10 @@ func _heavy_patch() -> String:
 				if _cell_seed[i] >= 0:
 					plucked[_cell_seed[i]] = 0.0
 		_cut_cracks(rect)
+		for k in range(_latent.size() - 1, -1, -1):   # joints of fills dug out with it
+			var lp: PackedVector2Array = _latent[k].path
+			if not lp.is_empty() and rect.has_point(lp[0]):
+				_latent.remove_at(k)
 		# Seams: each cut edge opens into a crack along it a few years on.
 		var corners := [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]
 		for s in 4:
