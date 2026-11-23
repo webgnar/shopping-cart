@@ -42,6 +42,13 @@ of this to work on how the cart drives.
   exported) under `Displays`, giant `Inflatable`s under `Bonuses` and `BonusStation`s under `Stations`; HUD
   `scenes/ui/sweep_hud.tscn`. The supermarket has one. Console `sweep` (`sweep nobots`, `sweep 60`) loads it and
   starts; in multiplayer the host runs it (SWEEP message). Rebuild its models with `tools/supermarket_models.py`.
+- `scenes/levels/cart_ball_arena.tscn` — Cart Ball, a car-soccer style mode: a 30 x 20 m walled asphalt arena (fenced
+  concrete barriers, cut corners) with a Green goal and a Red goal (`scenes/ball/goal.tscn`; its `Inside` Area3D only
+  catches a ball wholly over the line) and the big ball (`scenes/ball/ball.tscn`, 1.3 m, 4 kg, on layer 3). The match
+  is `scenes/ball/cart_ball.tscn` (`scripts/ball/cart_ball.gd`, HUD `scenes/ui/cart_ball_hud.tscn`): you play Green
+  and attack Red; kickoff counts 3, 2, 1 with your cart held, a goal shows GOAL! then a new kickoff, and full time
+  comes after `match_time`. Console `ball` loads the arena and starts a match. The score runs on the host only, and
+  there are no bots or teams for guests yet.
 - `scenes/asphalt/asphalt_lab.tscn` — the 2D asphalt lab: a road section ageing year by year (the crack types in
   zack's Asphalt Cracking Quick Guide, potholes) and being repaired (crack filling, pothole fill, heavy patches, chip
   seal, overlay), drawn as a colour map and a height map (`AsphaltSim.bake_height()` gives real heights in metres for displacement;
@@ -87,5 +94,7 @@ From `shopping-cart/`:
 - Race screenshots: `xvfb-run godot --rendering-method gl_compatibility -s res://tests/race_screenshot.gd -- <out dir>`
 - Bot carts drive themselves in every level: `godot --headless --fixed-fps 120 -s res://tests/bot_test.gd`
 - Endless sandbox (chunks load, no holes, flush edges, floors, hill): `godot --headless --fixed-fps 120 -s res://tests/sandbox_test.gd`
+- Cart Ball (console `ball`, kickoff hold, ball pushed, goals both ends, no-goal on the line, out of bounds, full time): `godot --headless --fixed-fps 120 -s res://tests/cart_ball_test.gd`
+- Cart Ball screenshots: `xvfb-run godot --rendering-method gl_compatibility -s res://tests/cart_ball_screenshot.gd -- <out dir>`
 - Asphalt lab (ageing, crack types, repairs, replay): `godot --headless -s res://tests/asphalt_test.gd`
 - Asphalt lab screenshots (stages, close-ups, height maps): `xvfb-run godot --rendering-method gl_compatibility -s res://tests/asphalt_screenshot.gd -- <out dir>`

@@ -1,0 +1,446 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/ball/ball.tscn" id="2_ball"]
+[ext_resource type="PackedScene" path="res://scenes/ball/goal.tscn" id="3_goal"]
+[ext_resource type="PackedScene" path="res://scenes/ball/cart_ball.tscn" id="4_mode"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="5_asphalt_phys"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="6_solid"]
+[ext_resource type="Material" path="res://assets/materials/garage/asphalt.tres" id="7_asphalt"]
+[ext_resource type="Material" path="res://assets/materials/garage/concrete_wall.tres" id="8_concrete"]
+[ext_resource type="Material" path="res://assets/materials/garage/paint_white.tres" id="9_white"]
+[ext_resource type="Material" path="res://assets/materials/cart_ball/fence.tres" id="10_fence"]
+[ext_resource type="Material" path="res://assets/materials/garage/galvanized.tres" id="11_rail"]
+[ext_resource type="Material" path="res://assets/materials/cart_ball/team_green.tres" id="12_green"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
+size = Vector3(120, 1, 100)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
+material = ExtResource("7_asphalt")
+size = Vector2(120, 100)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_w0"]
+size = Vector3(4.5426, 4, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_barrier_w0"]
+material = ExtResource("8_concrete")
+size = Vector3(4.5426, 1, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_fence_w0"]
+material = ExtResource("10_fence")
+size = Vector3(4.5426, 3, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rail_w0"]
+material = ExtResource("11_rail")
+size = Vector3(4.5426, 0.06, 0.06)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_w1"]
+size = Vector3(7.4, 4, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_barrier_w1"]
+material = ExtResource("8_concrete")
+size = Vector3(7.4, 1, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_fence_w1"]
+material = ExtResource("10_fence")
+size = Vector3(7.4, 3, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rail_w1"]
+material = ExtResource("11_rail")
+size = Vector3(7.4, 0.06, 0.06)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_w2"]
+size = Vector3(30, 4, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_barrier_w2"]
+material = ExtResource("8_concrete")
+size = Vector3(30, 1, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_fence_w2"]
+material = ExtResource("10_fence")
+size = Vector3(30, 3, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rail_w2"]
+material = ExtResource("11_rail")
+size = Vector3(30, 0.06, 0.06)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_over_goal"]
+size = Vector3(0.5, 1.9, 5.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_fence_over_goal"]
+material = ExtResource("10_fence")
+size = Vector3(0.02, 1.9, 5.2)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_halfway"]
+material = ExtResource("9_white")
+size = Vector2(0.15, 20)
+
+[sub_resource type="TorusMesh" id="TorusMesh_circle"]
+material = ExtResource("9_white")
+inner_radius = 2.85
+outer_radius = 3.0
+rings = 96
+ring_segments = 8
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_spot"]
+material = ExtResource("9_white")
+top_radius = 0.25
+bottom_radius = 0.25
+height = 0.004
+radial_segments = 24
+rings = 1
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_box_front"]
+material = ExtResource("9_white")
+size = Vector2(0.15, 10.15)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_box_side"]
+material = ExtResource("9_white")
+size = Vector2(4, 0.15)
+
+[node name="CartBallArena" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="Floor" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("5_asphalt_phys")
+
+[node name="Shape" type="CollisionShape3D" parent="Floor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("BoxShape3D_floor")
+
+[node name="Mesh" type="MeshInstance3D" parent="Floor"]
+mesh = SubResource("PlaneMesh_floor")
+
+[node name="Walls" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("6_solid")
+
+[node name="SideNorth" type="CollisionShape3D" parent="Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -10.25)
+shape = SubResource("BoxShape3D_w2")
+
+[node name="SideSouth" type="CollisionShape3D" parent="Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 10.25)
+shape = SubResource("BoxShape3D_w2")
+
+[node name="EndRedNorth" type="CollisionShape3D" parent="Walls"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 15.25, 2, -6.3)
+shape = SubResource("BoxShape3D_w1")
+
+[node name="EndRedSouth" type="CollisionShape3D" parent="Walls"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 15.25, 2, 6.3)
+shape = SubResource("BoxShape3D_w1")
+
+[node name="EndGreenNorth" type="CollisionShape3D" parent="Walls"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -15.25, 2, -6.3)
+shape = SubResource("BoxShape3D_w1")
+
+[node name="EndGreenSouth" type="CollisionShape3D" parent="Walls"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -15.25, 2, 6.3)
+shape = SubResource("BoxShape3D_w1")
+
+[node name="CornerRedSouth" type="CollisionShape3D" parent="Walls"]
+transform = Transform3D(0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, 0.707107, 13.676777, 2, 8.676777)
+shape = SubResource("BoxShape3D_w0")
+
+[node name="CornerRedNorth" type="CollisionShape3D" parent="Walls"]
+transform = Transform3D(0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 13.676777, 2, -8.676777)
+shape = SubResource("BoxShape3D_w0")
+
+[node name="CornerGreenSouth" type="CollisionShape3D" parent="Walls"]
+transform = Transform3D(0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, -13.676777, 2, 8.676777)
+shape = SubResource("BoxShape3D_w0")
+
+[node name="CornerGreenNorth" type="CollisionShape3D" parent="Walls"]
+transform = Transform3D(0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, 0.707107, -13.676777, 2, -8.676777)
+shape = SubResource("BoxShape3D_w0")
+
+[node name="OverRedGoal" type="CollisionShape3D" parent="Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.25, 3.05, 0)
+shape = SubResource("BoxShape3D_over_goal")
+
+[node name="OverGreenGoal" type="CollisionShape3D" parent="Walls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.25, 3.05, 0)
+shape = SubResource("BoxShape3D_over_goal")
+
+[node name="Barriers" type="Node3D" parent="."]
+
+[node name="SideNorth" type="Node3D" parent="Barriers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10.25)
+
+[node name="Concrete" type="MeshInstance3D" parent="Barriers/SideNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_barrier_w2")
+
+[node name="Fence" type="MeshInstance3D" parent="Barriers/SideNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_fence_w2")
+
+[node name="Rail" type="MeshInstance3D" parent="Barriers/SideNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+mesh = SubResource("BoxMesh_rail_w2")
+
+[node name="SideSouth" type="Node3D" parent="Barriers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 10.25)
+
+[node name="Concrete" type="MeshInstance3D" parent="Barriers/SideSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_barrier_w2")
+
+[node name="Fence" type="MeshInstance3D" parent="Barriers/SideSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_fence_w2")
+
+[node name="Rail" type="MeshInstance3D" parent="Barriers/SideSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+mesh = SubResource("BoxMesh_rail_w2")
+
+[node name="EndRedNorth" type="Node3D" parent="Barriers"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 15.25, 0, -6.3)
+
+[node name="Concrete" type="MeshInstance3D" parent="Barriers/EndRedNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_barrier_w1")
+
+[node name="Fence" type="MeshInstance3D" parent="Barriers/EndRedNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_fence_w1")
+
+[node name="Rail" type="MeshInstance3D" parent="Barriers/EndRedNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+mesh = SubResource("BoxMesh_rail_w1")
+
+[node name="EndRedSouth" type="Node3D" parent="Barriers"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 15.25, 0, 6.3)
+
+[node name="Concrete" type="MeshInstance3D" parent="Barriers/EndRedSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_barrier_w1")
+
+[node name="Fence" type="MeshInstance3D" parent="Barriers/EndRedSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_fence_w1")
+
+[node name="Rail" type="MeshInstance3D" parent="Barriers/EndRedSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+mesh = SubResource("BoxMesh_rail_w1")
+
+[node name="EndGreenNorth" type="Node3D" parent="Barriers"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -15.25, 0, -6.3)
+
+[node name="Concrete" type="MeshInstance3D" parent="Barriers/EndGreenNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_barrier_w1")
+
+[node name="Fence" type="MeshInstance3D" parent="Barriers/EndGreenNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_fence_w1")
+
+[node name="Rail" type="MeshInstance3D" parent="Barriers/EndGreenNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+mesh = SubResource("BoxMesh_rail_w1")
+
+[node name="EndGreenSouth" type="Node3D" parent="Barriers"]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -15.25, 0, 6.3)
+
+[node name="Concrete" type="MeshInstance3D" parent="Barriers/EndGreenSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_barrier_w1")
+
+[node name="Fence" type="MeshInstance3D" parent="Barriers/EndGreenSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_fence_w1")
+
+[node name="Rail" type="MeshInstance3D" parent="Barriers/EndGreenSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+mesh = SubResource("BoxMesh_rail_w1")
+
+[node name="CornerRedSouth" type="Node3D" parent="Barriers"]
+transform = Transform3D(0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, 0.707107, 13.676777, 0, 8.676777)
+
+[node name="Concrete" type="MeshInstance3D" parent="Barriers/CornerRedSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_barrier_w0")
+
+[node name="Fence" type="MeshInstance3D" parent="Barriers/CornerRedSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_fence_w0")
+
+[node name="Rail" type="MeshInstance3D" parent="Barriers/CornerRedSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+mesh = SubResource("BoxMesh_rail_w0")
+
+[node name="CornerRedNorth" type="Node3D" parent="Barriers"]
+transform = Transform3D(0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, 13.676777, 0, -8.676777)
+
+[node name="Concrete" type="MeshInstance3D" parent="Barriers/CornerRedNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_barrier_w0")
+
+[node name="Fence" type="MeshInstance3D" parent="Barriers/CornerRedNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_fence_w0")
+
+[node name="Rail" type="MeshInstance3D" parent="Barriers/CornerRedNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+mesh = SubResource("BoxMesh_rail_w0")
+
+[node name="CornerGreenSouth" type="Node3D" parent="Barriers"]
+transform = Transform3D(0.707107, 0, -0.707107, 0, 1, 0, 0.707107, 0, 0.707107, -13.676777, 0, 8.676777)
+
+[node name="Concrete" type="MeshInstance3D" parent="Barriers/CornerGreenSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_barrier_w0")
+
+[node name="Fence" type="MeshInstance3D" parent="Barriers/CornerGreenSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_fence_w0")
+
+[node name="Rail" type="MeshInstance3D" parent="Barriers/CornerGreenSouth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+mesh = SubResource("BoxMesh_rail_w0")
+
+[node name="CornerGreenNorth" type="Node3D" parent="Barriers"]
+transform = Transform3D(0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, 0.707107, -13.676777, 0, -8.676777)
+
+[node name="Concrete" type="MeshInstance3D" parent="Barriers/CornerGreenNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_barrier_w0")
+
+[node name="Fence" type="MeshInstance3D" parent="Barriers/CornerGreenNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_fence_w0")
+
+[node name="Rail" type="MeshInstance3D" parent="Barriers/CornerGreenNorth"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+mesh = SubResource("BoxMesh_rail_w0")
+
+[node name="FenceOverRedGoal" type="MeshInstance3D" parent="Barriers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.25, 3.05, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_fence_over_goal")
+
+[node name="FenceOverGreenGoal" type="MeshInstance3D" parent="Barriers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.25, 3.05, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_fence_over_goal")
+
+[node name="Lines" type="Node3D" parent="."]
+
+[node name="Halfway" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.003, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_halfway")
+
+[node name="CentreCircle" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1, 0, 0, 0, 0.04, 0, 0, 0, 1, 0, 0.003, 0)
+cast_shadow = 0
+mesh = SubResource("TorusMesh_circle")
+
+[node name="CentreSpot" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
+cast_shadow = 0
+mesh = SubResource("CylinderMesh_spot")
+
+[node name="RedBoxFront" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0.003, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_box_front")
+
+[node name="RedBoxNorth" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0.003, -5)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_box_side")
+
+[node name="RedBoxSouth" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0.003, 5)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_box_side")
+
+[node name="GreenBoxFront" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 0.003, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_box_front")
+
+[node name="GreenBoxNorth" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 0.003, -5)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_box_side")
+
+[node name="GreenBoxSouth" type="MeshInstance3D" parent="Lines"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 0.003, 5)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_box_side")
+
+[node name="RedPaint" type="Label3D" parent="Lines"]
+transform = Transform3D(0, 1, 0, 0, 0, 1, 1, 0, 0, 12.6, 0.02, 0)
+modulate = Color(0.86, 0.16, 0.14, 1)
+text = "RED"
+font_size = 220
+outline_size = 0
+
+[node name="GreenPaint" type="Label3D" parent="Lines"]
+transform = Transform3D(0, -1, 0, 0, 0, 1, -1, 0, 0, -12.6, 0.02, 0)
+modulate = Color(0.16, 0.72, 0.32, 1)
+text = "GREEN"
+font_size = 220
+outline_size = 0
+
+[node name="RedSign" type="Label3D" parent="."]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 15.2, 3, 0)
+modulate = Color(0.86, 0.16, 0.14, 1)
+text = "RED"
+font_size = 160
+outline_size = 18
+
+[node name="GreenSign" type="Label3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -15.2, 3, 0)
+modulate = Color(0.16, 0.72, 0.32, 1)
+text = "GREEN"
+font_size = 160
+outline_size = 18
+
+[node name="GoalRed" parent="." instance=ExtResource("3_goal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 0, 0)
+
+[node name="GoalGreen" parent="." instance=ExtResource("3_goal")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -15, 0, 0)
+
+[node name="PostLeft" parent="GoalGreen" index="1"]
+surface_material_override/0 = ExtResource("12_green")
+
+[node name="PostRight" parent="GoalGreen" index="2"]
+surface_material_override/0 = ExtResource("12_green")
+
+[node name="Crossbar" parent="GoalGreen" index="3"]
+surface_material_override/0 = ExtResource("12_green")
+
+[node name="FloorPaint" parent="GoalGreen" index="8"]
+surface_material_override/0 = ExtResource("12_green")
+
+[node name="Ball" parent="." instance=ExtResource("2_ball")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.66, 0)
+
+[node name="BallSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.66, 0)
+
+[node name="CartSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 0)
+
+[node name="CartBall" parent="." node_paths=PackedStringArray("ball", "ball_spawn", "kickoff_spot") instance=ExtResource("4_mode")]
+ball = NodePath("../Ball")
+ball_spawn = NodePath("../BallSpawn")
+kickoff_spot = NodePath("../CartSpawn")
+
+[connection signal="body_entered" from="GoalRed/Inside" to="CartBall" method="_on_red_goal_body_entered"]
+[connection signal="body_entered" from="GoalGreen/Inside" to="CartBall" method="_on_green_goal_body_entered"]

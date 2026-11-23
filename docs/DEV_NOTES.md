@@ -1671,3 +1671,13 @@ by node, so moving the sections didn't need a re-bake.
 - `Net.test_latency` delays everything a machine sends; `multiplayer_test.gd` runs the guest with 150 ms. The guest
   got going in 0.21 s (0.22 s offline), the largest correction was 5.8 cm, and it came to rest 0.000 m from the host.
 - Known limit: the predicted cart passes through boxes and other carts on the guest until the host's push shows up.
+
+## Asphalt: parking lot paint (Nov 23 2026)
+
+AsphaltSim has painted lines (`paint_lines`, start/end pairs in metres) for stall lines. Sizes come from the
+parking lot design PDF in `References/Levels/c620content.pdf`: lines are 4 in (0.1 m) wide, and stalls here are
+2.5 m wide by 5.5 m deep. The paint stands `paint_thickness` (0.8 mm) proud in `bake_height()`, so the cart's
+wheels feel it. `paint_left(p)` gives how much is left: it wears with surface age and traffic, fastest in the wheel
+paths, in 20 cm patches. Cracks cut through it, patches and fills cover it, and a surface seal or overlay repaints
+it. AsphaltCanvas draws it in 5 cm pieces, with an optional `paint_texture` (white, modulated) and `paint_color` as
+the fallback. The lab and the lot sections have a stall row of four stalls plus a head line. The lot is re-baked.
