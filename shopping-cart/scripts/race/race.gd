@@ -36,6 +36,7 @@ static var bots_on_load := true
 ## The racing bots' way down: its Marker3D children in order (wide of each hairpin, say), then bot_goal.
 @export var route: Node3D
 @export var hud: RaceHUD
+@export var goal_text := "Race down to the exit"   ## the HUD line under the clock: where the race goes
 
 enum Phase { IDLE, WAITING, COUNTDOWN, RACING, DONE }
 var phase := Phase.IDLE
@@ -277,11 +278,11 @@ func _process(_delta: float) -> void:
 		Phase.COUNTDOWN:
 			var n := ceili(clock)
 			hud.show_countdown(str(n) if n > 0 else "GO!", float(n) - clock if n > 0 else 0.0)
-			hud.show_clock(0.0, "Get ready: race down to the exit")
+			hud.show_clock(0.0, "Get ready: " + goal_text.to_lower())
 		Phase.RACING:
 			hud.show_countdown("GO!" if clock < go_hold else "", clock / go_hold)
 			var done := racers.filter(func(x): return x.time >= 0.0).size()
-			var status := "Race down to the exit"
+			var status := goal_text
 			if not me.is_empty() and me.time >= 0.0:
 				status = "You finished %s in %s" % [RaceHUD.ordinal(_place_of(me)), RaceHUD.format_time(me.time)]
 			elif done > 0:

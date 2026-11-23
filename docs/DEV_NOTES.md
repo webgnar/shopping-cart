@@ -5,6 +5,26 @@ triangle count and file size for new models, judgment calls, what was left out, 
 
 
 
+## 2026-11-23: Downhill highway race (console `downhill`, `race downhill`)
+
+zack: "need a simple downhill map for a multiplayer race. fairly steep. two lane highway."
+`scenes/levels/downhill_highway.tscn`: a 600 m two-lane highway (two 3.7 m lanes, 1.5 m paved shoulders, double
+yellow centre line, white edge lines) between concrete Jersey barriers, down a grassy canyon. Flat 40 m at the top
+for the grid, then a smooth roll into 15 % for about 400 m through two S-bends (about 90 m radius), easing back to
+flat before the finish at 520 m and an 80 m run-out to an end wall. Drop 62 m. It reuses the garage's race scene
+(`scenes/race/race.tscn`, 12 grid slots, two abreast per lane) and its asphalt, paint and concrete materials.
+- Built from nodes: the `Road` Path3D's curve is the centre line, and every part (asphalt, lines, barriers, slopes) is a
+  CSGPolygon3D cross-section swept along it, so dragging curve points in the editor reshapes the whole road. CSG can't
+  take a physics material, so collision is on StaticBody3Ds (RoadBody asphalt, Barriers concrete, Slopes grass) with
+  shapes baked from the CSG by `tools/bake_downhill_collision_cli.gd` into `assets/downhill/collision/`. Re-run it
+  after editing the road (the scene was laid out once by a scratch generator, not committed; edit it directly).
+- Race: `goal_text` export on Race for the HUD line ("Race down the highway"); the console's `race <place>` races in
+  another level. No bot carts (no nav mesh), so it's players only; multiplayer guests race as in the garage.
+- Carts have a lot of rolling drag: freewheeling at 12 % one settled near 5 m/s, hence 15 %. The test driver, held to 3.5 m/s, takes 2:21.
+- Left out: trees, signs, a backdrop past the canyon rims, bots.
+- Test: `godot --headless --fixed-fps 120 -s res://tests/downhill_test.gd` (drives down with the real keys). Screenshots:
+  `xvfb-run godot --rendering-method gl_compatibility -s res://tests/downhill_screenshot.gd -- <out dir>`.
+
 ## 2026-11-22: Backrest and seat swing freely
 
 zack: they're loose hinges, they should swing freely; zack will add friction later. Removed the hinge friction
@@ -1746,7 +1766,14 @@ corners. The curve is the curb line at ground level; the street is on its right.
 back, 4" in the ground) are hidden and not modelled. Demo: `scenes/curb/curb_demo.tscn`. Test: `tests/curb_test.gd`
 (profile sizes, ray hits on top/face/caps/island corner). Renders: `tests/curb_screenshot.gd`.
 
-## Asphalt lab: show or hide my repairs (Nov 23 2026)
+## Asphalt lab: one toggle per repair (Nov 23 2026)
+
+zack: each kind of repair is a checkbox. Ticking one does it at the slider's year (shown on the box, "Fill cracks
+(year 12.0)"); unticking undoes only that one and replays. Each kind is done at most once. The slider is the road's
+own year again (0 to 40), not years since the last repair. The "Show my repairs", "Road crew repairs on its own" and
+"Forget my repairs" controls are gone from the lab (`auto_maintain` stays in AsphaltSim for the lot's crew column).
+`AsphaltSim.set_repair(action, on, t)` and `repair_year(action)` replace `clear_events()`. The year label wraps, so a
+long label can no longer widen the side panel over the maps.
 
 A "Show my repairs" checkbox under the repair buttons turns the repairs done by hand off and on at the same year,
 so the road can be compared with and without them. They are kept while hidden (`AsphaltSim.show_repairs`,

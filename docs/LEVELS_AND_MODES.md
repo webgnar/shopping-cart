@@ -50,8 +50,14 @@ of this to work on how the cart drives.
   the same keys a player does; where each stands in the arena is its kickoff spot). Kickoff counts 3, 2, 1 with every
   cart held; a goal shows GOAL!, then a slowed replay of the last seconds from the `ReplayCamera` (a push key skips
   it), then a new kickoff. First to `goals_to_win` (5) wins; the clock counts up unless `match_time` sets a limit.
-  Console `ball` loads the arena and starts a match. The score runs on the host only, and multiplayer guests get no
-  team yet.
+  Console `ball` loads the arena and starts a match. Multiplayer: the host plays Green and guests join Red, Green,
+  Red... kicking off from the arena's `GreenSpots` / `RedSpots`; the Red bots play only while no player is on Red
+  (else they wait at `Bench`). The host runs the match and sends it to guests (BALL message); the replay moves the
+  real bodies on the host, so guests see it through the snapshots.
+- `scenes/levels/downhill_highway.tscn` (console `downhill`; `race downhill` races it) — a 600 m two-lane highway
+  down a grassy canyon at 15 % with two S-bends, Jersey barriers both sides, for multiplayer races (players only, no
+  bots). The road is CSGPolygon3D cross-sections swept along the `Road` Path3D; after editing it re-bake the collision
+  with `godot --headless -s res://tools/bake_downhill_collision_cli.gd`.
 - `scenes/levels/chain_lot.tscn` (console `chain`) — a blank asphalt lot for testing long chains of nested carts:
   a line of 10 single spare carts straight ahead of `CartSpawn` (3 m apart, facing +X, push into their backs) and 16
   more scattered at random headings under `Carts/Scattered`. Uses `scripts/main.gd`; no other props.
@@ -95,6 +101,7 @@ From `shopping-cart/`:
 - Multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/multiplayer_test.gd`
 - Rendezvous service, and online play by join code over WebRTC (from `services/rendezvous`, after `npm install`):
   `npm test` and `npm run test:godot`
+- Downhill highway race (`race downhill`, drives down to the finish): `godot --headless --fixed-fps 120 -s res://tests/downhill_test.gd`
 - Garage race (console `race`, count, lock until GO, finish, bots race all ten floors): `godot --headless --fixed-fps 120 -s res://tests/race_test.gd`
 - Supermarket sweep (console `sweep`, count, grab, limit, spills, bonuses, bots shop, results): `godot --headless --fixed-fps 120 -s res://tests/sweep_test.gd`
 - Sweep screenshots: `xvfb-run godot --rendering-method gl_compatibility -s res://tests/sweep_screenshot.gd -- <out dir>`
@@ -102,6 +109,7 @@ From `shopping-cart/`:
 - Bot carts drive themselves in every level: `godot --headless --fixed-fps 120 -s res://tests/bot_test.gd`
 - Endless sandbox (chunks load, no holes, flush edges, floors, hill): `godot --headless --fixed-fps 120 -s res://tests/sandbox_test.gd`
 - Cart Ball (console `ball`, kickoff hold, bots score and keep goal, replay and skip, ball pushed, goals both ends, no-goal on the line, out of bounds, first to five): `godot --headless --fixed-fps 120 -s res://tests/cart_ball_test.gd`
+- Cart Ball multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/cart_ball_multiplayer_test.gd`
 - Cart Ball screenshots: `xvfb-run godot --rendering-method gl_compatibility -s res://tests/cart_ball_screenshot.gd -- <out dir>`
 - Asphalt lab (ageing, crack types, repairs, replay): `godot --headless -s res://tests/asphalt_test.gd`
 - Asphalt lab screenshots (stages, close-ups, height maps): `xvfb-run godot --rendering-method gl_compatibility -s res://tests/asphalt_screenshot.gd -- <out dir>`
