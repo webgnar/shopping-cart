@@ -52,6 +52,10 @@ of this to work on how the cart drives.
   it), then a new kickoff. First to `goals_to_win` (5) wins; the clock counts up unless `match_time` sets a limit.
   Console `ball` loads the arena and starts a match. The score runs on the host only, and multiplayer guests get no
   team yet.
+- `scenes/levels/downhill_highway.tscn` (console `downhill`; `race downhill` races it) — a 600 m two-lane highway
+  down a grassy canyon at 15 % with two S-bends, Jersey barriers both sides, for multiplayer races (players only, no
+  bots). The road is CSGPolygon3D cross-sections swept along the `Road` Path3D; after editing it re-bake the collision
+  with `godot --headless -s res://tools/bake_downhill_collision_cli.gd`.
 - `scenes/levels/chain_lot.tscn` (console `chain`) — a blank asphalt lot for testing long chains of nested carts:
   a line of 10 single spare carts straight ahead of `CartSpawn` (3 m apart, facing +X, push into their backs) and 16
   more scattered at random headings under `Carts/Scattered`. Uses `scripts/main.gd`; no other props.
@@ -95,6 +99,7 @@ From `shopping-cart/`:
 - Multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/multiplayer_test.gd`
 - Rendezvous service, and online play by join code over WebRTC (from `services/rendezvous`, after `npm install`):
   `npm test` and `npm run test:godot`
+- Downhill highway race (`race downhill`, drives down to the finish): `godot --headless --fixed-fps 120 -s res://tests/downhill_test.gd`
 - Garage race (console `race`, count, lock until GO, finish, bots race all ten floors): `godot --headless --fixed-fps 120 -s res://tests/race_test.gd`
 - Supermarket sweep (console `sweep`, count, grab, limit, spills, bonuses, bots shop, results): `godot --headless --fixed-fps 120 -s res://tests/sweep_test.gd`
 - Sweep screenshots: `xvfb-run godot --rendering-method gl_compatibility -s res://tests/sweep_screenshot.gd -- <out dir>`

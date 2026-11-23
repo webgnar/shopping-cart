@@ -5,6 +5,26 @@ triangle count and file size for new models, judgment calls, what was left out, 
 
 
 
+## 2026-11-23: Downhill highway race (console `downhill`, `race downhill`)
+
+zack: "need a simple downhill map for a multiplayer race. fairly steep. two lane highway."
+`scenes/levels/downhill_highway.tscn`: a 600 m two-lane highway (two 3.7 m lanes, 1.5 m paved shoulders, double
+yellow centre line, white edge lines) between concrete Jersey barriers, down a grassy canyon. Flat 40 m at the top
+for the grid, then a smooth roll into 15 % for about 400 m through two S-bends (about 90 m radius), easing back to
+flat before the finish at 520 m and an 80 m run-out to an end wall. Drop 62 m. It reuses the garage's race scene
+(`scenes/race/race.tscn`, 12 grid slots, two abreast per lane) and its asphalt, paint and concrete materials.
+- Built from nodes: the `Road` Path3D's curve is the centre line, and every part (asphalt, lines, barriers, slopes) is a
+  CSGPolygon3D cross-section swept along it, so dragging curve points in the editor reshapes the whole road. CSG can't
+  take a physics material, so collision is on StaticBody3Ds (RoadBody asphalt, Barriers concrete, Slopes grass) with
+  shapes baked from the CSG by `tools/bake_downhill_collision_cli.gd` into `assets/downhill/collision/`. Re-run it
+  after editing the road (the scene was laid out once by a scratch generator, not committed; edit it directly).
+- Race: `goal_text` export on Race for the HUD line ("Race down the highway"); the console's `race <place>` races in
+  another level. No bot carts (no nav mesh), so it's players only; multiplayer guests race as in the garage.
+- Carts have a lot of rolling drag: freewheeling at 12 % one settled near 5 m/s, hence 15 %. The test driver, held to 3.5 m/s, takes 2:21.
+- Left out: trees, signs, a backdrop past the canyon rims, bots.
+- Test: `godot --headless --fixed-fps 120 -s res://tests/downhill_test.gd` (drives down with the real keys). Screenshots:
+  `xvfb-run godot --rendering-method gl_compatibility -s res://tests/downhill_screenshot.gd -- <out dir>`.
+
 ## 2026-11-22: Backrest and seat swing freely
 
 zack: they're loose hinges, they should swing freely; zack will add friction later. Removed the hinge friction
