@@ -1681,3 +1681,14 @@ wheels feel it. `paint_left(p)` gives how much is left: it wears with surface ag
 paths, in 20 cm patches. Cracks cut through it, patches and fills cover it, and a surface seal or overlay repaints
 it. AsphaltCanvas draws it in 5 cm pieces, with an optional `paint_texture` (white, modulated) and `paint_color` as
 the fallback. The lab and the lot sections have a stall row of four stalls plus a head line. The lot is re-baked.
+
+## 2026-11-23: parking block rebuilt to the Nitterhouse 6' sheet
+
+zack asked for the parking block to match `References/Props/6-ft-wheel-stops_Nitterhouse.pdf`.
+`parking_block()` in `tools/parking_lot_models.py` now builds 72" x 7 5/8" x 5" (1.829 x 0.194 x 0.127 m) with the
+top long edges chamfered, two 3/4" pin holes cut straight through (exact boolean) with 5/8" rebar pins 1 cm below
+the top, and two 8" x 1" drain slots under it with 36" between them. The sheet doesn't size the chamfer, hole
+positions or slot ends, so they are read off its drawing: chamfer 1 1/2" across x 1 3/4" down, holes 6 1/2" and
+slots 10" from each end. The yellow reflector strips went (not on the sheet). 236 tris, 0 z-fighting hits.
+`parking_block.tscn` collides with a ConvexPolygonShape3D of the chamfered section (was a box); the 1" slots
+are left out of the shape. parking_lot_test's block face moved to z = -1.25.
