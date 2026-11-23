@@ -20,7 +20,7 @@ config/icon="uid://d0rbvnae1syfi"
 
 Console="*res://scenes/ui/console.tscn"
 Net="*res://scenes/net/net_session.tscn"
-PauseMenu="*res://scenes/ui/pause_menu.tscn"
+Pause="*res://scenes/ui/pause_menu.tscn"
 
 [display]
 

@@ -1,6 +1,6 @@
 class_name PauseMenu
 extends CanvasLayer
-## The pause menu (Esc), loaded as the `PauseMenu` autoload so it works in every level. It has a button for each
+## The pause menu (Esc), loaded as the `Pause` autoload so it works in every level. It has a button for each
 ## console command (built from the console's own list every time it opens, so new commands show up by themselves),
 ## plus Resume and Quit. Places (the console's fast-travel destinations, race and sweep) go in the top grid, the
 ## rest under Commands. Layout lives in scenes/ui/pause_menu.tscn; buttons are copies of its ButtonTemplate.
