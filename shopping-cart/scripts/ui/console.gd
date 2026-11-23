@@ -13,6 +13,8 @@ extends CanvasLayer
 @export var race_level := "garage"
 ## The `sweep` command's level: a destinations key whose scene has a Sweep node (scenes/sweep/sweep.tscn).
 @export var sweep_level := "market"
+## The `lotgen` command's level: a destinations key whose scene has a LotGenerator (scenes/lot_gen/lot_generator.tscn).
+@export var lot_gen_level := "lotgen"
 
 @onready var _output: RichTextLabel = %Output
 @onready var _entry: LineEdit = %Input
@@ -32,12 +34,22 @@ func _ready() -> void:
 	add_command("race", _cmd_race, "race to the bottom of the parking garage: 3, 2, 1, go! (race nobots: just players; race downhill: the downhill highway)")
 	for place in destinations:
 		add_command(place, _travel.bind(place), "fast travel to %s" % destinations[place].get_file())
+	add_command(lot_gen_level, _cmd_lotgen, "a freshly generated parking lot (lotgen 45: 45 degree stalls; lotgen 60 7: seed 7; add oneway for one-way aisles)")
 	log_line("[color=#8a93a6]Console ready. Type [b]help[/b] for commands.[/color]")
 
 
 ## Adds a console command (other autoloads add theirs, e.g. Net's host/join).
 func add_command(name: String, run: Callable, help: String) -> void:
 	_commands[name] = {"run": run, "help": help}
+
+
+## Every command name, in the order they were added (the pause menu makes a button per command).
+func command_names() -> Array:
+	return _commands.keys()
+
+
+func command_help(name: String) -> String:
+	return _commands[name].help if _commands.has(name) else ""
 
 
 func is_open() -> bool:
@@ -176,6 +188,19 @@ func _cmd_sweep(args: PackedStringArray) -> void:
 	Sweep.bots_on_load = with_bots
 	Sweep.duration_on_load = seconds
 	_travel(PackedStringArray(), sweep_level)
+
+
+func _cmd_lotgen(args: PackedStringArray) -> void:
+	var options := {}
+	for a in args:
+		if a == "oneway":
+			options.two_way = false
+		elif a in ["90", "60", "45", "30"] and not options.has("stall_angle"):
+			options.stall_angle = int(a)
+		elif a.is_valid_int():
+			options.seed = int(a)
+	LotGenerator.next_options = options
+	_travel(PackedStringArray(), lot_gen_level)
 
 
 func _travel(_args: PackedStringArray, place: String) -> void:

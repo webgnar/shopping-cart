@@ -49,7 +49,8 @@ destinations = Dictionary[String, String]({
 "asphalt": "res://scenes/levels/asphalt_lot.tscn",
 "ball": "res://scenes/levels/cart_ball_arena.tscn",
 "chain": "res://scenes/levels/chain_lot.tscn",
-"sandbox": "res://scenes/main.tscn"
+"lotgen": "res://scenes/levels/generated_lot.tscn",
+"sandbox": "res://scenes/levels/lot90.tscn"
 })
 
 [node name="Panel" type="PanelContainer" parent="."]

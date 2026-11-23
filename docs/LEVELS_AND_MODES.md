@@ -5,7 +5,7 @@ of this to work on how the cart drives.
 
 ## Layout of the whole game
 
-- `scenes/main.tscn` — the sandbox level: an endless parking lot to work out the cart's physics in, with a test
+- `scenes/main.tscn` — the old sandbox (still what drive_test and most tests load; the console `sandbox` and the game start now go to `lot90.tscn`): an endless parking lot to work out the cart's physics in, with a test
   strip (speed bumps, a curb, a ramp up to a ledge, boxes) down the spawn aisle and `CartSpawn`. Its `Chunks` node
   (`scripts/sandbox/chunk_streamer.gd`) fills a 40 m grid around the cart with terrain chunks from
   `scenes/sandbox/chunks/`, picked by a hash of the square so the layout never changes. The sandbox uses only
@@ -54,13 +54,20 @@ of this to work on how the cart drives.
   Red... kicking off from the arena's `GreenSpots` / `RedSpots`; the Red bots play only while no player is on Red
   (else they wait at `Bench`). The host runs the match and sends it to guests (BALL message); the replay moves the
   real bodies on the host, so guests see it through the snapshots.
-- `scenes/levels/downhill_highway.tscn` (console `downhill`; `race downhill` races it) — a 600 m two-lane highway
-  down a grassy canyon at 15 % with two S-bends, Jersey barriers both sides, for multiplayer races (players only, no
+- `scenes/levels/downhill_highway.tscn` (console `downhill`; `race downhill` races it) — a 600 m dead-straight two-lane
+  highway down a grassy canyon at 30 %, Jersey barriers both sides, for multiplayer races (players only, no
   bots). The road is CSGPolygon3D cross-sections swept along the `Road` Path3D; after editing it re-bake the collision
   with `godot --headless -s res://tools/bake_downhill_collision_cli.gd`.
 - `scenes/levels/chain_lot.tscn` (console `chain`) — a blank asphalt lot for testing long chains of nested carts:
   a line of 10 single spare carts straight ahead of `CartSpawn` (3 m apart, facing +X, push into their backs) and 16
   more scattered at random headings under `Carts/Scattered`. Uses `scripts/main.gd`; no other props.
+- `scenes/levels/generated_lot.tscn` (console `lotgen`, `lotgen 45 7 oneway` for 45 degree stalls, seed 7, one-way
+  aisles) — a parking lot laid out on load by `LotGenerator` (`scenes/lot_gen/lot_generator.tscn`): stall rows,
+  aisles, curbed end islands, wheel stops, striping, a perimeter curb and cart corrals. `CartSpawn` is just outside
+  the entrance on the lot's -X edge.
+- `scenes/levels/lot90.tscn` (console `sandbox`; the game starts here) — a 60 x 40 m 90 degree lot from the same generator, paved with 24
+  aged asphalt sections (year 12) whose sims paint, wear and crack the stall lines; the traffic's wheel paths run down
+  the aisles. Baked into the scene: re-run `tools/bake_lot_cli.gd` and the asphalt section bake after changing it.
 - `scenes/asphalt/asphalt_lab.tscn` — the 2D asphalt lab: a road section ageing year by year (the crack types in
   zack's Asphalt Cracking Quick Guide, potholes) and being repaired (crack filling, pothole fill, heavy patches, chip
   seal, overlay), drawn as a colour map and a height map (`AsphaltSim.bake_height()` gives real heights in metres for displacement;
@@ -95,6 +102,8 @@ From `shopping-cart/`:
   by `tools/coast_models.py`; its docstring lists the steps to rebuild it)
 - Stacked carts (nest, herd, pull off, knocks): `godot --headless --fixed-fps 120 -s res://tests/cart_stack_test.gd`
 - Long cart chains in the chain lot (plough the line, turn, rest, pull off): `godot --headless --fixed-fps 120 -s res://tests/chain_lot_test.gd`
+- Parking lot generator (Table 1 sizes at every angle, stops, islands): `godot --headless -s res://tests/lot_generator_test.gd`
+- Parking lot generator screenshots: `xvfb-run godot --rendering-method gl_compatibility -s res://tests/lot_generator_screenshot.gd -- <out dir>`
 - Wheel sounds (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
 - Sandbox screenshots (spawn, overview, test strip, 2 km out): `xvfb-run godot -s res://tests/sandbox_screenshot.gd -- <out prefix>`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
