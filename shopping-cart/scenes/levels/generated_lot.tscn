@@ -1,0 +1,30 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="2_asphalt"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/sidewalk.tres" id="3_sidewalk"]
+[ext_resource type="PackedScene" path="res://scenes/lot_gen/lot_generator.tscn" id="4_gen"]
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_ground"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+material = ExtResource("3_sidewalk")
+size = Vector2(400, 400)
+
+[node name="GeneratedLot" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="Ground" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("2_asphalt")
+
+[node name="Shape" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("WorldBoundaryShape3D_ground")
+
+[node name="Mesh" type="MeshInstance3D" parent="Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0)
+mesh = SubResource("PlaneMesh_ground")
+
+[node name="CartSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 0)
+
+[node name="LotGenerator" parent="." instance=ExtResource("4_gen")]

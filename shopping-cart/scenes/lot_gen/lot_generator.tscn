@@ -1,0 +1,41 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/lot_gen/lot_generator.gd" id="1_gen"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/asphalt.tres" id="2_asphalt"]
+[ext_resource type="PackedScene" path="res://scenes/lot_gen/stripe.tscn" id="3_stripe"]
+[ext_resource type="PackedScene" path="res://scenes/curb/curb.tscn" id="4_curb"]
+[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/parking_block.tscn" id="5_stop"]
+[ext_resource type="PackedScene" path="res://scenes/lot_gen/island_fill.tscn" id="6_fill"]
+[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/cart_corral.tscn" id="7_corral"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_lot"]
+material = ExtResource("2_asphalt")
+size = Vector2(1, 1)
+
+[node name="LotGenerator" type="Node3D" node_paths=PackedStringArray("surface", "stripes", "stops", "curbs", "islands", "corral_group")]
+script = ExtResource("1_gen")
+surface = NodePath("Surface")
+stripes = NodePath("Stripes")
+stops = NodePath("WheelStops")
+curbs = NodePath("Curbs")
+islands = NodePath("Islands")
+corral_group = NodePath("Corrals")
+stripe_scene = ExtResource("3_stripe")
+curb_scene = ExtResource("4_curb")
+wheel_stop_scene = ExtResource("5_stop")
+island_fill_scene = ExtResource("6_fill")
+corral_scene = ExtResource("7_corral")
+
+[node name="Surface" type="MeshInstance3D" parent="."]
+transform = Transform3D(70, 0, 0, 0, 1, 0, 0, 0, 60, 35, 0, 0)
+mesh = SubResource("PlaneMesh_lot")
+
+[node name="Stripes" type="Node3D" parent="."]
+
+[node name="WheelStops" type="Node3D" parent="."]
+
+[node name="Curbs" type="Node3D" parent="."]
+
+[node name="Islands" type="Node3D" parent="."]
+
+[node name="Corrals" type="Node3D" parent="."]
