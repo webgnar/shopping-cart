@@ -1715,3 +1715,11 @@ positions or slot ends, so they are read off its drawing: chamfer 1 1/2" across 
 slots 10" from each end. The yellow reflector strips went (not on the sheet). 236 tris, 0 z-fighting hits.
 `parking_block.tscn` collides with a ConvexPolygonShape3D of the chamfered section (was a box); the 1" slots
 are left out of the shape. parking_lot_test's block face moved to z = -1.25.
+
+## Asphalt lab: repair, then the timeline starts again (Nov 23 2026)
+
+Clicking a repair now repairs the road as it is at the slider's year, and the slider goes back to the start. From
+then on it counts years since that repair; the label also shows the road's own year. Repairs stack: scrub forward,
+repair again, and the timeline restarts from there. Clear repairs goes back to the original timeline.
+`AsphaltSim.advance_to(t)` now includes repairs made at exactly t (`_apply_due`), so the slider's start shows the
+road already repaired.
