@@ -1704,3 +1704,14 @@ zack chose to improve how the damage mechanisms relate rather than build a sprin
 Also new are `thermal_spacing` (new binder, aged binder; scaled by sqrt(structure)/sqrt(climate)) and the
 configurable `oxidation_years`. Thermal cracks now open in the middle of the longest uncracked stretch once it
 passes 1.6 x the spacing, which is how shrinkage stress relief works. The lot is re-baked.
+
+## 2026-11-23: parking block rebuilt to the Nitterhouse 6' sheet
+
+zack asked for the parking block to match `References/Props/6-ft-wheel-stops_Nitterhouse.pdf`.
+`parking_block()` in `tools/parking_lot_models.py` now builds 72" x 7 5/8" x 5" (1.829 x 0.194 x 0.127 m) with the
+top long edges chamfered, two 3/4" pin holes cut straight through (exact boolean) with 5/8" rebar pins 1 cm below
+the top, and two 8" x 1" drain slots under it with 36" between them. The sheet doesn't size the chamfer, hole
+positions or slot ends, so they are read off its drawing: chamfer 1 1/2" across x 1 3/4" down, holes 6 1/2" and
+slots 10" from each end. The yellow reflector strips went (not on the sheet). 236 tris, 0 z-fighting hits.
+`parking_block.tscn` collides with a ConvexPolygonShape3D of the chamfered section (was a box); the 1" slots
+are left out of the shape. parking_lot_test's block face moved to z = -1.25.
