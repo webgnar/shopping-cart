@@ -1,0 +1,2868 @@
+ABSTRACT 
+FENG, ZHEN. Micromechanics-based Multiscale Lattice Modeling of Fatigue Cracking in 
+Hot Mixed Asphalt. (Under the direction of Y. Richard Kim and Murthy N. Guddati.) 
+This dissertation presents a novel micromechanics-based lattice procedure designed to 
+characterize the cracking performance of hot mix asphalt (HMA) from its constituent 
+material properties. The approach essentially consists of a series of direct-lattice models 
+integrated with multiscale technique. A typical direct-lattice modeling starts with a 
+preprocessor that discretizes the microstructure of a specimen, which is either physically or 
+virtually fabricated, into a random truss lattice. The mixture performance can be predicted 
+by analyzing such lattice network using a general-purpose finite element program FEP++. 
+The cracking process in HMA is simulated by successive removal of failed links representing 
+microcracks. In this study, a surface energy based failure criterion is developed to trigger the 
+creation and subsequent extension of microcracks. 
+Due to the disparate length scales associated with microcracking and specimen size, the 
+direct-lattice modeling described above would demand unrealistic computational cost for 
+modeling even a laboratory scale HMA specimens. In order to make the procedure more 
+practical, the multiscale approach is implemented. Essentially, multi-scale model considers 
+the effect of different-sized aggregates at different length scales. Such an approach reduces 
+the computational cost significantly, while capturing the mechanical phenomenon at various 
+length scales. Finally, the effectiveness of the proposed multiscale lattice procedure is 
+illustrated by modeling an actual indirect tensile (IDT) test on a thin cylindrical HMA 
+specimen and making quantitative comparisons with experimental measurements, including 
+full-strain fields measured by the digital image correlations (DIC) technique. 
+
+Micromechanics-based Multiscale Lattice Modeling of 
+Fatigue Cracking in Hot Mixed Asphalt
+by 
+Zhen Feng
+A dissertation submitted to the Graduate Faculty of 
+North Carolina State University 
+in partial fulfillment of the 
+requirements for the Degree of 
+Doctor of Philosophy 
+Civil Engineering
+Raleigh 
+2003 
+APPROVED BY:
+_________________________ _________________________ 
+__________________________ _________________________ 
+Y. Richard Kim Murthy N. Guddati 
+John W. Baugh Robert E. White 
+(Chair of Advisory Committee) (Co-chair of Advisory Committee)
+
+ii
+To my daughter 
+Aimee Feng 
+
+iii
+BIOGRAPHY 
+Zhen Feng was born in Shenyang, China on October 10, 1973, the son of Yaqing Zhang and 
+Zhongzhi Feng. He received his Bachelor’s degree in Engineering Mechanics in July 1995, 
+and Master’s degree in Civil Engineering in December 1997 from Tsinghua University, 
+Beijing, China. He went to University of South Carolina at 1998 and one year later 
+transferred to North Carolina State University, joined the Ph.D. program in transportation 
+engineering at the department of Civil Engineering. 
+
+iv
+ACKNOWLEDGEMENTS 
+First and foremost, I want to thank my parents for their unconditional love and support. 
+I am grateful to my doctoral advisor Dr. Richard Kim. This dissertation would not exist at all 
+without Dr. Kim, who accepted me as a doctoral student and provided me financial support 
+through my 5 years’ study at NCSU. His knowledge, energy, friendship, and inspiration will 
+always serve to me as an example of the perfect supervisor. 
+I would also like to give my sincere thanks to Dr. Murthy Guddati, my co-advisor, the most 
+brilliant researcher that I have ever met. He has always been extremely generous with his 
+time, knowledge and ideas. I really enjoy working with him and I hope in the future I could 
+have the chance to work with him again. 
+Many thanks go to Dr. Yasuyuki Horie and my committee members, Dr. Robert White and 
+Dr. John Baugh, for helpful discussions and invaluable professional advices. 
+I would also like to acknowledge with much appreciation the support from my colleagues at 
+NCSU and many more persons participated in various ways to ensure my research succeeded. 
+Special thanks go to my wife, the best that I could have in this world. 
+
+v
+TABLE OF CONTENTS
+LIST OF TABLES .............................................................................................................VIII
+LIST OF FIGURES ..............................................................................................................IX
+1. INTRODUCTION........................................................................................................... 1
+1.1 NUMERICAL MODELING OF FATIGUE CRACKING IN HOT MIXED ASPHALT................ 1 
+1.2 OBJECTIVES ............................................................................................................... 3 
+1.3 ORGANIZATION OF THE THESIS .................................................................................. 4 
+2. LATTICE MESH GENERATION ............................................................................... 6
+2.1 LATTICE MODELING OF HOMOGENEOUS SOLID MATERIALS...................................... 6 
+2.2 MODELING OF HETEROGENEITY .............................................................................. 17 
+3. NUMERICAL SOLVER.............................................................................................. 21
+3.1 STIFFNESS MATRIX FORMATION .............................................................................. 21 
+3.2 NUMERICAL ALGORITHM FOR STATIC SOLVER........................................................ 25 
+3.3 NUMERICAL SOLVER BASED ON DYNAMIC RELAXATION METHOD ......................... 26 
+4. FRACTURE LAW........................................................................................................ 33
+4.1 FAILURE CRITERION FOR QUASI-BRITTLE FRACTURE .............................................. 33 
+4.2 IMPLEMENTATION OF QUASI-BRITTLE FRACTURE CRITERION.................................. 35 
+
+vi
+5. DIRECT-LATTICE MODELING.............................................................................. 44
+5.1 MICROSTRUCTURE GENERATION ............................................................................. 45 
+5.2 COMPREHENSIVE POSTPROCESSOR .......................................................................... 48 
+6. STUDY OF COMPUTATIONAL COST ................................................................... 50
+6.1 DIRECT-LATTICE MODELING OF IDT........................................................................ 50 
+6.2 TECHNIQUES TO REDUCE COMPUTATIONAL COST ................................................... 51 
+7. MULTISCALE MODELING APPROACH .............................................................. 55
+8. MULTISCALE LATTICE MODELING OF IDT .................................................... 58
+8.1 SPLITTING INTO VARIOUS SCALES AND VIRTUAL STRUCTURE GENERATION........... 59 
+8.2 MASTIC ANALYSIS................................................................................................... 65 
+8.3 IDT SIMULATION AND COMPARISON WITH EXPERIMENTAL DATA .......................... 75 
+9. SUMMARY AND FUTURE RESEARCH................................................................. 80
+REFERENCES...................................................................................................................... 82
+APPENDIX A - MODELING OF VISCOELASTIC SOLIDS......................................... 87
+APPENDIX B - VISCOELASTIC FRACTURE LAW..................................................... 91
+APPENDIX C - PREPROCESSOR FOR LATTICE MESH GENERATION............... 94
+APPENDIX D - FLOW CHART OF NUMERICAL SIMULATOR............................... 99
+
+vii
+APPENDIX E - PSEUDO CODE OF POSTPROCESSOR............................................ 101
+
+viii
+LIST OF TABLES
+Table 2.1 Calculation of Constant C....................................................................................... 12 
+Table 2.2 Results of Lattice Simulation of Axial Compression and Shear ............................ 16 
+Table 4.1 Comparison between Direct Implementation and Damage Control....................... 42 
+Table 8.1Volumetric Mixture Design..................................................................................... 58 
+Table 8.2 Constituent Material Properties .............................................................................. 58 
+Table 8.3 Mastic Modulus at Each Scale (UNIT = MPa)....................................................... 67 
+Table 8.4 Surface Energy at Each Scale (UNIT = ergs/cm2
+).................................................. 70 
+Table 8.5 List of Component Surface Energy (ergs/cm2)....................................................... 71 
+Table 8.6 Results of Lattice Modeling of SEN at Scale 4 ...................................................... 73 
+
+ix
+LIST OF FIGURES
+Figure 2.1 Geometry and Crack Pattern of (a) Shear Experiment on Concrete Plate and 
+Simulated Cracked Patterns in a (b) Square Mesh, (c) Regular Triangular Mesh, (d) 
+Rotated Triangular Mesh and (e) Random Triangular Mesh. (Based on refs.12 and 14). 7 
+Figure 2.2 Generation of Random Truss Lattice for Homogeneous Materials, (a) Base Mesh, 
+(b) Random Distributed Nodes, and (c) Lattice Network (Delaunay Triangulation) ....... 9 
+Figure 2.3 Lattice Link Types: (a) Truss Elements, and (b) Beam Elements......................... 10 
+Figure 2.4 Lattice Modeling of Axial Tension and Shear. ..................................................... 15 
+Figure 2.5 (a) Particle Overlay - Internal Structure, (b) Projection on Top of a Regular 
+Triangular Lattice, and (c) Assigning Properties to the Beams in Each Phase............... 17 
+Figure 2.6 Lattice Mesh Generation for HMA ....................................................................... 20 
+Figure 3.1 (a) External Forces and Deformations on a Single Lattice Link, and (b) its Stressstrain Relation (Hooke’s Law)........................................................................................ 22 
+Figure 3.2 Skyline of Stiffness Matrix.................................................................................... 24 
+Figure 3.3 Implicit and Explicit Nodes in Lattice System...................................................... 27 
+Figure 3.4 Lattice Simulation of Tensile Test with Dynamic Relaxation Method Based 
+Numerical Solver ............................................................................................................ 31 
+Figure 4.1 Crack Patterns from Lattice Modeling with Displacement Control (a) dt=5.0e-3, 
+(b) dt=1.0e-3, (c) dt=1.0e-4, and (d) dt=5.0e-5 (sec)...................................................... 37 
+
+x
+Figure 4.2 Load-deflection Curves from Lattice Modeling with Displacement Control ....... 38 
+Figure 4.3 Determination of Corrector α .............................................................................. 40 
+Figure 4.4 Crack Patterns from (a) Damage Control, and (b) Displacement Control with 
+dt=5.0e-5 sec. .................................................................................................................. 41 
+Figure 4.5 Load-deflection Curves from Damage Control and Displacement Control.......... 42 
+Figure 5.1 Framework of Direct-lattice Procedure ................................................................. 44 
+Figure 5.2 Microstructure Generated from Digital Imaging Process (a) Actual Specimen, (b) 
+Raw image, and (c) Resulting Microstructure ............................................................... 45 
+Figure 5.3 Microstructure from Virtual Fabrication, (a) 3D Volumetric Aggregate gradation, 
+(b) Apparent “Area” Gradation, and (c) Virtually Fabricated Microstructure. .............. 47 
+Figure 5.4 Example of the Simulation Results Processed by Postprocessor. ......................... 48 
+Figure 6.1 Direct-lattice Modeling of IDT Specimen............................................................. 50 
+Figure 6.2 Lattice Modeling of SEN Specimen for Uniaxial Tensile (a) Specimen Geometry, 
+(b) Lattice Mesh with Generated Grain Skeleton (Reprinted from ref. 33).................... 51 
+Figure 6.3 An Adaptive Procedure for Fracture Simulation of Concrete Specimen (a) 
+Specimen Geometry and Analysis Model, (b) Adaptive Remeshing. (Reprinted from ref. 
+34) ................................................................................................................................... 52 
+Figure 6.4 Representing Rigid Inclusion with its Boundary Nodes ....................................... 53 
+Figure 7.1 Multiscale Lattice Modeling Cooperated with Virtual Fabrication ...................... 56 
+Figure 8.1 Parameter Determination Process for Multiscale Analysis................................... 60 
+
+xi
+Figure 8.2 Apparent Aggregation Gradation for Each Scale.................................................. 62 
+Figure 8.3 Virtual Fabricated Microstructures at Different Scales......................................... 64 
+Figure 8.4 Mastic Analysis in Multiscale Lattice Modeling of IDT....................................... 65 
+Figure 8.5 Effective Moduli from Uniaxial Tensile Tests on RVEs ...................................... 68 
+Figure 8.6 SEN Test for the Approximation of Mastic Surface Energy................................. 69 
+Figure 8.7 Lattice simulation of IDT (a) Load-deflection Curves, and (b) Cracking Patterns 
+from the Lattice Simulation and Experimental Observation .......................................... 76 
+Figure 8.8 Horizontal/Vertical Strain Fields Captured by DIC and Predicted by the Virtual 
+Testing Procedure ........................................................................................................... 78 
+Figure A.1 Generalized Maxwell Model ................................................................................ 87 
+Figure A.2 Creep Test on a Homogeneous Viscoelastic Plate ............................................... 90 
+Figure B.1 Viscoelastic Cracking in Lattice........................................................................... 91 
+Figure C.1 Project Lattice Base Mesh onto the Top of Microstructure.................................. 94 
+Figure C.2 Step 2 in Lattice Mesh Generation ....................................................................... 94 
+Figure C.3 Binder Node Generation ....................................................................................... 95 
+Figure C.4 Aggregate Node Generation ................................................................................. 95 
+Figure C.5 Interface Node Generation.................................................................................... 95 
+Figure C.6 Interface of Lattice Mesh Generation Program .................................................... 97 
+Figure C.7 Flow Chart for Lattice Mesh Generation.............................................................. 98 
+
+xii
+Figure D.1 Flow Chart for Numerical Solver in Lattice Modeling ........................................ 99 
+Figure D.2 Flow Chart of Function of “Update Network” in Fig. D.1................................. 100 
+
+1
+1. INTRODUCTION
+1.1 NUMERICAL MODELING OF FATIGUE CRACKING IN HOT MIXED ASPHALT
+Fatigue cracking is one of the major distresses in asphalt pavements. Numerous field and 
+laboratory studies on the Superpave PG binder specification clearly indicate that the fatigue 
+cracking performance of hot mixed asphalt (HMA) is dependent on the interaction of the 
+aggregate and asphalt binder. This fact makes it difficult to develop a reliable component 
+material specification for fatigue cracking by testing only one component. However, it is 
+impossible to test asphalt-aggregate mixtures for the binder specification because asphalt 
+binders are normally purchased long before aggregate sources are determined for various 
+projects. Although some locally representative combinations of aggregate and binder may be 
+identified, the large experimental cost involved in the mixture testing makes the testing of 
+HMA an improbable alternative for the binder specification. In an attempt to reduce the cost 
+of understanding and characterizing the cracking performance of HMA, and to produce an 
+enhanced component material specification, a micromechanics-based numerical modeling 
+procedure is developed in this study. 
+In many materials, HMA being no exception, the fatigue phenomenon is driven by the 
+nucleation, propagation, and coalescence of microcracks. This fact indicates that a 
+microlevel simulation of this cracking phenomenon may lead to an improved qualitative and 
+quantitative understanding of the fatigue performance. Over the past few decades, 
+micromechanical analysis has been proposed in the study of materials such as metals, soils, 
+
+2
+rocks, and concrete. Such analysis may be conducted in two different ways, detailed 
+micromechanical modeling and average micromechanical modeling. 
+Detailed micromechanical modeling involves the precise simulation of micromechanical 
+phenomena such as stress singularity and the propagation of each and every microcrack. 
+Theoretically, such research can be performed using well-established computational 
+techniques such as finite element methods. Even with the impressive computational power 
+that is currently available, such detailed micromechanical simulations are not feasible due to 
+the need for extremely fine meshes and computationally demanding re-meshing procedures 
+(1). Furthermore, considering the main objective of characterizing the fatigue behavior at a 
+macroscopic level, it is unnecessary to resort to such detailed micromechanical modeling. 
+Average micromechanical modeling, as the name implies, provides an efficient alternative of 
+approximate micromechanical simulation to predict macromechanical behavior in an average 
+sense. For example, in soils, discrete element modeling can predict macroscopic behavior by 
+approximating the grains as spherical particles and modeling the interaction between them 
+using a contact model (2,3). Similar discrete element modeling techniques have been 
+successfully used in modeling other granular materials and rock masses (4~6). Although 
+discrete particle modeling has been used for simulating HMA (7), an alternative technique 
+based on lattice modeling may be more effective due to the bond-dominant nature of the 
+material. Succinctly put, lattice modeling involves approximating the continuum using a 
+lattice, with each element representing an intact bond that can be broken at any time to create 
+a microcrack. 
+
+3
+Lattice modeling was originally proposed by Hrennikoff (8) as a regular triangular truss 
+lattice to solve classical problems of elasticity. However, due to the lack of sufficient 
+computational power at that time, the model remained theoretical. In the late 1980s, lattice 
+models were reintroduced by theoretical physicists (9) to calculate the problem of conduction 
+and to model brittle failure in disordered materials. In the early 1990s, lattice modeling was 
+introduced to simulate progressive failure in concrete by Schlangen and Van Mier et al. (10 ~ 
+13). Based on these studies, it appears that lattice modeling could be successful in simulating 
+damage and cracking of HMA. 
+The lattice methodology developed in this study is systematically built from existing lattice 
+models for homogeneous elastic materials and modified further for HMA. It is extended to 
+simulate the microscopic damage and subsequent macrocracking by implementing a surface 
+energy based fracture law. Later, with the help of multiscale approach, the enhanced lattice 
+modeling procedure becomes capable of simulating laboratory-scale HMA specimens. 
+1.2 OBJECTIVES
+The primary objective of the dissertation is to develop a micromechanics-based lattice 
+modeling for that would eventually result in: 
+o reducing the experimental costs, 
+o helping in better understanding the interaction of binder and aggregates and its effects 
+on fatigue cracking, and 
+
+4
+o estimating the fatigue performance starting from its component material properties. 
+In its final form, as part of the future research work, it is expected that the micromechanical 
+lattice model, combined with macroscopic modeling and experimental techniques, would 
+lead to an economical and effective procedure for fatigue characterization of HMA, and thus 
+to enhanced design methods and performance-related mix specification for flexible 
+pavements. 
+1.3 ORGANIZATION OF THE THESIS
+The thesis is organized in 9 chapters to describe the methodology developed in this study and 
+assesses its performance. 
+First, a mesh generation procedure is developed to convert the microstructure of the material 
+being simulated into a network of springs or truss elements in Chapter 2. The resulting lattice 
+system is then analyzed by a numerical solver in the manner of matrix structural analysis as 
+described in Chapter 3. In order to simulate the progressive cracking in HMA at low 
+temperature, a surface energy based fracture law is employed for quasi-brittle fracture 
+analysis in Chapter 4. Complementing concepts and procedures described in the previous 
+chapters, a stand-alone microstructure generation method and a comprehensive postprocessor are developed and integrated to the analysis procedure in Chapter 5. Chapter 6 
+contains the discussion of computational cost, leading to the conclusion that direct-lattice 
+modeling would demand an unrealistic computational cost for modeling even laboratoryscale HMA specimens. To make the procedure more practical, the multiscale lattice 
+
+5
+methodology is introduced in Chapter 7 and its effectiveness is described in Chapter 8 with 
+the help of numerical simulation of an indirect tensile test (IDT). Chapter 9 summarizes the 
+thesis and contains some recommendations for future work. 
+
+6
+2. LATTICE MESH GENERATION
+Lattice modeling involves approximating a continuous solid by a network of discrete links. A 
+lattice approach generally consists of three major steps, i.e., 1) representing the material with 
+a discrete lattice network, 2) analyzing the resulting lattice mesh with a numerical tool, and 3) 
+predicting the mixture performance using numerical simulation. This chapter emphasizes the 
+method of discretizing the continuum solid into lattice mesh. Such method is first developed 
+and tested for homogeneous materials (Section 2.1) and extended further to heterogeneous 
+HMA (Section 2.2). 
+2.1 LATTICE MODELING OF HOMOGENEOUS SOLID MATERIALS
+The lattice representation, essentially characterized by network geometry and link properties, 
+should mimic the behavior of continuum at the macro-scale. In particular, for the case of a 
+homogeneous isotropic solid, the lattice should be statistically homogeneous and isotropic. 
+Statistical homogeneity is easily obtained by having uniform lattice generation parameters 
+over the entire structure. On the other hand, to represent an isotropic solid, close attention to 
+the lattice network is required. A regular lattice network has preferred directions due to its 
+geometry, resulting in undesirable macroscopic anisotropy. Although some maneuvering can 
+be done to induce isotropy on the regular lattice, it appears that a more effective way of 
+obtaining macroscopic isotropy is to use a random lattice network. 
+
+7
+For example, Fig. 2.1 gives the comparison between the experiment observation and results 
+of fracture simulations using different lattice geometries. 
+ 
+Figure 2.1 Geometry and Crack Pattern of (a) Shear Experiment on Concrete Plate and 
+Simulated Cracked Patterns in a (b) Square Mesh, (c) Regular Triangular Mesh, (d) Rotated 
+Triangular Mesh and (e) Random Triangular Mesh. (Based on refs.12 and 14) 
+Four different mesh geometries are used in the simulation. The square grid mesh is used in 
+the first simulation (Fig. 2.1b). Triangular mesh (Fig. 2.1c) and triangular mesh rotated 90º 
+(Fig. 2.1d) are used in the second and third simulations, respectively. In the last simulation, a 
+special random lattice (Fig. 2.1e) is used (14). In all four simulations, two overlapping curved 
+(a) 
+(b) (c) 
+(d) (e) 
+
+8
+cracks are obtained, however there are differences in crack shape due to the different 
+orientation of the meshes. The simulation using the random lattice resembled the experiment 
+most closely. 
+Based on the above observation, the lattice with random network is adopted in the current 
+study. In the remainder of this section, the mesh generation procedure and link property 
+determination are discussed, after which the methodology is tested with the help of 
+theoretical solutions. 
+2.1.1 Random Lattice Generation 
+As illustrated in Fig. 2.2, the generation of a lattice begins with a regular square mesh called 
+the base mesh. Each cell of the base mesh contains a single node whose exact location 
+(deviation from the center) is determined based on uniform probability distribution function. 
+Once the nodes are generated, the lattice network is constructed by linking the nodes using 
+Delaunay’s triangulation method (15,16). The basic idea of Delaunay’s triangulation is to 
+take three points and check if their circumscribing circle contains no other points inside. If so, 
+these three points will be connected to form a triangle. 
+
+9
+Figure 2.2 Generation of Random Truss Lattice for Homogeneous Materials, (a) Base Mesh, 
+(b) Random Distributed Nodes, and (c) Lattice Network (Delaunay Triangulation) 
+It should be noted that the distribution function (that controls the node position inside each 
+base cell) also affects the mechanical characteristic of the lattice network. Numerical tests 
+have proved that the uniform probability distribution function is the only one among a variety 
+of random distributions, including 'Beta', 'Exponential', 'Gamma', 'Geometric', 'Lognormal', 
+'Poisson', 'Normal', and 'Weibull' distributions, that can guarantee macroscopic isotropy. So 
+far, there is no clear theoretical evidence to explain this observation. However, further study 
+of this issue is beyond the range of this study, and will not be discussed here. 
+(a) (b) (c) 
+Characteristic Link 
+Length 
+
+10
+2.1.3 Link Type 
+The lattice link can either be a truss element (spring) or a beam element (Fig. 2.3). 
+Figure 2.3 Lattice Link Types: (a) Truss Elements, and (b) Beam Elements. 
+Compared with truss elements, beam elements can capture the local rotations due to the fixed 
+connection at the nodes. However, as long as the element (or link) size is small (with respect 
+to the length scale of the local heterogeneity in the material), both truss and beam lattice will 
+lead to similar results at the macroscopic level. Beam lattice has the ability to simulate 
+materials with varying Poisson’s ratios, whereas the truss lattice tends to result in a Poisson’s 
+ratio of approximately 0.3 (17,18). Considering the computational cost issues and the fact 
+that HMA has a Poisson’s ratio of approximately 0.3 at the room temperature, the truss 
+lattice is preferred over the beam lattice. It is expected that eventually beam lattice will be 
+used so as to simulate the variation of Poisson’s ratio with temperature. 
+Axial force 
+Axial force
+Shear 
+Bending moment 
+(a) (b) 
+Hinge 
+Connection 
+Rigid
+Connection
+
+11
+2.1.3 Link Properties 
+Lattice link properties can be categorized into two groups, mechanical and geometrical 
+properties. The mechanical properties of each link, such as Young’s modulus and specific 
+surface energy, are chosen based on the component material(s) that the link lies over. The 
+geometrical properties, such as cross-sectional area and link length, however, are mainly 
+dependent on mesh density and usually can be used to adjust the global behavior of the lattice 
+network to match the actual mechanical response of the material being simulated. 
+Specifically, one may define the relationship between the cross-sectional area (Ai) and the 
+lattice characteristic length (Lc), as shown in the following equation, so that the macroscopic 
+Young’s modulus of the lattice network matches the actual material modulus, 
+A C L t i c = ⋅ ⋅ (2-1) 
+In the above equation, t is the thickness of the specimen, which is unity for 2D analysis. The 
+constant C can be obtained by simulating the uniaxial tensile test on a binder patch 
+represented by a network of lattice links with an identical link modulus but with varying Ai
+and Lc , and then finding the value of C that yields the same modulus as that of the actual 
+material, as illustrated in the following example. 
+
+12
+Table 2.1 Calculation of Constant C 
+CASE Lc AT Emat. Estru α A* C 
+1 1/50 1 1 47.30 0.0211 0.0211 1.06 
+2 1/50 1 1 47.50 0.0211 0.0211 1.05 
+3 1/50 1 1 47.77 0.0209 0.0209 1.05 
+4 1/100 1 1 94.30 0.0106 0.0106 1.06 
+5 1/100 1 1 95.23 0.0105 0.0105 1.05 
+6 1/100 1 1 95.13 0.0105 0.0105 1.05 
+7 1/200 1 1 190.99 0.0052 0.0052 1.05 
+8 1/200 1 1 190.64 0.0052 0.0052 1.05 
+9 1/200 1 1 190.93 0.0052 0.0052 1.05 
+ Average 1.05 
+Lc – Lattice characteristic link length
+ AT
+ – Trial cross sectional area of lattice link 
+Emat. – Young’s modulus of the material 
+Estru – Modulus of the lattice network obtained through uniaxial tensile test 
+α – Correct factor, defined as Emat Estru / 
+ A* – Corrected link cross-sectional area, defined as AT α ⋅
+The above table gives the numerical results from lattice modeling of a unit square undergoing 
+uniaxial tensile load with constant cross-sectional area (AT
+) but different lattice density (Lc). 
+Since the lattice system is linearly elastic, the link cross-sectional area is linearly proportional 
+
+13
+to the modulus of the lattice structure, i.e., A ∝ Estru . In other words, the new cross-sectional 
+area of α ⋅ A will result in a new structure modulus of Estru α ⋅ . Thus, if the constant α is 
+defined as Emat Estru / , we can easily find the link cross-sectional area (A* in Table 2.1) that 
+results in the structure modulus identical to the material’s Young modulus. Then, the 
+resulting link cross-sectional area (A*), divided by the lattice characteristic length (Lc), can 
+be used as the constant C in equation (2-1), which is ≈1.05. 
+2.1.4 Verification of Lattice Model 
+Three aspects of the modeling must be evaluated: (1) Are the material properties independent 
+of any specific realization of the random lattice (i.e. repeatability of random generation)? (2) 
+Is the lattice isotropic? (3) Are the predicted macroscopic moduli close to those of the 
+material simulated? These questions are answered by using three separate realizations of 
+lattice models to simulate a homogeneous elastic material plate undergoing two different 
+types of deformation – axial tension and shear (Fig. 2.4). The results from the linear elastic 
+analysis are summarized in Table 2.2. It can be clearly seen that all three realizations 
+produce results close to each other, thus verifying the repeatability of random lattice 
+generation. From the table, it can also be observed that the macroscopic properties of lattice 
+models match well with the actual properties of the material being simulated. As this match 
+is independent of the loading configuration, it can be concluded that the lattice is statistically 
+isotropic. 
+
+14
+2.1.5 Modeling viscoelastic solids 
+Although the above discussion is limited to elastic solids, the concepts presented can readily 
+extend to viscoelastic materials – the links can simply be made viscoelastic by replacing the 
+spring with viscous element (Appendix A). The lattice model has been successfully used to 
+simulate creep of linear viscoelastic materials. It was observed that the time dependence of 
+the link properties at the microscopic scale translates directly to the macroscopic scale. 
+
+15
+Uniform Tensile 
+Axial Tension Shear 
+Random Truss Lattice Modeling 
+∆ Y
+Deformed 
+Shape 
+Original 
+Shape 
+Uniformly Distributed Shear 
+Shear
+25.4mm 
+25.4m
+m
+Figure 2.4 Lattice Modeling of Axial Tension and Shear. 
+
+16
+Table 2.2 Results of Lattice Simulation of Axial Tension and Shear 
+Lattice has 101x101nodes Lattice Simulation 
+Lattice characteristic length 
+= 0.254mm No. 1 No. 2 No. 3 Average. 
+Exact 
+Solution 
+Disptop 
+(mm) 
+8.98E-04 8.89E-04 8.90E-04 8.92E-04 8.91E-04 
+disp error 0.75% 0.22% 0.16% 0.50% 
+Etensile
+(x103MPa) 19.49 19.68 19.66 19.61 19.64 
+Uniaxial 
+Tension 
+ν structure 0.34 0.34 0.34 0.34 0.34 
+γ 9.87E-5 9.63E-5 9.63E-5 9.71E-5 9.43E-5 
+shear Shear error 4.96% 2.41% 3.15% 3.51% 
+Gshear 
+(x103MPa) 6.98 7.10 7.11 7.06 7.30 
+Disptop -- Vertical deformation on the top of specimen, ∆Y
+disp error -- Error in the lattice simulation of Disptop compared with theoretical solution 
+Etensile -- Material elastic modulus backcalculated from lattice simulation of uniaxial 
+ tension case 
+ν structure -- Material Poisson's ratio backcalculated from lattice simulation of uniaxial 
+ tension case 
+γ -- shear strain 
+shear error -- Error in lattice simulation of γ compared with theoretical solution 
+Gshear -- Material shear modulus backcalculated from lattice simulation of shear case 
+
+17
+(a) (b) (c) 
+2.2 MODELING OF HETEROGENEITY
+Heterogeneity can be included in lattice models through two approaches, microstructurebased and statistics-based. In the first approach, a (regular) lattice mesh is projected onto the 
+actual material structure and the properties of each lattice link are assigned according to the 
+material that the link lies over (Fig. 2.5). 
+Figure 2.5 (a) Particle Overlay - Internal Structure, (b) Projection on Top of a Regular 
+Triangular Lattice, and (c) Assigning Properties to the Beams in Each Phase. 
+(Reprinted from ref.17) 
+In such lattice mesh, the geometry and link size are not directly related to the actual internal 
+geometry of the material and need to be determined by the analyst, which raises additional 
+questions. The second approach is to translate the microstructural information into a 
+statistical distribution that is subsequently used to assign strength and stiffness properties to 
+different lattice links (19). In the second approach, the lattice system is less refined than the 
+first approach, but more phenomenological and the reported 2D analyses show large 
+deviation from reality. In this study, we develop a new microstructure-based approach – the 
+
+18
+lattice mesh is directly transformed from the configuration of aggregate particles (as shown 
+in Fig. 2.6), instead of projecting the mesh onto the microstructure. 
+First, a regular square base mesh is projected onto the given digitized microstructure (Fig. 
+2.6a) which is generated by the explicit structure generation techniques (see Chapter 5). In 
+such digitized microstructure, the pixel with light color represents aggregate and dark color 
+as asphalt binder. According to the material type of pixels inside, each base cell can be 
+distinguished as “asphalt binder cell”- which contains pixels representing asphalt binder only 
+(Fig. 2.6b), “interface cell”- which contains both mastic and aggregate pixels (Fig. 2.6c), or 
+“aggregate cell”- which contains aggregate pixels only (Fig. 2.6d). Each asphalt cell of the 
+base mesh contains a single asphalt node whose exact location is determined based on 
+uniform probability distribution function as previously described in Section 2.1. Each 
+aggregate cell contains a single aggregate node that is set right on the base cell center to form 
+a triangular mesh, in which nodes are regularly distributed but randomly connected, with the 
+sole purpose of visually representing the aggregate particles. Different from asphalt or 
+aggregate cells, each segment of aggregate boundary curve in interface cell needs to be 
+represented by a single interface node. Thus an interface cell with several segments of 
+aggregate boundary curves may contain multiple interface nodes as shown in Fig. 2.6c. Once 
+all the nodes are generated, the random truss lattice then can be constructed by linking the 
+nodes using Delaunay triangulation method (Fig. 2.6e). It can be clearly seen that in the 
+resulting lattice mesh, the location and configuration of aggregate particle are precisely 
+represented as dark links and the remaining homogenized mastic is represented as light links 
+
+19
+in an accurate manner. The detailed information about lattice mesh generation of HMA can 
+be referred to Appendix C. 
+The properties of each lattice link are assigned according to the material that the link 
+represents. In this study, the HMA is modeled as two-phase (aggregate plus asphalt binder) 
+system. The aggregates are assumed as rigid inclusions, and deformation and cracks occur 
+only inside the binder. Therefore, only the binder related link properties need to be specified 
+in the analysis. 
+It should be noted that the image of microstructure in above figure could be obtained from 
+either physically or virtually fabricated specimen using the microstructure generation 
+technique introduced in Chapter 5. In the latter case, the material microstructure is generated 
+directly from the aggregate gradation instead of having to process a physically fabricated 
+specimen, thus resulting in a significant reduction in analysis cost. Unless especially 
+mentioned, all the microstructures used in this study are generated from virtual fabrication 
+approach. 
+
+20
+Figure 2.6 Lattice Mesh Generation for HMA 
+(a) Base cell over 
+microstructure surface 
+Base cell size 
+= 10 by 10 Pixels 
+(e) Lattice mesh 
+(b) Binder base cell and binder node 
+(c) Interface base cell and Interface nodes 
+(d) Aggregate base cell and aggregate node 
+Microstructure 
+Generation Techniques 
+Aggregate 
+boundary curve 
+
+21
+3. NUMERICAL SOLVER
+After the continuum has been discretized into a random truss lattice network, the mechanical 
+performance of the material being simulated is predicted by analyzing the lattice network 
+within a framework of finite element method. In this study, a general-purpose finite element 
+program FEP++ (20) is modified and used as numerical tool for linear deformation analysis. 
+Such numerical tool can be easily extended for damage analysis by incorporating with a 
+surface energy base failure criterion as described in the following chapter. This chapter 
+focuses on description of the stiffness matrix formulation, the algorithm of the proposed 
+static numerical solver, and a brief discussion on an alternative numerical solver based on 
+dynamic relaxation method. The implementation of the static numerical solver is given in 
+Appendix D. 
+ 
+3.1 STIFFNESS MATRIX FORMATION
+ As described in Chapter 2, in truss lattice model, the material is discretized into a lattice 
+consisting of randomly distributed truss elements that can transfer normal forces. For elastic 
+materials, the stress-strain relation within each truss element follows the 1-D Hooke’s law 
+(Fig. 3.1). 
+
+22
+Figure 3.1 (a) External Forces and Deformations on a Single Lattice Link, and (b) its Stressstrain Relation (Hooke’s Law) 
+The relation among the external forces and corresponding link deformation in Fig. 3.1 can be 
+expressed as follows, 
+ 
+ij
+ij ij
+i ij L
+L L
+F EA ( ) * − = (3-1)
+where, E is Young’s modulus, Aij is the cross-sectional area, Lij and Lij
+*
+ are the length of the 
+original and deformed link, respectively. 
+Using truss theory, one can easily obtain the stiffness matrix for each lattice link, 
+(a) (b) 
+i 
+F j i
+Fj =Fi
+Stressσ
+Strain ε
+Modulus E 
+ui uj
+Lij
+Lij
+*
+θ
+x
+y
+
+23
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+− −
+− −
+− −
+− −
+=
+2 2
+2 2
+2 2
+2 2
+x y y x y y
+x x y x x y
+x y y x y y
+x x y x x y
+ij
+ij
+e L
+EA
+k
+λ λ λ λ λ λ
+λ λ λ λ λ λ
+λ λ λ λ λ λ
+λ λ λ λ λ λ
+(3-2)
+where, λx = cosθ and λ y = sinθ . The location of each element in this 4 x 4 symmetric 
+matrix is associated with the respective x and y components at the near end (node i), followed 
+by the far end (node j), i.e., 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+⋅
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+− −
+− −
+− −
+− −
+=
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+= ⋅
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+jy
+jx
+iy
+ix
+x y y x y y
+x x y x x y
+x y y x y y
+x x y x x y
+ij
+ij
+jy
+jx
+iy
+ix
+e
+jy
+jx
+iy
+ix
+u
+u
+u
+u
+L
+EA
+u
+u
+u
+u
+k
+F
+F
+F
+F
+2 2
+2 2
+2 2
+2 2
+λ λ λ λ λ λ
+λ λ λ λ λ λ
+λ λ λ λ λ λ
+λ λ λ λ λ λ
+(3-3)
+where subscripts x and y refer to the component along x and y coordinates, respectively. 
+Thus, the structural stiffness matrix can be constructed by assembling each and every link 
+stiffness matrix together: 
+ e
+n
+e K k =1 = Α (3-4)
+Then, the lattice system can be represented by a set of linear equations, 
+ F = KU (3-5)
+
+24
+Where, F is the force (load) vector and U is the displacement vector. If there are N nodes in 
+the lattice system, then F and U are of length 2N, and stiffness matrix K is a 2N by 2N
+symmetric positive definite (SPD) matrix. Generally, K is a sparse matrix and is stored using 
+a skyline storage scheme to save the computational resources. 
+ 
+Figure 3.2 Skyline of Stiffness Matrix 
+The skyline is the dashed line in Fig. 3.2 that bounds the uppermost nonzero element in each 
+column of the matrix. In skyline storage mode, K is stored in a one-dimensional array, 
+column-wise beginning with the first nonzero element in each column and ending with the 
+diagonal term. And the locations of the diagonal terms in such one-dimensional array are 
+stored in another one dimensional integer array. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=
+X
+X X
+X X
+X
+X X X X X
+X X X
+X X
+X X X
+K
+0
+0 0 0
+0 0 0
+0 0 0 0 0
+0 0 0 0 0
+Skyline 
+X : nonzero element 
+0 : zero element 
+
+25
+3.2 NUMERICAL ALGORITHM FOR STATIC SOLVER
+A direct solver based on a modified LU factorization (21) is employed into FEP++ to solve 
+equation (3-5). In this algorithm, the stiffness matrix K is first factorized as, 
+(3-6)
+where, L is a lower triangular matrix with diagonial element equal to one, D is a diagonial 
+matrix. 
+Submit equation (3-6) into (3-5), 
+ F L DL U Ly T = ( ) = (3-7)
+ DL U y T = (3-8)
+The following algorithm is employed to solve equations (3-7) and (3-8) for displacement 
+vector U. 
+1. Factorization of stiffness matrix 
+1) d1=K11; 
+2) for i = 2, 3, …, n
+(1) ∑
+−
+=
+= −
+1
+1
+j
+k
+ij ij ik jk t K t l , (j = 1, 2, …, i-1), where ij ij j t = l d . 
+(2) ij ij j l = t / d , (j = 1, 2, …, i-1)
+(3) ∑
+−
+=
+= −
+1
+1
+i
+k
+i ii ik ik d K t l
+2. Solve equation (3-7) and (3-8) … 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+= =
+1
+1
+1
+1
+1
+1
+2
+21 1
+2
+1
+1 2
+21 n
+n
+n n n
+T l
+l l
+d
+d
+d
+l l
+l
+K LDL
+… 
+… 
+… 
+… 
+… 
+. 
+. 
+. . 
+. 
+. . 
+. 
+. 
+
+26
+1) 1 F1 y = ; 
+2) ∑
+−
+=
+= −
+1
+1
+i
+k
+i i ik k y F l y , (i = 2, 3, …, n) 
+3) n n n U = y / d
+4) ∑= +
+= −
+n
+k i
+i i i kiUk U y d l
+1
+/ , (i = n –1, …2, 1,) 
+In this study, the basic linear algebra libraries (BLAS) from Intel® Math Kernel Library (22) 
+are implemented into the numerical solver to improve the computational efficiency. However, 
+due to the implicit nature, both formulation and factorization of structural stiffness require 
+large computational resources. Especially, in the case of damage simulation, as discussed in 
+the following chapter, such expensive operation has to be repeated at each and every time 
+step. In an attempt to reduce computational time and expense, an implicit-explicit approach 
+based on dynamic relaxation method is developed in this study as an alternative numerical 
+tool. 
+3.3 NUMERICAL SOLVER BASED ON DYNAMIC RELAXATION METHOD
+The dynamic relaxation method is developed from the equation of motion governing 
+structural response, 
+ Mu+ Cu + Ku = F (3-9)
+ where M is the mass matrix, C is the damping matrix. 
+
+27
+Essentially, equation (3-5), which is strictly applicable to static systems, is translated into a 
+pseudo-dynamic one with fictitious mass and fictitious viscous damping. The method is 
+based on the fact that a system undergoing damped vibration, excited by a constant force, 
+ultimately comes to rest at the displaced position of static equilibrium of the system under the 
+action of the force. Thus, the static solution can be obtained as the steady state part of the 
+response. 
+An implicit-explicit algorithm based on “predictor-corrector” method (23) is employed and 
+tested in this study. Basically, the lattice links are divided into two groups: 1) the implicit 
+links, for example, the stiff sub-domains such as penalty constraints in the system; and 2) the 
+explicit links, i.e., the remainder of the structure (Fig. 3.3). 
+Figure 3.3 Implicit and Explicit Nodes in Lattice System 
+Loading Nodes 
+Restrained Nodes 
+Explicit Links Implicit Links 
+
+28
+Let I and E superscripts refer to the implicit and explicit groups, respectively. Assume M is 
+diagonal (lumped). Formulation of this procedure can be summarized as the following 
+iterative equations: 
+ 
+n n n n a
+t d d t v − ⋅ ∆ + = + ∆ ⋅ + (1 2 ) 2
+~ 2
+1 β
+ 
+(3-10)
+ n n n v = v + ∆t − ⋅ a + (1 ) ~ 1 γ (3-11)
+ I M M t K * 2 = + β∆ (3-12)
+ ) ~ ~ ( ) ( 1 1 1
+* 1
+1 + + +
+−
++ = ⋅ − ⋅ − ⋅ n n n K dn a M F C v (3-13)
+ 1
+2
+1 1
+~ n+ = n+ + ∆ an+ d d β t (3-14)
+ 1 1 1
+~ + + + = + ∆ ⋅ n n n v v γ t a (3-15)
+ 
+where d, v, and a are the nodal displacement, velocity, and acceleration. ∆t is time step 
+length. The Newmark time stepping parameters are chosen as: γ = 0.6 and 3025 β = 0. are 
+numerical constant. Superscript “~” refers to “predictor”. 
+The calculation starts with the prediction of the nodal displacement and velocity vectors at 
+time point n+1 (equations (3-10) and (3-11)). Equations (3-12) and (3-13) are then solved for 
+the acceleration vector at time point n+1, which is used to correct the predicted nodal 
+displacement and velocity vectors using equations (3-14) and (3-15). The algorithm for the 
+implementation of the above procedure is given as follows: 
+
+29
+1. Input the node and element information, load information, mass M and damping 
+constant C. 
+2. Set initial conditions. 
+3. For time step n (t = ∆t ⋅ n ), 
+a. Compute * M 
+b. Compute component internal nodal forces 1
+~ { } + = ⋅ n n
+Int R K d , 1
+~ { } + = ⋅ n n
+Int C C v
+For element e=1 … Number of elements 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+− −
+− −
+− −
+− −
+=
+4
+3
+2
+1
+2 2
+2 2
+2 2
+2 2
+~
+~
+~
+~
+{ }
+e
+e
+e
+e
+x y y x y y
+x x y x x y
+x y y x y y
+x x y x x y
+e
+e
+n
+Int
+e
+d
+d
+d
+d
+L
+A E
+r
+λ λ λ λ λ λ
+λ λ λ λ λ λ
+λ λ λ λ λ λ
+λ λ λ λ λ λ
+ , 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+− −
+− −
+− −
+− −
+=
+4
+3
+2
+1
+2 2
+2 2
+2 2
+2 2
+~
+~
+~
+~
+{ } _ *
+e
+e
+e
+e
+x y y x y y
+x x y x x y
+x y y x y y
+x x y x x y
+n
+Int
+e
+c
+c
+c
+c
+c C val
+λ λ λ λ λ λ
+λ λ λ λ λ λ
+λ λ λ λ λ λ
+λ λ λ λ λ λ
+ where 
+e
+j i
+x L
+x − x λ =
+e
+j i
+y L
+y − y λ = , Le is link length. 
+ Assemble the contribution from element e to the structural nodal force: 
+n
+Int
+e {r } Æ n
+Int { ; R } n
+Int
+e {c } Æ n
+Int { C }
+Next element 
+c. Compute external load vector 1 1 {}1
+~ + + − + = + ⋅ n
+external B Boundary Fn Fn K U D , 
+
+30
+external
+n F +1 is the external load applied on the structure at time n+1 t
+{} Boundary U represents the specified displacement on the boundary nodes. 
+1
+~
+Dn+ represents the predicted displacement on the loaded nodes. 
+4. Solve equation (3-13) for } { n+1 a
+5. Update } { n+1 d and } { n+1 v (equation (3-14),(3-15)) 
+6. Output results and go to Step 3 with n → n +1
+In the above algorithm, the nodal mass is approximated as the multiple of the area of the base 
+cell and material density. The damping constant for each link is approximated as 
+ 
+2
+( ) 2 2 i j
+ij ij ij
+m m
+k m k
++ = (3-16)
+where i and j are the near and far end node numbers. ij k is the link stiffness. mij is the link 
+mass, which is defined as the average of nodal mass of the end nodes mi and mj . 
+The results from a sample problem solved with dynamic relaxation based numerical solver 
+are shown in Fig. 3.4. 
+
+31
+ 
+Figure 3.4 Lattice Simulation of Tensile Test with Dynamic Relaxation Method Based 
+Numerical Solver 
+In the above example, a homogeneous material plate is fixed on the bottom and the top edge 
+is gradually pulled in a displacement control mode. The nodal mass is assumed as 1Kg, and 
+modulus of elasticity as 1000MPa. Time step length is 1.0e-4 second. The total analysis time 
+is set as 2.0 seconds and analysis is performed within the linear elastic range. The reactions at 
+the top and bottom edges are plotted versus the displacement applied on the top edge. 
+The use of dynamic relaxation method can significantly reduce the computational time and 
+storage requirements for each time step since there is no need to formulate, factorize and 
+store the global stiffness matrix. For example, the computational time for single step for 
+dynamic relaxation solver in the above sample is about 0.03sec on a PC with Pentium 4 
+Displacement 
+Control 
+0
+500
+1000
+1500
+2000
+2500
+0 0.5 1 1.5 2 2.5
+Displacement (mm)
+Reactions (N)
+Bottom Reaction
+Top Reaction
+Static Solution
+
+32
+(2.52GHz) CPU and 512M RAM, only 1/500 of that for static solver. However, to guarantee 
+the numerical stability, time step length ∆t for dynamic relaxation solver has to be much 
+smaller than that of static numerical solver. In general cases, there is no significant reduction 
+in the overall computational cost. Especially, for modeling of HMA, the time step length is 
+even smaller because of the large stiffness of the rigid aggregate, thus demanding unrealistic 
+time steps and computational time. In addition, the parameters (fictitious mass and fictitious 
+viscous damping) used in the above example are chosen in an arbitrarily manner. Much 
+work remains to be done to develop an automated procedure to estimate these parameters so 
+that stability is guaranteed and the efficiency is optimized. At this time, only the static 
+solver developed in Section 3.2 is used in the numerical modeling. 
+
+33
+4. FRACTURE LAW
+The lattice approach simulates damage in bond-dominant materials by the successive 
+removal of failed links, representing microcracks. Thus, in addition to the parameters 
+required for linear deformation analysis (cross-sectional area and link modulus), a failure 
+criterion is required to trigger the creation of microcracks. Noting that the breakage of a 
+failed lattice link can be viewed as the creation of a microcrack in the continuum 
+representation, it is reasonable to assume that the failure criterion is related to the energy 
+needed to create the associated microcrack. In this chapter, a surface energy based failure 
+criterion for quasi-brittle fracture is presented (Section 4.1) and implemented into the 
+numerical solver for progressive damage analysis (Section 4.2). The current study focuses on 
+quasi-brittle fracture. Its extension to viscoelastic fracture will be the part of future work. A 
+preliminary discussion about the viscoelastic fracture law can be found in Appendix B. 
+4.1 FAILURE CRITERION FOR QUASI-BRITTLE FRACTURE
+The lattice link used in this study is modeled as linear elastic-brittle, with failure occurring 
+when the energy stored in the link exceeds the surface energy of the associated microcrack. 
+Based on classical fracture mechanics, the required energy to create the crack is a multiple of 
+the crack area and the specific surface energy associated with the broken bond (24,25). Thus, 
+the link is removed when the linear elastic strain energy ( e Ui ) exceeds the multiple of the 
+
+34
+microcrack surface area (i.e., the cross-sectional area, Ai ) and the specific surface energy 
+( i γ ); that is, the link breaks when 
+ i i
+e Ui ≥ γ ⋅ A (4-1)
+ 
+In equation (4-1), the surface energy, i γ , is actually representing the interface surface energy 
+in the lattice system. For a binder-to-binder link, i γ is the surface energy of cohesion – the 
+energy required to create a unit area crack within the binder, which is twice the specific 
+surface energy of the asphalt binder (Γb ), 
+ i = 2Γb γ (4-2)
+For a binder-to-aggregate link, i γ is the surface energy of adhesion – the energy required to 
+create a unit area crack between the binder and aggregate, which can be calculated using the 
+following equation: 
+ i = Γa + Γb − Γab γ (4-3)
+where Γa is the aggregate surface energy, and Γab is derived from the interface effects 
+between aggregate and binder (26). The detailed procedure to calculate the link surface 
+energy can be found in Chapter 8. 
+
+35
+Noting that 2
+2
+1
+i i i i
+e Ui = E ⋅ A ⋅ L ⋅ε (Ei, Li, and i ε are Young’s modulus, length, and axial strain 
+of the link), the surface energy-based failure criterion immediately translates into the 
+following strain-based criterion: 
+ 
+i i
+f i
+i i E L
+γ ε ε2
+< = (4-4)
+Thus, any link subjected to tensile force with strain exceeding its specified failure strain 
+threshold in equation (4-4) is removed to represent microcracks. Note that the above failure 
+criterion applies only to links in tension, and there is no compressive failure of the links in 
+the current lattice model. Presently, the analysis is quasi-static, and inertial effects are 
+neglected. 
+4.2 IMPLEMENTATION OF QUASI-BRITTLE FRACTURE CRITERION
+The above failure criterion is implemented into the numerical solver through two different 
+ways, i.e., displacement control and damage control. 
+4.2.1 Displacement Control 
+Direct implementation is based on gradually increasing the displacement with time. The 
+procedure is as follows: 
+
+36
+At time n t = t , 
+1) Read load information from loading history 
+2) Formulate global stiffness matrix K based on the contribution from the available 
+links (i.e., the links that have not been removed from the system). 
+3) Solve the linear system F = KU for the nodal displacements and convert the 
+results into the link axial strain ε . 
+4) Compare the axial strain with the critical strain cr ε (failure strain threshold), i.e., 
+For link i, if it is tensile strain and i cr ε ≥ ε , remove it from the network. 
+5) Increase time as n n n t = t + ∆t +1 , where n ∆t is time step length for current step. 
+6) Go back to step 1) and repeat the above procedures for the analysis at next time 
+step. 
+At each time step, the analysis is performed in a straightforward manner. Lattice is solved as 
+a linear elastic system under “static load” (instant value of loading history at this time). All 
+the links with the tensile strain larger than the critical failure strain are simultaneously 
+removed from the network, and are not considered in the subsequent analysis. In the above 
+procedure, the time step length has to be small enough to capture the actual material behavior. 
+This is especially important in the case of quasi-brittle failure, which has a very stiff postpeak part in the load-deflection curve. Large time step length will capture neither the peak 
+load value nor the load-deflection curve. On the other hand, reducing the time step length 
+increases the computational cost. Thus, the use of the above algorithm requires an optimized 
+
+37
+time step length. This can be illustrated by the following example of a single edge notch 
+(SEN) test with different time step length, as shown in Figs. 4.1 and 4.2. 
+Figure 4.1 Crack Patterns from Lattice Modeling with Displacement Control (a) dt=5.0e-3, 
+(b) dt=1.0e-3, (c) dt=1.0e-4, and (d) dt=5.0e-5 (sec). 
+The structure is fixed at the bottom, and the top edge is gradually pulled in a displacement 
+control mode until it is completely fractured. 
+(a) (b) 
+(c) (d) 
+
+38
+Figure 4.2 Load-deflection Curves from Lattice Modeling with Displacement Control 
+It can be clearly seen that in direct implementation, the numerical results are sensitive to the 
+time step length. Large time step length (dt>1.0e-4) results in much stiffer response as well 
+as unrealistic crack pattern. After dt<1.0e-4, both crack pattern and the load-deflection curve 
+quickly converges while reducing the time step length. Considering the computational cost 
+and accuracy requirement, dt=1.0e-4 can be used as the optimized time step length for the 
+current case. 
+The above example is widely used to determine the damaged related materials properties, 
+such as surface energy. In such case, it is not only expensive but also unnecessary to 
+determine the optimized time step length by taking a number of numerical tests for each 
+different microstructure. The obvious question is: Can we find a more efficient alternative 
+0
+1
+2
+3
+0 0.004 0.008 0.012
+Displacement (mm)
+Reaction (N)
+dt=5.0e-3
+dt=1.0e-3
+dt=1.0e-4
+dt=5.0e-5
+
+39
+approach to obtain the damaged related materials properties without considering the effect of 
+the time step length? To answer this question, an algorithm is presented in the following 
+section, named as “damage control method”. 
+4.2.2 Damage control method 
+As the name implies, the analysis is directly controlled by the damage process. In particular, 
+the time step length is automatically adapted so that within each time step there is only one 
+link removed. 
+The algorithm of damage control method is given as follows, 
+At time n t = t , 
+1) Read load information from loading history 
+2) Formulate global stiffness matrix K based on the contribution from the available 
+links (i.e., the links that have not been removed from the system). 
+3) Solve the linear system F = KU for the nodal displacements and convert the 
+results into the link axial strain ε . 
+4) Find the link with the maximum tensile strain ε max{}ε max =
+5) Calculate corrector max ε
+ε α = cr
+6) Output ) F(α ⋅t and α ⋅{}ε as the results for current step (load and resulting 
+deformation). 
+
+40
+7) Remove the link with the maximum tensile strain from the lattice network. 
+8) Increase time as n n n t = t + ∆t +1 , where n ∆t is a constant time step length. Go back 
+to step 1) and repeat the above procedures for the analysis at next time step. 
+The above algorithm can be further explained in Fig. 4.3. 
+Figure 4.3 Determination of Corrector α
+At time tn, the link with the maximum tensile strain, max ε , can be found through structural 
+analysis. Since the structure is linear elastic system, we can simply find when the tensile 
+strain in this link reaches the critical strain cr ε , 
+ 
+n n
+cr t = ⋅t = α ⋅t
+ε
+ε
+max
+* (4-5)
+t 
+F
+* F
+*
+t nt
+Fn
+t 
+ε
+cr ε
+n t =α ⋅t
+*
+*
+t nt
+max ε
+Loading History 
+
+41
+Similarly, the deformation of each and every lattice link at time t
+*
+ (= ) n α ⋅t can be obtained 
+from the multiple of corrector and the strain at time tn, i.e., {} ( ) n α ⋅ ε t . Thus, at step n, the 
+actual load applied on the structure is ) ( n F α ⋅t so that there is only one link removed from 
+the network, and the corresponding axial strain vector is {} ( ) n α ⋅ ε t . 
+The damage control method can be viewed as a fracture test using an intelligent testing 
+machine that can feel the resistance from the specimen and use it as feed back information to 
+control the loading automatically. The following figures (Figs. 4.4 and 4.5) and Table 4.1 
+show the results of SEN test under damage control, as well as the comparison with the results 
+from displacement control. 
+ 
+Figure 4.4 Crack Patterns from (a) Damage Control, and (b) Displacement Control with 
+dt=5.0e-5 sec. 
+
+42
+Figure 4.5 Load-deflection Curves from Damage Control and Displacement Control 
+Table 4.1 Comparison between Displacement Control and Damage Control 
+Time Step 
+Length∆t
+ (sec) 
+Computational 
+time 
+ (sec) 
+Peak value 
+(N) 
+5.0e-3 480 2.288 
+1.0e-3 2,400 1.711 
+1.0e-4 24,000 1.445 
+Displacement Control 
+5.0e-5 48,000 1.439 
+Damage control 7,200 1.471 
+0
+0.4
+0.8
+1.2
+1.6
+0 0.002 0.004 0.006 0.008
+Displacement (mm)
+Reaction (N)
+Displacement Control, dt=5.0e-5
+Damage Control Results
+Envelope of Damage Control Results
+
+43
+From the above comparison, one can clearly see that damage control and displacement 
+control with small time step lead to the identical crack pattern and load-deflection curve, 
+while the former approach reduces the computational time significantly. Because of this, all 
+the SEN tests in the later mastic analysis (see Chapter 8) will be analyzed through damage 
+control approach. 
+It should be noted, for damage control approach, the envelope of the load-deflection curve, 
+instead of original “snap back curve”, will be used in the data analysis. 
+
+44
+5. DIRECT-LATTICE MODELING
+Based on the concepts previously described, a software tool is developed to utilize the lattice 
+modeling procedure for the study of HMA behavior. Basically, it is comprised of three 
+components: (a) a preprocessor that generates and converts the microstructure of a specimen 
+into a lattice mesh; (b) a numerical simulator that analyzes the resulting lattice mesh; and (c) 
+a postprocessor that analyzes the simulation results to average and scale up into a usable 
+form at the macroscopic level. The elements of each of these components, along with their 
+interdependence, are shown in Fig. 5.1. 
+ 
+Figure 5.1 Framework of Direct-lattice Procedure 
+Preprocessor 
+Microstructure 
+Lattice Mesh Numerical Solver 
+Loading History 
+Failure Criterion 
+Constituent 
+Material Properties
+Cracking Pattern 
+Load vs. 
+Deformation Curve
+Scale up for 
+Analysis at Larger 
+Scale 
+Numerical Simulator Postprocessor
+Actual 
+Specimen 
+Cut Surface 
+Imaging 
+Process 
+Virtual 
+Fabrication 
+Volumetric 
+Mixture 
+Design 
+
+45
+Several components of direct-lattice modeling in Fig. 5.1, such as the procedure to discretize 
+the material microstructure into lattice mesh and the numerical solver coupled with surface 
+energy based failure criterion, have been described in Chapters 2 ~ 4. In this chapter, we will 
+focus on the description of microstructure generation (Section 5.1), and a comprehensive 
+postprocessor (Section 5.2). 
+5.1 MICROSTRUCTURE GENERATION
+Two microstructural generation approaches developed by Zhang et al. (27) are implemented 
+in the preprocessor to capture the microstructure of the material being simulated: 
+5.1.1 Digital imaging process 
+Digital imaging process essentially involves capturing the microstructure from a cut surface 
+of a physically fabricated specimen (Fig. 5.2). 
+Figure 5.2 Microstructure Generated from Digital Imaging Process (a) Actual Specimen, (b) 
+Raw image, and (c) Resulting Microstructure 
+Image 
+Acquisition
+Image 
+Analysis
+( a ) ( b ) ( c ) 
+
+46
+First, a cleanly cut surface of the specimen (Fig. 5.2a) is scanned into a grayscale digital 
+image (Fig. 5.2b). The brightness and contrast of the resulting digital image is then adjusted 
+by image-analysis software IMAQ from National Instruments (28). The image-processing 
+software IMAQ is used again to remove fine aggregates to obtain a microstructure of HMA 
+(Fig. 5.2c), which can be used for the generation of a lattice mesh (see Chapter 2). 
+Digital imaging process has been widely used to quantify the aggregate configurations. 
+However, identifying the aggregate particles from the mastic background is a longstanding 
+problem in image analysis of engineering materials and especially for HMA. The difficulty 
+stems from the fact that aggregates within the specimen have different colors depending on 
+their mineral composition. Some aggregates have dark-gray color close to that of asphalt 
+binder, which makes it difficult to distinguish these aggregates from asphalt automatically 
+using digital techniques. Currently, such problem still has to be solved manually by painting 
+the dark aggregates white with the help of image manipulation software (29). In addition, 
+digital imaging process requires physical fabrication of the specimens, indicating that for 
+each mixture to be evaluated one must fabricate several specimens, digitally image the 
+specimens, and process the images so that they can be used in micromechanical simulation. 
+Considering the prohibitive number of possible mixture designs, such a requirement of 
+physical fabrication could be very expensive and time-consuming. In order to reduce, and 
+possibly eliminate the need for the physical fabrication of specimens, an alternative to digital 
+imaging, namely virtual fabrication, is developed to facilitate the numerical modeling. 
+
+47
+5.1.2 Virtual fabrication 
+Virtual fabrication refers to utilizing the mix properties to virtually fabricate the 2D 
+microstructure of a specimen for the 2D lattice analysis (Fig. 5.3). 
+Figure 5.3 Microstructure from Virtual Fabrication, (a) 3D Volumetric Aggregate gradation, 
+(b) Apparent “Area” Gradation, and (c) Virtually Fabricated Microstructure. 
+Such an approach starts with inverse stereology that converts the volumetric aggregate 
+gradation into the “2D apparent area gradation” (i.e., the distribution of aggregate cut face 
+area in a randomly cut section from the 3D specimen), which is later used in a particle 
+generation program to control the size and shape of each and every polygon representing 
+aggregate, and eventually forming a complete microstructure. It has been shown that the 
+virtual fabricated specimen can mimic the actual specimen in its microstructure and, more 
+importantly, the mechanical behavior of the specimen. The detailed information about the 
+virtual fabrication and its evaluation can be found in reference (30). 
+(b) 
+100
+0% Passing 
+Sieve Size (mm)
+0.075 1.18 4.75 9.5 12.5 0.075 1.18 4.75 9.5 12.5
+(a) 
+% Passing 
+Sieve Size (mm) 
+100
+0
+Inverse 
+Stereology
+ (c) 
+Structure 
+Generation 
+
+48
+5.2 COMPREHENSIVE POSTPROCESSOR
+A graphical postprocessor has been implemented to effectively view and analyze results from 
+the numerical simulator. Specifically, a visual basic postprocessor has been implemented to 
+view the link breakage (i.e., cracking process) as well as the load displacement curve. The 
+detailed information about this visual basic program can be referred to Appendix E. A 
+sample output from the postprocessor is shown in Fig. 5.4. 
+ 
+Figure 5.4 Example of the Simulation Results Processed by Postprocessor. 
+
+49
+It is expected that the cracking process would aid in a qualitative understanding of the 
+damage phenomena, whereas the load-displacement curve is useful for a more quantitative 
+understanding. It is also envisioned that the load-displacement curve and other quantitative 
+indicators would be used to scale-up the results from microscopic level to the macroscopic 
+level (e.g., helping to determine the damage parameters in the viscoelastic continuum 
+damage model (VCDM), proposed by Kim et al. (31,32)). 
+
+50
+6. STUDY OF COMPUTATIONAL COST 
+6.1 DIRECT-LATTICE MODELING OF IDT 
+Since one of the goals of lattice modeling is to relate the component material properties to the 
+mixture properties, it is desirable to capture the effect of even the finest aggregates. Such 
+detailed modeling, although appears straightforward at the outset, has significant practical 
+limitations due to the prohibitive computational cost. It turns out that the simulation of 
+commonly used HMA specimens is impractical with current computing power. For example, 
+to capture the effect of all the aggregates larger than 0.3 mm, it is necessary to choose a 
+lattice link length of 0.03 mm or smaller. With this requirement, it turns out that a 150 mm 
+diameter IDT specimen (Fig. 6.1) would require approximately 28,000,000 nodes in the 
+lattice mesh, thus making the analysis impractical. 
+Figure 6.1 Direct-lattice Modeling of IDT Specimen 
+IDT Test on MTS 
+150mm 
+Lattice Simulation 
+12mm 
+
+51
+6.2 TECHNIQUES TO REDUCE COMPUTATIONAL COST
+Increasing the link length can reduce the system size, thus leading to more tractable 
+computational modeling. However, because larger links cannot model the smaller aggregates, 
+there is a significant loss of accuracy. In the past decade, different techniques have been 
+proposed to reduce the computational cost for lattice analysis. Vervuurt et al. (33) used lattice 
+mesh with different density for different area: a finer lattice used around the crack tip (or 
+notch) and a coarser mesh represents the surrounding material. 
+Figure 6.2 Lattice Modeling of SEN Specimen for Uniaxial Tensile (a) Specimen Geometry, 
+(b) Lattice Mesh with Generated Grain Skeleton (Reprinted from ref. 33) 
+(a) (b) 
+
+52
+Bolander et al (34) used remeshing technique for the lattice modeling, in which a regular 
+lattice network is used only over the fracture process zone (FPZ) and its immediate vicinity, 
+while the surrounding material is represented using boundary elements. These two meshes 
+are tied together and updated as the crack tip advances during fracture. 
+Figure 6.3 An Adaptive Procedure for Fracture Simulation of Concrete Specimen (a) 
+Specimen Geometry and Analysis Model, (b) Adaptive Remeshing. (Reprinted from ref. 34) 
+(a)
+(b)
+Boundary Element 
+Lattice Mesh 
+
+53
+These methods, as well as the well-know boundary element method, are well suited for 
+damage. Unfortunately, our problem is related to the distributed damage and these methods 
+are not applicable. 
+In this study, we first attempted to reduce the analysis cost through two approaches, i.e., 1) 
+reducing the lattice system size, and 2) improving the computational efficiency. One efficient 
+approach to reduce system size (the total number of degree-of-freedoms) is to represent the 
+aggregate particle with its boundary nodes only. Consider the fact that for the most part, 
+HMA consists of rigid aggregates that do not deform or crack at the temperature range where 
+fatigue cracking is of concern. Deformation and cracking only occurs inside the binder (or 
+mastic), which is a minor volumetric portion of the mixture. Therefore, it is desirable to 
+confine the detailed lattice modeling to this active region. Indeed, noting that the aggregates 
+cannot deform, the nodes around the aggregate are constrained with each other, and the 
+lattice mesh inside the inclusion is simply removed (Fig. 6.4). 
+Figure 6.4 Representing Rigid Inclusion with its Boundary Nodes 
+Uniform Tension 
+Rigid Elastic 
+Inclusion Constrained 
+ Nodes 
+
+54
+It can be clearly seen from the figure that there is a many-fold reduction in the number of 
+lattice links, resulting in a significant decrease in computational cost. 
+Secondly, in an attempt to improve computational efficiency, the basic linear algebra 
+libraries (BLAS) from Intel® Math Kernel Library (MKL) are implemented into the 
+numerical solver to further improve the computational efficiency. We also investigated the 
+effectiveness of dynamic relaxation method based numerical solver. Unfortunately, even 
+with such efforts, lattice modeling is still limited for small system with relatively coarse 
+mesh. To make lattice-modeling approach more practical and realistic, we introduce the 
+multi-scale modeling idea into lattice methodology. 
+
+55
+7. MULTISCALE MODELING APPROACH
+Essentially, the multiscale approach considers the effect of different-sized aggregates at 
+different scales. Such an approach reduces the computational cost significantly while 
+capturing the mechanical phenomena at various scale lengths. The enhanced multiscale 
+lattice procedure combined with virtual fabrication technique is illustrated in Fig. 7.1. 
+As shown in the figure, given the mixture aggregate gradation, inverse stereology is applied 
+to obtain the aggregate gradation in terms of the apparent aggregate area percentage. Then, 
+the resulting 2D apparent aggregate gradation may be divided into a series of sub-regions 
+based on different scales of observation (i.e., aggregate size). 
+The lattice modeling starts with the virtual fabrication of a group of representative volume 
+elements (RVEs) at the last (smallest) scale, scale n. Noting that the heterogeneity at scale n
+is ignored at the larger scale, ‘scale n-1’, scale n RVE can be regarded as homogeneous 
+mastic in the analysis performed at scale n-1. A group of RVEs are then analyzed using the 
+direct-lattice modeling described in Chapter 5. The lattice analysis takes the surface energies 
+and modulus of the binder and aggregate and calculates the effective modulus and surface 
+energies of RVEs at scale n. This is accomplished by simulating the SEN test for surface 
+energies and the uniaxial test for the effective modulus of RVEs. The resulting modulus and 
+surface energies from all the RVEs are statistically averaged to eliminate the specimen-tospecimen variation due to the random nature of microstructure. The processed mastic 
+properties are, in turn, used for the larger scale (scale n-1) lattice modeling. This procedure 
+is recursively applied until all sub-regions of the gradation are considered. In particular, the 
+
+56
+microstructure of the specimen being simulated is created and analyzed at scale 1 to predict 
+its mechanical response and, eventually, the mixture’s cracking performance. 
+Figure 7.1 Multiscale Lattice Modeling Cooperated with Virtual Fabrication 
+Volumetric Aggregate Gradation (3D Mixture Design) 
+2D Apparent Aggregate Gradation in a Cut Surface 
+Inverse Stereology 
+0
+0.075 0.3 2.36 12.5 19.0 Sieve Size (mm) Scale n Scale (n-1) . . . . . Scale 1 Scale of 
+Observation 
+Virtual 
+fabrication of 
+scale n RVEs 
+. 
+. 
+. 
+. 
+Lattice analysis 
+of uniaxial & 
+notch tests on 
+resulting RVEs 
+Statistically 
+averaged 
+lattice results 
+Microstructure of 
+specimen w/ aggregate 
+size at scale 1
+Lattice simulation at 
+scale 1 with mastic 
+properties obtained 
+from lattice analysis on 
+scale 2
+Performance 
+Prediction 
+Scale n-1
+mastic 
+properties 
+Virtual 
+fabrication of 
+scale n-1 RVEs
+Lattice analysis 
+of uniaxial & 
+notch tests on 
+resulting RVEs
+Statistically 
+averaged 
+lattice results 
+Scale n-2
+mastic 
+properties
+Direct-lattice 
+
+57
+An important point to note is that in the multiscale analysis, the heterogeneities observed at 
+the smaller scale and their effects on microcracking are considered in an average sense by 
+using homogenized (averaged) mechanical properties. Considering the main objective of 
+characterizing the cracking behavior at macro-level, as previously mentioned, it is 
+unnecessary to precisely simulate the micromechanical phenomena such as stress singularity 
+and propagation of each and every microcrack. Thus, in the current research, the multiscale 
+approach is sufficient and, due to its efficiency, appropriate and desirable. 
+
+58
+8. MULTISCALE LATTICE MODELING OF IDT 
+To illustrate the effectiveness of the proposed multiscale lattice procedure combined with 
+virtual fabrication technique, a four-scale approach is used to model a 150 mm IDT specimen 
+at 5°C for which direct-lattice modeling is not practical (see Chapter 6). The volumetric 
+mixture design, along with the constituent material properties, are given in Tables 8.1 and 8.2, 
+respectively. 
+Table 8.1Volumetric Mixture Design
+Sieve Size 
+(mm) 
+Percent 
+Passing (%) 
+12.50 100 
+9.50 99 
+4.75 86 
+2.36 63 
+1.18 44 
+0.60 33 
+0.30 22 Asphalt Content (%) 6.4 
+0.15 13 Air Voids (%) 4.0 
+0.075 6 VMA (%) 18.8 
+Table 8.2 Constituent Material Properties 
+Aggregate 
+(Georgia Granite)
+Binder 
+(AAM) 
+Modulus 50 GPa 152 MPa (BBR@-10C)
+Surface Energy 206.5 ergs/cm2 48.35 ergs/cm2
+
+59
+The multiscale lattice modeling, as described in the following sections, can be divided into 
+five major steps: 
+Step 1 – Splitting the analysis into various scales. 
+Step 2 – Virtual fabrication of RVEs at various scales. 
+Step 3 – Obtaining the material properties of mastic at each scale, using lattice modeling. 
+Step 4 – Simulation of IDT at structure level. 
+Step 5 - Comparison of the numerical results and experimental observations. 
+Detailed information about step 1 and 2 is given in Section 8.1. Step 3 is described in Section 
+8.2. The IDT simulation results (step 4) and the comparison with experimental measurements 
+(step 5) are given at the end of this chapter. 
+8.1 SPLITTING INTO VARIOUS SCALES AND VIRTUAL STRUCTURE GENERATION
+The first two questions that need to be answered in multiscale analysis are, 1) how many 
+scales do we need? 2) what are the optimized RVE size and lattice characteristic length for 
+each scale? To answer these questions, an automated procedure built on a trial-and-error 
+approach is given in this section. (Fig. 8.1). 
+
+60
+Figure 8.1 Parameter Determination Process for Multiscale Analysis
+System size matches PC 
+capacity? 
+Determine the minimum 
+aggregate size 
+No
+Obtain the maximum 
+aggregate size 
+scale 1 analysis?
+All the aggregates of interest 
+have been modeled?
+Correct 
+lattice size 
+Yes
+END
+No
+Yes
+No
+Yes
+Next scale
+Determine the RVE size 
+Initial trial of link size 
+Calculate the total number of DOF 
+
+61
+The procedure starts with an initial trial link size based on experience. Given the specimen 
+size, the total number of nodes and degree of freedoms (DOFs) involved at scale 1 can be 
+estimated. If the resulting system size is beyond the available computational power, increase 
+the lattice size till the total number of DOFs is practical for numerical analysis. Otherwise, 
+decrease the link size until the system size matches the PC capacity. The determined link 
+size is then used to approxiate the minimum aggregate that can be modelled at scale 1 – to 
+capture the effect of an aggregate particle on the mixture mechanical behavior, the link size 
+should be at least 6~10 times smaller than the aggregate. Noting that the minimum aggregate 
+size at scale 1 is actually the maximum aggregate size at the smaller length scale (scale 2), it 
+can be used to determine the scale 2 RVEs’ size. Generally, to represent the mechanical 
+properties, RVE should be 4~5 times the largest aggregate size. The lattice density and the 
+minmum aggregate for scale 2 RVEs are then determined using the same approach for scale 
+1. This procedure is recursively applied until all the aggregates of significance are considered. 
+Essentially, two important criteria should alway be followed, 1) the link size should be small 
+enough to capture the effect of the smallest aggregate in the microstructure, while 
+maintaining a reasonable computational cost; and 2) the RVE should be large enough to 
+represent the mechanical properties of the mastic. 
+According the above procedure, a four-scale lattice modeling combined with virtual 
+fabrication is used for current IDT simulation, as shown in Fig. 8.2. 
+
+62
+ 
+Figure 8.2 Apparent Aggregation Gradation for Each Scale 
+Inverse Stereology
+3D Aggregate Gradation 
+2D Apparent Aggregate Gradation 
+0
+20
+40
+60
+80
+100 
+% Passing
+0.075 0.3 1.18 4.75 9.5 12.5
+Scale-1
+Scale-2 
+Scale-3 
+Scale-4 
+ 0.075 0.30
+% Passing 
+Sieve Size (mm) 
+ 0.30 1.18
+% Passing 
+Sieve Size (mm) 0
+100
+ 1.18 4.75
+% Passing 
+Sieve Size (mm) 
+Scale 4 
+Scale 3 
+Scale 2 
+For RVE Generation 
+0.075 0.3 1.18 4.75 9.5 12.5 0
+20 
+40 
+60 
+80 
+100
+Sieve Size (mm)
+% Passing
+100
+100
+0
+0
+Sieve Size (mm)
+Scale 1 
+% Passing 
+Sieve Size (mm) 
+100
+0 4.75 12.5
+
+63
+In Fig. 8.2, the volumetric aggregate gradation (Table 8.1) is first converted into the 
+aggregate gradation in terms of the aggregate area percentage using inverse stereology. The 
+resulting aggregate area gradation is divided into four sub-regions: scale 1 for coarse 
+aggregate between 12.5 and 4.75 mm, and scales 2 to 4 for fine aggregate between 4.75 ~ 
+1.18 mm, 1.18 ~ 0.30 mm, and <0.30 mm, respectively. The apparent area gradation for 
+scale 1 is used to create the IDT specimen where the coarse aggregates are explicitly 
+represented and mastic (or “scale 1 mastic”) is considered as a homogeneous medium. The 
+aggregate area gradations for scales 2 to 4 are used to generate a group of virtual RVEs for 
+mastic analysis performed at different scales as illustrated in Fig. 8.3. 
+The resulting microstructures are then discretized into random truss lattice for the further 
+mastic analysis (Section 8.2) and structural performance prediction (Section 8.3). 
+
+64
+Figure 8.3 Virtual Fabricated Microstructures at Different Scales 
+D=150mm
+RVE at scale 4 
+1.5 by 1.5 mm2
+ 
+Lc =0.0095 mm 
+RVE at scale 3 
+6.0 by 6.0 mm2
+ 
+Lc =0.05 mm 
+RVE at scale 2 
+24.0 by 24.0 mm2
+ 
+Lc =0.16 mm 
+12.75mm
+4.75mm
+1.18mm
+0.30mm
+The characteristic link 
+length, Lc=0.75mm 
+
+65
+8.2 MASTIC ANALYSIS
+With the help of multiscale approach, the numerical modeling of IDT converts into a series 
+of lattice modeling at four successive length scales. At each scale, HMA is considered as a 
+mixture of coarse aggregates and mastic, while the mastic properties are obtained from a 
+finer scale lattice model of the finer aggregates and binder or mastic. Eventually, the 
+properties of scale 1 mastic can be obtained and used for the IDT structural performance 
+simulation, as illustrated in Fig. 8.4. 
+Figure 8.4 Mastic Analysis in Multiscale Lattice Modeling of IDT 
+In current lattice simulation, two types of mastic properties need to be determined through 
+mastic analysis, i.e., effective modulus of elasticity and surface energy. 
+Scale 4 Analysis Scale 3 Analysis Scale 2 Analysis 
+Modeling of 
+IDT Structural 
+Performance
+Component Materials’ Properties
+Scale 3 Mastic 
+Properties 
+Scale 2 Mastic 
+Properties
+Scale 1 Mastic 
+Properties 
+Loading History 
+Mastic Analysis
+
+66
+8.2.1 Effective Modulus of Elasticity 
+Starting from scale 4, the lattice modeling procedure is used to analyze the RVEs to 
+approximate the effective modulus for scale 3 mastic. This is accomplished by the use of 
+uniaxial tension tests on RVEs. A total of ten RVEs are tested. Each lattice realization of the 
+uniaxial test takes the modulus of the component materials at scale 4 and obtains the stiffness 
+of the mastic at scale 3. The results are then statistically averaged and used in the lattice 
+modeling at scale 3 as the mastic modulus. This procedure is recursively applied to all RVEs, 
+and the results are given in Table 8.3 and also plotted in Fig. 8.5 to provide insight into the 
+scatter of data from different realizations. 
+
+67
+Table 8.3 Mastic Modulus at Each Scale (UNIT = MPa) 
+Results of mastic analysis at 
+RVE 
+scale 4 scale 3 scale 2 
+1 809 1,320 2,030 
+2 779 1,304 2,355 
+3 779 1,495 2,311 
+4 776 1,495 2,311 
+5 778 1,455 2,336 
+6 762 1,460 2,333 
+7 840 1,455 2,349 
+8 792 1,448 2,345 
+9 761 1,521 2,352 
+10 754 1,411 2,302 
+Std. Dev. 25.7 72.4 104.5 
+Mean 783 1,436 2,300 
+Effective 
+modulus of 
+mastic at scale 3 
+Effective 
+modulus of 
+mastic at scale 2 
+Effective 
+modulus of 
+mastic at scale 1 
+
+68
+ 
+Figure 8.5 Effective Moduli from Uniaxial Tensile Tests on RVEs at Different Length 
+Scales 
+0.00
+0.01
+0.02
+600 700 800 900 1000
+Uniformly Distributed Load 
+Uniaxial 
+compression tests 
+0
+0.003
+0.006
+1000 1200 1400 1600 1800 2000
+0.000
+0.002
+0.004
+1800 2000 2200 2400 2600 2800
+Modulus of Elasticity for Scale 4 Mastic (MPa)
+PDF PDF PDF
+Modulus of Elasticity for Scale 3 Mastic (MPa)
+Modulus of Elasticity for Scale 2 Mastic (MPa)
+783MPa 
+1,436MPa 
+2,300MPa
+
+69
+The probability density function (PDF) in Fig. 8.5 is the derivative of the probability 
+distribution function. That is, the probability of a modulus of elasticity between (E, E + ∆E ) 
+can be obtained from the integral of the PDF over (E, E + ∆E ). The modulus of elasticity 
+corresponding to the peak value of the PDF is the mean value, and the area under the curve is 
+always equal to 1. Generally, a flat curve represents a large deviation from the mean value or 
+large scatter in data distribution. 
+8.2.2 Specific Surface Energy 
+The surface energy for mastic can be estimated using SEN in a similar manner to the 
+estimation of effective modulus. The notch is cut at the middle edge of each RVE with a 5% 
+of RVE width and 2% of RVE height. The structure is fixed at the bottom, and the top edge 
+is gradually pulled in a displacement control mode until it is completely fractured. 
+Figure 8.6 SEN Test for the Approximation of Mastic Surface Energy 5% 
+a
+20% a
+Displacement control 
+a 
+a 
+
+70
+The energy loss during the fracturing process, divided by the macro crack length, can be 
+viewed as the specific surface energy for mastic at scale 3. This procedure is recursively 
+applied to all RVEs, and the results are given in Table 8.4. 
+Table 8.4 Surface Energy at Each Scale (UNIT = ergs/cm2
+) 
+Column 1 Column 2 Column 3 Column 4 
+Analysis Scale Scale 4 Scale 3 Scale 2 
+Γm 48.35 618.53 7140.49 50397.93 
+Γa 206.50 206.50 206.50 206.50 
+Γma 79.18 79.18 79.18 79.18 
+ma Link γ 175.67 745.85 7267.82 50525.25 
+Surface 
+Energy mm γ 96.70 1237.06 14280.98 100795.85 
+Γm - Surface Energy of Mastic 
+Γa - Surface Energy of Aggregate 
+Γma - Interfacial Surface Energy between Mastic and Aggregate 
+ma γ - Surface Energy for Mastic-to- Aggregate Type Lattice Link 
+mm γ - Surface Energy for Mastic-to- Mastic Type Lattice Link 
+Column 1 – Input information for analysis at scale 4 
+Column 2 – Results from analysis at scale 4, also representing 
+ Input information for analysis at scale 3 
+Column 3 – Results from analysis at scale 3, also representing 
+ Input information for analysis at scale 2 
+Column 4 – Results from analysis at scale 2, also representing 
+ Input information for analysis at scale 1 
+
+71
+In Table 8.4, the link surface energy as the input information for mastic analysis at scale 4 
+(column 1) is derived from the surface energy components of asphalt and aggregate 
+measured in the laboratory (Table 8.5). 
+Table 8.5 List of Component Surface Energy (ergs/cm2
+) 
+Component Γ LW Γ AB Γ + Γ − Γ
+Georgia Granite 206.5 133.2 73.3 24.1 96.0 
+AAM 48.35 9.33 39.02 17.79 21.40 
+In Table 8.5, the total surface energy ( Γ ) consists of two components, Lifshitz-van der 
+Waals component ( LW Γ ), and Acid-Base component ( AB Γ ), i.e., 
+ LW AB Γ = Γ + Γ (8-1)
+And, 
+ _ Γ = 2 Γ Γ AB +
+(8-2)
+where + Γ is Lewis acid component of surface interaction, and − Γ is the Lewis base 
+component of surface interaction. 
+As previously discussed, the link surface energy for mastic-mastic type lattice link mm γ , 
+which represents the strength within the scale 4 mastic (cohesion), can be calculated from 
+equation (4-2), i.e., 
+
+72
+ 
+2 96.70 ergs/cm
+2
+=
+mm = Γm γ
+(8-3)
+The link surface energy for aggregate-mastic type lattice link, ma γ , which represents the 
+interfacial strength between mastic and aggregate (adhesion), can be calculated from 
+equation (4-3). 
+ 
+ma = Γm + Γa − Γma γ (8-4)
+where Γma is the interfacial surface energy between mastic and aggregate, and can be derived 
+from the following equations. 
+As described in equation (8-1), there are two components for interfacial surface energy, 
+ AB
+ma
+LW Γma = Γma + Γ (8-5)
+The Liftshitz-van der Waals component, LW Γma , can be calculated using the Berthelot 
+geometric mean (37) : 
+ 2 ( ) LW
+a
+LW
+m
+LW Γma = Γ − Γ (8-6)
+The acid-base component, AB Γma , is defined as, 
+ 2( )( ) + + − − Γ = Γm − Γa Γm − Γa
+AB
+ma (8-7)
+
+73
+Substituting equation (8-6) and (8-7) into equation (8-5), we have 
+2
+2
+2
+79.18 /
+( 9.33 133.2) 2( 17.79 24.1)( 21.40 96.0)
+( ) 2( )( )
+ergs cm
+m a m a
+LW
+a
+LW
+ma m
+=
+= − + − −
+Γ = Γ − Γ + Γ − Γ Γ − Γ + + − −
+(8-8)
+Given the component surface energy (Table 8.5), the link surface energy for masticaggregate type ma γ at scale 4 lattice analysis can be obtained from equations (8-4) and (8-8), 
+ 
+2 = 48.3 + 5206.50 - 79.18 = 175.67 ergs/cm
+ma = Γm + Γa − Γma γ (8-9)
+Lattice simulation of SEN at scale 4 is then performed, and the results from three realizations 
+are given in Table 8.6. 
+Table 8.6 Results of Lattice Modeling of SEN at Scale 4 
+CASE Energy Loss 
+( N ⋅ mm ) 
+Surface Area of 
+Crack 
+(mm
+2
+) 
+Surface Energy 
+( 2 N ⋅ mm / mm )
+Surface Energy 
+( 2 ergs/ cm ) 
+1 0.0018 1.44 6.28E-04 628.43 
+2 0.0021 1.66 6.32E-04 632.18 
+3 0.0041 3.44 5.95E-04 594.98 
+Average 618.53 
+In the above table, the surface area of crack is the multiple of crack length (mm) and the 
+thickness of RVE (which is equal to 1 mm for 2D analysis). The surface energy of 618.53 
+
+74
+ergs/cm2 is then used as the surface energy of the mastic at scale 3 (Column 2 in Table 8.4). 
+We assume the interfacial surface energy between mastic and aggregate is always equal to 
+the interfacial surface energy between binder and aggregate. Then, the link surface energy for 
+lattice modeling of SEN at scale 3 can be derived using the same method for scale 4 analysis 
+through equations (8-3) ~ (8-8). The results obtained from the previous finer scale are 
+processed and used as input information for the next scale. This procedure is recursively 
+applied until the mastic and link surface energy for IDT simulation at scale 1 are obtained 
+(Column 4 in Table 8.4). 
+8.2.3 Additional Discussion 
+In this study, the surface energy measured in the laboratory is directly used in the lattice 
+analysis at scale 4. However, it doesn’t mean that we can simply use the laboratory measured 
+surface energy for the mastic analysis at the smallest length scale in any case. In the current 
+case, since the laboratory scale happens to be similar to the characteristic link length at scale 
+4, one can assign the laboratory measurement as the link properties for scale 4 lattice analysis. 
+Otherwise, the results from laboratory must be extrapolated. 
+
+75
+8.3 IDT SIMULATION AND COMPARISON WITH EXPERIMENTAL DATA
+In this section, the mechanical properties of scale 1 mastic obtained from the above mastic 
+analysis are used in scale 1 lattice modeling to predict the mechanical behavior of the IDT 
+specimen. In the IDT simulation, the top rigid loading cell is gradually compressed under 
+displacement control with a rate of 0.12 mm/sec. The resulting load vs. displacement curve 
+and cracking pattern are shown in Fig. 8.7. It appears that the multiscale modeling procedure 
+gives reasonable values for strength. The observed cracking pattern is also in agreement with 
+the typical cracking patterns observed in the IDT testing of HMA. The softening part of the 
+load-displacement curve, however, appears stiffer than the experimental measurement. This 
+is mainly because viscoelasticity still plays a substantial role in the specimen mechanical 
+behavior (39), which is not taken into consideration in the current lattice model. Thus, 
+improvements to the proposed model to simulate viscoelastic cracking are essential for more 
+accurate lattice modeling of HMA’s cracking behavior. Such enhancements are subjects of 
+future research. 
+
+76
+ ( a ) 
+(b) 
+Figure 8.7 Lattice simulation of IDT (a) Load-deflection Curves, and (b) Cracking Patterns 
+from the Lattice Simulation and Experimental Observation 
+0
+5
+10
+15
+20
+25
+0 2 4 6 8 10 12
+Displacement (mm)
+Load (kN)
+A 
+B 
+C 
+Numerical
+Experimental
+Stage A Stage B 
+Stage C Actual Crack Pattern 
+
+77
+The numerical prediction of the strain fields at different stages (Fig. 8.7) is further evaluated 
+with the help of the DIC method, a non-contact, full-field displacement and strain analysis 
+method that compares images of a deformed specimen with its original geometry (38). 
+Examples of the horizontal strain (εxx) and vertical strain (εyy) contour fields from these two 
+methods are given in Fig. 8.8. 
+
+78
+DIC- xx ε at stage A B C 
+Lattice- xx ε at stage A B C 
+DIC- yy ε at stage A B C 
+Lattice- yy ε at stage A B C 
+Figure 8.8 Horizontal/Vertical Strain Fields Captured by DIC and Predicted by the Virtual 
+Testing Procedure 
+
+79
+In the above figure, a lighter shade represents a smaller value in the figures associated with 
+lattice simulation and DIC observation. It can be seen from this figure that the lattice 
+simulation captures the effect of the location of aggregate particles and cracks, and that 
+similar patterns can be observed from the strain fields of the virtual and actual testing. In 
+particular, at stage A, large strain only occurs near the loading areas. At this stage, although 
+the nucleation of microcracks can be observed near the middle of the specimen, the structural 
+response is still within the linear range. These microcracks then start to grow and coalesce to 
+form a large propagating crack when the load reaches 70-80% of the peak value (stage B). 
+Then, the crack propagates through the specimen quickly and causes the complete failure of 
+the structure (stage C). 
+
+80
+9. SUMMARY AND FUTURE RESEARCH
+In this study, a practical lattice modeling procedure for the characterization of cracking in 
+HMA is presented. Its three major components, preprocessor for lattice mesh generation, 
+numerical solver coupled with a surface energy-based failure criterion, and a comprehensive 
+postprocessor are systematically developed and tested. However, due to the disparate length 
+scales associated with microcracking and specimen size, such direct-lattice modeling would 
+demand an unrealistic computational cost for modeling even laboratory-scale HMA 
+specimens. In order to make the procedure more practical, the multiscale approach is 
+implemented to consider the effect of different-sized aggregates at different length scales. 
+Such an approach reduces the computational cost significantly, while capturing the 
+mechanical phenomena at various length scales. The basic idea of multiscale modeling is to 
+model the effects of different sized aggregates at different length scales. Thus, the directlattice modeling is replaced by a series of lattice simulations performed at different length 
+scales. The effectiveness of the resulting procedure is illustrated with the help of the 
+quantitative prediction of the load-displacement curve from the IDT testing, using a fourscale approach. The proposed virtual testing procedure yields a realistic crack pattern and 
+also adequately predicts the load-displacement behavior before reaching peak load. The 
+strain fields measured from the DIC during the IDT testing verify the reasonableness of the 
+strain calculation in the lattice simulation. 
+However, before the procedure can be used with confidence, there are several aspects that 
+need to be investigated further. These include (a) replacing the truss elements with beam 
+
+81
+elements to simulate variable Poisson’s ratio, (b) developing and evaluating the viscoelastic 
+fracture law, and (c) modeling of viscoelastic fracture. These three issues are subjects of 
+future research. In addition, since the proposed procedure approximates the material behavior 
+in a statistical sense, it is necessary to perform a number of realizations to provide a reliable 
+and more accurate prediction. In that case, a parallel computing technique aids significantly 
+in reducing the analysis time. Eventually, it is expected that, in its final form, the proposed 
+lattice modeling procedure could be used to estimate the cracking performance of HMA 
+starting from the component materials’ moduli and surface energies, thus leading to an 
+enhanced performance-related mixture specification and mix design optimization. 
+
+82
+REFERENCES
+1 Kwon, Y. W., Lee, J. H., and Liu, C. T., “Modeling and Simulation of Crack Initiation 
+and Growth in Particulate Composites,” Journal of Pressure Vessel Technology, 
+Vol. 119, pp. 319-324 (1997). 
+2 Ouadfel, H., Rothenburg, L., “An algorithm for detecting inter-ellipsoid contacts”, 
+Computers and Geotechnics, Vol. 24, No. 4, pp. 245-63 (1999). 
+3 Kim, J. S., Kim, J. Y., and Lee, S. R., “Analysis of soil nailed earth slope by discrete 
+element method,” Computers and Geotechnics, Vol. 20, No. 1, pp. 1-14 (1997). 
+4 Cundall, P. A., “A Computer Model for Simulating Progressive Large Scale Movements 
+in Blocky Rock Systems,” Proceedings. International Symposium on Rock Fracture, 
+ISRM, Nancy, France, pp. 2-8 (1971). 
+5 Zubelewicz, A., Bazant, Z. P., “Interface Element Modeling of Fracture in Aggregate 
+Composites,” Journal of Engineering Mechanics, Vol. 113, No. 11, pp. 1619-1630 
+(1987). 
+6 Ricardo, D., Tang-Tat, N. G., “Discrete Modeling of Stress-Strain Behavior of Granular 
+Media at Small and Large Strains,” Engineering Computations, Vol. 9, No. 2, pp. 
+129-43 (1992). 
+7 Meegoda, J. N., Chang, K. G., “Modeling of Viscoelastic Behavior of Hot Mix Asphalt 
+(HMA) Using Discrete Element Methods,” Proceedings of the third ASCE Materials 
+Engineering Conference-Infrastructure: New Materials and Methods of Repair, 
+Edited by K. D. Basham, San Diego, CA, November, pp. 804-811 (1994). 
+8 Hrennikoff, A., “Solution of Problems of Elasticity by the Framework Method”, Journal 
+of Applied Mechanics, Vol.12, 1941, pp.169-175. 
+9 Herrmann, H.J. and Roux, S., “Statistical Models for the Fracture of Disordered Media”, 
+Elsevier Science, 1992. 
+
+83
+10 Schlangen, E., Van Mier, “Experimental and Numerical Analysis of Micromechanics of 
+Fracture of Cement-based Composites”, Cement and Concrete Composites, Vol.14, 
+No.2, 1992, pp.105-118. 
+11 Schlangen, E., “Computational Aspects of Fracture Simulations with Lattice Models”, 
+Fracture Mechanics of Concrete Structures, Edited by F. H. Wittmann, 
+AEDIFICATIO, Freiburg, 1995, pp.913-928. 
+12 Schlangen, E., and Graboczi, E.J., “Fracture Simulations of Concrete Using Lattice 
+Models: Computational Aspects”, Engineering Fracture Mechanics, Vol.57, No.2~3, 
+May~June 1997, pp.319-332. 
+13 Chiaia, B., Vervuurt, A., and Van Mier, J. G. M., “Lattice Model Evaluation of 
+Progressive Failure in Disordered Particle Composites”, Engineering Fracture 
+Mechanics, Vol.57, No.2~3, May~June 1997, pp.301-318. 
+14 Schlangen, E., and Graboczi, E.J., “New Method for Simulating Fracture Using an 
+elastically uniform random geometry lattice”, International Journal of Engineering 
+Science, Vol.34, 1996, pp.1131-1144. 
+15 Christ, N.H., Friedberg, R., and Lee, T.D., “Random Lattice Field Theory: General 
+Formulation”, Nuclear Physics B, Particle Physics, Vol.B202, No.1, pp.89-125 
+(1982). 
+16 Moukarzel, C. and Herrmann, H. J., “A Vectorizable Random Lattice”, Journal of 
+Statistical Physics, Vol.68, pp.911-923 (1992). 
+17 Chiaia, B., Vervuurt, A., Van Mier, J. G. M., “Lattice Model Evaluation of Progressive 
+Failure in Disordered Particle Composites”, Engineering Fracture Mechanics, 
+Vol.57, No.2~3, pp.301-318 (1997). 
+18 Schlangen, E., “Computational Aspects of Fracture Simulations with Lattice Models”, 
+Fracture Mechanics of Concrete Structures, Edited by F. H. Wittmann, 
+AEDIFICATIO, Freiburg, pp.913-928 (1995). 
+
+84
+19 Van Mier J. G. M., Van Vliet, M. R. A., and Wang, T. K., “Fracture Mechanisms in 
+Particle Composites: Statistical Aspects in Lattice Type Analysis”, Mechanics of 
+Materials, Vol.34, pp.705-724 (2002). 
+20 Guddati, M. N., “FEP++: An Object Oriented Finite Element Program Linear and 
+Nonlinear Transient Analysis”, 1995 – current. 
+21 Marsden, J.E., Sirovich, L. and Golubitsky M, Numerical Mathematics, Springer-Verlag 
+New York, Inc., 2000. 
+22 www.intel.com/software/products/mkl 
+23 Hughes, T.J.R., The Finite Element Method – Linear Static and Dynamic Finite Element 
+Analysis, Dover Publications, Inc., 2000. 
+24 E. E. Gdoutos, “Failure Mechanics Criteria and Applications,” Kluwer Academic 
+Publishers, 1990. 
+25 H. L. Ewalds and R. J. H. Wanhill, “Fracture Mechanics,” Edward Arnold Ltd., 1984. 
+26 D. N. Little, D. X. Chen, R. L. Lytton, and Y. R. Kim, “Micromechanics Modeling of 
+Performance of HMA Based on Surface Energy”, unpublished manuscript. 
+27 Feng, Z., Zhang, P., Guddati, M.N., and Kim, Y. R. “Virtual Testing Procedure for the 
+Evaluation of Cracking Performance of Hot Mix Asphalt”, submitted for the 
+Association of Asphalt Paving Technologists (AAPT) 2004 Annual Meeting, Baton 
+Rouge, Louisiana, USA. 
+28 IMAQ Vision Concept Manual, National Instruments, 2000. 
+29 Yue, Z. Q., Bekking, W. and Morin, I., “Application of Digital Image Processing to 
+Quantitative Study of Asphalt Concrete Microstructure”, Transportation Research 
+Record 1492, TRB, National Research Council, Washington, D.C., 1995, pp.53-60. 
+30 A Micromechanical Based Methodology for the Study of Fatigue Cracking in Asphalt 
+Concrete – Project Final Report, 2003 (Unpublished script) 
+
+85
+31 Kim, Y.R., H.J. Lee, and D.N. Little, “Fatigue Characterization of Asphalt Concrete 
+Using Viscoelasticity and Continuum Damage Theory”, Journal of the Association 
+of Asphalt Paving Technologists, Vol.66, 1997, pp. 520-569. 
+32 Guddati, M.N, Feng, Z., and Kim, Y. R., “Towards a Micromechanics-based Procedure 
+to Characterize Fatigue Performance of Asphalt Concrete”, Transportation Research 
+Board 2002 Annual Meeting, Washington D.C. January, 2002. 
+33 Vervuurt, A., Van Vliet, M. R. A., Van Mier, J. G. M., and Schlangen, E., “Simulation 
+of Tensile Fracture in Concrete”, Fracture Mechanics of Concrete Structures, ED. F. 
+H. Wittmann. Freiburg, 1995, pp.353-362. 
+34 Bolander, J. E., Shiraishi, T. and Isogawa, Y., “An Adaptive Procedure for Fracture 
+Simulation in Extensive Lattice Networks”, Journal of Engineering Fracture 
+Mechanics, Vol.54, No.3, 1996, pp.325-334. 
+35 Lilliu, G. and Van Mier, J. G. M., “3D Lattice Type Fracture Model for Concrete”, 
+Engineering Fracture Mechanics, Vol. 70, 2003, pp.927-941. 
+36 O. J. Vacin, J. Stastna, and L. Zanzotto, “Creep Compliance of Polymer Modified 
+Asphalt, Asphalt Mastic and Hot Mix Asphalt,” Transportation Research Board 
+2003 Annual Meeting, Washington, D.C. (2003). 
+37 Good, R. J. and van Oss, C. J., “The Modern Theory of Contact Angles and the 
+Hydrogen Bond Components of Surface Energies”, Plenum Press, New York 
+(1991). 
+38 Seo, Y., Kim, Y. R., Witczak, M. W., and Bonaquist, R., “Application of Digital Image 
+Correlation Method to Mechanical Testing of Asphalt-Aggregate Mixtures,” 
+Transportation Research Record, No. 1789, Transportation Research Board, 
+National Research Council, Washington, D.C., pp. 162-172 (2002). 
+39 Ghassan, R. C., “Characterization of asphalt concrete in tension using a Visco-ElastoPlastic model,” Doctoral Thesis, North Carolina State University, 2002. 
+
+86
+40 Schapery, R. A., “A Theory of Crack Initiation and Growth in Viscoelastic Media I. 
+Theory Development, International Journal of Fracture,” Vol. 11, pp. 141-159 
+(1975). 
+41 Schapery, R. A., “A Method of Predicting Crack Growth in Nonhomogeneous 
+Viscoelastic Meida,” International Journal of Fracture, Vol. 14, pp. 3-309 (1978). 
+42 R. A. Schapery, “A Micromechanical Model for Non-linear Viscoelastic Behavior of 
+Particle-reinforced Rubber with Distributed Damage, Engineering Fracture 
+Mechanics, Vol. 25, pp. 545-867 (1986). 
+
+87
+APPENDIX A - MODELING OF VISCOELASTIC SOLIDS
+The random truss lattice developed in this study can be easily extended to viscoelastic 
+materials by replacing the linear elastic springs with viscoelastic elements, in which the stress 
+(σ ) and strain (ε ) is governed by the constitutive equation, 
+τ
+τ
+ε
+σ τ d
+d
+d E t
+t
+∫ = −
+0
+( ) (A-1)
+In the above equation, the relaxation modulus E is determined using physical experiments. In 
+this study, the Generalized Maxwell model is adopted where the relaxation modulus is 
+represented by Prony series expansion, 
+∑=
+−
+= ∞ +
+m
+i
+t
+i i E t E E e
+1
+( ) ρ (A-2)
+where E∞ is the long term relaxation modulus, Ei and ρ i =ηi Ei are the modulus and the 
+relaxation time of component i in generalized Maxwell model (Fig. A.1). 
+Figure A.1 Generalized Maxwell Model 
+σ ε
+Component i
+ηi
+Em
+η m
+
+88
+As described in the above figure, in generalized Maxwell model, a total number of m springdashpot elements are placed in parallel, each with its own characteristic relaxation time. Thus, 
+it can model a wide range of time-dependent viscoelastic behavior. 
+Define ∑=
+= ∞ +
+m
+i
+E E Ei
+1
+0 , then equation (A-2) can be written as, 
+∑=
+ρ
+−
+= − −
+m
+i
+t
+i i E t E E e
+1
+0 ( ) (1 ) . (A-3)
+Substituting (A-3) into (A-1), one can obtain 
+ τ
+τ
+ε
+σ = − − ∫ ∑=
+ρ
+−τ −
+d
+d
+d
+t E E e
+t m
+i
+t
+i i
+0 1
+0 ( . ) [ (1 )] (A-4)
+Using the concept of pseudo strain, 
+∫
+−
+= −
+t t
+R
+i d
+d
+d
+e i
+0
+(1 ) τ
+τ
+ε
+ε ρ
+τ
+ (A-5)
+equation (A-4) can be rewritten as, 
+∑=
+=
+m
+i
+R
+i i
+R
+1
+ε α ε (A-6) 
+and 
+( ) ( ( ) ) 0
+R σ t = E ε t − ε (A-7)
+where E0
+Ei α i = . 
+
+89
+Divide time domain [0,t] to [ , ] n n+1
+i
+∪ t t , where n+1 = n + ∆ n+1 t t t is the time point at n+1. 
+Assume that the strain varies linearly with ] , [ , ∈ n n+1 τ τ t t , i.e., 
+1
+1 ( ) ( )
++
++
+∆
+∆ = ∂
+∂
+n
+n
+t
+ε t
+τ
+ε τ (A-8)
+Then, at time point tn+1, equation (A-6) and (A-7) can be discretized as 
+
+
+
+
+
+
+
+
+∆ − − ∆
+∆ = + − +
++ ∆ + −
++
++
++
+∆−
++ (1 ) ( ) ( ) ( ) ( ( ) ( ))
+1 1
+1
+1
+1
+1 i
+n
+i
+n t
+n i
+n
+n
+n n
+R
+i
+t
+n n
+R
+i t e
+t
+t
+t t e t t ρ ρ ρ
+ε
+ε ε ε ε (A-9)
+ 
+
+ 
+
+ = −∑=
++ + +
+m
+i
+n
+R
+n n i i t E t t
+1
+1 0 1 1 σ ( ) ε ( ) α ε ( ) (A-10)
+Thus, the axial stress for each viscous link can be calculated using the above recurrence 
+formula. 
+After implementing the above equations, the lattice model has been successfully used to 
+simulate creep of linear viscoelastic plate under constant load (Fig. A.2). The vertical 
+deformation at top layer predicted by lattice modeling matches well with ABAQUS results. 
+It was observed that the time dependence of the link properties at the microscopic scale 
+translates directly to the macroscopic scale. 
+
+90
+Figure A.2 Creep Test on a Homogeneous Viscoelastic Plate 
+Homogeneous material patch
+Constant Load
+Rigid 
+0.0E+00
+5.0E-04
+1.0E-03
+0.0E+00 2.0E-01 4.0E-01 6.0E-01
+Time (sec)
+Displacement on top (mm)
+ABAQUS
+Lattice Prediction
+
+91
+APPENDIX B - VISCOELASTIC FRACTURE LAW
+In lattice modeling, the area of created surface associated with a removal of lattice link is 
+also defined as its cross-sectional area. However, the creation of such crack becomes a 
+progressive process in the case of viscoelasticity. As shown in the Fig. B.1, initial center 
+microcrack with random length is statistically introduced into the viscous links right after 
+lattice mesh generation. A surface energy based viscoelastic fracture law, as described in the 
+following, is developed to govern the growth and propagation of such center microcracks. 
+The viscous link is progressively reduced in both stiffness and strength with the growth of 
+the initial micro crack until its complete failure (i.e., removal from the network). 
+Figure B.1 Viscoelastic Cracking in Lattice 
+Essentially, at each load step, each link with a center microcrack is analyzed in an analogous 
+manner to a viscoelastic plate with an initial center crack under creep. The fracture energy 
+Viscoelastic link with a central 
+a0
+w=A/t
+
+92
+needed to drive the crack propagation is assumed to equal to surface energy. For each viscous 
+link, using the energy balance theory, the work done on the failure zone by the surrounding 
+linear viscoelastic material is equal to the energy needed to generate new surfaces (surface 
+energy), i.e., 
+ 
+∫ ∂
+∂ = −
+i t
+0
+2
+I v i d K ( ) 2 C (t ) τ
+τ
+τ Γ τ (B-1)
+where the stress intensity factor is given by: 
+ K t t Y a I ( ) = σ( ) (B-2)
+where Y is the calibration factor approximated as 
+ ) 2 )tan( 2
+( 2
+w
+a
+a
+w Y ≅ ⋅ ⋅ π
+π
+π (B-3)
+a is the center crack length, ti is fracture initiation time and may be assumed as zero for 
+current case; Cv is creep compliance and written in the form of generalized power law: 
+ m v 0 2 C (t ) = C + C t (B-4)
+where C0 , C2 , and m are material constants. 
+Based on Schapery’s theory, the velocity of crack propagation is: 
+ 
+
+93
+ 
+2
+1
+2
+2(1 1/ )
+1/
+1/
+2
+2
+2
+8 (1 ) 2 I
+K
+K
+K
+C
+a
+m
+m
+m I
+m
+m
+Ig
+I σ
+λ π +
+
+
+
+
+
+
+
+
+
+
+
+
+Γ −
+ = (B-5)
+where, 1/ m λ m is the constant factor depending on the exponent m, 1I σ m is defined as a 
+material property and can be obtained from experimental data. 
+The link is removed whenever one of the following two criteria is satisfied: 
+ g a(t ) ≥ a
+ a(t) ≥ w
+(B-6)
+ where 2
+0
+8
+πC σ
+ag
+Γ ≡ is the critical crack length, and w is the crack length due to the 
+complete failure of link. 
+The above procedure is currently employed in our lattice model. Testing and verification of 
+the viscoelastic damage model are the part of future work. 
+
+94
+APPENDIX C - PREPROCESSOR FOR LATTICE MESH 
+GENERATION 
+The general procedure of lattice mesh generation is described as follows: 
+1. Project a lattice base mesh onto the top of microstructure. 
+Figure C.1 Project Lattice Base Mesh onto the Top of Microstructure 
+2. Scan each and every base cell to determine its type: binder cell, aggregate cell, or 
+interface cell. 
+Figure C.2 Step 2 in Lattice Mesh Generation 
++ 
+Lattice Base Mesh Microstructure Overlap of Base Mesh and 
+Microstructure 
+1 2 3 4 
+5 6 7 8 
+Cell 1 contains only binder pixels Æ binder cell 
+Cell 7 contains only aggregate pixels Æ aggregate cell 
+Cell 2 contains both binder and aggregate pixels Æ interface cell.
+
+95
+3. Single node is randomly generated (following uniform distribution) within each 
+binder cell. 
+Figure C.3 Binder Node Generation 
+4. Single node is generated and located at the center of each aggregate cell. 
+Figure C.4 Aggregate Node Generation 
+5. The interface cell is processed as what follows: 
+Figure C.5 Interface Node Generation 
+Aggregate boundary curve
+
+96
+ 1) First, all the interface pixels within an interface cell are picked up. 
+Criterion to determine the interface pixel (which locates on the aggregate boundary) – 
+its gray intensity value (GIV) is different with its neighbor. 
+2) These interface pixels are categorized into different groups, and each group 
+represents a single segment of aggregate boundary that falls inside this interface cell. 
+Criterion employed - any two neighboring interface pixels belong to same group (i.e., 
+boundary segment). 
+3) The coordinates of all interface pixels that belongs to each group are averaged to 
+obtain one interface node, which is used to represent the corresponding boundary 
+segment. 
+6. The resulting nodes are generated and numbered in an optimized manner to minimize 
+the bandwidth of stiffness matrix, and thus to reach a better computational efficiency 
+in the latter numerical analysis. Delaunay triangulation program is then used to 
+construct the lattice mesh from these isolated nodes. 
+It should be noted that in current study, we arbitrarily attach a “fictitious” binder layer with 
+thickness of half base cell size around the specimen, and the nodes along the specimen edge 
+are regularly arranged to obtain a smooth boundary. 
+
+97
+The program interface and flow chart written in VB are shown in the following figures, 
+respectively. 
+Figure C.6 Interface of Lattice Mesh Generation Program 
+
+98
+Figure C.7 Flow Chart for Lattice Mesh Generation 
+Read base cell and microstructure information 
+Determine the cell type
+Interface Cell? 
+Yes
+No
+Generate Node 
+Within Each Cell 
+Last Cell?
+Yes
+No 
+Generate Interface Nodes to replace 
+the previous fictitious ones 
+Start from the 1st base cell
+Call Explicit Executable File to 
+Construct Lattice Mesh Using 
+Delaunay Triangulation Technique
+Output the Lattice Node and Mesh Information 
+for the Following Numerical Analysis 
+Generate a fictitious 
+Node Within Each 
+Interface Cell 
+
+99
+APPENDIX D - FLOW CHART OF NUMERICAL SIMULATOR
+Figure D.1 Flow Chart for Numerical Solver in Lattice Modeling 
+Read Input Information 
+Obtain the Load Information for Current Step
+Form Global Stiffness Matrix (Chapter 3.1) 
+Form Global Nodal Force Vector 
+Solve KU=F for Nodal Displacement (Chapter 3.2) 
+Damage Analysis? 
+Yes
+No 
+Update Lattice Network (Chapter 4.1, Figure D.2) 
+Last Time Step? 
+Yes
+No
+END 
+Next Step 
+
+100
+Figure D.2 Flow Chart of Function of “Update Network” in Fig. D.1 
+Initialize the variables
+Link is broken or rigid? 
+Assign surface energy based on the link type 
+Calculate the axial strain i ε for link 
+i i
+f i
+i i E L failure strain γ ε ε
+2
+> = ? 
+Remove this link 
+Last link? 
+Yes 
+No
+Yes
+No 
+Yes
+No 
+Return to main process
+Go to next link 
+
+101
+APPENDIX E - PSEUDO CODE OF POSTPROCESSOR
+The graphical postprocessor developed in lattice approach to effectively view and analyze the 
+numerical results is written in the environment of Visual Basic 6.0. Its pseudo code is given 
+in the following, 
+1. Open the data file that contains the original geometry information of the lattice 
+network which represents the microstructure of the specimen being simulated. The 
+geometry information includes the node coordinates and link information (link type 
+node numbers of the near and far end nodes of lattice link) 
+2. Calculate the specimen size. 
+3. Calculate the scale factor for mesh display, which is defined as the ratio of the left 
+graphical window size (Fig. 5.4) and the largest dimension of the specimen. Such 
+scale factor is used to multiply the node coordinates so that the lattice network can fit 
+the left graphical window. 
+4. Starting from the first one in the network, draw each and every lattice link 
+successively in the left graphical window. Different types of lattice links are 
+represented with different colors. 
+5. Now, one can display the original lattice network on screen and virtually check its 
+geometry. 
+6. Next, read the data file that records the cracking process. Basically, such data file 
+contains the following information for each failed link: 
+
+102
+Step number – when this link is removed. 
+Link near and far end nodes’ numbers – which link is removed. 
+Link type – what type of link is removed. 
+7. The progressive cracking process is animated by scrolling the horizontal scroll bar 
+located under the menu (Fig. 5.4). 
+First, read the value of this horizontal scroll bar. This integrate number is used as the 
+current time step number in the numerical analysis. 
+Then, all the links that were removed before this step are redrew with different color 
+and overlapped on the original lattice mesh to virtually represent the cracking trace. 
+8. To display the load-deflection curve simultaneously, 
+First, read the data file that contains the information needed to construct a loaddeflection curve, i.e., the load applied on the specimen and the corresponding 
+deformation measured on the interested location for each and every time step 
+sequentially. 
+Then, find the maximum values of the load and deflection. 
+Two scale factors are then calculated and applied to the load and deflection data 
+respectively, to make the load-deflection curve fit the right graphical window (Fig. 
+5.4) as what we did in displaying lattice mesh in the left graphical window. 
+All the data points (i.e., the points with values of the load applied as vertical 
+coordinates and the values of corresponding displacement as horizontal coordinates) 
+
+103
+measured before the current time step are linked to each other with straight lines and 
+plotted on the right graphical window 
+9. Clear the graphical window for the new cases. 

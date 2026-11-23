@@ -34,7 +34,7 @@ in this folder with the file names below.
 ## Lattice models of asphalt (NC State theses)
 - Microstructure Generation of Asphalt Concrete and Lattice Modeling of Its Cracking Behavior under Low Temperature.
   https://repository.lib.ncsu.edu/items/85ad3164-49d1-4b94-a93e-de07496230e1
-- Micromechanics-based Multiscale Lattice Modeling of Fatigue Cracking in Hot Mixed Asphalt.
+- `feng_2003_multiscale_lattice_fatigue_cracking.txt` (text only, from zack): Feng, NC State PhD 2003, "Micromechanics-based Multiscale Lattice Modeling of Fatigue Cracking in Hot Mixed Asphalt".
   https://repository.lib.ncsu.edu/items/e9f2dfdc-9b39-44e7-a56b-5665b3741e9b
 - Cracking of asphalt mixture by discrete element modelling with real aggregate shapes. https://trid.trb.org/View/2103190
 
