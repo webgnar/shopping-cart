@@ -68,8 +68,8 @@ func _run() -> void:
 	await _push(4.0)
 	await _wait(1.0)
 	var front := maxf(cart.wheels.FL.global_position.z, cart.wheels.FR.global_position.z)
-	_check("parking block stops cart", front < -1.15 - 0.089 + 0.03 and front > -2.0,
-		"front wheels stopped at z = %.2f (block face at -1.24)" % front)
+	_check("parking block stops cart", front < -1.15 - 0.097 + 0.03 and front > -2.0,
+		"front wheels stopped at z = %.2f (block face at -1.25)" % front)
 
 	# A cart pushed into a corral's open end ends up inside it (corral 1A opens at z = -5.44, x = -1.3).
 	main.spawn_cart(Vector3(-1.3, 0, -9.5), -PI / 2)

@@ -1705,6 +1705,17 @@ Also new are `thermal_spacing` (new binder, aged binder; scaled by sqrt(structur
 configurable `oxidation_years`. Thermal cracks now open in the middle of the longest uncracked stretch once it
 passes 1.6 x the spacing, which is how shrinkage stress relief works. The lot is re-baked.
 
+## 2026-11-23: parking block rebuilt to the Nitterhouse 6' sheet
+
+zack asked for the parking block to match `References/Props/6-ft-wheel-stops_Nitterhouse.pdf`.
+`parking_block()` in `tools/parking_lot_models.py` now builds 72" x 7 5/8" x 5" (1.829 x 0.194 x 0.127 m) with the
+top long edges chamfered, two 3/4" pin holes cut straight through (exact boolean) with 5/8" rebar pins 1 cm below
+the top, and two 8" x 1" drain slots under it with 36" between them. The sheet doesn't size the chamfer, hole
+positions or slot ends, so they are read off its drawing: chamfer 1 1/2" across x 1 3/4" down, holes 6 1/2" and
+slots 10" from each end. The yellow reflector strips went (not on the sheet). 236 tris, 0 z-fighting hits.
+`parking_block.tscn` collides with a ConvexPolygonShape3D of the chamfered section (was a box); the 1" slots
+are left out of the shape. parking_lot_test's block face moved to z = -1.25.
+
 ## Asphalt lab: repair, then the timeline starts again (Nov 23 2026)
 
 Clicking a repair now repairs the road as it is at the slider's year, and the slider goes back to the start. From
@@ -1721,3 +1732,16 @@ road already repaired.
   crumbs round the edge, and a height of 4 to 8 mm per cell.
 - A new surface or overlay shows the fresh hot-mix photo (`fresh_texture` in the base shader), fading as the
   binder greys, so it isn't flat black any more.
+
+## 2026-11-23: procedural Type C curb
+
+zack gave the curb drawing (`References/Props/type_c_doweled_curb.png`, "Type C Doweled") for curbs the future
+parking lot generator will lay. `scenes/curb/curb.tscn` is a Path3D (`scripts/curb/curb.gd`, class `Curb`, @tool)
+that sweeps the drawing's section along its curve: 6" top from the back to the curb line, 6" tall at the curb line
+with the back 1/4" higher, face battered 1 1/2" per foot (6 3/4" at the base), 1/4" R back and 3/4" R front top
+corners. The curve is the curb line at ground level; the street is on its right. Open curves get square ends,
+`curve.closed` joins up. `Curb.curve_through(points, radius, closed)` rounds a polyline's corners. Mesh (shared
+`curb_concrete.tres`, like the wheel stop's shared materials) and a ConcavePolygonShape3D of the same triangles
+(solid.tres) are rebuilt when the curve changes; the base is left open. The dowels (1/2" x 8", 5' OC, 3" from the
+back, 4" in the ground) are hidden and not modelled. Demo: `scenes/curb/curb_demo.tscn`. Test: `tests/curb_test.gd`
+(profile sizes, ray hits on top/face/caps/island corner). Renders: `tests/curb_screenshot.gd`.

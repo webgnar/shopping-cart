@@ -1,0 +1,61 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/environment/default_environment.tscn" id="1_rbkyw"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/asphalt.tres" id="2_5ivjn"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/asphalt.tres" id="3_3avjc"]
+[ext_resource type="PackedScene" path="res://scenes/curb/curb.tscn" id="4_fh52h"]
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_dqcv8"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_sumse"]
+material = ExtResource("3_3avjc")
+size = Vector2(60, 60)
+
+[sub_resource type="Curve3D" id="Curve3D_6t3wi"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -3, 0, -2, 0, 0, 0, 0, 0, 0, 3, 0, -2),
+"tilts": PackedFloat32Array(0, 0)
+}
+point_count = 2
+
+[sub_resource type="Curve3D" id="Curve3D_rqmbv"]
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -10, 0, -10, 0, 0, 0, 0, 0, 0.82842714, -10, 0, -0.5000001, -0.82842714, 0, 0, 0, 0, 0, -8.5, 0, 1, 0, 0, 0, 0, 0, 0, -5, 0, 1),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
+}
+point_count = 4
+
+[sub_resource type="Curve3D" id="Curve3D_62eh7"]
+closed = true
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0.49705628, 5, 0, -3.9, -0.49705628, 0, 0, 0, 0, 0, 5.9, 0, -3, 0, 0, 0, 0.49705628, 0, 0, 10.1, 0, -3, 0, 0, 0.49705628, 0, 0, 0, 11, 0, -3.9, 0, 0, 0, 0, 0, -0.49705628, 11, 0, -4.5, 0.49705628, 0, 0, 0, 0, 0, 10.1, 0, -5.4, 0, 0, 0, -0.49705628, 0, 0, 5.9, 0, -5.4, 0, 0, -0.49705628, 0, 0, 0, 5, 0, -4.5),
+"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0)
+}
+point_count = 8
+
+[node name="CurbDemo" type="Node3D" unique_id=200971188]
+
+[node name="Environment" type="Node3D" parent="." unique_id=1147523159 instance=ExtResource("1_rbkyw")]
+
+[node name="Ground" type="StaticBody3D" parent="." unique_id=1840464957]
+physics_material_override = ExtResource("2_5ivjn")
+
+[node name="Shape" type="CollisionShape3D" parent="Ground" unique_id=1815509639]
+shape = SubResource("WorldBoundaryShape3D_dqcv8")
+
+[node name="Mesh" type="MeshInstance3D" parent="Ground" unique_id=660019122]
+mesh = SubResource("PlaneMesh_sumse")
+
+[node name="Curbs" type="Node3D" parent="." unique_id=1275718777]
+
+[node name="Straight" type="Path3D" parent="Curbs" unique_id=1322189650 instance=ExtResource("4_fh52h")]
+curve = SubResource("Curve3D_6t3wi")
+
+[node name="Corner" type="Path3D" parent="Curbs" unique_id=1851734576 instance=ExtResource("4_fh52h")]
+curve = SubResource("Curve3D_rqmbv")
+
+[node name="Island" type="Path3D" parent="Curbs" unique_id=944268745 instance=ExtResource("4_fh52h")]
+curve = SubResource("Curve3D_62eh7")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1464914780]
+transform = Transform3D(0.9958932, -0.034159105, 0.083844356, 0, 0.9260912, 0.37729967, -0.090535745, -0.37575015, 0.9222879, 1, 4.5, 8)

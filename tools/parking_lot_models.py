@@ -304,21 +304,50 @@ def stadium(length, width, segs=12):
 # ------------------------------------------------------------------ models
 
 def parking_block():
-    """Precast concrete wheel stop, 6' x 7" x 5" (1.83 x 0.178 x 0.127 m, Kuhlman 8085508). Long along X."""
+    """Precast concrete wheel stop to the Nitterhouse 6' Parking Block sheet
+    (References/Props/6-ft-wheel-stops_Nitterhouse.pdf): 72" x 7 5/8" x 5" (1.829 x 0.194 x 0.127 m), top long
+    edges chamfered, two 3/4" pin holes straight through, two 8" x 1" drain slots across the underside with 36"
+    between them. Long along X. The sheet gives no chamfer, hole or slot-end sizes, so these are read off its
+    drawing: chamfer 1 1/2" across x 1 3/4" down, holes 6 1/2" from each end, slots 10" from each end."""
+    IN = 0.0254
+    hl, hw, h = 36 * IN, 7.625 / 2 * IN, 5 * IN
     m = Model("parking_block")
     b = m.obj("Block", "concrete")
-    # Trapezoid section with chamfered top corners (front is +Y).
-    prof = [(-0.089, 0.0), (0.089, 0.0), (0.089, 0.07), (0.06, 0.127), (-0.06, 0.127), (-0.089, 0.07)]
-    m.prism(b, prof, -0.915, 0.915)
+    prof = [(-hw, 0.0), (hw, 0.0), (hw, h - 1.75 * IN), (hw - 1.5 * IN, h), (-hw + 1.5 * IN, h), (-hw, h - 1.75 * IN)]
+    m.prism(b, prof, -hl, hl)
+    cut = Model.__new__(Model)   # cutters, collected the same way but never exported
+    cut.objs, cut.by_material, cut.xf = {}, False, Matrix.Identity(4)
+    c = cut.obj("Cutters", "concrete")
+    for s in (-1, 1):
+        cut.box(c, (8 * IN, 2 * hw + 0.02, 2 * IN), (s * 22 * IN, 0, 0))   # drain slot, 1" high
+        cut.cyl(c, 0.375 * IN, h + 0.02, (s * 29.5 * IN, 0, -0.01), segs=12)   # 3/4" pin hole
+    _subtract(m._bm(b), cut._bm(c))
     p = m.obj("Pins", "dark_metal")
-    for x in (-0.6, 0.6):   # rebar pins, domed tops proud of the block
-        m.cyl(p, 0.016, 0.006, (x, 0, 0.125), segs=10)
-    s = m.obj("Reflectors", "bollard_yellow")
-    for x in (-0.75, 0.75):   # yellow reflective tape on the face toward the car
-        a = math.atan2(0.029, 0.057)   # chamfer slope
-        m.box(s, (0.14, 0.004, 0.035), (x, -0.0765, 0.0995), rot=Matrix.Rotation(-a, 3, "X"))
-        m.box(s, (0.14, 0.004, 0.035), (x, 0.0765, 0.0995), rot=Matrix.Rotation(a, 3, "X"))
+    for s in (-1, 1):   # 5/8" rebar pins driven down the holes, tops 1 cm below the surface
+        m.cyl(p, 0.3125 * IN, h - 0.01, (s * 29.5 * IN, 0, 0), segs=10)
     return m.build()
+
+
+def _subtract(bm, cutter_bm):
+    """Boolean-subtract one bmesh from another in place (Blender's exact solver)."""
+    obs = []
+    for name, src in (("_target", bm), ("_cutter", cutter_bm)):
+        me = bpy.data.meshes.new(name)
+        src.to_mesh(me)
+        ob = bpy.data.objects.new(name, me)
+        bpy.context.scene.collection.objects.link(ob)
+        obs.append(ob)
+    mod = obs[0].modifiers.new("cut", "BOOLEAN")
+    mod.operation, mod.solver, mod.object = "DIFFERENCE", "EXACT", obs[1]
+    ev = obs[0].evaluated_get(bpy.context.evaluated_depsgraph_get())
+    bm.clear()
+    bm.from_mesh(ev.to_mesh())
+    ev.to_mesh_clear()
+    for ob in obs:
+        me = ob.data
+        bpy.data.objects.remove(ob)
+        bpy.data.meshes.remove(me)
+    cutter_bm.free()
 
 
 def cart_corral():
