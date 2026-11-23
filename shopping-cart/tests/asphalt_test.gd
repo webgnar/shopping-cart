@@ -243,6 +243,9 @@ func _run() -> void:
 	for x in [1.0, 2.85, 7.15, 9.0]:
 		off_path += pt.paint_left(Vector2(x, 5.03)) / 4.0
 	_check("paint wears in the wheel paths", in_path < off_path - 0.2, "%.2f left in the wheel paths, %.2f between" % [in_path, off_path])
+	pt.do_action(A.REPAINT)
+	_check("repaint makes the lines fresh", pt.paint_left(Vector2(1.95, 5.03)) == 1.0, "%.2f" % pt.paint_left(Vector2(1.95, 5.03)))
+	pt.advance_to(12.0)
 	pt.do_action(A.OVERLAY)
 	_check("overlay repaints the lines", pt.paint_left(Vector2(1.95, 5.03)) == 1.0, "%.2f" % pt.paint_left(Vector2(1.95, 5.03)))
 

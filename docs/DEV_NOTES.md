@@ -1853,3 +1853,10 @@ much slower between them; it also greys. AsphaltCanvas draws it flat black (`sea
 the cover at each corner, so the wear shows the road in soft patches, and restripes paint lines over it. Height is
 unchanged (the coat is under a millimetre), so the 3D preview shows the stones through the black. Chip seal is gone
 from the sim, the base shader and the scenes (the chip_seal.png texture stays in assets/asphalt/textures).
+
+## Asphalt: Repaint stripes; sealcoat covers the lines (Nov 23 2026)
+
+zack: a repaint repair, and spot sealcoat should cover the paint. `Action.REPAINT` sets `AsphaltSim.paint_born`
+(an overlay does too); paint wear (`paint_left`) and its dirt count from it. Spot sealcoat no longer restripes.
+AsphaltCanvas draws the paint under everything, then again on top of the sealcoat spots, patches and fills made
+before the last repaint; `bake_height` paints over repairs no newer than `paint_born`. Lab: "Repaint stripes".

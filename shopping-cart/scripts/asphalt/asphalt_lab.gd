@@ -30,7 +30,7 @@ var _relief_at := -1   ## msec: redraw the relief view (it takes a moment, so no
 @onready var _stats: Label = %Stats
 @onready var _history: Label = %History
 @onready var _start_here: Button = %StartHere
-@onready var _repairs: Array[CheckBox] = [%Repair0, %Repair1, %Repair2, %Repair3, %Repair4]   ## by AsphaltSim.Action
+@onready var _repairs: Array[CheckBox] = [%Repair0, %Repair1, %Repair2, %Repair3, %Repair4, %Repair5]   ## by AsphaltSim.Action
 @onready var _seed: SpinBox = %Seed
 
 

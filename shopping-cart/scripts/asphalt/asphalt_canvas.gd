@@ -313,7 +313,7 @@ func _draw() -> void:
 			draw_circle(at * px_per_m, (0.002 + 0.004 * _h(hs * 13.0)) * px_per_m, crumb)
 	if not hm and not sim.seal_spots.is_empty():
 		_draw_seal_spots()
-		_draw_paint(true)
+	_draw_paint(true)
 	# Potholes. Where a crocodile cell has been plucked out: its broken rim, then the wet base course below,
 	# darker the deeper it goes. Elsewhere a ragged hole round the 10 cm cell.
 	for k in sim.plucked.size():
@@ -358,11 +358,11 @@ func _draw() -> void:
 		dirt_poly.append(Vector2(x0, sim.size.y) * px_per_m)
 		_surface(dirt_poly, _hc(-0.04) if hm else shoulder_color, 0.2, shoulder_texture, shoulder_texture_m)
 
-## Paint lines, worn away in patches (patches and fills are drawn over them, cracks through them). `restriped`:
-## only the pieces over a spot sealcoat, drawn again on top of it (the crew restripes after sealing).
+## Paint lines, worn away in patches. First drawn under everything (patches, fills and sealcoat cover them, cracks
+## cut through them); with `restriped`, drawn again on top of the repairs made before the last repaint.
 func _draw_paint(restriped: bool) -> void:
 	var hm := mode == Mode.HEIGHT
-	var paint_dirt := clampf(sim.surface_age() / 20.0, 0.0, 1.0) * 0.3
+	var paint_dirt := clampf((sim.time - sim.paint_born) / 20.0, 0.0, 1.0) * 0.3
 	for k in range(0, sim.paint_lines.size() - 1, 2):
 		var a := sim.paint_lines[k]
 		var b := sim.paint_lines[k + 1]
@@ -373,7 +373,7 @@ func _draw_paint(restriped: bool) -> void:
 			var p0 := a.lerp(b, float(i) / n)
 			var p1 := a.lerp(b, float(i + 1) / n)
 			var mid := (p0 + p1) * 0.5
-			if restriped and not _in_spot(mid):
+			if restriped and not _under_older_repair(mid):
 				continue
 			var left := sim.paint_left(mid)
 			if left <= 0.02:
@@ -390,11 +390,15 @@ func _draw_paint(restriped: bool) -> void:
 				draw_primitive(quad, PackedColorArray([Color(paint_color.lerp(aged_asphalt, paint_dirt), left)]), PackedVector2Array())
 
 
-func _in_spot(p: Vector2) -> bool:
+func _under_older_repair(p: Vector2) -> bool:
 	for sp in sim.seal_spots:
-		if Geometry2D.is_point_in_polygon(p, sp.poly):
+		if sp.born <= sim.paint_born and Geometry2D.is_point_in_polygon(p, sp.poly):
 			return true
-	return false
+	for pt in sim.patches:
+		if pt.born <= sim.paint_born and (pt.rect as Rect2).has_point(p):
+			return true
+	var fb := sim.fill_born[sim.cell_index(p)]
+	return fb >= 0.0 and fb <= sim.paint_born
 
 
 ## Spot sealcoat: flat black, so only the relief under it reads. Drawn on a 5 cm grid with the coat's cover at

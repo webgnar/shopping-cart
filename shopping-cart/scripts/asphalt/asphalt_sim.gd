@@ -24,11 +24,11 @@ extends Node
 signal changed
 
 enum Kind { TRANSVERSE, JOINT, WHEELPATH, FATIGUE, BLOCK, EDGE, SLIPPAGE, REFLECTION, SEAM }
-enum Action { CRACK_FILL, POTHOLE_FILL, HEAVY_PATCH, SURFACE_SEAL, OVERLAY }
+enum Action { CRACK_FILL, POTHOLE_FILL, HEAVY_PATCH, SURFACE_SEAL, OVERLAY, REPAINT }
 
 const KIND_NAMES := ["transverse", "lane joint", "wheel path", "fatigue", "block", "edge", "slippage",
 	"reflection", "patch seam"]
-const ACTION_NAMES := ["Crack filling", "Pothole fill", "Heavy patch", "Spot sealcoat", "Mill & overlay"]
+const ACTION_NAMES := ["Crack filling", "Pothole fill", "Heavy patch", "Spot sealcoat", "Mill & overlay", "Repaint"]
 
 const CELL := 0.1        ## m: cell grid for fatigue, water damage and potholes
 const GRID := 0.02       ## m: crack occupancy grid (cracks that run into another one join it)
@@ -92,7 +92,7 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 @export var paint_width := 0.1                          ## m (4 in, the standard stall line)
 @export var paint_thickness := 0.0008                   ## m fresh traffic paint stands above the asphalt
 @export var paint_life := 8.0                           ## years for the paint to wear off under a wheel path
-## The lines are repainted with every surface seal or overlay; patches and fills cover them.
+## The lines are repainted by Repaint and by an overlay; repairs made since cover them until the next repaint.
 
 @export_group("Spot sealcoat")
 @export var sealcoat_life := 3.0                        ## years for a spot sealcoat to wear through in the wheel paths
@@ -106,6 +106,7 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 var time := 0.0
 ## When the current wearing surface went down (overlay or seal) and what it is.
 var surface_born := 0.0
+var paint_born := 0.0                     ## year the lines were last painted
 var rut_born := 0.0
 var cracks: Array[Crack] = []
 var seal_spots: Array[Dictionary] = []    ## spot sealcoats: { poly: PackedVector2Array (m), born: float }
@@ -231,6 +232,7 @@ func reset() -> void:
 	_rng.seed = seed
 	time = 0.0
 	surface_born = 0.0
+	paint_born = 0.0
 	rut_born = 0.0
 	cracks.clear()
 	patches.clear()
@@ -383,7 +385,7 @@ func mix_weakness(p: Vector2) -> float:
 
 ## How much paint is left at p, 0..1: it wears with age and traffic (fastest in the wheel paths), in patches.
 func paint_left(p: Vector2) -> float:
-	var wear := surface_age() * traffic * (0.15 + load[cell_index(p)]) / paint_life
+	var wear := (time - paint_born) * traffic * (0.15 + load[cell_index(p)]) / paint_life
 	if wear <= 0.0:
 		return 1.0
 	# Value noise on a 20 cm grid: some stretches go first.
@@ -535,7 +537,7 @@ func bake_height(res := 0.01) -> PackedFloat32Array:
 			for ix in range(x0, x1 + 1):
 				var q := Vector2(ix * res, iy * res)
 				var j := iy * w + ix
-				if painted[j] == 0 and covered[j] < 0.0 and q.distance_to(a + ab * clampf((q - a).dot(ab) / len2, 0.0, 1.0)) <= half_w:
+				if painted[j] == 0 and covered[j] <= paint_born and q.distance_to(a + ab * clampf((q - a).dot(ab) / len2, 0.0, 1.0)) <= half_w:
 					out[j] += paint_thickness * paint_left(q)
 					painted[j] = 1
 	# Filled cracks: the sealant fills the crack flush and the overband stands a little proud, until it debonds.
@@ -1293,6 +1295,9 @@ func _apply(action: int) -> void:
 			note = _spot_seal()
 		Action.OVERLAY:
 			note = _resurface()
+		Action.REPAINT:
+			paint_born = time
+			note = "%d lines" % (paint_lines.size() / 2)
 	log_lines.append("Year %.1f  %s: %s" % [time, ACTION_NAMES[action], note])
 	_rebuild_lengths()
 
@@ -1647,6 +1652,7 @@ func _resurface() -> String:
 	edge_r.fill(0.0)
 	rut_born = time
 	surface_born = time
+	paint_born = time
 	seal_spots.clear()
 	_rebuild_grid()
 	return "%d cracks will reflect through" % buried
