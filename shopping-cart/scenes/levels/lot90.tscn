@@ -1032,7 +1032,7 @@ section_scene = ExtResource("5_section")
 transform = Transform3D(60, 0, 0, 0, 1, 0, 0, 0, 40, 30, 0, 0)
 visible = false
 
-[node name="Section_0_0" parent="LotGenerator/Sections" index="0" unique_id=1932500157 instance=ExtResource("5_section")]
+[node name="Section_0_0" parent="LotGenerator/Sections" index="0" unique_id=178594320 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, -15)
 seed = 1001
 year = 12.0
@@ -1041,6 +1041,7 @@ height_map = ExtResource("7_isgui")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_0_0" index="0"]
 wheel_paths = PackedFloat32Array(-3.5348, -1.8347998, 0.12279987, 1.8227997)
+traffic = 0.35
 paint_lines = PackedVector2Array(2.8016005, 7.9782, 8.288, 7.9782)
 
 [node name="Base" parent="LotGenerator/Sections/Section_0_0/ColorViewport" index="0"]
@@ -1053,7 +1054,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_isgui")
 [node name="Shape" parent="LotGenerator/Sections/Section_0_0/Body" index="0"]
 shape = SubResource("HeightMapShape3D_py6fn")
 
-[node name="Section_0_1" parent="LotGenerator/Sections" index="1" unique_id=718936410 instance=ExtResource("5_section")]
+[node name="Section_0_1" parent="LotGenerator/Sections" index="1" unique_id=803232013 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, -5)
 seed = 1002
 year = 12.0
@@ -1062,6 +1063,7 @@ height_map = ExtResource("13_tc87a")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_0_1" index="0"]
 wheel_paths = PackedFloat32Array(6.4652, 8.1652, 10.1228, 11.8228)
+traffic = 0.35
 paint_lines = PackedVector2Array()
 
 [node name="Base" parent="LotGenerator/Sections/Section_0_1/ColorViewport" index="0"]
@@ -1074,7 +1076,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_batrt")
 [node name="Shape" parent="LotGenerator/Sections/Section_0_1/Body" index="0"]
 shape = SubResource("HeightMapShape3D_6dix5")
 
-[node name="Section_0_2" parent="LotGenerator/Sections" index="2" unique_id=2012473356 instance=ExtResource("5_section")]
+[node name="Section_0_2" parent="LotGenerator/Sections" index="2" unique_id=2089339057 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, 5)
 seed = 1003
 year = 12.0
@@ -1083,6 +1085,7 @@ height_map = ExtResource("15_6dix5")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_0_2" index="0"]
 wheel_paths = PackedFloat32Array(-1.8227997, -0.12279987, 1.8347998, 3.5348)
+traffic = 0.35
 paint_lines = PackedVector2Array()
 
 [node name="Base" parent="LotGenerator/Sections/Section_0_2/ColorViewport" index="0"]
@@ -1095,7 +1098,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_yh7my")
 [node name="Shape" parent="LotGenerator/Sections/Section_0_2/Body" index="0"]
 shape = SubResource("HeightMapShape3D_8orgn")
 
-[node name="Section_0_3" parent="LotGenerator/Sections" index="3" unique_id=1972503625 instance=ExtResource("5_section")]
+[node name="Section_0_3" parent="LotGenerator/Sections" index="3" unique_id=1055093401 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, 15)
 seed = 1004
 year = 12.0
@@ -1104,6 +1107,7 @@ height_map = ExtResource("17_yh7my")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_0_3" index="0"]
 wheel_paths = PackedFloat32Array(8.1772, 9.8772, 11.8348, 13.5348)
+traffic = 0.35
 paint_lines = PackedVector2Array(7.1983995, 7.9782, 1.7119999, 7.9782)
 
 [node name="Base" parent="LotGenerator/Sections/Section_0_3/ColorViewport" index="0"]
@@ -1116,7 +1120,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_ff7f4")
 [node name="Shape" parent="LotGenerator/Sections/Section_0_3/Body" index="0"]
 shape = SubResource("HeightMapShape3D_errjn")
 
-[node name="Section_1_0" parent="LotGenerator/Sections" index="4" unique_id=1796552088 instance=ExtResource("5_section")]
+[node name="Section_1_0" parent="LotGenerator/Sections" index="4" unique_id=875764818 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 15, 0, -15)
 seed = 1038
 year = 12.0
@@ -1125,6 +1129,7 @@ height_map = ExtResource("19_tbs63")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_1_0" index="0"]
 wheel_paths = PackedFloat32Array(-3.5348, -1.8347998, 0.12279987, 1.8227997)
+traffic = 0.35
 paint_lines = PackedVector2Array(2.8016005, 0.56900024, 8.288, 0.56900024, 2.8016005, 3.1597996, 8.288, 3.1597996, 2.8016005, 5.7506, 8.288, 5.7506, 2.8016005, 8.3414, 8.288, 8.3414)
 
 [node name="Base" parent="LotGenerator/Sections/Section_1_0/ColorViewport" index="0"]
@@ -1137,7 +1142,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_uglg4")
 [node name="Shape" parent="LotGenerator/Sections/Section_1_0/Body" index="0"]
 shape = SubResource("HeightMapShape3D_njn31")
 
-[node name="Section_1_1" parent="LotGenerator/Sections" index="5" unique_id=285241547 instance=ExtResource("5_section")]
+[node name="Section_1_1" parent="LotGenerator/Sections" index="5" unique_id=1598795908 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 15, 0, -5)
 seed = 1039
 year = 12.0
@@ -1146,6 +1151,7 @@ height_map = ExtResource("21_errjn")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_1_1" index="0"]
 wheel_paths = PackedFloat32Array(6.4652, 8.1652, 10.1228, 11.8228)
+traffic = 0.35
 paint_lines = PackedVector2Array(5.4864, 0.56900024, 0, 0.56900024, 5.4864, 3.1597996, 0, 3.1597996, 5.4864, 5.7506, 0, 5.7506, 5.4864, 8.3414, 0, 8.3414)
 
 [node name="Base" parent="LotGenerator/Sections/Section_1_1/ColorViewport" index="0"]
@@ -1158,7 +1164,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_gpcrh")
 [node name="Shape" parent="LotGenerator/Sections/Section_1_1/Body" index="0"]
 shape = SubResource("HeightMapShape3D_gljr0")
 
-[node name="Section_1_2" parent="LotGenerator/Sections" index="6" unique_id=1588881608 instance=ExtResource("5_section")]
+[node name="Section_1_2" parent="LotGenerator/Sections" index="6" unique_id=853275408 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 15, 0, 5)
 seed = 1040
 year = 12.0
@@ -1167,6 +1173,7 @@ height_map = ExtResource("23_uglg4")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_1_2" index="0"]
 wheel_paths = PackedFloat32Array(-1.8227997, -0.12279987, 1.8347998, 3.5348)
+traffic = 0.35
 paint_lines = PackedVector2Array(4.5136, 0.56900024, 10, 0.56900024, 4.5136, 3.1597996, 10, 3.1597996, 4.5136, 5.7506, 10, 5.7506, 4.5136, 8.3414, 10, 8.3414)
 
 [node name="Base" parent="LotGenerator/Sections/Section_1_2/ColorViewport" index="0"]
@@ -1179,7 +1186,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_hyun1")
 [node name="Shape" parent="LotGenerator/Sections/Section_1_2/Body" index="0"]
 shape = SubResource("HeightMapShape3D_cmud2")
 
-[node name="Section_1_3" parent="LotGenerator/Sections" index="7" unique_id=728564743 instance=ExtResource("5_section")]
+[node name="Section_1_3" parent="LotGenerator/Sections" index="7" unique_id=1630594475 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 15, 0, 15)
 seed = 1041
 year = 12.0
@@ -1188,6 +1195,7 @@ height_map = ExtResource("25_fcjkd")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_1_3" index="0"]
 wheel_paths = PackedFloat32Array(8.1772, 9.8772, 11.8348, 13.5348)
+traffic = 0.35
 paint_lines = PackedVector2Array(7.1983995, 0.56900024, 1.7119999, 0.56900024, 7.1983995, 3.1597996, 1.7119999, 3.1597996, 7.1983995, 5.7506, 1.7119999, 5.7506, 7.1983995, 8.3414, 1.7119999, 8.3414)
 
 [node name="Base" parent="LotGenerator/Sections/Section_1_3/ColorViewport" index="0"]
@@ -1200,7 +1208,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_aqkug")
 [node name="Shape" parent="LotGenerator/Sections/Section_1_3/Body" index="0"]
 shape = SubResource("HeightMapShape3D_7qeo4")
 
-[node name="Section_2_0" parent="LotGenerator/Sections" index="8" unique_id=677940589 instance=ExtResource("5_section")]
+[node name="Section_2_0" parent="LotGenerator/Sections" index="8" unique_id=199180219 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 25, 0, -15)
 seed = 1075
 year = 12.0
@@ -1209,6 +1217,7 @@ height_map = ExtResource("27_gljr0")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_2_0" index="0"]
 wheel_paths = PackedFloat32Array(-3.5348, -1.8347998, 0.12279987, 1.8227997)
+traffic = 0.35
 paint_lines = PackedVector2Array(2.8016005, 0.9321995, 8.288, 0.9321995, 2.8016005, 3.5230007, 8.288, 3.5230007, 2.8016005, 6.1138, 8.288, 6.1138, 2.8016005, 8.704599, 8.288, 8.704599)
 
 [node name="Base" parent="LotGenerator/Sections/Section_2_0/ColorViewport" index="0"]
@@ -1221,7 +1230,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_lubsw")
 [node name="Shape" parent="LotGenerator/Sections/Section_2_0/Body" index="0"]
 shape = SubResource("HeightMapShape3D_bsd0o")
 
-[node name="Section_2_1" parent="LotGenerator/Sections" index="9" unique_id=470054684 instance=ExtResource("5_section")]
+[node name="Section_2_1" parent="LotGenerator/Sections" index="9" unique_id=1628233357 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 25, 0, -5)
 seed = 1076
 year = 12.0
@@ -1230,6 +1239,7 @@ height_map = ExtResource("29_hyun1")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_2_1" index="0"]
 wheel_paths = PackedFloat32Array(6.4652, 8.1652, 10.1228, 11.8228)
+traffic = 0.35
 paint_lines = PackedVector2Array(5.4864, 0.9321995, 0, 0.9321995, 5.4864, 3.5230007, 0, 3.5230007, 5.4864, 6.1138, 0, 6.1138, 5.4864, 8.704599, 0, 8.704599)
 
 [node name="Base" parent="LotGenerator/Sections/Section_2_1/ColorViewport" index="0"]
@@ -1242,7 +1252,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_4wj0c")
 [node name="Shape" parent="LotGenerator/Sections/Section_2_1/Body" index="0"]
 shape = SubResource("HeightMapShape3D_kb4pp")
 
-[node name="Section_2_2" parent="LotGenerator/Sections" index="10" unique_id=1234209444 instance=ExtResource("5_section")]
+[node name="Section_2_2" parent="LotGenerator/Sections" index="10" unique_id=2063611687 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 25, 0, 5)
 seed = 1077
 year = 12.0
@@ -1251,6 +1261,7 @@ height_map = ExtResource("31_c3xxy")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_2_2" index="0"]
 wheel_paths = PackedFloat32Array(-1.8227997, -0.12279987, 1.8347998, 3.5348)
+traffic = 0.35
 paint_lines = PackedVector2Array(4.5136, 0.9321995, 10, 0.9321995, 4.5136, 3.5230007, 10, 3.5230007, 4.5136, 6.1138, 10, 6.1138, 4.5136, 8.704599, 10, 8.704599)
 
 [node name="Base" parent="LotGenerator/Sections/Section_2_2/ColorViewport" index="0"]
@@ -1263,7 +1274,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_kdsal")
 [node name="Shape" parent="LotGenerator/Sections/Section_2_2/Body" index="0"]
 shape = SubResource("HeightMapShape3D_jjqwj")
 
-[node name="Section_2_3" parent="LotGenerator/Sections" index="11" unique_id=429374608 instance=ExtResource("5_section")]
+[node name="Section_2_3" parent="LotGenerator/Sections" index="11" unique_id=1820436791 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 25, 0, 15)
 seed = 1078
 year = 12.0
@@ -1272,6 +1283,7 @@ height_map = ExtResource("33_7qeo4")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_2_3" index="0"]
 wheel_paths = PackedFloat32Array(8.1772, 9.8772, 11.8348, 13.5348)
+traffic = 0.35
 paint_lines = PackedVector2Array(7.1983995, 0.9321995, 1.7119999, 0.9321995, 7.1983995, 3.5230007, 1.7119999, 3.5230007, 7.1983995, 6.1138, 1.7119999, 6.1138, 7.1983995, 8.704599, 1.7119999, 8.704599)
 
 [node name="Base" parent="LotGenerator/Sections/Section_2_3/ColorViewport" index="0"]
@@ -1284,7 +1296,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_xeaek")
 [node name="Shape" parent="LotGenerator/Sections/Section_2_3/Body" index="0"]
 shape = SubResource("HeightMapShape3D_4uiox")
 
-[node name="Section_3_0" parent="LotGenerator/Sections" index="12" unique_id=1772701731 instance=ExtResource("5_section")]
+[node name="Section_3_0" parent="LotGenerator/Sections" index="12" unique_id=20398708 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 35, 0, -15)
 seed = 1112
 year = 12.0
@@ -1293,6 +1305,7 @@ height_map = ExtResource("35_lubsw")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_3_0" index="0"]
 wheel_paths = PackedFloat32Array(-3.5348, -1.8347998, 0.12279987, 1.8227997)
+traffic = 0.35
 paint_lines = PackedVector2Array(2.8016005, 1.2954006, 8.288, 1.2954006, 2.8016005, 3.8862, 8.288, 3.8862, 2.8016005, 6.477001, 8.288, 6.477001, 2.8016005, 9.067799, 8.288, 9.067799)
 
 [node name="Base" parent="LotGenerator/Sections/Section_3_0/ColorViewport" index="0"]
@@ -1305,7 +1318,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_oe5ul")
 [node name="Shape" parent="LotGenerator/Sections/Section_3_0/Body" index="0"]
 shape = SubResource("HeightMapShape3D_q0bm0")
 
-[node name="Section_3_1" parent="LotGenerator/Sections" index="13" unique_id=329288644 instance=ExtResource("5_section")]
+[node name="Section_3_1" parent="LotGenerator/Sections" index="13" unique_id=936012623 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 35, 0, -5)
 seed = 1113
 year = 12.0
@@ -1314,6 +1327,7 @@ height_map = ExtResource("37_hihv5")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_3_1" index="0"]
 wheel_paths = PackedFloat32Array(6.4652, 8.1652, 10.1228, 11.8228)
+traffic = 0.35
 paint_lines = PackedVector2Array(5.4864, 1.2954006, 0, 1.2954006, 5.4864, 3.8862, 0, 3.8862, 5.4864, 6.477001, 0, 6.477001, 5.4864, 9.067799, 0, 9.067799)
 
 [node name="Base" parent="LotGenerator/Sections/Section_3_1/ColorViewport" index="0"]
@@ -1326,7 +1340,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_g5tvu")
 [node name="Shape" parent="LotGenerator/Sections/Section_3_1/Body" index="0"]
 shape = SubResource("HeightMapShape3D_86ak5")
 
-[node name="Section_3_2" parent="LotGenerator/Sections" index="14" unique_id=1656674247 instance=ExtResource("5_section")]
+[node name="Section_3_2" parent="LotGenerator/Sections" index="14" unique_id=2076374130 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 35, 0, 5)
 seed = 1114
 year = 12.0
@@ -1335,6 +1349,7 @@ height_map = ExtResource("39_kb4pp")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_3_2" index="0"]
 wheel_paths = PackedFloat32Array(-1.8227997, -0.12279987, 1.8347998, 3.5348)
+traffic = 0.35
 paint_lines = PackedVector2Array(4.5136, 1.2954006, 10, 1.2954006, 4.5136, 3.8862, 10, 3.8862, 4.5136, 6.477001, 10, 6.477001, 4.5136, 9.067799, 10, 9.067799)
 
 [node name="Base" parent="LotGenerator/Sections/Section_3_2/ColorViewport" index="0"]
@@ -1347,7 +1362,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_j7bla")
 [node name="Shape" parent="LotGenerator/Sections/Section_3_2/Body" index="0"]
 shape = SubResource("HeightMapShape3D_f7xyn")
 
-[node name="Section_3_3" parent="LotGenerator/Sections" index="15" unique_id=1646994306 instance=ExtResource("5_section")]
+[node name="Section_3_3" parent="LotGenerator/Sections" index="15" unique_id=1996222435 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 35, 0, 15)
 seed = 1115
 year = 12.0
@@ -1356,6 +1371,7 @@ height_map = ExtResource("41_kdsal")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_3_3" index="0"]
 wheel_paths = PackedFloat32Array(8.1772, 9.8772, 11.8348, 13.5348)
+traffic = 0.35
 paint_lines = PackedVector2Array(7.1983995, 1.2954006, 1.7119999, 1.2954006, 7.1983995, 3.8862, 1.7119999, 3.8862, 7.1983995, 6.477001, 1.7119999, 6.477001, 7.1983995, 9.067799, 1.7119999, 9.067799)
 
 [node name="Base" parent="LotGenerator/Sections/Section_3_3/ColorViewport" index="0"]
@@ -1368,7 +1384,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_1dvmp")
 [node name="Shape" parent="LotGenerator/Sections/Section_3_3/Body" index="0"]
 shape = SubResource("HeightMapShape3D_0wc8i")
 
-[node name="Section_4_0" parent="LotGenerator/Sections" index="16" unique_id=1702500357 instance=ExtResource("5_section")]
+[node name="Section_4_0" parent="LotGenerator/Sections" index="16" unique_id=2003002636 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 45, 0, -15)
 seed = 1149
 year = 12.0
@@ -1377,6 +1393,7 @@ height_map = ExtResource("43_knoti")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_4_0" index="0"]
 wheel_paths = PackedFloat32Array(-3.5348, -1.8347998, 0.12279987, 1.8227997)
+traffic = 0.35
 paint_lines = PackedVector2Array(2.8016005, 1.6585999, 8.288, 1.6585999, 2.8016005, 4.249401, 8.288, 4.249401, 2.8016005, 6.8401985, 8.288, 6.8401985, 2.8016005, 9.431, 8.288, 9.431)
 
 [node name="Base" parent="LotGenerator/Sections/Section_4_0/ColorViewport" index="0"]
@@ -1389,7 +1406,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_bd8w0")
 [node name="Shape" parent="LotGenerator/Sections/Section_4_0/Body" index="0"]
 shape = SubResource("HeightMapShape3D_4kous")
 
-[node name="Section_4_1" parent="LotGenerator/Sections" index="17" unique_id=1643394409 instance=ExtResource("5_section")]
+[node name="Section_4_1" parent="LotGenerator/Sections" index="17" unique_id=2073102350 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 45, 0, -5)
 seed = 1150
 year = 12.0
@@ -1398,6 +1415,7 @@ height_map = ExtResource("45_4uiox")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_4_1" index="0"]
 wheel_paths = PackedFloat32Array(6.4652, 8.1652, 10.1228, 11.8228)
+traffic = 0.35
 paint_lines = PackedVector2Array(5.4864, 1.6585999, 0, 1.6585999, 5.4864, 4.249401, 0, 4.249401, 5.4864, 6.8401985, 0, 6.8401985, 5.4864, 9.431, 0, 9.431)
 
 [node name="Base" parent="LotGenerator/Sections/Section_4_1/ColorViewport" index="0"]
@@ -1410,7 +1428,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_qyjaj")
 [node name="Shape" parent="LotGenerator/Sections/Section_4_1/Body" index="0"]
 shape = SubResource("HeightMapShape3D_p7wg8")
 
-[node name="Section_4_2" parent="LotGenerator/Sections" index="18" unique_id=352589376 instance=ExtResource("5_section")]
+[node name="Section_4_2" parent="LotGenerator/Sections" index="18" unique_id=2035033793 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 45, 0, 5)
 seed = 1151
 year = 12.0
@@ -1419,6 +1437,7 @@ height_map = ExtResource("47_oe5ul")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_4_2" index="0"]
 wheel_paths = PackedFloat32Array(-1.8227997, -0.12279987, 1.8347998, 3.5348)
+traffic = 0.35
 paint_lines = PackedVector2Array(4.5136, 1.6585999, 10, 1.6585999, 4.5136, 4.249401, 10, 4.249401, 4.5136, 6.8401985, 10, 6.8401985, 4.5136, 9.431, 10, 9.431)
 
 [node name="Base" parent="LotGenerator/Sections/Section_4_2/ColorViewport" index="0"]
@@ -1431,7 +1450,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_k5gtv")
 [node name="Shape" parent="LotGenerator/Sections/Section_4_2/Body" index="0"]
 shape = SubResource("HeightMapShape3D_740m2")
 
-[node name="Section_4_3" parent="LotGenerator/Sections" index="19" unique_id=739253981 instance=ExtResource("5_section")]
+[node name="Section_4_3" parent="LotGenerator/Sections" index="19" unique_id=1507083138 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 45, 0, 15)
 seed = 1152
 year = 12.0
@@ -1440,6 +1459,7 @@ height_map = ExtResource("49_hku2u")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_4_3" index="0"]
 wheel_paths = PackedFloat32Array(8.1772, 9.8772, 11.8348, 13.5348)
+traffic = 0.35
 paint_lines = PackedVector2Array(7.1983995, 1.6585999, 1.7119999, 1.6585999, 7.1983995, 4.249401, 1.7119999, 4.249401, 7.1983995, 6.8401985, 1.7119999, 6.8401985, 7.1983995, 9.431, 1.7119999, 9.431)
 
 [node name="Base" parent="LotGenerator/Sections/Section_4_3/ColorViewport" index="0"]
@@ -1452,7 +1472,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_irhre")
 [node name="Shape" parent="LotGenerator/Sections/Section_4_3/Body" index="0"]
 shape = SubResource("HeightMapShape3D_8gpxm")
 
-[node name="Section_5_0" parent="LotGenerator/Sections" index="20" unique_id=1933678873 instance=ExtResource("5_section")]
+[node name="Section_5_0" parent="LotGenerator/Sections" index="20" unique_id=1699827663 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 55, 0, -15)
 seed = 1186
 year = 12.0
@@ -1461,6 +1481,7 @@ height_map = ExtResource("51_86ak5")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_5_0" index="0"]
 wheel_paths = PackedFloat32Array(-3.5348, -1.8347998, 0.12279987, 1.8227997)
+traffic = 0.35
 paint_lines = PackedVector2Array(2.8016005, 2.021801, 8.288, 2.021801)
 
 [node name="Base" parent="LotGenerator/Sections/Section_5_0/ColorViewport" index="0"]
@@ -1473,7 +1494,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_30wd6")
 [node name="Shape" parent="LotGenerator/Sections/Section_5_0/Body" index="0"]
 shape = SubResource("HeightMapShape3D_703qo")
 
-[node name="Section_5_1" parent="LotGenerator/Sections" index="21" unique_id=1365404132 instance=ExtResource("5_section")]
+[node name="Section_5_1" parent="LotGenerator/Sections" index="21" unique_id=1018811451 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 55, 0, -5)
 seed = 1187
 year = 12.0
@@ -1482,6 +1503,7 @@ height_map = ExtResource("53_j7bla")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_5_1" index="0"]
 wheel_paths = PackedFloat32Array(6.4652, 8.1652, 10.1228, 11.8228)
+traffic = 0.35
 paint_lines = PackedVector2Array()
 
 [node name="Base" parent="LotGenerator/Sections/Section_5_1/ColorViewport" index="0"]
@@ -1494,7 +1516,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_mmcjm")
 [node name="Shape" parent="LotGenerator/Sections/Section_5_1/Body" index="0"]
 shape = SubResource("HeightMapShape3D_dxjdj")
 
-[node name="Section_5_2" parent="LotGenerator/Sections" index="22" unique_id=1329618098 instance=ExtResource("5_section")]
+[node name="Section_5_2" parent="LotGenerator/Sections" index="22" unique_id=1963908588 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 55, 0, 5)
 seed = 1188
 year = 12.0
@@ -1503,6 +1525,7 @@ height_map = ExtResource("55_rmkdb")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_5_2" index="0"]
 wheel_paths = PackedFloat32Array(-1.8227997, -0.12279987, 1.8347998, 3.5348)
+traffic = 0.35
 paint_lines = PackedVector2Array()
 
 [node name="Base" parent="LotGenerator/Sections/Section_5_2/ColorViewport" index="0"]
@@ -1515,7 +1538,7 @@ surface_material_override/0 = SubResource("ShaderMaterial_hgrgi")
 [node name="Shape" parent="LotGenerator/Sections/Section_5_2/Body" index="0"]
 shape = SubResource("HeightMapShape3D_cj47a")
 
-[node name="Section_5_3" parent="LotGenerator/Sections" index="23" unique_id=1470923974 instance=ExtResource("5_section")]
+[node name="Section_5_3" parent="LotGenerator/Sections" index="23" unique_id=940476514 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 55, 0, 15)
 seed = 1189
 year = 12.0
@@ -1524,6 +1547,7 @@ height_map = ExtResource("57_0wc8i")
 
 [node name="Sim" parent="LotGenerator/Sections/Section_5_3" index="0"]
 wheel_paths = PackedFloat32Array(8.1772, 9.8772, 11.8348, 13.5348)
+traffic = 0.35
 paint_lines = PackedVector2Array(7.1983995, 2.021801, 1.7119999, 2.021801)
 
 [node name="Base" parent="LotGenerator/Sections/Section_5_3/ColorViewport" index="0"]
@@ -1539,210 +1563,210 @@ shape = SubResource("HeightMapShape3D_va8l8")
 [node name="ParkingBlock" parent="LotGenerator/WheelStops" index="0" unique_id=1662605783 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 9.2736, 0, -17.6784)
 
-[node name="ParkingBlock2" parent="LotGenerator/WheelStops" index="1" unique_id=1490847256 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock2" parent="LotGenerator/WheelStops" index="1" unique_id=1817453075 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 11.8644, 0, -17.6784)
 
-[node name="ParkingBlock3" parent="LotGenerator/WheelStops" index="2" unique_id=1615954674 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock3" parent="LotGenerator/WheelStops" index="2" unique_id=10503899 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 14.4552, 0, -17.6784)
 
-[node name="ParkingBlock4" parent="LotGenerator/WheelStops" index="3" unique_id=1462878416 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock4" parent="LotGenerator/WheelStops" index="3" unique_id=1482736329 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 17.046, 0, -17.6784)
 
-[node name="ParkingBlock5" parent="LotGenerator/WheelStops" index="4" unique_id=1803185182 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock5" parent="LotGenerator/WheelStops" index="4" unique_id=444430285 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 19.6368, 0, -17.6784)
 
-[node name="ParkingBlock6" parent="LotGenerator/WheelStops" index="5" unique_id=403734239 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock6" parent="LotGenerator/WheelStops" index="5" unique_id=127254202 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 22.2276, 0, -17.6784)
 
-[node name="ParkingBlock7" parent="LotGenerator/WheelStops" index="6" unique_id=1573668180 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock7" parent="LotGenerator/WheelStops" index="6" unique_id=1190646439 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 24.8184, 0, -17.6784)
 
-[node name="ParkingBlock8" parent="LotGenerator/WheelStops" index="7" unique_id=1072244944 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock8" parent="LotGenerator/WheelStops" index="7" unique_id=644501741 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 27.4092, 0, -17.6784)
 
-[node name="ParkingBlock9" parent="LotGenerator/WheelStops" index="8" unique_id=1344562238 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock9" parent="LotGenerator/WheelStops" index="8" unique_id=1147064581 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 30, 0, -17.6784)
 
-[node name="ParkingBlock10" parent="LotGenerator/WheelStops" index="9" unique_id=928621686 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock10" parent="LotGenerator/WheelStops" index="9" unique_id=1683411257 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 32.5908, 0, -17.6784)
 
-[node name="ParkingBlock11" parent="LotGenerator/WheelStops" index="10" unique_id=577195990 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock11" parent="LotGenerator/WheelStops" index="10" unique_id=289616535 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 35.1816, 0, -17.6784)
 
-[node name="ParkingBlock12" parent="LotGenerator/WheelStops" index="11" unique_id=1429593268 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock12" parent="LotGenerator/WheelStops" index="11" unique_id=23969603 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 37.7724, 0, -17.6784)
 
-[node name="ParkingBlock13" parent="LotGenerator/WheelStops" index="12" unique_id=1881621190 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock13" parent="LotGenerator/WheelStops" index="12" unique_id=713880049 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 40.3632, 0, -17.6784)
 
-[node name="ParkingBlock14" parent="LotGenerator/WheelStops" index="13" unique_id=159267742 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock14" parent="LotGenerator/WheelStops" index="13" unique_id=345168355 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 42.954, 0, -17.6784)
 
-[node name="ParkingBlock15" parent="LotGenerator/WheelStops" index="14" unique_id=822894176 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock15" parent="LotGenerator/WheelStops" index="14" unique_id=604538356 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 45.5448, 0, -17.6784)
 
-[node name="ParkingBlock16" parent="LotGenerator/WheelStops" index="15" unique_id=1864206899 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock16" parent="LotGenerator/WheelStops" index="15" unique_id=238893527 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 48.1356, 0, -17.6784)
 
-[node name="ParkingBlock17" parent="LotGenerator/WheelStops" index="16" unique_id=901535729 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock17" parent="LotGenerator/WheelStops" index="16" unique_id=535549268 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 50.7264, 0, -17.6784)
 
-[node name="ParkingBlock18" parent="LotGenerator/WheelStops" index="17" unique_id=71573490 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock18" parent="LotGenerator/WheelStops" index="17" unique_id=1459248938 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 11.8644, 0, -0.6096)
 
-[node name="ParkingBlock19" parent="LotGenerator/WheelStops" index="18" unique_id=2056473397 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock19" parent="LotGenerator/WheelStops" index="18" unique_id=389764289 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 14.4552, 0, -0.6096)
 
-[node name="ParkingBlock20" parent="LotGenerator/WheelStops" index="19" unique_id=1105580181 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock20" parent="LotGenerator/WheelStops" index="19" unique_id=982962117 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 17.046, 0, -0.6096)
 
-[node name="ParkingBlock21" parent="LotGenerator/WheelStops" index="20" unique_id=1873429773 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock21" parent="LotGenerator/WheelStops" index="20" unique_id=1167270739 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 19.6368, 0, -0.6096)
 
-[node name="ParkingBlock22" parent="LotGenerator/WheelStops" index="21" unique_id=1326067717 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock22" parent="LotGenerator/WheelStops" index="21" unique_id=2071430609 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 22.2276, 0, -0.6096)
 
-[node name="ParkingBlock23" parent="LotGenerator/WheelStops" index="22" unique_id=278759403 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock23" parent="LotGenerator/WheelStops" index="22" unique_id=491276420 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 24.8184, 0, -0.6096)
 
-[node name="ParkingBlock24" parent="LotGenerator/WheelStops" index="23" unique_id=403725750 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock24" parent="LotGenerator/WheelStops" index="23" unique_id=1807306159 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 27.4092, 0, -0.6096)
 
-[node name="ParkingBlock25" parent="LotGenerator/WheelStops" index="24" unique_id=2076104544 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock25" parent="LotGenerator/WheelStops" index="24" unique_id=267302381 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 30, 0, -0.6096)
 
-[node name="ParkingBlock26" parent="LotGenerator/WheelStops" index="25" unique_id=203495785 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock26" parent="LotGenerator/WheelStops" index="25" unique_id=2091022438 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 32.5908, 0, -0.6096)
 
-[node name="ParkingBlock28" parent="LotGenerator/WheelStops" index="26" unique_id=130709723 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock28" parent="LotGenerator/WheelStops" index="26" unique_id=925752713 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 37.7724, 0, -0.6096)
 
-[node name="ParkingBlock29" parent="LotGenerator/WheelStops" index="27" unique_id=1883390223 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock29" parent="LotGenerator/WheelStops" index="27" unique_id=480189124 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 40.3632, 0, -0.6096)
 
-[node name="ParkingBlock30" parent="LotGenerator/WheelStops" index="28" unique_id=660876 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock30" parent="LotGenerator/WheelStops" index="28" unique_id=1101217834 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 42.954, 0, -0.6096)
 
-[node name="ParkingBlock31" parent="LotGenerator/WheelStops" index="29" unique_id=543918912 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock31" parent="LotGenerator/WheelStops" index="29" unique_id=483861171 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 45.5448, 0, -0.6096)
 
-[node name="ParkingBlock32" parent="LotGenerator/WheelStops" index="30" unique_id=268709102 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock32" parent="LotGenerator/WheelStops" index="30" unique_id=319745824 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 48.1356, 0, -0.6096)
 
-[node name="ParkingBlock33" parent="LotGenerator/WheelStops" index="31" unique_id=1494901810 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock33" parent="LotGenerator/WheelStops" index="31" unique_id=2052184297 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 11.8644, 0, 0.6096)
 
-[node name="ParkingBlock34" parent="LotGenerator/WheelStops" index="32" unique_id=1909134929 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock34" parent="LotGenerator/WheelStops" index="32" unique_id=300247986 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 14.4552, 0, 0.6096)
 
-[node name="ParkingBlock35" parent="LotGenerator/WheelStops" index="33" unique_id=1272194376 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock35" parent="LotGenerator/WheelStops" index="33" unique_id=1346213740 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 17.046, 0, 0.6096)
 
-[node name="ParkingBlock36" parent="LotGenerator/WheelStops" index="34" unique_id=1567898111 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock36" parent="LotGenerator/WheelStops" index="34" unique_id=309428133 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 19.6368, 0, 0.6096)
 
-[node name="ParkingBlock37" parent="LotGenerator/WheelStops" index="35" unique_id=1044134863 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock37" parent="LotGenerator/WheelStops" index="35" unique_id=198168434 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 22.2276, 0, 0.6096)
 
-[node name="ParkingBlock38" parent="LotGenerator/WheelStops" index="36" unique_id=283318170 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock38" parent="LotGenerator/WheelStops" index="36" unique_id=331248209 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 24.8184, 0, 0.6096)
 
-[node name="ParkingBlock39" parent="LotGenerator/WheelStops" index="37" unique_id=692428406 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock39" parent="LotGenerator/WheelStops" index="37" unique_id=1696869083 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 27.4092, 0, 0.6096)
 
-[node name="ParkingBlock40" parent="LotGenerator/WheelStops" index="38" unique_id=509022114 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock40" parent="LotGenerator/WheelStops" index="38" unique_id=88104807 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 30, 0, 0.6096)
 
-[node name="ParkingBlock41" parent="LotGenerator/WheelStops" index="39" unique_id=1795223860 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock41" parent="LotGenerator/WheelStops" index="39" unique_id=2013627954 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 32.5908, 0, 0.6096)
 
-[node name="ParkingBlock42" parent="LotGenerator/WheelStops" index="40" unique_id=1858518573 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock42" parent="LotGenerator/WheelStops" index="40" unique_id=1314017936 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 35.1816, 0, 0.6096)
 
-[node name="ParkingBlock43" parent="LotGenerator/WheelStops" index="41" unique_id=500507467 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock43" parent="LotGenerator/WheelStops" index="41" unique_id=453244485 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 37.7724, 0, 0.6096)
 
-[node name="ParkingBlock44" parent="LotGenerator/WheelStops" index="42" unique_id=849694934 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock44" parent="LotGenerator/WheelStops" index="42" unique_id=21210320 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 40.3632, 0, 0.6096)
 
-[node name="ParkingBlock46" parent="LotGenerator/WheelStops" index="43" unique_id=1990699676 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock46" parent="LotGenerator/WheelStops" index="43" unique_id=530974642 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 45.5448, 0, 0.6096)
 
-[node name="ParkingBlock47" parent="LotGenerator/WheelStops" index="44" unique_id=1356123983 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock47" parent="LotGenerator/WheelStops" index="44" unique_id=63920122 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 48.1356, 0, 0.6096)
 
-[node name="ParkingBlock48" parent="LotGenerator/WheelStops" index="45" unique_id=346113241 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock48" parent="LotGenerator/WheelStops" index="45" unique_id=27320705 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 9.2736, 0, 17.6784)
 
-[node name="ParkingBlock49" parent="LotGenerator/WheelStops" index="46" unique_id=1498203025 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock49" parent="LotGenerator/WheelStops" index="46" unique_id=247162964 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 11.8644, 0, 17.6784)
 
-[node name="ParkingBlock50" parent="LotGenerator/WheelStops" index="47" unique_id=1030292191 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock50" parent="LotGenerator/WheelStops" index="47" unique_id=2001341260 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 14.4552, 0, 17.6784)
 
-[node name="ParkingBlock51" parent="LotGenerator/WheelStops" index="48" unique_id=373505367 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock51" parent="LotGenerator/WheelStops" index="48" unique_id=1254748852 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 17.046, 0, 17.6784)
 
-[node name="ParkingBlock52" parent="LotGenerator/WheelStops" index="49" unique_id=1597443032 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock52" parent="LotGenerator/WheelStops" index="49" unique_id=119642641 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 19.6368, 0, 17.6784)
 
-[node name="ParkingBlock53" parent="LotGenerator/WheelStops" index="50" unique_id=288444781 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock53" parent="LotGenerator/WheelStops" index="50" unique_id=1642021198 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 22.2276, 0, 17.6784)
 
-[node name="ParkingBlock54" parent="LotGenerator/WheelStops" index="51" unique_id=518608519 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock54" parent="LotGenerator/WheelStops" index="51" unique_id=1327917460 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 24.8184, 0, 17.6784)
 
-[node name="ParkingBlock55" parent="LotGenerator/WheelStops" index="52" unique_id=1424054850 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock55" parent="LotGenerator/WheelStops" index="52" unique_id=2087181141 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 27.4092, 0, 17.6784)
 
-[node name="ParkingBlock56" parent="LotGenerator/WheelStops" index="53" unique_id=1872872912 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock56" parent="LotGenerator/WheelStops" index="53" unique_id=367872624 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 30, 0, 17.6784)
 
-[node name="ParkingBlock57" parent="LotGenerator/WheelStops" index="54" unique_id=1677826405 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock57" parent="LotGenerator/WheelStops" index="54" unique_id=981470025 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 32.5908, 0, 17.6784)
 
-[node name="ParkingBlock58" parent="LotGenerator/WheelStops" index="55" unique_id=1208932092 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock58" parent="LotGenerator/WheelStops" index="55" unique_id=148539532 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 35.1816, 0, 17.6784)
 
-[node name="ParkingBlock59" parent="LotGenerator/WheelStops" index="56" unique_id=1841405992 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock59" parent="LotGenerator/WheelStops" index="56" unique_id=1810274291 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 37.7724, 0, 17.6784)
 
-[node name="ParkingBlock60" parent="LotGenerator/WheelStops" index="57" unique_id=501719608 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock60" parent="LotGenerator/WheelStops" index="57" unique_id=1237011536 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 40.3632, 0, 17.6784)
 
-[node name="ParkingBlock61" parent="LotGenerator/WheelStops" index="58" unique_id=2049058587 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock61" parent="LotGenerator/WheelStops" index="58" unique_id=529902869 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 42.954, 0, 17.6784)
 
-[node name="ParkingBlock62" parent="LotGenerator/WheelStops" index="59" unique_id=833764617 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock62" parent="LotGenerator/WheelStops" index="59" unique_id=1824415583 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 45.5448, 0, 17.6784)
 
-[node name="ParkingBlock63" parent="LotGenerator/WheelStops" index="60" unique_id=1383361121 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock63" parent="LotGenerator/WheelStops" index="60" unique_id=1678134858 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 48.1356, 0, 17.6784)
 
-[node name="ParkingBlock64" parent="LotGenerator/WheelStops" index="61" unique_id=1624982690 instance=ExtResource("7_agv5t")]
+[node name="ParkingBlock64" parent="LotGenerator/WheelStops" index="61" unique_id=2013316553 instance=ExtResource("7_agv5t")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 50.7264, 0, 17.6784)
 
-[node name="Curb" parent="LotGenerator/Curbs" index="0" unique_id=2029341754 instance=ExtResource("9_0d85t")]
+[node name="Curb" parent="LotGenerator/Curbs" index="0" unique_id=424047077 instance=ExtResource("9_0d85t")]
 curve = SubResource("Curve3D_qyjaj")
 
-[node name="Curb2" parent="LotGenerator/Curbs" index="1" unique_id=1565381266 instance=ExtResource("9_0d85t")]
+[node name="Curb2" parent="LotGenerator/Curbs" index="1" unique_id=172364675 instance=ExtResource("9_0d85t")]
 curve = SubResource("Curve3D_p7wg8")
 
-[node name="Perimeter" parent="LotGenerator/Curbs" index="2" unique_id=1374258233 instance=ExtResource("9_0d85t")]
+[node name="Perimeter" parent="LotGenerator/Curbs" index="2" unique_id=425119823 instance=ExtResource("9_0d85t")]
 curve = SubResource("Curve3D_3nik2")
 
-[node name="IslandFill" parent="LotGenerator/Islands" index="0" unique_id=1407985701 instance=ExtResource("11_io5lc")]
+[node name="IslandFill" parent="LotGenerator/Islands" index="0" unique_id=1665604980 instance=ExtResource("11_io5lc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5152, 0, 0)
 size = Vector3(2.1200001, 0.13, 10.6928005)
 
-[node name="IslandFill2" parent="LotGenerator/Islands" index="1" unique_id=1784144395 instance=ExtResource("11_io5lc")]
+[node name="IslandFill2" parent="LotGenerator/Islands" index="1" unique_id=255820042 instance=ExtResource("11_io5lc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 51.484802, 0, 0)
 size = Vector3(2.1200001, 0.13, 10.6928005)
 
 [node name="CartCorral" parent="LotGenerator/Corrals" index="0" unique_id=422234247 instance=ExtResource("14_emfil")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 42.954, 0, 2.7432)
 
-[node name="CartCorral2" parent="LotGenerator/Corrals" index="1" unique_id=2097569054 instance=ExtResource("14_emfil")]
+[node name="CartCorral2" parent="LotGenerator/Corrals" index="1" unique_id=1261905711 instance=ExtResource("14_emfil")]
 transform = Transform3D(1, 0, 6.123234e-17, 0, 1, 0, -6.123234e-17, 0, 1, 35.1816, 0, -2.7432)
 
 [editable path="LotGenerator"]

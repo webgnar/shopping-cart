@@ -73,6 +73,26 @@ func _check_layout(angle: int, two_way: bool) -> void:
 		for i in range(1, xs.size()):
 			pitch_ok = pitch_ok and absf(xs[i] - xs[i - 1] - g.stall_width / sin(a)) < 0.01
 	_check(tag + " stall pitch (Table 1 C)", pitch_ok)
+	# Across a double row the stripes run straight on: every stripe end on a double row's head line meets another.
+	var ends := []
+	for s: Node3D in stripes:
+		for e in [s.position + s.transform.basis.x * 0.5, s.position - s.transform.basis.x * 0.5]:
+			ends.append(e)
+	var bay := 2.0 * g.stall_depth() + g.aisle_width()
+	var aisle_count := int(g.size.y / bay)
+	var margin := (g.size.y - aisle_count * bay) * 0.5
+	var heads := 0
+	var met := 0
+	for i in ends.size():
+		var e: Vector3 = ends[i]
+		for k in range(1, aisle_count):
+			if absf(e.z - (-g.size.y * 0.5 + margin + k * bay)) < 0.01:
+				heads += 1
+				for j in ends.size():
+					if j != i and ends[j].distance_to(e) < 0.01:
+						met += 1
+						break
+	_check(tag + " double-row stripes meet across the head line", heads > 0 and met == heads, "%d of %d" % [met, heads])
 	# Islands: two per double row, one curb each plus the perimeter.
 	var doubles := int(g.size.y / (2.0 * g.stall_depth() + g.aisle_width())) - 1
 	_check(tag + " islands", g.islands.get_child_count() == doubles * 2,

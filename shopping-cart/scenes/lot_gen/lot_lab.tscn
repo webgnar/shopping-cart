@@ -1,0 +1,198 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/lot_gen/lot_lab.gd" id="1_lab"]
+[ext_resource type="PackedScene" path="res://scenes/environment/default_environment.tscn" id="2_env"]
+[ext_resource type="PackedScene" path="res://scenes/lot_gen/lot_generator.tscn" id="3_gen"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/sidewalk.tres" id="4_sidewalk"]
+
+[sub_resource type="SystemFont" id="SystemFont_mono"]
+font_names = PackedStringArray("Menlo", "Consolas", "DejaVu Sans Mono", "monospace")
+
+[sub_resource type="Theme" id="Theme_lab"]
+default_font_size = 14
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+material = ExtResource("4_sidewalk")
+size = Vector2(600, 600)
+
+[node name="LotLab" type="Node3D" node_paths=PackedStringArray("generator", "pivot", "camera", "settings_panel", "stats_panel")]
+script = ExtResource("1_lab")
+generator = NodePath("LotGenerator")
+pivot = NodePath("Pivot")
+camera = NodePath("Pivot/Camera")
+settings_panel = NodePath("UI/Panel")
+stats_panel = NodePath("UI/StatsPanel")
+
+[node name="Environment" parent="." instance=ExtResource("2_env")]
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, 0)
+mesh = SubResource("PlaneMesh_ground")
+
+[node name="LotGenerator" parent="." instance=ExtResource("3_gen")]
+
+[node name="Pivot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 0, 0)
+
+[node name="Camera" type="Camera3D" parent="Pivot"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 120, 0)
+current = true
+projection = 1
+size = 80.0
+far = 1000.0
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Panel" type="PanelContainer" parent="UI"]
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 292.0
+offset_bottom = 12.0
+theme = SubResource("Theme_lab")
+
+[node name="Margin" type="MarginContainer" parent="UI/Panel"]
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="Rows" type="VBoxContainer" parent="UI/Panel/Margin"]
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="UI/Panel/Margin/Rows"]
+theme_override_font_sizes/font_size = 18
+text = "Parking lot lab"
+
+[node name="AngleRow" type="HBoxContainer" parent="UI/Panel/Margin/Rows"]
+
+[node name="Label" type="Label" parent="UI/Panel/Margin/Rows/AngleRow"]
+custom_minimum_size = Vector2(110, 0)
+text = "Stall angle"
+
+[node name="Angle" type="OptionButton" parent="UI/Panel/Margin/Rows/AngleRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+item_count = 4
+popup/item_0/text = "90 deg"
+popup/item_0/id = 0
+popup/item_1/text = "60 deg"
+popup/item_1/id = 1
+popup/item_2/text = "45 deg"
+popup/item_2/id = 2
+popup/item_3/text = "30 deg"
+popup/item_3/id = 3
+selected = 0
+
+[node name="TwoWay" type="CheckBox" parent="UI/Panel/Margin/Rows"]
+unique_name_in_owner = true
+text = "Two-way aisles"
+
+[node name="LotWidthRow" type="HBoxContainer" parent="UI/Panel/Margin/Rows"]
+
+[node name="Label" type="Label" parent="UI/Panel/Margin/Rows/LotWidthRow"]
+custom_minimum_size = Vector2(110, 0)
+text = "Lot length (X)"
+
+[node name="LotWidth" type="SpinBox" parent="UI/Panel/Margin/Rows/LotWidthRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+min_value = 20.0
+max_value = 200.0
+step = 1.0
+value = 70.0
+suffix = "m"
+
+[node name="LotDepthRow" type="HBoxContainer" parent="UI/Panel/Margin/Rows"]
+
+[node name="Label" type="Label" parent="UI/Panel/Margin/Rows/LotDepthRow"]
+custom_minimum_size = Vector2(110, 0)
+text = "Lot depth (Z)"
+
+[node name="LotDepth" type="SpinBox" parent="UI/Panel/Margin/Rows/LotDepthRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+min_value = 15.0
+max_value = 200.0
+step = 1.0
+value = 60.0
+suffix = "m"
+
+[node name="Islands" type="CheckBox" parent="UI/Panel/Margin/Rows"]
+unique_name_in_owner = true
+text = "End islands"
+
+[node name="IslandLengthRow" type="HBoxContainer" parent="UI/Panel/Margin/Rows"]
+
+[node name="Label" type="Label" parent="UI/Panel/Margin/Rows/IslandLengthRow"]
+custom_minimum_size = Vector2(110, 0)
+text = "Island length"
+
+[node name="IslandLength" type="SpinBox" parent="UI/Panel/Margin/Rows/IslandLengthRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 10.0
+step = 0.1
+value = 2.4
+suffix = "m"
+
+[node name="WheelStops" type="CheckBox" parent="UI/Panel/Margin/Rows"]
+unique_name_in_owner = true
+text = "Wheel stops"
+
+[node name="Perimeter" type="CheckBox" parent="UI/Panel/Margin/Rows"]
+unique_name_in_owner = true
+text = "Perimeter curb"
+
+[node name="CorralsRow" type="HBoxContainer" parent="UI/Panel/Margin/Rows"]
+
+[node name="Label" type="Label" parent="UI/Panel/Margin/Rows/CorralsRow"]
+custom_minimum_size = Vector2(110, 0)
+text = "Cart corrals"
+
+[node name="Corrals" type="SpinBox" parent="UI/Panel/Margin/Rows/CorralsRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+max_value = 20.0
+value = 2.0
+
+[node name="SeedRow" type="HBoxContainer" parent="UI/Panel/Margin/Rows"]
+
+[node name="Label" type="Label" parent="UI/Panel/Margin/Rows/SeedRow"]
+custom_minimum_size = Vector2(110, 0)
+text = "Seed"
+
+[node name="Seed" type="SpinBox" parent="UI/Panel/Margin/Rows/SeedRow"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 9999.0
+value = 1.0
+
+[node name="TopView" type="CheckBox" parent="UI/Panel/Margin/Rows"]
+unique_name_in_owner = true
+button_pressed = true
+text = "Top view (off: 3D, drag to orbit)"
+
+[node name="StatsPanel" type="PanelContainer" parent="UI"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -352.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = 12.0
+grow_horizontal = 0
+theme = SubResource("Theme_lab")
+
+[node name="Margin" type="MarginContainer" parent="UI/StatsPanel"]
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="Stats" type="Label" parent="UI/StatsPanel/Margin"]
+unique_name_in_owner = true
+theme_override_fonts/font = SubResource("SystemFont_mono")
+theme_override_font_sizes/font_size = 13
+text = "stats"
