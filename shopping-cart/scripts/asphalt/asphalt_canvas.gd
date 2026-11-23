@@ -46,6 +46,7 @@ const CHUNK := 6              ## points per drawn piece of crack (each piece get
 @export var cold_mix := Color(0.09, 0.085, 0.08)
 @export var crack_color := Color(0.03, 0.03, 0.03)
 @export var spall_color := Color(0.33, 0.31, 0.29)      ## broken crack edges, aggregate showing
+@export var loose_stone := Color(0.42, 0.4, 0.37)      ## stones crumbled out of wide cracks
 @export var sealant_fresh := Color(0.02, 0.02, 0.025)
 @export var sealant_aged := Color(0.16, 0.16, 0.16)
 @export var pothole_rim := Color(0.40, 0.37, 0.33)
@@ -234,6 +235,14 @@ func _draw() -> void:
 			if wpx < 1.5 and not hm:
 				col.a = clampf(wpx * 0.9, 0.55, 1.0)
 			draw_polyline(seg, col, maxf(wpx, 1.2), true)
+			# Loose stones crumbled off the edges of wide cracks, kicked about by traffic.
+			if w > 0.006 and not hm:
+				var stones := int(minf((w - 0.006) * 900.0, 6.0))
+				for s in stones:
+					var hs := _h(k * 7.1 + s * 3.3 + c.pts[0].x * 13.0)
+					var at := seg[int(hs * (seg.size() - 1))]
+					var off := Vector2(_h(hs * 91.0) - 0.5, _h(hs * 57.0) - 0.5) * (w * 3.0 + 0.02) * px_per_m
+					draw_circle(at + off, (0.002 + 0.004 * _h(hs * 33.0)) * px_per_m, loose_stone.darkened(0.3 * _h(hs * 17.0)))
 			k = e
 	# Crack sealant: a band of rubberised bitumen poured over each filled crack, worn and debonding with age.
 	for c in sim.cracks:

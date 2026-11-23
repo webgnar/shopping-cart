@@ -1681,3 +1681,26 @@ wheels feel it. `paint_left(p)` gives how much is left: it wears with surface ag
 paths, in 20 cm patches. Cracks cut through it, patches and fills cover it, and a surface seal or overlay repaints
 it. AsphaltCanvas draws it in 5 cm pieces, with an optional `paint_texture` (white, modulated) and `paint_color` as
 the fallback. The lab and the lot sections have a stall row of four stalls plus a head line. The lot is re-baked.
+
+## Asphalt: cracks from the material (Nov 23 2026)
+
+zack chose to improve how the damage mechanisms relate rather than build a spring/fracture simulation. Changes:
+
+1. Mix strength field: `mix_weakness(p)` mixes slow noise (metres: compaction, segregation) with fine noise at
+   `aggregate_size`. As a free crack grows, its tip picks the weakest of three headings (`crack_bias`), so paths
+   weave around the stones and run through poor mix.
+2. Crocodile cells grow out of the wheel-path cracks. A fatigue-network edge that touches no crack now rarely opens
+   on its own (0.12 instead of 1.0 per year).
+3. Width is separate from growth. Each crack has a `local` opening rate from where it starts (wheel load, subgrade
+   support, standing water, climate). The opening drive is 0.4 + 0.9 x oxidation, integrated in `Crack._g`, so
+   width grows faster as the binder hardens and pauses while the crack is sealed. Wide cracks also drop loose stones
+   (canvas `loose_stone`).
+4. Subgrade and water: `pond` per cell marks low spots (`ponding` export). They add to fatigue wetness and to the
+   water that turns broken-up cells into potholes, which still need fatigue and traffic as well.
+5. Junctions: when a crack meets another, a share `t_junctions` join at a T, a share `stop_short` die out just
+   short of it, and the rest turn and run alongside it for up to 3 tries. Free cracks also throw side branches
+   (`branching` per metre).
+
+Also new are `thermal_spacing` (new binder, aged binder; scaled by sqrt(structure)/sqrt(climate)) and the
+configurable `oxidation_years`. Thermal cracks now open in the middle of the longest uncracked stretch once it
+passes 1.6 x the spacing, which is how shrinkage stress relief works. The lot is re-baked.
