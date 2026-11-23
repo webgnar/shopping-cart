@@ -1,4 +1,4 @@
-class_name PauseMenu
+class_name PauseScreen
 extends CanvasLayer
 ## The pause menu (Esc), loaded as the `Pause` autoload so it works in every level. It has a button for each
 ## console command (built from the console's own list every time it opens, so new commands show up by themselves),
