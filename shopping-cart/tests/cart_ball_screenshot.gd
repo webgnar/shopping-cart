@@ -1,5 +1,5 @@
 extends SceneTree
-## Renders Cart Ball: the kickoff count from behind your cart, the arena from above, a goal, and full time.
+## Renders Cart Ball: the kickoff count from behind your cart, the arena from above, a goal, its replay, and full time.
 ## Needs a display:
 ##   xvfb-run godot --rendering-method gl_compatibility -s res://tests/cart_ball_screenshot.gd -- <out dir>
 
@@ -53,12 +53,20 @@ func _run() -> void:
 		await physics_frame
 	await _frames(20)
 	await _shot("cart_ball_goal.png")
-	game.clock = 0.0
-	while game.phase != CartBall.Phase.PLAYING:
-		await physics_frame
-	await _frames(5)
 	cam.queue_free()
 	main.set_process(true)
+	while game.phase != CartBall.Phase.REPLAY:
+		await physics_frame
+	while game._replay_at < game._tape.size() * 0.75:
+		await physics_frame
+	await _shot("cart_ball_replay.png")
+	while game.phase != CartBall.Phase.PLAYING:
+		await physics_frame
+	game.score = [4, 3]
+	game.ball.global_position = Vector3(13.2, 0.66, 0.6)
+	game.ball.linear_velocity = Vector3(4, 0, 0)
+	while game.phase != CartBall.Phase.FULL_TIME:
+		await physics_frame
 	await _frames(30)
 	await _shot("cart_ball_full_time.png")
 	quit()

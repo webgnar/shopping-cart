@@ -12,6 +12,7 @@
 [ext_resource type="Material" path="res://assets/materials/cart_ball/fence.tres" id="10_fence"]
 [ext_resource type="Material" path="res://assets/materials/garage/galvanized.tres" id="11_rail"]
 [ext_resource type="Material" path="res://assets/materials/cart_ball/team_green.tres" id="12_green"]
+[ext_resource type="PackedScene" path="res://scenes/ball/ball_bot_cart.tscn" id="13_bot"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
 size = Vector3(120, 1, 100)
@@ -437,7 +438,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.66, 0)
 [node name="CartSpawn" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 0)
 
-[node name="CartBall" parent="." node_paths=PackedStringArray("ball", "ball_spawn", "kickoff_spot") instance=ExtResource("4_mode")]
+[node name="RedStriker" parent="." instance=ExtResource("13_bot")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 6, 0, 0)
+
+[node name="RedKeeper" parent="." instance=ExtResource("13_bot")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 13, 0, 0)
+
+[node name="Bot" parent="RedKeeper"]
+role = 1
+
+[node name="CartBall" parent="." node_paths=PackedStringArray("ball", "ball_spawn", "kickoff_spot", "green_goal", "red_goal") instance=ExtResource("4_mode")]
+green_goal = NodePath("../GoalGreen")
+red_goal = NodePath("../GoalRed")
 ball = NodePath("../Ball")
 ball_spawn = NodePath("../BallSpawn")
 kickoff_spot = NodePath("../CartSpawn")
