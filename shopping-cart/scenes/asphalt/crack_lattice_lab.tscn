@@ -1,0 +1,91 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/asphalt/crack_lattice_lab.gd" id="1_lab"]
+[ext_resource type="Script" path="res://scripts/asphalt/crack_lattice.gd" id="2_sim"]
+[ext_resource type="Script" path="res://scripts/asphalt/crack_lattice_canvas.gd" id="3_canvas"]
+[ext_resource type="Texture2D" path="res://assets/asphalt/asphalt_grain.tres" id="4_grain"]
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_patch"]
+viewport_path = NodePath("PatchViewport")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+bg_color = Color(0.09, 0.1, 0.12, 1)
+
+[node name="CrackLatticeLab" type="Control" node_paths=PackedStringArray("sim", "year", "info")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_lab")
+sim = NodePath("Sim")
+year = NodePath("Panel/Box/Year")
+info = NodePath("Panel/Box/Info")
+
+[node name="Sim" type="Node" parent="."]
+script = ExtResource("2_sim")
+
+[node name="PatchViewport" type="SubViewport" parent="."]
+disable_3d = true
+size = Vector2i(1024, 1024)
+render_target_update_mode = 4
+
+[node name="Patch" type="Node2D" parent="PatchViewport" node_paths=PackedStringArray("sim")]
+texture_repeat = 2
+script = ExtResource("3_canvas")
+sim = NodePath("../../Sim")
+grain = ExtResource("4_grain")
+
+[node name="PatchView" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -282.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("ViewportTexture_patch")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -270.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Box" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Panel/Box"]
+layout_mode = 2
+autowrap_mode = 3
+text = "Crack lattice: a 2 x 2 m patch as stones in mastic on a mesh of springs (experiment)"
+
+[node name="YearLabel" type="Label" parent="Panel/Box"]
+layout_mode = 2
+text = "Year"
+
+[node name="Year" type="HSlider" parent="Panel/Box"]
+layout_mode = 2
+max_value = 30.0
+tick_count = 7
+ticks_on_borders = true
+
+[node name="Info" type="Label" parent="Panel/Box"]
+layout_mode = 2
+autowrap_mode = 3
