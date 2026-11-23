@@ -1704,3 +1704,11 @@ zack chose to improve how the damage mechanisms relate rather than build a sprin
 Also new are `thermal_spacing` (new binder, aged binder; scaled by sqrt(structure)/sqrt(climate)) and the
 configurable `oxidation_years`. Thermal cracks now open in the middle of the longest uncracked stretch once it
 passes 1.6 x the spacing, which is how shrinkage stress relief works. The lot is re-baked.
+
+## Asphalt lab: repair, then the timeline starts again (Nov 23 2026)
+
+Clicking a repair now repairs the road as it is at the slider's year, and the slider goes back to the start. From
+then on it counts years since that repair; the label also shows the road's own year. Repairs stack: scrub forward,
+repair again, and the timeline restarts from there. Clear repairs goes back to the original timeline.
+`AsphaltSim.advance_to(t)` now includes repairs made at exactly t (`_apply_due`), so the slider's start shows the
+road already repaired.

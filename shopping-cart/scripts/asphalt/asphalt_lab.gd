@@ -20,6 +20,7 @@ extends Control
 var playing := false
 var _dragging := false
 var _play_t := 0.0     ## years: where Play has got to (the sim catches up a step at a time)
+var _epoch := 0.0      ## year of the last repair by hand: the timeline starts there, and runs max_years on from it
 var _replay_at := -1   ## msec: replay once the condition sliders settle
 var _relief_at := -1   ## msec: redraw the relief view (it takes a moment, so not every frame)
 
@@ -60,16 +61,16 @@ func _process(delta: float) -> void:
 	# would never reach the next step.
 	if absf(_play_t - sim.time) > AsphaltSim.DT:
 		_play_t = sim.time   # scrubbed or replayed while playing
-	_play_t = minf(_play_t + years_per_second * delta, max_years)
+	_play_t = minf(_play_t + years_per_second * delta, _epoch + max_years)
 	sim.advance_to(_play_t)
-	if _play_t >= max_years:
+	if _play_t >= _epoch + max_years:
 		_play.button_pressed = false
 
 
 func _update_ui() -> void:
-	_timeline.set_value_no_signal(sim.time)
+	_timeline.set_value_no_signal(sim.time - _epoch)
 	var s := sim.stats()
-	_year.text = "Year %.1f" % s.year
+	_year.text = _year_text(sim.time - _epoch)
 	var kinds := PackedStringArray()
 	for k in AsphaltSim.Kind.size():
 		if s.by_kind[k] > 0.05:
@@ -94,10 +95,17 @@ func _label_condition(slider: Range) -> void:
 		label.text = "%.2f" % slider.value
 
 
+## The slider counts years since the last repair by hand (or since the road was built).
+func _year_text(value: float) -> String:
+	if _epoch <= 0.0:
+		return "Year %.1f" % value
+	return "Year %.1f since the repair (road year %.1f)" % [value, _epoch + value]
+
+
 func _on_timeline_value_changed(value: float) -> void:
-	_year.text = "Year %.1f" % value
+	_year.text = _year_text(value)
 	if not _dragging:
-		sim.seek(value)
+		sim.seek(_epoch + value)
 
 
 func _on_timeline_drag_started() -> void:
@@ -106,22 +114,26 @@ func _on_timeline_drag_started() -> void:
 
 func _on_timeline_drag_ended(_changed: bool) -> void:
 	_dragging = false
-	sim.seek(_timeline.value)
+	sim.seek(_epoch + _timeline.value)
 
 
 func _on_play_toggled(on: bool) -> void:
 	playing = on
 	_play.text = "Pause" if on else "Play"
-	if on and sim.time >= max_years - 0.01:
-		sim.seek(0.0)
+	if on and sim.time >= _epoch + max_years - 0.01:
+		sim.seek(_epoch)
 	_play_t = sim.time
 
 
+## Repair the road as it is at this year; the timeline then starts again from the repaired road.
 func _on_repair_pressed(action: int) -> void:
 	sim.do_action(action)
+	_epoch = sim.time
+	_update_ui()
 
 
 func _on_clear_pressed() -> void:
+	_epoch = 0.0
 	sim.clear_events()
 
 
