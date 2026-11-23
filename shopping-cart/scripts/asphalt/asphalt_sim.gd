@@ -68,6 +68,13 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 @export var spall_depth := 0.006                        ## m: broken shoulders either side of a wide crack
 @export var edge_feather := 0.15                        ## m round the section easing back to 0 to meet flat ground
 
+@export_group("Paint")
+@export var paint_lines := PackedVector2Array()         ## painted lines (stall lines): start and end point pairs, m
+@export var paint_width := 0.1                          ## m (4 in, the standard stall line)
+@export var paint_thickness := 0.0008                   ## m fresh traffic paint stands above the asphalt
+@export var paint_life := 8.0                           ## years for the paint to wear off under a wheel path
+## The lines are repainted with every surface seal or overlay; patches and fills cover them.
+
 @export_group("Maintenance")
 @export var auto_maintain := false                      ## a road crew repairs the road on its own (see _auto_maintain)
 
@@ -260,6 +267,24 @@ func surface_age() -> float:
 	return time - surface_born
 
 
+## How much paint is left at p, 0..1: it wears with age and traffic (fastest in the wheel paths), in patches.
+func paint_left(p: Vector2) -> float:
+	var wear := surface_age() * traffic * (0.15 + load[cell_index(p)]) / paint_life
+	if wear <= 0.0:
+		return 1.0
+	# Value noise on a 20 cm grid: some stretches go first.
+	var q := p * 5.0
+	var i := q.floor()
+	var f := q - i
+	f = f * f * (Vector2(3.0, 3.0) - 2.0 * f)
+	var n := lerpf(lerpf(_hash2(i), _hash2(i + Vector2(1, 0)), f.x), lerpf(_hash2(i + Vector2(0, 1)), _hash2(i + Vector2(1, 1)), f.x), f.y)
+	return clampf(1.0 - wear * (0.4 + 1.2 * n), 0.0, 1.0)
+
+
+func _hash2(v: Vector2) -> float:
+	return fposmod(sin(v.x * 127.1 + v.y * 311.7 + seed * 17.3) * 43758.5453, 1.0)
+
+
 ## True where the road is asphalt (not shoulder, not fretted away).
 func paved(p: Vector2) -> bool:
 	if p.y < 0.0 or p.y >= size.y:
@@ -336,6 +361,27 @@ func bake_height(res := 0.01) -> PackedFloat32Array:
 		if fill_born[i] >= 0.0:
 			_stamp_disk(out, w, h, res, cell_center(i), 0.1, 0.006, false)
 			_stamp_disk(covered, w, h, res, cell_center(i), 0.1, fill_born[i], false)
+	# Paint stands a hair proud where it is left (not under a patch or fill); cracks still cut through it.
+	var half_w := paint_width * 0.5
+	var painted := PackedByteArray()
+	if not paint_lines.is_empty():
+		painted.resize(w * h)
+	for k in range(0, paint_lines.size() - 1, 2):
+		var a := paint_lines[k]
+		var b := paint_lines[k + 1]
+		var x0 := maxi(0, int((minf(a.x, b.x) - half_w) / res))
+		var x1 := mini(w - 1, int(ceil((maxf(a.x, b.x) + half_w) / res)))
+		var y0 := maxi(0, int((minf(a.y, b.y) - half_w) / res))
+		var y1 := mini(h - 1, int(ceil((maxf(a.y, b.y) + half_w) / res)))
+		var ab := b - a
+		var len2 := maxf(ab.length_squared(), 1e-10)
+		for iy in range(y0, y1 + 1):
+			for ix in range(x0, x1 + 1):
+				var q := Vector2(ix * res, iy * res)
+				var j := iy * w + ix
+				if painted[j] == 0 and covered[j] < 0.0 and q.distance_to(a + ab * clampf((q - a).dot(ab) / len2, 0.0, 1.0)) <= half_w:
+					out[j] += paint_thickness * paint_left(q)
+					painted[j] = 1
 	# Filled cracks: the sealant fills the crack flush and the overband stands a little proud, until it debonds.
 	var surface := PackedFloat32Array(out)
 	for c in cracks:

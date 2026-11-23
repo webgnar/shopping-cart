@@ -197,6 +197,25 @@ func _run() -> void:
 	_check("overlay buries the cracks", ov.stats().crack_m == 0.0 and ov.surface_age() == 0.0, "%.0f m" % ov.stats().crack_m)
 	ov.advance_to(22.0)
 	_check("reflection cracks come back", ov.stats().by_kind[K.REFLECTION] > 1.0, "%.1f m" % ov.stats().by_kind[K.REFLECTION])
+
+	# Paint: stall lines stand a hair proud, wear fastest in the wheel paths, and are repainted with an overlay.
+	var pt := _sim()
+	pt.paint_lines = PackedVector2Array([Vector2(0.8, 5.03), Vector2(9.2, 5.03)])
+	pt.reset()
+	pt.advance_to(0.2)
+	var ph0 := pt.bake_height(0.02)
+	var fresh := ph0[int(round(5.03 / 0.02)) * 501 + int(round(5.0 / 0.02))]
+	_check("fresh paint stands proud", fresh > 0.0006 and fresh < 0.001, "%.2f mm" % (fresh * 1000.0))
+	pt.advance_to(8.0)
+	var in_path := 0.0
+	var off_path := 0.0
+	for x in [1.95, 3.75, 6.25, 8.05]:
+		in_path += pt.paint_left(Vector2(x, 5.03)) / 4.0
+	for x in [1.0, 2.85, 7.15, 9.0]:
+		off_path += pt.paint_left(Vector2(x, 5.03)) / 4.0
+	_check("paint wears in the wheel paths", in_path < off_path - 0.2, "%.2f left in the wheel paths, %.2f between" % [in_path, off_path])
+	pt.do_action(A.OVERLAY)
+	_check("overlay repaints the lines", pt.paint_left(Vector2(1.95, 5.03)) == 1.0, "%.2f" % pt.paint_left(Vector2(1.95, 5.03)))
 	var cs := _sim()
 	cs.advance_to(16.0)
 	cs.do_action(A.SURFACE_SEAL)
