@@ -1,0 +1,35 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/curb/curb.gd" id="1_curb"]
+[ext_resource type="Material" path="res://assets/parking_lot/materials/curb_concrete.tres" id="2_conc"]
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="3_solid"]
+
+[sub_resource type="Curve3D" id="Curve3D_curb"]
+resource_local_to_scene = true
+_data = {
+"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0),
+"tilts": PackedFloat32Array(0, 0)
+}
+point_count = 2
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_curb"]
+resource_local_to_scene = true
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_curb"]
+resource_local_to_scene = true
+
+[node name="Curb" type="Path3D" node_paths=PackedStringArray("mesh_instance", "collision")]
+curve = SubResource("Curve3D_curb")
+script = ExtResource("1_curb")
+mesh_instance = NodePath("Mesh")
+collision = NodePath("Body/Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("ArrayMesh_curb")
+material_override = ExtResource("2_conc")
+
+[node name="Body" type="StaticBody3D" parent="." groups=["curb"]]
+physics_material_override = ExtResource("3_solid")
+
+[node name="Shape" type="CollisionShape3D" parent="Body"]
+shape = SubResource("ConcavePolygonShape3D_curb")

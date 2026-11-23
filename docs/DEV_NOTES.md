@@ -1723,3 +1723,16 @@ then on it counts years since that repair; the label also shows the road's own y
 repair again, and the timeline restarts from there. Clear repairs goes back to the original timeline.
 `AsphaltSim.advance_to(t)` now includes repairs made at exactly t (`_apply_due`), so the slider's start shows the
 road already repaired.
+
+## 2026-11-23: procedural Type C curb
+
+zack gave the curb drawing (`References/Props/type_c_doweled_curb.png`, "Type C Doweled") for curbs the future
+parking lot generator will lay. `scenes/curb/curb.tscn` is a Path3D (`scripts/curb/curb.gd`, class `Curb`, @tool)
+that sweeps the drawing's section along its curve: 6" top from the back to the curb line, 6" tall at the curb line
+with the back 1/4" higher, face battered 1 1/2" per foot (6 3/4" at the base), 1/4" R back and 3/4" R front top
+corners. The curve is the curb line at ground level; the street is on its right. Open curves get square ends,
+`curve.closed` joins up. `Curb.curve_through(points, radius, closed)` rounds a polyline's corners. Mesh (shared
+`curb_concrete.tres`, like the wheel stop's shared materials) and a ConcavePolygonShape3D of the same triangles
+(solid.tres) are rebuilt when the curve changes; the base is left open. The dowels (1/2" x 8", 5' OC, 3" from the
+back, 4" in the ground) are hidden and not modelled. Demo: `scenes/curb/curb_demo.tscn`. Test: `tests/curb_test.gd`
+(profile sizes, ray hits on top/face/caps/island corner). Renders: `tests/curb_screenshot.gd`.
