@@ -1,7 +1,7 @@
 class_name CartBallHUD
 extends CanvasLayer
 ## Cart Ball's screen: the scoreboard at the top (Green's goals, the match clock, Red's goals), a big word in the
-## middle (3, 2, 1, GO!, GOAL!) and the full-time panel. Layout lives in scenes/ui/cart_ball_hud.tscn;
+## middle (3, 2, 1, GO!, GOAL!), the REPLAY tag while a goal is replayed, and the full-time panel. Layout lives in scenes/ui/cart_ball_hud.tscn;
 ## scripts/ball/cart_ball.gd tells it what to show.
 
 @export var go_color := Color(0.42, 0.9, 0.5)       ## GO! is drawn in this colour
@@ -12,6 +12,7 @@ extends CanvasLayer
 @onready var _clock: Label = %Clock
 @onready var _status: Label = %Status
 @onready var _banner: Label = %Banner
+@onready var _replay: Label = %ReplayTag
 @onready var _final: PanelContainer = %FullTime
 @onready var _final_score: Label = %FinalScore
 @onready var _final_line: Label = %FinalLine
@@ -36,6 +37,10 @@ func show_banner(text: String, color: Color, t: float) -> void:
 	_banner.text = text
 	_banner.modulate = go_color if text == "GO!" else color
 	_banner.scale = Vector2.ONE * lerpf(pop_scale, 1.0, clampf(t * 4.0, 0.0, 1.0))
+
+
+func show_replay(on: bool) -> void:
+	_replay.visible = on
 
 
 func show_full_time(green: int, red: int, line: String) -> void:

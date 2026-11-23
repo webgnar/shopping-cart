@@ -3,6 +3,9 @@
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hqnrr"]
 [ext_resource type="Script" path="res://scripts/ui/key_cap.gd" id="2_bo48s"]
 [ext_resource type="Theme" path="res://assets/ui/road_sign_theme.tres" id="3_theme"]
+[ext_resource type="Script" path="res://scripts/ui/force_diagram.gd" id="4_forces"]
+[ext_resource type="Texture2D" path="res://assets/ui/cart_side.png" id="5_side"]
+[ext_resource type="Texture2D" path="res://assets/ui/cart_top.png" id="6_top"]
 
 [sub_resource type="SystemFont" id="SystemFont_cms"]
 font_names = PackedStringArray("Consolas", "DejaVu Sans Mono", "Monospace")
@@ -570,7 +573,7 @@ horizontal_alignment = 1
 [node name="Caption" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyW/Border/Text"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "BACK UP"
+text = "LIFT"
 horizontal_alignment = 1
 
 [node name="KeyE" type="PanelContainer" parent="Screen/Controls/Drive/KeyCaps"]
@@ -658,7 +661,7 @@ horizontal_alignment = 1
 [node name="Caption" type="Label" parent="Screen/Controls/Drive/KeyCaps/KeyS/Border/Text"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "FRONT UP"
+text = "PRESS"
 horizontal_alignment = 1
 
 [node name="KeyD" type="PanelContainer" parent="Screen/Controls/Drive/KeyCaps"]
@@ -824,8 +827,49 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 9
-text = "P RESET · M MULTIPLAYER · F11 FULL SCREEN
+text = "P RESET · M MULTIPLAYER · F FORCES · F11 FULL SCREEN
 CLICK TO LOOK · ESC TO RELEASE · SCROLL TO ZOOM"
 horizontal_alignment = 0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
 theme_override_constants/outline_size = 4
+
+[node name="ForceSign" type="PanelContainer" parent="Screen"]
+unique_name_in_owner = true
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -16.0
+offset_top = -16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_meter")
+
+[node name="Lines" type="VBoxContainer" parent="Screen/ForceSign"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Plaque" type="PanelContainer" parent="Screen/ForceSign/Lines"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_styles/panel = SubResource("Style_plaque")
+
+[node name="Caption" type="Label" parent="Screen/ForceSign/Lines/Plaque"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 8
+text = "HANDLE FORCES"
+horizontal_alignment = 1
+
+[node name="ForceView" type="Control" parent="Screen/ForceSign/Lines"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(512, 210)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("4_forces")
+side_texture = ExtResource("5_side")
+top_texture = ExtResource("6_top")

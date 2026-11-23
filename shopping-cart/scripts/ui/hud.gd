@@ -14,6 +14,8 @@ extends CanvasLayer
 @onready var _groceries: Label = %Groceries
 @onready var _hands: Label = %Hands
 @onready var _track: Control = %Track
+@onready var _force_sign: Control = %ForceSign
+@onready var _force_view: ForceDiagram = %ForceView
 @onready var _markers := {"L": %LeftHand, "R": %RightHand}
 
 const BAR_HALF := 0.26   ## m: half the handlebar's width, the track's half length
@@ -23,7 +25,24 @@ const BAR_HALF := 0.26   ## m: half the handlebar's width, the track's half leng
 }
 
 
+## F cycles the handle-forces sign: both views, side, top, hidden.
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("forces"):
+		if not _force_sign.visible:
+			_force_sign.visible = true
+			_force_view.view = ForceDiagram.View.BOTH
+		elif _force_view.view == ForceDiagram.View.BOTH:
+			_force_view.view = ForceDiagram.View.SIDE
+		elif _force_view.view == ForceDiagram.View.SIDE:
+			_force_view.view = ForceDiagram.View.TOP
+		else:
+			_force_sign.visible = false
+		get_viewport().set_input_as_handled()
+
+
 func show_cart(cart: ShoppingCart) -> void:
+	if _force_sign.visible:
+		_force_view.show_cart(cart)
 	var v := cart.frame_velocity()
 	_speed.text = "%d" % roundi(Vector2(v.x, v.z).length() * 3.6)
 	_turn.text = "%d°/s" % roundi(rad_to_deg(cart.frame_spin()))
