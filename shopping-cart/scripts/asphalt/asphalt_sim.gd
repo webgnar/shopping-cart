@@ -87,6 +87,7 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 
 @export_group("Maintenance")
 @export var auto_maintain := false                      ## a road crew repairs the road on its own (see _auto_maintain)
+@export var show_repairs := true                        ## off: the repairs in `events` are kept but not done
 
 ## Time since the road was built, years.
 var time := 0.0
@@ -278,7 +279,7 @@ func advance_to(t: float) -> void:
 ## Do the repairs that are due now; true if there were any.
 func _apply_due() -> bool:
 	var any := false
-	while _next_event < events.size() and events[_next_event].t <= time + DT * 0.25:
+	while show_repairs and _next_event < events.size() and events[_next_event].t <= time + DT * 0.25:
 		_apply(events[_next_event].action)
 		_next_event += 1
 		any = true
@@ -294,6 +295,8 @@ func seek(t: float) -> void:
 
 ## Do a repair now and remember it, so it is replayed when scrubbing. Later repairs are dropped (a new timeline).
 func do_action(action: int) -> void:
+	if not show_repairs:   # bring the hidden repairs back first, so they aren't dropped
+		set_show_repairs(true)
 	_apply_due()
 	while events.size() > _next_event:
 		events.pop_back()
@@ -306,6 +309,14 @@ func do_action(action: int) -> void:
 ## Forget the repairs done by hand and replay to the current year.
 func clear_events() -> void:
 	events.clear()
+	var t := time
+	reset()
+	advance_to(t)
+
+
+## Turn the repairs in `events` on or off and replay to the current year, to compare the road with and without them.
+func set_show_repairs(on: bool) -> void:
+	show_repairs = on
 	var t := time
 	reset()
 	advance_to(t)

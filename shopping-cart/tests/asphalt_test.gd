@@ -311,6 +311,12 @@ func _run() -> void:
 	await process_frame
 	_check("repairs stack up", lsim.events.size() == 2 and is_equal_approx(lsim.time, 15.0) and lsim.log_lines.size() == 2,
 		"year %.1f, %s" % [lsim.time, lsim.log_lines])
+	var show := lab.get_node("Panel/Scroll/Box/ShowRepairs") as CheckBox
+	show.button_pressed = false
+	_check("repairs can be hidden", lsim.log_lines.is_empty() and is_equal_approx(lsim.time, 15.0) and lsim.events.size() == 2,
+		"year %.1f, %s, %d kept" % [lsim.time, lsim.log_lines, lsim.events.size()])
+	show.button_pressed = true
+	_check("and shown again", lsim.log_lines.size() == 2 and is_equal_approx(lsim.time, 15.0), "year %.1f, %s" % [lsim.time, lsim.log_lines])
 
 	(lab.get_node("Panel/Scroll/Box/Timeline") as HSlider).value = 0.0
 	await process_frame

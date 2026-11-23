@@ -30,6 +30,7 @@ var _relief_at := -1   ## msec: redraw the relief view (it takes a moment, so no
 @onready var _stats: Label = %Stats
 @onready var _history: Label = %History
 @onready var _auto: CheckBox = %AutoMaintain
+@onready var _show_repairs: CheckBox = %ShowRepairs
 @onready var _seed: SpinBox = %Seed
 
 
@@ -69,6 +70,8 @@ func _process(delta: float) -> void:
 
 func _update_ui() -> void:
 	_timeline.set_value_no_signal(sim.time - _epoch)
+	_show_repairs.set_pressed_no_signal(sim.show_repairs)
+	_show_repairs.disabled = sim.events.is_empty()
 	var s := sim.stats()
 	_year.text = _year_text(sim.time - _epoch)
 	var kinds := PackedStringArray()
@@ -97,9 +100,12 @@ func _label_condition(slider: Range) -> void:
 
 ## The slider counts years since the last repair by hand (or since the road was built).
 func _year_text(value: float) -> String:
-	if _epoch <= 0.0:
-		return "Year %.1f" % value
-	return "Year %.1f since the repair (road year %.1f)" % [value, _epoch + value]
+	var text := "Year %.1f" % value
+	if _epoch > 0.0:
+		text = "Year %.1f since the repair (road year %.1f)" % [value, _epoch + value]
+	if not sim.show_repairs and not sim.events.is_empty():
+		text += ", repairs hidden"
+	return text
 
 
 func _on_timeline_value_changed(value: float) -> void:
@@ -134,7 +140,13 @@ func _on_repair_pressed(action: int) -> void:
 
 func _on_clear_pressed() -> void:
 	_epoch = 0.0
+	sim.show_repairs = true
 	sim.clear_events()
+
+
+## Same year, with or without the repairs done by hand.
+func _on_show_repairs_toggled(on: bool) -> void:
+	sim.set_show_repairs(on)
 
 
 func _on_auto_toggled(on: bool) -> void:

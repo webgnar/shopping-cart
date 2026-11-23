@@ -1745,3 +1745,9 @@ corners. The curve is the curb line at ground level; the street is on its right.
 (solid.tres) are rebuilt when the curve changes; the base is left open. The dowels (1/2" x 8", 5' OC, 3" from the
 back, 4" in the ground) are hidden and not modelled. Demo: `scenes/curb/curb_demo.tscn`. Test: `tests/curb_test.gd`
 (profile sizes, ray hits on top/face/caps/island corner). Renders: `tests/curb_screenshot.gd`.
+
+## Asphalt lab: show or hide my repairs (Nov 23 2026)
+
+A "Show my repairs" checkbox under the repair buttons turns the repairs done by hand off and on at the same year,
+so the road can be compared with and without them. They are kept while hidden (`AsphaltSim.show_repairs`,
+`set_show_repairs()` replays to the current year). Doing a new repair while they are hidden turns them back on first.
