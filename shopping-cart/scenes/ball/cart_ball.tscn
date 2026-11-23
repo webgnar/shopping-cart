@@ -3,8 +3,13 @@
 [ext_resource type="Script" path="res://scripts/ball/cart_ball.gd" id="1_mode"]
 [ext_resource type="PackedScene" path="res://scenes/ui/cart_ball_hud.tscn" id="2_hud"]
 
-[node name="CartBall" type="Node" node_paths=PackedStringArray("hud")]
+[node name="CartBall" type="Node" node_paths=PackedStringArray("hud", "replay_camera")]
 script = ExtResource("1_mode")
 hud = NodePath("CartBallHUD")
+replay_camera = NodePath("ReplayCamera")
 
 [node name="CartBallHUD" parent="." instance=ExtResource("2_hud")]
+
+[node name="ReplayCamera" type="Camera3D" parent="."]
+fov = 50.0
+far = 300.0
