@@ -1774,3 +1774,25 @@ own year again (0 to 40), not years since the last repair. The "Show my repairs"
 "Forget my repairs" controls are gone from the lab (`auto_maintain` stays in AsphaltSim for the lot's crew column).
 `AsphaltSim.set_repair(action, on, t)` and `repair_year(action)` replace `clear_events()`. The year label wraps, so a
 long label can no longer widen the side panel over the maps.
+
+A "Show my repairs" checkbox under the repair buttons turns the repairs done by hand off and on at the same year,
+so the road can be compared with and without them. They are kept while hidden (`AsphaltSim.show_repairs`,
+`set_show_repairs()` replays to the current year). Doing a new repair while they are hidden turns them back on first.
+
+## Crack lattice: a spring-mesh cracking experiment (Nov 23 2026)
+
+zack asked for a mock-up of physics-based cracking next to the current rules. It is separate from AsphaltSim:
+`scripts/asphalt/crack_lattice.gd` (`CrackLattice`), `crack_lattice_canvas.gd`, lab `scenes/asphalt/crack_lattice_lab.tscn`.
+A 2 x 2 m patch (wraps round at the edges) is a triangular mesh of springs every 2 cm, glued to the base by soft
+springs. Stones from a dense 19 mm gradation (>= 4.75 mm, ~45 % of the area) make the springs they touch weaker
+(stone-face bond); the finer fraction is the mastic's strength scatter. Two unit loads are solved once each and
+superposed: winter cold shrinkage (stronger along the road than across it, grows as the binder hardens; base takes
+it up over 0.45 m) and wheel bending in the wheel path (mostly across the road; spreads over 7 cm). Each step
+adds Miner fatigue per spring and snaps any spring past its strength left; the mesh round it is relaxed locally
+(Gauss-Seidel from the break outwards), which can snap the next one. Drawing: a crack runs through each triangle
+between the middles of its broken sides, pushed off the stones, so it weaves round them.
+Findings: transverse cracks, T-junctions and blocks come out of the cold load; the wheel path gets longitudinal
+cracks and ladders of short cross cracks. Gotchas: node jitter above ~3 % of the spacing makes the mesh itself carry
+very uneven loads (diffuse damage instead of cracks); fatigue that drives strength to zero does the same, so it only
+takes 80 %. Most stones are smaller than the 2 cm mesh, so routing round stones is done when drawing. Runs ~5 min for
+30 years in GDScript. Test `tests/crack_lattice_test.gd`; renders next to the lab `tests/crack_lattice_screenshot.gd`.
