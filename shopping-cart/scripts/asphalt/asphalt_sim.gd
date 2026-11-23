@@ -56,6 +56,16 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 @export_range(0.0, 2.0, 0.05) var drainage := 1.0      ## how much water gets in and stays (1 = typical)
 @export_range(0.0, 1.0, 0.05) var bond := 0.7          ## bond of the wearing course to the layer below (low = slippage)
 @export var oxidation_years := 9.0                      ## years for the binder to go most of the way to grey
+@export var thermal_spacing := Vector2(5.0, 1.4)        ## m between thermal cracks: new binder, fully aged (colder and thinner: closer)
+@export_range(0.0, 2.0, 0.05) var ponding := 1.0       ## how much water sits in low spots (poor grading)
+
+@export_group("Mix and crack paths")
+@export_range(0.0, 1.0, 0.05) var mix_variation := 0.5 ## how uneven the asphalt's strength is (compaction, segregation)
+@export var aggregate_size := 0.012                     ## m: the stones; the fine strength noise is this size
+@export_range(0.0, 1.0, 0.05) var crack_bias := 0.6    ## how hard cracks seek the weaker mix as they grow
+@export_range(0.0, 1.0, 0.05) var branching := 0.15    ## side branches per metre of freely growing crack
+@export_range(0.0, 1.0, 0.05) var t_junctions := 0.55  ## share of cracks that run into another and join it at a T
+@export_range(0.0, 1.0, 0.05) var stop_short := 0.25   ## share that die out just short of it (the rest turn and run along it)
 
 @export_group("Crack networks")
 @export var fatigue_cell := Vector2(0.14, 0.2)          ## m: size of a crocodile-skin cell (across, along the road)
@@ -92,7 +102,8 @@ var log_lines: PackedStringArray = []     ## every repair done, in order, for th
 # Cell grid (CELL), row-major: i = cy * nx + cx.
 var nx := 0
 var ny := 0
-var weak := PackedFloat32Array()      ## 0..1 subgrade weakness (soft spots)
+var weak := PackedFloat32Array()      ## 0..1 subgrade weakness (soft spots, poor support)
+var pond := PackedFloat32Array()      ## 0..1 low spots where water stands after rain
 var load := PackedFloat32Array()      ## traffic load per cell (wheel paths)
 var fatigue := PackedFloat32Array()   ## accumulated fatigue; cracks start at 1, break up into cells past FATIGUE_CELLS
 var damage := PackedFloat32Array()    ## water damage under open cracks; a pothole breaks out at 1
@@ -111,6 +122,8 @@ var occ := PackedInt32Array()
 var occ_pt := PackedInt32Array()
 
 var _rng := RandomNumberGenerator.new()
+var _mix_low := FastNoiseLite.new()    ## asphalt strength over metres (compaction, segregation)
+var _mix_fine := FastNoiseLite.new()   ## and stone by stone
 var _next_event := 0
 var _latent: Array[Dictionary] = []   ## buried crack paths waiting to reflect: { path, at }
 var _transverse_y: PackedFloat32Array = []
@@ -149,8 +162,21 @@ class Crack:
 	var guide := PackedVector2Array() ## path it follows (reflection and seam cracks)
 	var guide_i := 0
 	var seal_from := -1.0             ## year it was filled, -1 for never
-	var sealed_before := 0.0          ## years it spent sealed before seal_from
+	var sealed_before := 0.0          ## opening it missed while sealed before seal_from (see _g)
 	var alive := true
+	var local := 1.0                  ## how fast it opens where it is: traffic, support, standing water, climate
+	var surf0 := 0.0                  ## when the surface it is in was laid
+	var ox_k := 0.11                  ## binder ageing rate, 1/years
+	var deflects := 0                 ## times it has turned to run along another crack
+
+	## Opening drive from year t0 to t1: thermal cycling and traffic, both worse as the binder hardens
+	## (0.4 + 0.9 x oxidation, integrated).
+	func _g(t0: float, t1: float) -> float:
+		if t1 <= t0:
+			return 0.0
+		var e0 := exp(-maxf(t0 - surf0, 0.0) * ox_k)
+		var e1 := exp(-maxf(t1 - surf0, 0.0) * ox_k)
+		return 1.3 * (t1 - t0) - 0.9 * (e0 - e1) / ox_k
 
 	func seal_to() -> float:
 		return seal_from + SEAL_LIFE if seal_from >= 0.0 else -1.0
@@ -158,15 +184,16 @@ class Crack:
 	func sealed(t: float) -> bool:
 		return seal_from >= 0.0 and t >= seal_from and t < seal_from + SEAL_LIFE
 
-	## Width of the crack at point i at year t, m: it opens while it is not sealed.
+	## Width of the crack at point i at year t, m: it opens while it is not sealed, at its local rate. Width is
+	## separate from growth: the tip grows on its own, the opening comes from cycling, traffic and water.
 	func width(i: int, t: float) -> float:
 		var b := born[i]
-		var open := t - b
+		var open := _g(b, t)
 		if seal_from >= 0.0:
-			open -= maxf(0.0, minf(t, seal_from + SEAL_LIFE) - maxf(seal_from, b))
+			open -= _g(maxf(seal_from, b), minf(t, seal_from + SEAL_LIFE))
 			if b < seal_from:
 				open -= sealed_before
-		var rate := 0.0016 * widen
+		var rate := 0.0016 * widen * local
 		return clampf(0.001 + rate * maxf(open, 0.0), 0.001, 0.03)
 
 
@@ -194,7 +221,7 @@ func reset() -> void:
 	nx = int(round(size.x / CELL))
 	ny = int(round(size.y / CELL))
 	var n := nx * ny
-	for a in [weak, load, fatigue, damage, hole, crack_len, open_len]:
+	for a in [weak, pond, load, fatigue, damage, hole, crack_len, open_len]:
 		a.resize(n)
 		a.fill(0.0)
 	fill_born.resize(n)
@@ -215,11 +242,21 @@ func reset() -> void:
 	noise.seed = seed
 	noise.frequency = 0.35
 	noise.fractal_octaves = 3
+	var grade := FastNoiseLite.new()
+	grade.seed = seed + 101
+	grade.frequency = 0.25
+	_mix_low.seed = seed + 202
+	_mix_low.frequency = 1.0
+	_mix_low.fractal_octaves = 2
+	_mix_fine.seed = seed + 303
+	_mix_fine.frequency = 1.0 / maxf(aggregate_size, 0.002)
+	_mix_fine.fractal_octaves = 1
 	for cy in ny:
 		for cx in nx:
 			var i := cy * nx + cx
 			var p := Vector2(cx + 0.5, cy + 0.5) * CELL
 			weak[i] = clampf(0.5 + 0.9 * noise.get_noise_2d(p.x * 10.0, p.y * 10.0), 0.0, 1.0)
+			pond[i] = clampf((grade.get_noise_2d(p.x, p.y) - 0.15) * 2.5, 0.0, 1.0)
 			var l := 0.06
 			for w in wheel_paths:
 				l += exp(-pow((p.x - w) / wheel_path_width, 2.0))
@@ -265,6 +302,11 @@ func clear_events() -> void:
 
 func surface_age() -> float:
 	return time - surface_born
+
+
+## How weak the asphalt mix is at p, 0..1: a slow variation over metres plus a stone-by-stone one.
+func mix_weakness(p: Vector2) -> float:
+	return clampf(0.5 + mix_variation * (0.6 * _mix_low.get_noise_2d(p.x, p.y) + 0.5 * _mix_fine.get_noise_2d(p.x, p.y)), 0.0, 1.0)
 
 
 ## How much paint is left at p, 0..1: it wears with age and traffic (fastest in the wheel paths), in patches.
@@ -561,17 +603,21 @@ func _fatigue_and_water(ox: float) -> void:
 	for i in nx * ny:
 		if load[i] <= 0.0:
 			continue
-		var wet := clampf(open_len[i] / 0.1, 0.0, 2.0) * drainage
+		# Water in the base: through open cracks, and standing in low spots.
+		var wet := (clampf(open_len[i] / 0.1, 0.0, 2.0) + pond[i] * ponding) * drainage
 		# Traffic fatigue: wheel load on a weak, wet base, worse once the binder is brittle.
 		var f_rate := k_f * load[i] * (0.55 + 0.9 * weak[i]) * (1.0 + 0.6 * wet) * (0.8 + 0.4 * ox)
 		if patch_of[i] >= 0:
 			f_rate *= 0.6     # new full-depth base
 		fatigue[i] += DT * f_rate
 		# Water damage: water through open cracks softens the base and freeze-thaw pumps it out.
-		if open_len[i] > 0.0 or hole[i] > 0.0 or fill_born[i] >= 0.0:
+		if open_len[i] > 0.0 or pond[i] > 0.0 or hole[i] > 0.0 or fill_born[i] >= 0.0:
 			# Only broken-up (fatigue-cracked) asphalt lets the wheels pump the base out through it.
 			var broken := clampf((fatigue[i] - 1.4) / 0.6, 0.0, 1.5)
-			var d_rate := k_d * maxf(open_len[i] - 0.05, 0.0) * (0.3 + load[i]) * (0.4 + weak[i]) * broken
+			# Potholes need all three: water getting in (open cracks, standing water), a structure already broken up,
+			# and wheels to pump it.
+			var water := maxf(open_len[i] - 0.05, 0.0) + 0.06 * pond[i] * ponding
+			var d_rate := k_d * water * (0.3 + load[i]) * (0.4 + weak[i]) * broken
 			if fill_born[i] >= 0.0:
 				d_rate += 0.12 * climate * drainage * (0.4 + load[i])   # cold mix ravels out of the hole
 			damage[i] += DT * d_rate
@@ -600,23 +646,30 @@ func _fatigue_and_water(ox: float) -> void:
 func _initiate(age: float, ox: float) -> void:
 	var px0 := shoulder
 	var px1 := size.x - shoulder
-	# Transverse (thermal) cracks: once the binder hardens, cold nights crack it across, closer and closer.
+	# Transverse (thermal) cracks: once the binder hardens, cold snaps crack it across. Each crack relieves the
+	# shrinkage stress for a stretch either side, so a new one opens in the middle of the longest uncracked stretch,
+	# once that is long enough; the spacing shrinks as the binder hardens.
 	if age > 1.5:
-		var rate := 0.35 * climate * ox * (1.4 - 0.4 * structure)
+		var rate := 0.8 * climate * ox * (1.4 - 0.4 * structure)
 		if _rng.randf() < rate * DT:
-			var spacing := lerpf(5.0, 1.4, ox)
-			for _try in 6:
-				var y := _rng.randf_range(0.2, size.y - 0.2)
-				var ok := true
-				for ty in _transverse_y:
-					if absf(ty - y) < spacing:
-						ok = false
-						break
-				if ok:
-					_transverse_y.append(y)
-					var x := _rng.randf_range(px0 + 0.3, px1 - 0.3)
-					_twin(Kind.TRANSVERSE, Vector2(x, y), 0.0, 0.12, 0.08, 3.5, 1.3)
-					break
+			# Colder climates and thinner pavement crack closer together.
+			var spacing := lerpf(thermal_spacing.x, thermal_spacing.y, ox) * sqrt(structure) / sqrt(maxf(climate, 0.25))
+			var ys := PackedFloat32Array(_transverse_y)
+			ys.sort()
+			# The section is part of a longer road: its ends count as half a spacing from the last crack.
+			var prev := -spacing * 0.5
+			var best_gap := 0.0
+			var best_y := -1.0
+			ys.append(size.y + spacing * 0.5)
+			for y in ys:
+				if y - prev > best_gap:
+					best_gap = y - prev
+					best_y = (prev + y) * 0.5 + _rng.randf_range(-0.2, 0.2) * (y - prev)
+				prev = y
+			if best_gap > 1.6 * spacing and best_y > 0.2 and best_y < size.y - 0.2:
+				_transverse_y.append(best_y)
+				var x := _rng.randf_range(px0 + 0.3, px1 - 0.3)
+				_twin(Kind.TRANSVERSE, Vector2(x, best_y), 0.0, 0.12, 0.08, 3.5, 1.3)
 	# The lane joint: the paving seam opens early.
 	if age > 0.8 and _rng.randf() < 0.45 * climate * DT:
 		var y := _rng.randf_range(0.2, size.y - 0.2)
@@ -666,8 +719,7 @@ func _slippage() -> void:
 	var n := _rng.randi_range(2, 4)
 	for k in n:
 		var centre := Vector2(w, y - fwd * k * _rng.randf_range(0.08, 0.14))
-		var c := Crack.new()
-		c.kind = Kind.SLIPPAGE
+		var c := _new_crack(Kind.SLIPPAGE, centre)
 		c.growing = false
 		c.widen = 0.6
 		r *= _rng.randf_range(0.85, 1.15)
@@ -688,6 +740,18 @@ func _slippage() -> void:
 			cracks.append(c)
 
 
+## A new crack's opening rate from where it starts, and the surface's age.
+func _new_crack(kind: int, p: Vector2) -> Crack:
+	var c := Crack.new()
+	c.kind = kind
+	c.surf0 = surface_born
+	c.ox_k = maxf(climate, 0.05) / oxidation_years
+	var i := cell_index(p)
+	c.local = (0.5 + 0.5 * climate) * (0.45 + 0.45 * minf(load[i], 1.5) * traffic + 0.3 * weak[i]
+		+ 0.4 * pond[i] * ponding * drainage)
+	return c
+
+
 ## Two cracks growing opposite ways from one start; returns the second's index.
 func _twin(kind: int, p: Vector2, heading: float, wander: float, steer: float, speed: float, widen: float) -> int:
 	var a := _crack(kind, p, heading, heading, wander, steer, speed, 1e9, widen)
@@ -699,8 +763,7 @@ func _twin(kind: int, p: Vector2, heading: float, wander: float, steer: float, s
 
 func _crack(kind: int, p: Vector2, heading: float, pref: float, wander: float, steer: float, speed: float,
 		max_len: float, widen: float) -> int:
-	var c := Crack.new()
-	c.kind = kind
+	var c := _new_crack(kind, p)
 	c.dir = heading
 	c.pref = pref
 	c.wander = wander
@@ -728,7 +791,19 @@ func _grow(ci: int, dist: float) -> void:
 			q = c.guide[c.guide_i] + Vector2(_rng.randf_range(-0.004, 0.004), _rng.randf_range(-0.004, 0.004))
 			c.guide_i += 1
 		else:
-			c.dir += _rng.randfn(0.0, c.wander) + angle_difference(c.dir, c.pref) * c.steer
+			var d := c.dir + _rng.randfn(0.0, c.wander) + angle_difference(c.dir, c.pref) * c.steer
+			# The tip takes the weakest way of three: around the stones, through the poorly compacted mix.
+			if crack_bias > 0.0:
+				var best := -INF
+				var pick := d
+				for o in [-0.45, 0.0, 0.45]:
+					var score := mix_weakness(p + Vector2.from_angle(d + o) * STEP) * crack_bias * 3.0 - absf(o) * 0.8 \
+						+ _rng.randf() * 0.3
+					if score > best:
+						best = score
+						pick = d + o
+				d = pick
+			c.dir = d
 			q = p + Vector2.from_angle(c.dir) * STEP
 		if not paved(q) or patch_of[cell_index(q)] != patch_of[cell_index(p)] and c.kind != Kind.SEAM:
 			c.growing = false
@@ -737,11 +812,35 @@ func _grow(ci: int, dist: float) -> void:
 			var hit := _hit(q, ci, c)
 			if hit.x >= 0:
 				var other := cracks[hit.x]
-				q = other.pts[mini(hit.y, other.pts.size() - 1)]
-				_append(c, ci, q)
-				c.growing = false
-				break
+				var r := _rng.randf()
+				if r < t_junctions or c.deflects >= 3 or other.pts.size() < 2:
+					# Runs into it and stops at a T: the other crack's free edge takes the stress off.
+					q = other.pts[mini(hit.y, other.pts.size() - 1)]
+					_append(c, ci, q)
+					c.growing = false
+					break
+				if r < t_junctions + stop_short:
+					# Dies out just short of it, in the other crack's stress shadow.
+					c.growing = false
+					break
+				# Turns and runs alongside it for a while before joining.
+				var k := clampi(hit.y, 1, other.pts.size() - 1)
+				var along := (other.pts[k] - other.pts[k - 1]).angle()
+				if absf(angle_difference(c.dir, along)) > PI * 0.5:
+					along += PI
+				c.dir = lerp_angle(c.dir, along, 0.7)
+				c.pref = along
+				c.deflects += 1
+				continue
 		_append(c, ci, q)
+		# Now and then a side branch splits off (more as the binder gets brittle).
+		if c.guide.is_empty() and branching > 0.0 and c.kind != Kind.SLIPPAGE \
+				and _rng.randf() < branching * STEP * (0.5 + c.local * 0.5):
+			var side := 1.0 if _rng.randf() < 0.5 else -1.0
+			var b := _crack(c.kind, q, c.dir + side * _rng.randf_range(0.5, 1.0), c.pref + side * 0.6,
+				c.wander * 1.5, c.steer * 0.5, c.speed * 0.8, _rng.randf_range(0.15, 0.9), c.widen * 0.7)
+			cracks[b].parent = ci
+			c = cracks[ci]
 		if c.length >= c.max_len:
 			c.growing = false
 
@@ -827,8 +926,7 @@ func _reflect() -> void:
 		var path: PackedVector2Array = l.path
 		if path.size() < 3:
 			continue
-		var c := Crack.new()
-		c.kind = l.get("kind", Kind.REFLECTION)
+		var c := _new_crack(l.get("kind", Kind.REFLECTION), path[0])
 		c.speed = l.get("speed", 1.5)
 		c.widen = l.get("widen", 1.1)
 		c.guide = path
@@ -1004,13 +1102,13 @@ func _open_edges(age: float, ox: float) -> void:
 			continue
 		var touch_a := not _free(a, 0.03)
 		var touch_b := not _free(b, 0.03)
-		if not touch_a and not touch_b and _rng.randf() > DT * (1.0 if e.kind == Kind.FATIGUE else 0.3):
+		# Crocodile cells grow out of the wheel-path cracks: an edge touching no crack rarely opens on its own.
+		if not touch_a and not touch_b and _rng.randf() > DT * (0.12 if e.kind == Kind.FATIGUE else 0.3):
 			continue
 		e.on = true
 		var from := b if touch_b and not touch_a else a
 		var to := a if from == b else b
-		var c := Crack.new()
-		c.kind = e.kind
+		var c := _new_crack(e.kind, from)
 		c.speed = 1.2 if e.kind == Kind.FATIGUE else 2.0
 		c.widen = 1.3 if e.kind == Kind.FATIGUE else 1.0   # crocodile cells rock under every wheel and open fast
 		c.guide = _wobble(from, to, 0.012 if e.kind == Kind.FATIGUE else 0.07)
@@ -1075,7 +1173,7 @@ func _crack_fill() -> String:
 		if c.width(0, time) < 0.0015 and c.kind != Kind.TRANSVERSE:
 			continue
 		if c.seal_from >= 0.0:
-			c.sealed_before += minf(time, c.seal_to()) - c.seal_from
+			c.sealed_before += c._g(c.seal_from, minf(time, c.seal_to()))
 		c.seal_from = time
 		n += 1
 		m += c.length
@@ -1233,6 +1331,9 @@ func _cut_cracks(rect: Rect2) -> void:
 			var n := Crack.new()
 			n.kind = c.kind
 			n.widen = c.widen
+			n.local = c.local
+			n.surf0 = c.surf0
+			n.ox_k = c.ox_k
 			n.seal_from = c.seal_from
 			n.sealed_before = c.sealed_before
 			n.growing = false

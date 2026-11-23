@@ -28,6 +28,13 @@ func _sim(events := [], seed := 1) -> AsphaltSim:
 	return sim
 
 
+func _near(pts: PackedVector2Array, p: Vector2, r: float) -> bool:
+	for q in pts:
+		if q.distance_squared_to(p) < r * r:
+			return true
+	return false
+
+
 func _holes(sim: AsphaltSim) -> int:
 	var n := 0
 	for i in sim.nx * sim.ny:
@@ -216,6 +223,56 @@ func _run() -> void:
 	_check("paint wears in the wheel paths", in_path < off_path - 0.2, "%.2f left in the wheel paths, %.2f between" % [in_path, off_path])
 	pt.do_action(A.OVERLAY)
 	_check("overlay repaints the lines", pt.paint_left(Vector2(1.95, 5.03)) == 1.0, "%.2f" % pt.paint_left(Vector2(1.95, 5.03)))
+
+	# Crack paths and junctions (from the material, not a fixed recipe).
+	var mx := _sim()
+	mx.advance_to(18.0)
+	var on_crack := 0.0
+	var n_on := 0
+	var ends := 0
+	var joined := 0
+	var branches := 0
+	for c in mx.cracks:
+		if not c.alive or c.guide.size() > 0 or c.kind == K.SLIPPAGE:
+			continue
+		for q in c.pts:
+			on_crack += mx.mix_weakness(q)
+			n_on += 1
+		if c.parent >= 0:
+			branches += 1
+		if not c.growing and c.length < c.max_len - 0.03 and c.pts.size() > 2:
+			ends += 1
+			var tip := c.pts[c.pts.size() - 1]
+			for o in mx.cracks:
+				if o != c and o.alive and o.pts.size() > 1 and _near(o.pts, tip, 0.006):
+					joined += 1
+					break
+	var anywhere := 0.0
+	var rng := RandomNumberGenerator.new()
+	for i in 4000:
+		anywhere += mx.mix_weakness(Vector2(rng.randf_range(0.0, 10.0), rng.randf_range(0.0, 10.0)))
+	on_crack /= maxf(n_on, 1)
+	anywhere /= 4000.0
+	_check("cracks follow the weaker mix", on_crack > anywhere + 0.03, "%.2f on cracks, %.2f anywhere" % [on_crack, anywhere])
+	_check("cracks branch", branches > 5, "%d branches" % branches)
+	var share := float(joined) / maxf(ends, 1)
+	_check("not every crack ends at a T", share > 0.3 and share < 0.9, "%d of %d ends join another crack" % [joined, ends])
+	var wide_far := _sim()
+	wide_far.thermal_spacing = Vector2(12.0, 9.0)
+	wide_far.reset()
+	wide_far.advance_to(18.0)
+	_check("thermal spacing sets the cross cracks", wide_far.stats().by_kind[K.TRANSVERSE] < mx.stats().by_kind[K.TRANSVERSE],
+		"%.1f m at 9-12 m spacing, %.1f m at the default" % [wide_far.stats().by_kind[K.TRANSVERSE], mx.stats().by_kind[K.TRANSVERSE]])
+	# Standing water: more potholes where the lot holds water.
+	var dry := _sim()
+	dry.ponding = 0.0
+	dry.reset()
+	dry.advance_to(20.0)
+	var wet := _sim()
+	wet.ponding = 2.0
+	wet.reset()
+	wet.advance_to(20.0)
+	_check("standing water makes more potholes", _holes(wet) > _holes(dry), "%d hole cells wet, %d dry" % [_holes(wet), _holes(dry)])
 	var cs := _sim()
 	cs.advance_to(16.0)
 	cs.do_action(A.SURFACE_SEAL)
