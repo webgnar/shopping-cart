@@ -305,6 +305,7 @@ text = "Colour map left, height map right. Traffic runs up and down; two lanes, 
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
+autowrap_mode = 3
 text = "Year 0.0"
 
 [node name="Timeline" type="HSlider" parent="Panel/Scroll/Box"]
@@ -342,49 +343,37 @@ popup/item_4/id = 4
 [node name="RepairsHeader" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.62, 0.25, 1)
-text = "REPAIRS (done now, kept when you scrub)"
+text = "REPAIRS (tick to do one at this year, untick to undo it)"
 
-[node name="Repair0" type="Button" parent="Panel/Scroll/Box"]
+[node name="Repair0" type="CheckBox" parent="Panel/Scroll/Box"]
+unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Pour hot rubberised sealant into the open cracks and overband it. Stops water and stops them opening, for about 6 years."
 text = "Fill cracks"
 
-[node name="Repair1" type="Button" parent="Panel/Scroll/Box"]
+[node name="Repair1" type="CheckBox" parent="Panel/Scroll/Box"]
+unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Shovel cold mix into each pothole and roll it with the truck. Quick and cheap; it usually ravels out again."
 text = "Fill potholes (throw and roll)"
 
-[node name="Repair2" type="Button" parent="Panel/Scroll/Box"]
+[node name="Repair2" type="CheckBox" parent="Panel/Scroll/Box"]
+unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Saw-cut a rectangle round each fatigue area and pothole, dig it out and replace it full depth. The cut edges crack later."
 text = "Heavy patch (saw cut)"
 
-[node name="Repair3" type="Button" parent="Panel/Scroll/Box"]
+[node name="Repair3" type="CheckBox" parent="Panel/Scroll/Box"]
+unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Spray bitumen and roll in a layer of chips over the whole road. Seals it, but the old cracks reflect back through soon."
 text = "Surface seal (chip seal)"
 
-[node name="Repair4" type="Button" parent="Panel/Scroll/Box"]
+[node name="Repair4" type="CheckBox" parent="Panel/Scroll/Box"]
+unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Cold plane the top and pave a new asphalt layer. Resets the surface and edges; old cracks reflect through in a few years."
 text = "Mill and overlay"
-
-[node name="ShowRepairs" type="CheckBox" parent="Panel/Scroll/Box"]
-unique_name_in_owner = true
-layout_mode = 2
-tooltip_text = "Turn your repairs off to see the road at this year as if they were never done, and back on to compare. They are kept either way."
-button_pressed = true
-text = "Show my repairs"
-
-[node name="AutoMaintain" type="CheckBox" parent="Panel/Scroll/Box"]
-unique_name_in_owner = true
-layout_mode = 2
-tooltip_text = "A road crew repairs on its own: fills potholes, fills cracks once they open, patches fatigue areas, overlays when the road is beyond patching."
-text = "Road crew repairs on its own"
-
-[node name="ClearRepairs" type="Button" parent="Panel/Scroll/Box"]
-layout_mode = 2
-text = "Forget my repairs"
 
 [node name="ConditionsHeader" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2
@@ -543,15 +532,12 @@ autowrap_mode = 3
 [connection signal="toggled" from="Panel/Scroll/Box/PlayRow/PlayButton" to="." method="_on_play_toggled"]
 [connection signal="item_selected" from="Panel/Scroll/Box/PlayRow/View" to="." method="_on_view_selected"]
 [connection signal="gui_input" from="Views/PreviewView" to="." method="_on_preview_input"]
-[connection signal="toggled" from="Panel/Scroll/Box/ShowRepairs" to="." method="_on_show_repairs_toggled"]
-[connection signal="toggled" from="Panel/Scroll/Box/AutoMaintain" to="." method="_on_auto_toggled"]
-[connection signal="pressed" from="Panel/Scroll/Box/ClearRepairs" to="." method="_on_clear_pressed"]
 [connection signal="value_changed" from="Panel/Scroll/Box/SeedRow/Seed" to="." method="_on_seed_changed"]
-[connection signal="pressed" from="Panel/Scroll/Box/Repair0" to="." method="_on_repair_pressed" binds= [0]]
-[connection signal="pressed" from="Panel/Scroll/Box/Repair1" to="." method="_on_repair_pressed" binds= [1]]
-[connection signal="pressed" from="Panel/Scroll/Box/Repair2" to="." method="_on_repair_pressed" binds= [2]]
-[connection signal="pressed" from="Panel/Scroll/Box/Repair3" to="." method="_on_repair_pressed" binds= [3]]
-[connection signal="pressed" from="Panel/Scroll/Box/Repair4" to="." method="_on_repair_pressed" binds= [4]]
+[connection signal="toggled" from="Panel/Scroll/Box/Repair0" to="." method="_on_repair_toggled" binds= [0]]
+[connection signal="toggled" from="Panel/Scroll/Box/Repair1" to="." method="_on_repair_toggled" binds= [1]]
+[connection signal="toggled" from="Panel/Scroll/Box/Repair2" to="." method="_on_repair_toggled" binds= [2]]
+[connection signal="toggled" from="Panel/Scroll/Box/Repair3" to="." method="_on_repair_toggled" binds= [3]]
+[connection signal="toggled" from="Panel/Scroll/Box/Repair4" to="." method="_on_repair_toggled" binds= [4]]
 [connection signal="value_changed" from="Panel/Scroll/Box/StructureRow/Slider" to="." method="_on_condition_changed" binds= ["structure"]]
 [connection signal="value_changed" from="Panel/Scroll/Box/TrafficRow/Slider" to="." method="_on_condition_changed" binds= ["traffic"]]
 [connection signal="value_changed" from="Panel/Scroll/Box/ClimateRow/Slider" to="." method="_on_condition_changed" binds= ["climate"]]

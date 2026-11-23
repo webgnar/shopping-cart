@@ -1746,8 +1746,11 @@ corners. The curve is the curb line at ground level; the street is on its right.
 back, 4" in the ground) are hidden and not modelled. Demo: `scenes/curb/curb_demo.tscn`. Test: `tests/curb_test.gd`
 (profile sizes, ray hits on top/face/caps/island corner). Renders: `tests/curb_screenshot.gd`.
 
-## Asphalt lab: show or hide my repairs (Nov 23 2026)
+## Asphalt lab: one toggle per repair (Nov 23 2026)
 
-A "Show my repairs" checkbox under the repair buttons turns the repairs done by hand off and on at the same year,
-so the road can be compared with and without them. They are kept while hidden (`AsphaltSim.show_repairs`,
-`set_show_repairs()` replays to the current year). Doing a new repair while they are hidden turns them back on first.
+zack: each kind of repair is a checkbox. Ticking one does it at the slider's year (shown on the box, "Fill cracks
+(year 12.0)"); unticking undoes only that one and replays. Each kind is done at most once. The slider is the road's
+own year again (0 to 40), not years since the last repair. The "Show my repairs", "Road crew repairs on its own" and
+"Forget my repairs" controls are gone from the lab (`auto_maintain` stays in AsphaltSim for the lot's crew column).
+`AsphaltSim.set_repair(action, on, t)` and `repair_year(action)` replace `clear_events()`. The year label wraps, so a
+long label can no longer widen the side panel over the maps.

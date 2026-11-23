@@ -296,27 +296,27 @@ func _run() -> void:
 	(lab.get_node("Panel/Scroll/Box/Timeline") as HSlider).value = 12.0
 	await process_frame
 	_check("timeline scrubs the lab", is_equal_approx(lsim.time, 12.0), "year %.1f" % lsim.time)
-	(lab.get_node("Panel/Scroll/Box/Repair0") as Button).pressed.emit()
-	_check("repair button records a repair", lsim.events.size() == 1 and lsim.events[0].action == A.CRACK_FILL, str(lsim.events))
+	var fill := lab.get_node("Panel/Scroll/Box/Repair0") as CheckBox
+	fill.button_pressed = true
+	_check("ticking a repair does it at this year", lsim.events.size() == 1 and lsim.events[0].action == A.CRACK_FILL
+		and lsim.log_lines.size() == 1 and is_equal_approx(lsim.time, 12.0), "%s, %s" % [lsim.events, lsim.log_lines])
 	var tl := lab.get_node("Panel/Scroll/Box/Timeline") as HSlider
-	_check("repair starts the timeline again", tl.value == 0.0 and is_equal_approx(lsim.time, 12.0), "slider %.1f, year %.1f" % [tl.value, lsim.time])
-	tl.value = 5.0
+	tl.value = 15.0
 	await process_frame
-	_check("slider counts years since the repair", is_equal_approx(lsim.time, 17.0) and lsim.log_lines.size() == 1,
+	(lab.get_node("Panel/Scroll/Box/Repair2") as CheckBox).button_pressed = true
+	tl.value = 17.0
+	await process_frame
+	_check("repairs of different kinds stack up", lsim.events.size() == 2 and lsim.log_lines.size() == 2,
 		"year %.1f, %s" % [lsim.time, lsim.log_lines])
-	tl.value = 0.0
+	fill.button_pressed = false
+	_check("unticking one undoes only it", lsim.events.size() == 1 and lsim.events[0].action == A.HEAVY_PATCH
+		and lsim.log_lines.size() == 1 and is_equal_approx(lsim.time, 17.0), "year %.1f, %s" % [lsim.time, lsim.log_lines])
+	tl.value = 10.0
 	await process_frame
-	(lab.get_node("Panel/Scroll/Box/Repair2") as Button).pressed.emit()
-	tl.value = 3.0
-	await process_frame
-	_check("repairs stack up", lsim.events.size() == 2 and is_equal_approx(lsim.time, 15.0) and lsim.log_lines.size() == 2,
-		"year %.1f, %s" % [lsim.time, lsim.log_lines])
-	var show := lab.get_node("Panel/Scroll/Box/ShowRepairs") as CheckBox
-	show.button_pressed = false
-	_check("repairs can be hidden", lsim.log_lines.is_empty() and is_equal_approx(lsim.time, 15.0) and lsim.events.size() == 2,
-		"year %.1f, %s, %d kept" % [lsim.time, lsim.log_lines, lsim.events.size()])
-	show.button_pressed = true
-	_check("and shown again", lsim.log_lines.size() == 2 and is_equal_approx(lsim.time, 15.0), "year %.1f, %s" % [lsim.time, lsim.log_lines])
+	_check("scrubbing before a repair shows the road without it", lsim.log_lines.is_empty() and
+		(lab.get_node("Panel/Scroll/Box/Repair2") as CheckBox).button_pressed, str(lsim.log_lines))
+	var panel := lab.get_node("Panel") as Control
+	_check("side panel keeps its width", panel.size.x <= 331.0, "%.0f px" % panel.size.x)
 
 	(lab.get_node("Panel/Scroll/Box/Timeline") as HSlider).value = 0.0
 	await process_frame

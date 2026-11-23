@@ -87,7 +87,6 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 
 @export_group("Maintenance")
 @export var auto_maintain := false                      ## a road crew repairs the road on its own (see _auto_maintain)
-@export var show_repairs := true                        ## off: the repairs in `events` are kept but not done
 
 ## Time since the road was built, years.
 var time := 0.0
@@ -279,7 +278,7 @@ func advance_to(t: float) -> void:
 ## Do the repairs that are due now; true if there were any.
 func _apply_due() -> bool:
 	var any := false
-	while show_repairs and _next_event < events.size() and events[_next_event].t <= time + DT * 0.25:
+	while _next_event < events.size() and events[_next_event].t <= time + DT * 0.25:
 		_apply(events[_next_event].action)
 		_next_event += 1
 		any = true
@@ -295,8 +294,6 @@ func seek(t: float) -> void:
 
 ## Do a repair now and remember it, so it is replayed when scrubbing. Later repairs are dropped (a new timeline).
 func do_action(action: int) -> void:
-	if not show_repairs:   # bring the hidden repairs back first, so they aren't dropped
-		set_show_repairs(true)
 	_apply_due()
 	while events.size() > _next_event:
 		events.pop_back()
@@ -306,20 +303,25 @@ func do_action(action: int) -> void:
 	changed.emit()
 
 
-## Forget the repairs done by hand and replay to the current year.
-func clear_events() -> void:
-	events.clear()
-	var t := time
+## Turn one kind of repair on (done at year t) or off, and replay to the current year. Each kind is done at most once.
+func set_repair(action: int, on: bool, t: float) -> void:
+	for k in range(events.size() - 1, -1, -1):
+		if events[k].action == action:
+			events.remove_at(k)
+	if on:
+		events.append({ t = t, action = action })
+		events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.t < b.t)
+	var now := time
 	reset()
-	advance_to(t)
+	advance_to(now)
 
 
-## Turn the repairs in `events` on or off and replay to the current year, to compare the road with and without them.
-func set_show_repairs(on: bool) -> void:
-	show_repairs = on
-	var t := time
-	reset()
-	advance_to(t)
+## The year the repair kind is done at, or -1 if it is off.
+func repair_year(action: int) -> float:
+	for e in events:
+		if e.action == action:
+			return e.t
+	return -1.0
 
 
 func surface_age() -> float:
