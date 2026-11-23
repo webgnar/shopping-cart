@@ -20,6 +20,7 @@
 resource_local_to_scene = true
 shader = ExtResource("4_shader")
 shader_parameter/chip_texture = ExtResource("9_chip")
+shader_parameter/fresh_texture = ExtResource("6_hotmix")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_surface"]
 resource_local_to_scene = true

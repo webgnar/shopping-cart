@@ -1712,3 +1712,12 @@ then on it counts years since that repair; the label also shows the road's own y
 repair again, and the timeline restarts from there. Clear repairs goes back to the original timeline.
 `AsphaltSim.advance_to(t)` now includes repairs made at exactly t (`_apply_due`), so the slider's start shows the
 road already repaired.
+
+## Asphalt: repair looks, first pass (Nov 23 2026)
+
+- Heavy patches get a saw-cut line round them and the tar band crews pour over the seam. The band is the sealant
+  texture with wavy edges, 1.5 mm proud in the height map, and it fades out between SEAL_LIFE and 1.5 x SEAL_LIFE.
+- Pothole fills are lumpy cold-mix mounds: a darker crushed rim, the fill texture darkened while fresh (3 years),
+  crumbs round the edge, and a height of 4 to 8 mm per cell.
+- A new surface or overlay shows the fresh hot-mix photo (`fresh_texture` in the base shader), fading as the
+  binder greys, so it isn't flat black any more.

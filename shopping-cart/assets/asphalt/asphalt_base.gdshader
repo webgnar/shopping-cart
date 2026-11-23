@@ -23,6 +23,9 @@ uniform vec3 chip_color : source_color = vec3(0.46, 0.44, 0.40);
 uniform sampler2D chip_texture : source_color, repeat_enable, filter_linear_mipmap;  // chip seal photo, seamless
 uniform float chip_texture_m = 1.0;  // m the chip texture spans
 uniform bool use_chip_texture = true;
+uniform sampler2D fresh_texture : source_color, repeat_enable, filter_linear_mipmap;  // fresh rolled hot mix, seamless
+uniform float fresh_texture_m = 1.0;
+uniform bool use_fresh_texture = true;
 
 vec2 hash2(vec2 p) {
 	p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
@@ -111,6 +114,12 @@ void fragment() {
 		vec3 rock = mix(stone_color, chip_color, chip_seal) * (0.8 + 0.4 * st.y);
 		vec3 col = mix(binder, mix(binder, rock, show), stone);
 		col = mix(col, binder * 0.55, pit);
+		if (use_fresh_texture && chip_seal < 1.0) {
+			// A new hot-mix surface (or overlay): the rolled mix photo, fading into the procedural surface as the
+			// binder greys and the stones show.
+			vec3 fresh = texture(fresh_texture, sp / fresh_texture_m).rgb;
+			col = mix(col, fresh * (1.0 + mottle * 0.12), pow(1.0 - ox, 1.5) * 0.85 * (1.0 - chip_seal));
+		}
 		if (use_chip_texture && chip_seal > 0.0) {
 			// The chip seal photo, its binder dulling towards grey with age as the chips wear clean.
 			vec3 chip = texture(chip_texture, sp / chip_texture_m).rgb;

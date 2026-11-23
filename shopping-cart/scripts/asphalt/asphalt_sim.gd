@@ -410,9 +410,23 @@ func bake_height(res := 0.01) -> PackedFloat32Array:
 				if iy >= 0 and iy < h and ix >= 0 and ix < w:
 					out[iy * w + ix] = 0.003
 					covered[iy * w + ix] = maxf(covered[iy * w + ix], p.born)
+	# The tar band over a patch's seam stands a hair proud until it debonds.
+	for p in patches:
+		if time - p.born >= SEAL_LIFE * 1.5:
+			continue
+		var rect: Rect2 = p.rect
+		var outer := rect.grow(0.035)
+		var inner := rect.grow(-0.035)
+		for iy in range(maxi(0, int(outer.position.y / res)), mini(h - 1, int(ceil(outer.end.y / res))) + 1):
+			for ix in range(maxi(0, int(outer.position.x / res)), mini(w - 1, int(ceil(outer.end.x / res))) + 1):
+				var q := Vector2(ix * res, iy * res)
+				if outer.has_point(q) and not inner.has_point(q):
+					out[iy * w + ix] += SEAL_PROUD
 	for i in nx * ny:
 		if fill_born[i] >= 0.0:
-			_stamp_disk(out, w, h, res, cell_center(i), 0.1, 0.006, false)
+			# Lumpy: each shovelful packed down a different amount.
+			var lump := 0.004 + 0.004 * fposmod(sin(i * 12.9898) * 43758.5453, 1.0)
+			_stamp_disk(out, w, h, res, cell_center(i), 0.12, lump, false)
 			_stamp_disk(covered, w, h, res, cell_center(i), 0.1, fill_born[i], false)
 	# Paint stands a hair proud where it is left (not under a patch or fill); cracks still cut through it.
 	var half_w := paint_width * 0.5

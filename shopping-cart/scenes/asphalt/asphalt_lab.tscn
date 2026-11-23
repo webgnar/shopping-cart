@@ -18,6 +18,7 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_color"]
 shader = ExtResource("4_shader")
 shader_parameter/chip_texture = ExtResource("9_chip")
+shader_parameter/fresh_texture = ExtResource("6_hotmix")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_height"]
 shader = ExtResource("4_shader")

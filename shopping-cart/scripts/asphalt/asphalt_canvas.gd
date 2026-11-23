@@ -211,6 +211,31 @@ func _draw() -> void:
 			_textured(pts, patch_texture, patch_texture_m, aged_asphalt, _greying(age, 1.0))
 		else:
 			_poly(pts, _hc(0.003) if hm else _aged(age).lightened(0.12), 0.4)
+		# The saw cut round it, and the tar band the crew pours over the seam (it wears and debonds like sealant).
+		var edge := PackedVector2Array()
+		for k in 4:
+			var a: Vector2 = pts[k]
+			var b: Vector2 = pts[(k + 1) % 4]
+			var n := maxi(1, int(a.distance_to(b) / (0.1 * px_per_m)))
+			for j in n:
+				edge.append(a.lerp(b, float(j) / n))
+		edge.append(pts[0])
+		if not hm:
+			draw_polyline(edge, crack_color, maxf(0.004 * px_per_m, 1.0))
+		if age < AsphaltSim.SEAL_LIFE * 1.5:
+			var wavy := PackedVector2Array()
+			for j in edge.size():
+				var jit := (_h(j * 3.7 + p.born * 11.0) - 0.5) * 0.02 * px_per_m
+				wavy.append(edge[j] + Vector2(jit, -jit))
+			var bw := (0.06 + 0.02 * _h(p.born)) * px_per_m
+			var fade := clampf(1.0 - (age - AsphaltSim.SEAL_LIFE) / (AsphaltSim.SEAL_LIFE * 0.5), 0.0, 1.0)
+			if hm:
+				draw_polyline(wavy, Color(_hc(0.0045), fade), bw)
+			elif sealant_texture:
+				var tar_wash := clampf(age / 10.0, 0.0, 1.0) * 0.8
+				_textured_band(wavy, bw, sealant_texture, sealant_texture_m, sealant_aged, tar_wash)
+			else:
+				draw_polyline(wavy, Color(sealant_fresh.lerp(sealant_aged, clampf(age / 10.0, 0.0, 1.0)), fade), bw)
 	# Cracks, oldest part widest; wide ones have broken, ravelled edges.
 	for c in sim.cracks:
 		if not c.alive or c.pts.size() < 2:
@@ -275,7 +300,17 @@ func _draw() -> void:
 			continue
 		var c := sim.cell_center(i) + Vector2(_h(i) - 0.5, _h(i + 0.5) - 0.5) * 0.03
 		if fill_texture and not hm:
-			_textured(_circle_pts(c, 0.105, i * 0.37, 0.35), fill_texture, fill_texture_m, aged_asphalt, _greying(t - fb, 0.6))
+			# A lumpy mound of cold mix shovelled a little past the hole and packed by tyres: a darker, crushed
+			# rim, the mix itself (darker than the road until it greys), and crumbs kicked out round it.
+			var fage := t - fb
+			_poly(_circle_pts(c, 0.135, i * 0.71, 0.55), cold_mix.lerp(aged_asphalt, _greying(fage, 0.6)).darkened(0.25), 0.3)
+			_textured(_circle_pts(c, 0.12, i * 0.37, 0.5), fill_texture, fill_texture_m, aged_asphalt, _greying(fage, 0.6))
+			if fage < 3.0:
+				_poly(_circle_pts(c, 0.12, i * 0.37, 0.5), Color(cold_mix, 0.35 * (1.0 - fage / 3.0)), 0.3)
+			for s in 3:
+				var hs := _h(i * 5.3 + s * 1.7)
+				var at := c + Vector2.from_angle(hs * TAU) * (0.13 + 0.06 * _h(hs * 7.0))
+				draw_circle(at * px_per_m, (0.003 + 0.005 * _h(hs * 13.0)) * px_per_m, cold_mix.lerp(aged_asphalt, _greying(fage, 0.6)))
 			continue
 		var col := _hc(0.006) if hm else cold_mix.lerp(aged_asphalt, 1.0 - exp(-(t - fb) * sim.climate / (oxidation_years * 0.6)))
 		_poly(_circle_pts(c, 0.105, i * 0.37, 0.35), col, 0.3)
