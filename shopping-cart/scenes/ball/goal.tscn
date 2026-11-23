@@ -1,0 +1,144 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="1_solid"]
+[ext_resource type="Material" path="res://assets/materials/cart_ball/team_red.tres" id="2_team"]
+[ext_resource type="Material" path="res://assets/materials/cart_ball/net.tres" id="3_net"]
+[ext_resource type="Material" path="res://assets/materials/garage/paint_white.tres" id="4_white"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_back"]
+size = Vector3(0.1, 2, 5.2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_side"]
+size = Vector3(2.5, 2, 0.1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_roof"]
+size = Vector3(2.6, 0.1, 5.2)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_post"]
+height = 2.0
+radius = 0.08
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_bar"]
+height = 5.16
+radius = 0.08
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_post"]
+material = ExtResource("2_team")
+top_radius = 0.08
+bottom_radius = 0.08
+height = 2.0
+radial_segments = 16
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_bar"]
+material = ExtResource("2_team")
+top_radius = 0.08
+bottom_radius = 0.08
+height = 5.16
+radial_segments = 16
+
+[sub_resource type="BoxMesh" id="BoxMesh_back"]
+material = ExtResource("3_net")
+size = Vector3(0.02, 2, 5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_side"]
+material = ExtResource("3_net")
+size = Vector3(2.5, 2, 0.02)
+
+[sub_resource type="BoxMesh" id="BoxMesh_roof"]
+material = ExtResource("3_net")
+size = Vector3(2.5, 0.02, 5)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
+material = ExtResource("2_team")
+size = Vector2(2.5, 5)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_line"]
+material = ExtResource("4_white")
+size = Vector2(0.15, 5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_inside"]
+size = Vector3(1.18, 2, 4.8)
+
+[node name="Goal" type="Node3D"]
+
+[node name="Body" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("1_solid")
+
+[node name="Back" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.55, 1, 0)
+shape = SubResource("BoxShape3D_back")
+
+[node name="SideLeft" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 1, -2.55)
+shape = SubResource("BoxShape3D_side")
+
+[node name="SideRight" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 1, 2.55)
+shape = SubResource("BoxShape3D_side")
+
+[node name="Roof" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 2.05, 0)
+shape = SubResource("BoxShape3D_roof")
+
+[node name="PostLeft" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -2.5)
+shape = SubResource("CylinderShape3D_post")
+
+[node name="PostRight" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 2.5)
+shape = SubResource("CylinderShape3D_post")
+
+[node name="Crossbar" type="CollisionShape3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 2, 0)
+shape = SubResource("CylinderShape3D_bar")
+
+[node name="PostLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -2.5)
+mesh = SubResource("CylinderMesh_post")
+
+[node name="PostRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 2.5)
+mesh = SubResource("CylinderMesh_post")
+
+[node name="Crossbar" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 2, 0)
+mesh = SubResource("CylinderMesh_bar")
+
+[node name="NetBack" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 1, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_back")
+
+[node name="NetLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 1, -2.5)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_side")
+
+[node name="NetRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 1, 2.5)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_side")
+
+[node name="NetRoof" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 2, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_roof")
+
+[node name="FloorPaint" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 0.003, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_floor")
+
+[node name="GoalLine" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.004, 0)
+cast_shadow = 0
+mesh = SubResource("PlaneMesh_line")
+
+[node name="Inside" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 4
+monitorable = false
+
+[node name="Shape" type="CollisionShape3D" parent="Inside"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.91, 1, 0)
+shape = SubResource("BoxShape3D_inside")
