@@ -54,8 +54,8 @@ of this to work on how the cart drives.
   Red... kicking off from the arena's `GreenSpots` / `RedSpots`; the Red bots play only while no player is on Red
   (else they wait at `Bench`). The host runs the match and sends it to guests (BALL message); the replay moves the
   real bodies on the host, so guests see it through the snapshots.
-- `scenes/levels/downhill_highway.tscn` (console `downhill`; `race downhill` races it) — a 600 m two-lane highway
-  down a grassy canyon at 15 % with two S-bends, Jersey barriers both sides, for multiplayer races (players only, no
+- `scenes/levels/downhill_highway.tscn` (console `downhill`; `race downhill` races it) — a 600 m dead-straight two-lane
+  highway down a grassy canyon at 30 %, Jersey barriers both sides, for multiplayer races (players only, no
   bots). The road is CSGPolygon3D cross-sections swept along the `Road` Path3D; after editing it re-bake the collision
   with `godot --headless -s res://tools/bake_downhill_collision_cli.gd`.
 - `scenes/levels/chain_lot.tscn` (console `chain`) — a blank asphalt lot for testing long chains of nested carts:
