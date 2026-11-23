@@ -30,7 +30,7 @@ Connection setup (phase 1-2):
 Gameplay:
   Guest <======== WebRTC data channels (direct UDP, or Cloudflare TURN) ========> Host
           "state": unordered, no retransmits   -> INPUT (guest), SNAPSHOT (host)
-          "control": reliable, ordered          -> HELLO / WELCOME / LEVEL / RESET / LEFT / RACE / SWEEP
+          "control": reliable, ordered          -> HELLO / WELCOME / LEVEL / RESET / LEFT / RACE / SWEEP / BALL
 ```
 
 | Design doc piece | Here |
@@ -105,6 +105,13 @@ bodies, so the ordinary snapshots move them on every screen. SWEEP (protocol ver
 every shopper's score, item count and bonuses, each display's items left (for the signs), and pop-ups for a guest's
 own events ("+$8.99 Coffee", "Limit 5 of Coffee"); it goes out on every change and twice a second. Guests hide every
 cart's own groceries, as the host does.
+
+**Cart Ball.** The same pattern again (the console's `ball`, `scripts/ball/cart_ball.gd`): the host plays Green and
+puts guests on Red, Green, Red... at the arena's team kickoff spots, benches the Red bots while a player is on Red,
+and runs every rule. BALL (protocol version 8) carries the phase, the clock, the score, the last scorer and every
+player's team; it goes out on every change and twice a second. The ball and the bots' carts are level bodies, and the
+goal replay moves the real bodies on the host, so the snapshots show the replay on every screen; guests switch to the
+replay camera while the phase says so.
 
 ## Phases
 

@@ -34,6 +34,8 @@ enum Role { STRIKER, KEEPER }
 @export var keeper_reach := 10.0           ## m: the ball this close to its goal, the keeper goes for it
 @export_group("")
 
+## Set by the match (scripts/ball/cart_ball.gd): false while players fill Red and this bot waits on the bench.
+var active := true
 var _stuck := 0.0
 var _backing := 0.0
 var _get_up := -1.0
@@ -51,7 +53,7 @@ func game() -> CartBall:
 
 func _physics_process(delta: float) -> void:
 	var g := game()
-	if cart == null or cart.frame == null or g == null or g.phase != CartBall.Phase.PLAYING:
+	if cart == null or cart.frame == null or g == null or g.phase != CartBall.Phase.PLAYING or not active:
 		_press({})
 		return
 	if cart.fallen:

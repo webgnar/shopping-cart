@@ -10,11 +10,15 @@ extends Node
 ## Red is played by the bot carts in the arena (scenes/ball/ball_bot_cart.tscn, scripts/ball/ball_bot.gd): where
 ## each one stands in the arena scene is its kickoff spot.
 ##
+## Multiplayer: the host plays Green; guests join Red, Green, Red... in the order they joined, and kick off from the
+## arena's GreenSpots / RedSpots markers. The Red bots play only while no player is on Red; otherwise they wait on the
+## Bench. The host runs the match and sends its state to the guests (BALL, net_protocol.gd) whenever it changes and
+## every sync_interval; guests show the scoreboard, banners and the replay (the replay moves the real bodies on the
+## host, so it reaches guests in the snapshots like any other play).
+##
 ## Built as scenes/ball/cart_ball.tscn and placed in an arena level (scenes/levels/cart_ball_arena.tscn), which
 ## points its exports at the level's Ball, BallSpawn, CartSpawn and the two goals, and connects the goals' Inside
 ## areas' body_entered here. The console's `ball` loads the arena, and the match starts on load.
-##
-## Multiplayer: guests' carts are held at kickoff too, but the score and clock run on the host only for now.
 
 signal goal_scored(team: Team)
 signal match_over(green: int, red: int)
@@ -32,7 +36,11 @@ enum Phase { IDLE, KICKOFF, PLAYING, GOAL, REPLAY, FULL_TIME }
 @export var bounds := AABB(Vector3(-20, -3, -14), Vector3(40, 15, 28))
 @export var ball: RigidBody3D
 @export var ball_spawn: Marker3D
-@export var kickoff_spot: Marker3D         ## where your cart starts each kickoff, facing the Red goal
+@export var kickoff_spot: Marker3D         ## where your cart (the host's) starts each kickoff, facing the Red goal
+@export var green_spots: Node3D            ## Marker3D children: Green guests' kickoff spots, in order
+@export var red_spots: Node3D              ## Marker3D children: Red guests' kickoff spots, in order
+@export var bench: Node3D                  ## Marker3D children: where the bots wait while players fill Red
+@export var sync_interval := 0.5           ## s between the host's match updates to its guests
 @export var green_goal: Node3D            ## Green's goal (the bots read where the goals are from here)
 @export var red_goal: Node3D
 @export var hud: CartBallHUD
@@ -60,6 +68,9 @@ var _tape_bodies: Array[RigidBody3D] = []
 var _taped_cart: Node = null
 var _replay_at := 0.0     ## ticks into the tape
 var _was_frozen := {}     ## body -> its freeze before the replay
+## Who plays: [{id: int (1 the host, else a guest's network id), team: Team}]. Bots aren't listed.
+var players: Array[Dictionary] = []
+var _sync_clock := 0.0
 
 
 func bots() -> Array[BallBot]:
@@ -87,9 +98,47 @@ func level() -> Node:
 	return get_parent()
 
 
+func _net() -> NetSession:
+	return get_node_or_null("/root/Net") as NetSession
+
+
 func _is_guest() -> bool:
-	var net := get_node_or_null("/root/Net") as NetSession
+	var net := _net()
 	return net != null and net.is_guest()
+
+
+## Our own player id: 1 offline and on the host, our network id on a guest.
+func my_id() -> int:
+	return _net().my_id if _is_guest() else 1
+
+
+## The team we play for (Green until the host says otherwise).
+func my_team() -> Team:
+	for p in players:
+		if p.id == my_id():
+			return p.team
+	return Team.GREEN
+
+
+## Host: the players' teams, keeping everyone's team and adding guests who joined since (Red, Green, Red...), and
+## dropping those who left.
+func _pick_teams() -> void:
+	var ids := [1]
+	var net := _net()
+	if net and net.is_host():
+		ids.append_array(net.guest_ids())
+	players = players.filter(func(p): return p.id in ids)
+	for id in ids:
+		if players.any(func(p): return p.id == id):
+			continue
+		var reds := players.filter(func(p): return p.team == Team.RED).size()
+		var greens := players.size() - reds
+		players.append({"id": id, "team": Team.GREEN if id == 1 or reds >= greens else Team.RED})
+
+
+## The Red bots play only while no player is on Red.
+func bots_playing() -> bool:
+	return not players.any(func(p): return p.team == Team.RED)
 
 
 ## A fresh match: 0-0, full clock, kickoff. Returns false on a multiplayer guest (the host runs the match).
@@ -98,6 +147,7 @@ func start() -> bool:
 		return false
 	score = [0, 0]
 	clock = match_time
+	players.clear()
 	hud.hide_full_time()
 	_kickoff()
 	return true
@@ -108,12 +158,31 @@ func _kickoff() -> void:
 	_phase_time = 0.0
 	_place_ball()
 	ball.freeze = true
+	_pick_teams()
 	level().spawn_cart(kickoff_spot.global_position, kickoff_spot.global_rotation.y)
+	var next := {Team.GREEN: 0, Team.RED: 0}
+	for p in players:
+		if p.id == 1:
+			continue
+		var marks := (green_spots if p.team == Team.GREEN else red_spots).get_children()
+		var mark := marks[next[p.team] % marks.size()] as Node3D
+		next[p.team] += 1
+		_net().place_guest_cart(p.id, mark.global_position, mark.global_rotation.y)
+	var playing := bots_playing()
+	var benched := 0
 	for b in _bot_spots:
-		if is_instance_valid(b):
+		if not is_instance_valid(b):
+			continue
+		b.active = playing
+		if playing:
 			b.cart.place(_bot_spots[b][0], _bot_spots[b][1])
+		else:
+			var seat := bench.get_child(benched % bench.get_child_count()) as Node3D
+			benched += 1
+			b.cart.place(seat.global_position, seat.global_rotation.y)
 	_lock_carts(true)
 	_tape.clear()
+	_send_state()
 
 
 func _place_ball() -> void:
@@ -136,9 +205,17 @@ func _lock_carts(on: bool) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if phase == Phase.IDLE or _is_guest():
+	if phase == Phase.IDLE:
 		return
 	_phase_time += delta
+	if _is_guest():
+		# Only showing the host's match: run the clocks between its updates.
+		if phase == Phase.PLAYING:
+			clock = maxf(clock - delta, 0.0) if match_time > 0.0 else clock + delta
+		return
+	_sync_clock += delta
+	if _sync_clock >= sync_interval:
+		_send_state()
 	match phase:
 		Phase.KICKOFF:
 			_lock_carts(true)   # every tick: a cart reset during the count is a new cart
@@ -148,6 +225,7 @@ func _physics_process(delta: float) -> void:
 				ball.freeze = false
 				_place_ball()
 				_lock_carts(false)
+				_send_state()
 		Phase.PLAYING:
 			_record()
 			if match_time > 0.0:
@@ -163,6 +241,7 @@ func _physics_process(delta: float) -> void:
 			if _phase_time >= goal_pause:
 				_start_replay()
 		Phase.REPLAY:
+			_lock_carts(true)   # guests' own carts follow the tape instead of their keys
 			_replay_at += delta * replay_speed * Engine.physics_ticks_per_second
 			if _replay_at >= _tape.size() - 1:
 				_end_replay()
@@ -207,7 +286,7 @@ func _start_replay() -> void:
 			_was_frozen[b] = b.freeze
 			b.freeze = true
 	_show_tape(0.0)
-	replay_camera.current = true
+	_send_state()
 
 
 ## Puts everything where the tape had it `at` ticks in, between two ticks for the slow motion.
@@ -228,9 +307,6 @@ func _end_replay() -> void:
 	_was_frozen.clear()
 	for c in carts():
 		c.puppet = false
-	var cam = level().get("camera")
-	if cam:
-		cam.current = true
 	_next()
 
 
@@ -248,7 +324,9 @@ func _full_time() -> void:
 	var line := "It's a draw"
 	if score[0] != score[1]:
 		line = "%s wins!" % TEAM_NAMES[Team.GREEN if score[0] > score[1] else Team.RED]
+	_lock_carts(false)
 	hud.show_full_time(score[0], score[1], line)
+	_send_state()
 	match_over.emit(score[0], score[1])
 	_log("Full time: Green %d - %d Red. %s" % [score[0], score[1], line])
 
@@ -272,6 +350,7 @@ func _goal(team: Team) -> void:
 	_last_scorer = team
 	phase = Phase.GOAL
 	_phase_time = 0.0
+	_send_state()
 	goal_scored.emit(team)
 	_log("GOAL for %s! Green %d - %d Red" % [TEAM_NAMES[team], score[0], score[1]])
 
@@ -287,10 +366,18 @@ func _log(text: String) -> void:
 # ---------------------------------------------------------------- screen
 
 func _process(_delta: float) -> void:
-	hud.visible = phase != Phase.IDLE and not _is_guest()
+	# The replay is watched from the replay camera, everything else from your own.
+	var cam = level().get("camera")
+	if phase == Phase.REPLAY:
+		_aim_replay_camera()
+		replay_camera.current = true
+	elif replay_camera.current and cam:
+		cam.current = true
+	hud.visible = phase != Phase.IDLE
 	if not hud.visible:
 		return
-	var status := "Push the ball into the Red goal · first to %d" % goals_to_win
+	var them: String = TEAM_NAMES[Team.RED if my_team() == Team.GREEN else Team.GREEN]
+	var status := "You're %s: push the ball into the %s goal · first to %d" % [TEAM_NAMES[my_team()], them, goals_to_win]
 	match phase:
 		Phase.KICKOFF:
 			var n := ceili(float(countdown) - _phase_time)
@@ -306,9 +393,8 @@ func _process(_delta: float) -> void:
 			status = "Full time"
 		Phase.REPLAY:
 			hud.show_banner("", Color.WHITE, 0.0)
-			status = "Replay · push to skip"
-			_aim_replay_camera()
-			if Input.is_action_just_pressed("push_left") or Input.is_action_just_pressed("push_right"):
+			status = "Replay · push to skip" if not _is_guest() else "Replay"
+			if not _is_guest() and (Input.is_action_just_pressed("push_left") or Input.is_action_just_pressed("push_right")):
 				_end_replay()
 	hud.show_replay(phase == Phase.REPLAY)
 	hud.show_score(score[0], score[1], clock, status)
@@ -320,3 +406,48 @@ func _aim_replay_camera() -> void:
 	var at := Vector3(b.x * replay_camera_follow, replay_camera_height, replay_camera_side)
 	if at.distance_to(b) > 0.5:
 		replay_camera.look_at_from_position(at, b)
+
+
+# ---------------------------------------------------------------- multiplayer
+
+## Host: the match as it stands, to every guest (BALL in net_protocol.gd).
+func _send_state() -> void:
+	_sync_clock = 0.0
+	var net := _net()
+	if net == null or not net.is_host():
+		return
+	var b := NetProtocol.writer(NetProtocol.Msg.BALL)
+	b.put_u8(net.level_serial)
+	b.put_u8(phase)
+	b.put_float(_phase_time)
+	b.put_float(clock)
+	b.put_float(match_time)
+	b.put_u8(score[0])
+	b.put_u8(score[1])
+	b.put_u8(_last_scorer)
+	b.put_u8(goals_to_win)
+	b.put_u8(players.size())
+	for p in players:
+		b.put_32(p.id)
+		b.put_u8(p.team)
+	net.send_to_guests(b.data_array)
+
+
+## Guest: the host's match (the BALL message after its level serial).
+func apply_state(b: StreamPeerBuffer) -> void:
+	phase = b.get_u8() as Phase
+	_phase_time = b.get_float()
+	clock = b.get_float()
+	match_time = b.get_float()
+	score = [b.get_u8(), b.get_u8()]
+	_last_scorer = b.get_u8() as Team
+	goals_to_win = b.get_u8()
+	players.clear()
+	for i in b.get_u8():
+		players.append({"id": b.get_32(), "team": b.get_u8() as Team})
+	if phase == Phase.FULL_TIME:
+		var line := "It's a draw" if score[0] == score[1] else \
+			"%s wins!" % TEAM_NAMES[Team.GREEN if score[0] > score[1] else Team.RED]
+		hud.show_full_time(score[0], score[1], line)
+	else:
+		hud.hide_full_time()
