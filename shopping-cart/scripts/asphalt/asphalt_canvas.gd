@@ -7,6 +7,7 @@ extends Node2D
 enum Mode { COLOR, HEIGHT }
 
 const HEIGHT_RANGE := 0.1     ## m from mid grey to white (or black)
+const PAINT_PIECE := 0.05     ## m: paint lines are drawn in pieces this long, each worn by its own amount
 const CHUNK := 6              ## points per drawn piece of crack (each piece gets the width of its age)
 
 @export var sim: AsphaltSim
@@ -33,6 +34,11 @@ const CHUNK := 6              ## points per drawn piece of crack (each piece get
 @export var base_course_texture_m := 1.0
 @export var shoulder_texture: Texture2D       ## the gravel shoulders
 @export var shoulder_texture_m := 1.0
+
+@export_group("Paint")
+@export var paint_texture: Texture2D          ## line paint, top-down (white, worn); without one, paint_color
+@export var paint_texture_m := 0.5
+@export var paint_color := Color(0.88, 0.88, 0.84)
 
 @export_group("Colours")
 @export var fresh_asphalt := Color(0.075, 0.075, 0.08)
@@ -169,6 +175,30 @@ func _draw() -> void:
 		return
 	var t := sim.time
 	var hm := mode == Mode.HEIGHT
+	# Paint lines, worn away in patches (patches and fills are drawn over them, cracks through them).
+	var paint_dirt := clampf(sim.surface_age() / 20.0, 0.0, 1.0) * 0.3
+	for k in range(0, sim.paint_lines.size() - 1, 2):
+		var a := sim.paint_lines[k]
+		var b := sim.paint_lines[k + 1]
+		var along := (b - a).normalized()
+		var side := along.orthogonal() * sim.paint_width * 0.5
+		var n := maxi(1, int(ceil(a.distance_to(b) / PAINT_PIECE)))
+		for i in n:
+			var p0 := a.lerp(b, float(i) / n)
+			var p1 := a.lerp(b, float(i + 1) / n)
+			var left := sim.paint_left((p0 + p1) * 0.5)
+			if left <= 0.02:
+				continue
+			var quad := PackedVector2Array([(p0 + side) * px_per_m, (p1 + side) * px_per_m, (p1 - side) * px_per_m, (p0 - side) * px_per_m])
+			if hm:
+				draw_primitive(quad, PackedColorArray([_hc(sim.paint_thickness * left)]), PackedVector2Array())
+			elif paint_texture:
+				var uvs := PackedVector2Array()
+				for q in quad:
+					uvs.append(q / (paint_texture_m * px_per_m))
+				draw_primitive(quad, PackedColorArray([Color(Color.WHITE.lerp(aged_asphalt, paint_dirt), left)]), uvs, paint_texture)
+			else:
+				draw_primitive(quad, PackedColorArray([Color(paint_color.lerp(aged_asphalt, paint_dirt), left)]), PackedVector2Array())
 	# Heavy patches: fresh full-depth asphalt in a saw-cut rectangle, greying with its own age.
 	for p in sim.patches:
 		var r: Rect2 = p.rect
