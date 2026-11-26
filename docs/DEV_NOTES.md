@@ -5,6 +5,42 @@ triangle count and file size for new models, judgment calls, what was left out, 
 
 
 
+## 2026-11-26: Cart rig audit, colliders follow the model
+
+Measured `shopping_cart.glb` part by part (vertex extents, closed-mesh volume, centre of mass and inertia) against
+spec sheets: Regency 460SHPCRT64 (39.75 x 22.8 x 40.2 in, 5 in casters), Unarco M90/M100/M125/M141 wire carts
+(53-58 lb shipping weight, 40-41 in handle), 5 x 1-1/4 in shopping-cart casters (4 in swivel radius).
+
+| Measure | Model | Real | Verdict |
+| --- | --- | --- | --- |
+| Handle grip centre | x -0.001, y 1.003; grip 30 mm dia, +-0.241 m; top bar +-0.317 m | 0.97-1.05 m | OK |
+| Overall length | 0.977 m | 0.98-1.01 m | OK |
+| Wheelbase / rear track / front track | 0.78 / 0.61 / 0.31 m | not published | kept |
+| Handle behind rear axle | 0.07 m | not published | kept (see below) |
+| Wheel diameter | 124 mm | 127 mm (5 in) | 2 % small, kept |
+| Wheel width | tread 24.5 mm, tyre 40.8 mm | 32 mm (1-1/4 in) | OK |
+| Caster trail | 38 mm | 38 mm (4 in swivel radius - 2.5 in wheel radius) | matches |
+| Caster sideways offset | 0 | 0 | OK |
+| Basket floor | rises 4.9 deg toward the nose (y 0.452 to 0.512) | slopes down to the gate | OK |
+| Basket width | 0.614 m at the gate, tapering to 0.49 m at the nose (4.1 deg a side) | nesting taper | OK |
+| Total mass | 24.0 kg in the scene; 18.1 kg from the mesh volumes (hollow 1.5 mm tubes) | 53-58 lb shipping, about 22-25 kg | scene is right |
+
+- The mesh's own mass is low because its wires are thin (3.8 mm basket wire) and it has no welds, plating or
+  plastics. Mesh-derived frame: 14.1 kg, centre of mass (0.49, 0.47, 0) vs the scene's (0.45, 0.42, 0).
+- Frame inertia from the mesh, scaled to 18 kg, about its centre of mass: roll 2.18, yaw 2.46, pitch 2.80 kg m^2
+  (product Ixy 0.17). Godot's, worked out from the collision boxes: pitch 2.01, about 2.38 and 2.72 on axes
+  tilted 30 deg. Pitch is 28 % low, roll about 25 % high. Explicit `inertia` on Frame is recommended (not set
+  here; it's the physics thread's tuning).
+- Colliders changed in `cart.tscn` to follow the model, no change to the drive test (14 failing before and after,
+  the same checks): Handlebar box 6 x 6 x 52 cm -> 32 mm cylinder 0.634 m long on the grip; BasketFloor tilted
+  4.9 deg to sit on the floor wires; side walls tapered 4.1 deg to the wires and topped at the rail (0.94 m);
+  Cereal and Juice start 1.5 / 3 cm higher to clear the tilted floor.
+- Cylinder wheels (r 0.062, 32 mm) tried and not kept: on the rear wheels the result is the same (14 failing), but on the front
+  casters they stop the caster swivelling (single-hand push turns 5-7 deg instead of 22, 21-24 failing), even at
+  12 mm wide. Spheres stay until the physics thread looks at it.
+- No model change: nothing measured was wrong enough. The handle's 7 cm overhang could not be checked against a
+  published figure.
+
 ## 2026-11-23: Downhill highway: straight and 30 %
 
 zack: "much steeper and straight down please no curved road". The road is now dead straight at 30 % (from 15 % with
