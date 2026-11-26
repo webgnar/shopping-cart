@@ -10,6 +10,12 @@
 [ext_resource type="Script" path="res://scripts/cart/cart_nest_mouth.gd" id="12_mouth"]
 [ext_resource type="PackedScene" path="res://scenes/cart/nest_joint.tscn" id="13_nest"]
 [ext_resource type="PackedScene" path="res://scenes/cart/flag.tscn" id="14_flag"]
+[ext_resource type="Curve" path="res://assets/physics/human/arm_force_velocity.tres" id="20_arm_force_velocity"]
+[ext_resource type="Curve" path="res://assets/physics/human/leg_force_velocity.tres" id="20_leg_force_velocity"]
+[ext_resource type="Curve" path="res://assets/physics/human/arm_height_strength.tres" id="20_arm_height_strength"]
+[ext_resource type="Curve" path="res://assets/physics/human/arm_reach_strength.tres" id="20_arm_reach_strength"]
+[ext_resource type="Curve" path="res://assets/physics/human/effort_ramp.tres" id="20_effort_ramp"]
+[ext_resource type="Curve" path="res://assets/physics/human/fatigue_strength.tres" id="20_fatigue_strength"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_i6241"]
 friction = 0.5
@@ -126,6 +132,12 @@ size = Vector3(0.059, 0.006, 0.248)
 
 [node name="Cart" type="Node3D" unique_id=148615909]
 script = ExtResource("1_ytnl2")
+force_velocity = ExtResource("20_arm_force_velocity")
+leg_force_velocity = ExtResource("20_leg_force_velocity")
+arm_height_strength = ExtResource("20_arm_height_strength")
+arm_reach_strength = ExtResource("20_arm_reach_strength")
+effort_ramp = ExtResource("20_effort_ramp")
+fatigue_strength = ExtResource("20_fatigue_strength")
 
 [node name="Frame" type="RigidBody3D" parent="." unique_id=1338543223]
 collision_layer = 2
@@ -138,6 +150,8 @@ can_sleep = false
 freeze_mode = 1
 contact_monitor = true
 max_contacts_reported = 16
+linear_damp_mode = 1
+angular_damp_mode = 1
 
 [node name="BasketFloor" type="CollisionShape3D" parent="Frame" unique_id=158781773]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.57, 0.46, 0)
@@ -276,7 +290,8 @@ collision_mask = 7
 mass = 0.5
 physics_material_override = SubResource("PhysicsMaterial_qxkkq")
 can_sleep = false
-angular_damp = 0.05
+linear_damp_mode = 1
+angular_damp_mode = 1
 
 [node name="Shape" type="CollisionShape3D" parent="Wheel_RL" unique_id=723913140]
 shape = SubResource("SphereShape3D_daan1")
@@ -290,7 +305,8 @@ collision_layer = 0
 collision_mask = 0
 mass = 0.6
 can_sleep = false
-angular_damp = 2.0
+linear_damp_mode = 1
+angular_damp_mode = 1
 
 [node name="Shape" type="CollisionShape3D" parent="Fork_FL" unique_id=879034501]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02, -0.05, 0)
@@ -303,7 +319,8 @@ collision_mask = 7
 mass = 0.5
 physics_material_override = SubResource("PhysicsMaterial_qxkkq")
 can_sleep = false
-angular_damp = 0.05
+linear_damp_mode = 1
+angular_damp_mode = 1
 
 [node name="Shape" type="CollisionShape3D" parent="Wheel_FL" unique_id=53738916]
 shape = SubResource("SphereShape3D_7vkct")
@@ -318,7 +335,8 @@ collision_mask = 7
 mass = 0.5
 physics_material_override = SubResource("PhysicsMaterial_qxkkq")
 can_sleep = false
-angular_damp = 0.05
+linear_damp_mode = 1
+angular_damp_mode = 1
 
 [node name="Shape" type="CollisionShape3D" parent="Wheel_RR" unique_id=2133878828]
 shape = SubResource("SphereShape3D_dnshu")
@@ -332,7 +350,8 @@ collision_layer = 0
 collision_mask = 0
 mass = 0.6
 can_sleep = false
-angular_damp = 2.0
+linear_damp_mode = 1
+angular_damp_mode = 1
 
 [node name="Shape" type="CollisionShape3D" parent="Fork_FR" unique_id=158427550]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.02, -0.05, 0)
@@ -345,7 +364,8 @@ collision_mask = 7
 mass = 0.5
 physics_material_override = SubResource("PhysicsMaterial_qxkkq")
 can_sleep = false
-angular_damp = 0.05
+linear_damp_mode = 1
+angular_damp_mode = 1
 
 [node name="Shape" type="CollisionShape3D" parent="Wheel_FR" unique_id=2089392624]
 shape = SubResource("SphereShape3D_qy1of")

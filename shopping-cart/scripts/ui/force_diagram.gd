@@ -1,13 +1,14 @@
 class_name ForceDiagram
 extends Control
-## Live diagram of the forces on the cart's handle (scenes/ui/hud.tscn, the HANDLE FORCES sign). F cycles the view
-## (hud.gd). It draws what cart.gd recorded during the last physics step (handle_forces, grip_twist, wheel_load).
+## Live diagram of the forces on the cart (scenes/ui/hud.tscn, the HANDLE FORCES sign). F cycles the view (hud.gd).
+## It draws the cart's force ledger (cart.gd `ledger`: every force the script put on the cart in the last physics
+## step, where it acted), plus the weight and the wheel loads that balance it.
 ## Side view: the cart model's own side silhouette (tools/cart_diagram_render.py), tipped as the cart is, on the
-## ground; its weight at the centre of mass; the load each pair of wheels carries; the shoulders and the arm to the
-## handle; and at the handle the hands' push or pull along the arms, W's lift or S's press, and the arms' damping.
-## Top view: the model from above, nose up; each hand where it holds the bar, the line from its shoulder (the
-## body is behind the bar), the force it puts on the bar (angled by where the hand is against the shoulders), and
-## the twist all of it gives the cart.
+## ground; its weight at the centre of mass; the load each pair of wheels carries; the player's shoulders (lowered
+## as the trunk leans) and the arm to the handle; and every ledger force on the frame, summed by name, where it acts.
+## Rolling resistance (a torque about each axle) is shown as the drag it makes at the ground.
+## Top view: the model from above, nose up; each hand where it holds the bar, the line from its shoulder, the forces
+## that hand put on the bar seen from above, and the twist all the ledger forces give the cart about its centre of mass.
 
 enum View { SIDE, TOP, BOTH }
 
@@ -29,6 +30,7 @@ enum View { SIDE, TOP, BOTH }
 @export var pull_color := Color(0.95, 0.3, 0.15)
 @export var lean_color := Color(0.99, 0.8, 0.27)
 @export var damp_color := Color(0.65, 0.65, 0.65)
+@export var other_color := Color(0.8, 0.55, 1.0)   ## air drag, rest friction, rolling, hauling
 @export var weight_color := Color(1, 1, 1)
 @export var load_color := Color(0.45, 0.7, 1.0)
 @export var cart_color := Color(1, 1, 1, 0.35)
@@ -50,7 +52,7 @@ func show_cart(cart: ShoppingCart) -> void:
 
 
 func _draw() -> void:
-	if _cart == null or not is_instance_valid(_cart) or _cart.handle_forces.is_empty():
+	if _cart == null or not is_instance_valid(_cart) or _cart.ledger.is_empty():
 		return
 	var x := 0.0
 	if view != View.TOP:
@@ -103,33 +105,41 @@ func _draw_side(r: Rect2) -> void:
 		if n > 1.0:
 			_arrow(foot + Vector2(0, 14), Vector2(0, -n * load_pixels_per_newton), load_color, "")
 		_text(foot + Vector2(-14, 24), "%d" % roundi(n), load_color)
-	# At the handle: both hands added up.
-	var arm := Vector3.ZERO
-	var lean := Vector3.ZERO
-	var damp := 0.0
+	# The ledger's forces on the frame, summed by name and drawn where they act (their average point).
+	var sums := {}
+	var roll := 0.0
+	for e in _cart.ledger:
+		if e.body != frame and not str(e.name).begins_with("rolling"):
+			continue
+		if e.torque != Vector3.ZERO:
+			if str(e.name).begins_with("rolling"):
+				roll += e.torque.length() / _cart.wheel_radius
+			continue
+		var s: Dictionary = sums.get(e.name, {"force": Vector3.ZERO, "point": Vector3.ZERO, "n": 0})
+		s.force += e.force
+		s.point += e.point
+		s.n += 1
+		sums[e.name] = s
+	# The body, which the arms push from: shoulders behind the bar, lower the more the trunk leans.
 	var at := Vector3.ZERO
-	for side in _cart.handle_forces:
-		var h: Dictionary = _cart.handle_forces[side]
-		arm += h.arm
-		lean += h.lean
-		damp += h.damp
-		at += h.point
-	at /= _cart.handle_forces.size()
-	var handle: Vector2 = to_px.call(at)
-	# The body, which the arms push from: a little below the bar, closer the faster the cart rolls.
+	for side in ["L", "R"]:
+		at += frame.global_transform * Vector3(_cart.hand_position.x, _cart.hand_position.y, (-1.0 if side == "L" else 1.0) * _cart.hand_reach(side))
+	var handle: Vector2 = to_px.call(at / 2.0)
 	var shoulder: Vector2 = to_px.call((_cart.body_point("L") + _cart.body_point("R")) / 2.0)
 	draw_line(shoulder, handle, body_color, 1.5, true)
 	draw_circle(shoulder, 4.0, body_color)
 	draw_circle(handle, 3.5, weight_color)
-	if arm.length() > 1.0:
-		var ahead := arm.dot(fwd) > 0.0
-		_arrow(handle, to_vec.call(arm, pixels_per_newton), push_color if ahead else pull_color,
-			("PUSH %d N" if ahead else "PULL %d N") % roundi(arm.length()))
-	if lean.length() > 1.0:
-		_arrow(handle + Vector2(-5, 0), to_vec.call(lean, pixels_per_newton), lean_color,
-			("LIFT %d N" if lean.y > 0.0 else "PRESS %d N") % roundi(lean.length()))
-	if absf(damp) > 2.0:
-		_arrow(handle + Vector2(5, 0), Vector2(0, -damp * pixels_per_newton), damp_color, "")
+	var nudge := 0.0
+	for name in sums:
+		var s: Dictionary = sums[name]
+		var f: Vector3 = s.force
+		if f.length() < 1.0:
+			continue
+		var p: Vector2 = to_px.call(s.point / s.n) + Vector2(nudge, 0)
+		_arrow(p, to_vec.call(f, pixels_per_newton), _colour(name), "%s %d N" % [str(name).to_upper(), roundi(f.length())])
+		nudge = -nudge + (4.0 if nudge <= 0.0 else -4.0)
+	if roll > 0.5:
+		_text(r.position + Vector2(r.size.x - 92, 12), "ROLLING %.1f N" % roll, other_color)
 
 
 func _draw_top(r: Rect2) -> void:
@@ -147,23 +157,36 @@ func _draw_top(r: Rect2) -> void:
 		draw_set_transform(handle, 0.0, Vector2(k, k))
 		draw_texture(top_texture, -top_origin, cart_color)
 		draw_set_transform(Vector2.ZERO)
-	var twist := _cart.grip_twist
+	var com := xf * frame.center_of_mass
+	var twist := 0.0
+	for e in _cart.ledger:
+		if e.body == frame:
+			twist += (e.point - com).cross(e.force).y
 	for side in ["L", "R"]:
-		var h: Dictionary = _cart.handle_forces[side]
 		var s := -1.0 if side == "L" else 1.0
 		var hand := handle + Vector2(s * _cart.hand_reach(side) * ppm, 0)
-		var shoulder := handle + Vector2(s * _cart.shoulder_half * ppm, _cart.body_gap() * ppm)
+		var shoulder := handle + Vector2(s * _cart.shoulder_half * ppm, _cart.body_gap * ppm)
 		draw_line(shoulder, hand, body_color, 1.5, true)
 		draw_circle(shoulder, 4.0, body_color)
 		draw_circle(hand, 4.0, weight_color)
-		var f: Vector3 = h.arm
-		var v := Vector2(f.dot(right), -f.dot(fwd)) * pixels_per_newton
-		if v.length() > 2.0:
-			var pushing := f.dot(fwd) > 0.0
-			_arrow(hand, v, push_color if pushing else pull_color, "%d" % roundi(Vector2(f.dot(right), f.dot(fwd)).length()))
-		twist += h.twist
+		for e in _cart.ledger:
+			if e.side != side or e.body != frame:
+				continue
+			var f: Vector3 = e.force
+			var v := Vector2(f.dot(right), -f.dot(fwd)) * pixels_per_newton
+			if v.length() > 2.0:
+				_arrow(hand, v, _colour(e.name), "%d" % roundi(Vector2(f.dot(right), f.dot(fwd)).length()))
 		_text(hand + Vector2(-14, 18), "%d CM" % roundi(_cart.hand_reach(side) * 100.0), label_color)
 	_text(r.position + Vector2(4, r.size.y - 6), "TWIST %+d N·M %s" % [roundi(twist), "LEFT" if twist > 0.5 else ("RIGHT" if twist < -0.5 else "")], label_color)
+
+
+func _colour(name: String) -> Color:
+	match name:
+		"push": return push_color
+		"pull": return pull_color
+		"lift", "press": return lean_color
+		"hold height", "hold line": return damp_color
+	return other_color
 
 
 func _arrow(from: Vector2, v: Vector2, color: Color, label: String) -> void:
