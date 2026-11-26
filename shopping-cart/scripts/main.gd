@@ -5,6 +5,8 @@ extends Node3D
 ## speed bumps, a curb, a ramp up to a ledge and two stacks of boxes. Q/A = left hand push/pull, E/D = right hand
 ## push/pull (hold to push or pull harder), W/S lean the back/front up, P reset.
 ## The mouse only moves the camera (click to capture, Esc to release, wheel to zoom).
+## Off the aisle, scenes/sandbox/measurement_lanes.tscn has a coast-down lane, a braking lane, a turning-circle
+## pad, 2/5/10 degree slopes and curbs and bumps of known heights; L puts the cart at the next one's Start marker.
 ##
 ## The level, lights, camera, HUD and the CartSpawn marker are all nodes in the scene (scenes/main.tscn).
 ## A scene that uses this script but leaves out the environment, camera or HUD gets the shared default
@@ -19,7 +21,7 @@ const KEYS := {
 	"push_left": KEY_Q, "pull_left": KEY_A,
 	"push_right": KEY_E, "pull_right": KEY_D,
 	"lift": KEY_W, "press": KEY_S, "reset": KEY_P,
-	"fullscreen": KEY_F11, "forces": KEY_F,
+	"fullscreen": KEY_F11, "forces": KEY_F, "next_lane": KEY_L, "graphs": KEY_G,
 }
 
 var cart: ShoppingCart
@@ -36,6 +38,7 @@ var asphalt_mat: PhysicsMaterial = preload("res://assets/physics/asphalt.tres")
 var solid_mat: PhysicsMaterial = preload("res://assets/physics/solid.tres")
 
 var hud: CartHUD
+var _lane := -1   ## which Start marker L last jumped to (-1: none yet)
 
 
 func _ready() -> void:
@@ -105,6 +108,24 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		var p := cart.cart_origin()
 		spawn_cart(floor_under(p), cart.heading())
+	elif event.is_action_pressed("next_lane"):
+		_next_lane()
+
+
+## L: the cart goes to the next measurement lane's Start marker (every Marker3D named Start under
+## MeasurementLanes, in scene order), then back round to CartSpawn.
+func _next_lane() -> void:
+	var lanes := get_node_or_null("MeasurementLanes")
+	var net := get_node_or_null("/root/Net") as NetSession
+	if lanes == null or (net and net.is_guest()):
+		return
+	var starts: Array[Node] = lanes.find_children("Start", "Marker3D", true, false)
+	var spawn := get_node_or_null("CartSpawn")
+	if spawn:
+		starts.append(spawn)
+	_lane = (_lane + 1) % starts.size()
+	var m := starts[_lane] as Node3D
+	spawn_cart(m.global_position, m.global_rotation.y)
 
 
 func _process(delta: float) -> void:

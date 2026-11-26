@@ -16,6 +16,7 @@
 [ext_resource type="Material" path="res://assets/parking_lot/materials/curb_concrete.tres" id="19_curb"]
 [ext_resource type="Material" path="res://assets/parking_lot/materials/asphalt.tres" id="20_asphalt"]
 [ext_resource type="PackedScene" path="res://scenes/cart/cart_stack_4.tscn" id="stack4"]
+[ext_resource type="PackedScene" path="res://scenes/sandbox/measurement_lanes.tscn" id="21_lanes"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8qguk"]
 content_margin_top = 6.0
@@ -276,6 +277,8 @@ mass = 2.0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39, 0.875, 0.2)
 collision_mask = 7
 mass = 2.0
+
+[node name="MeasurementLanes" parent="." instance=ExtResource("21_lanes")]
 
 [node name="CartSpawn" type="Marker3D" parent="." unique_id=942329566]
 
