@@ -3,6 +3,15 @@
 Papers behind the crack lattice experiment (`shopping-cart/scenes/asphalt/crack_lattice_lab.tscn`). Put the PDFs
 in this folder with the file names below.
 
+## Distress definitions (what we draw and how it is measured)
+- `fhwa_2014_ltpp_distress_identification_manual.pdf`: Miller & Bellinger, "Distress Identification Manual for the
+  Long-Term Pavement Performance Program", 5th revised edition, FHWA-HRT-13-092 (2014). Public domain (US DOT).
+  https://www.fhwa.dot.gov/publications/research/infrastructure/pavements/ltpp/13092/13092.pdf
+  Asphalt chapter (distresses 1-15, pp. 1-30) and appendix A (wheel paths, fig. 136, p. 91). Crack severity by mean
+  width (<= 6 mm, 6-19 mm, > 19 mm), pothole severity by depth (< 25, 25-50, > 50 mm, at least 150 mm across),
+  fatigue pieces usually under 0.3 m, blocks 0.1-10 m2, edge cracking within 0.6 m of the edge. Our notes on it:
+  `docs/ASPHALT_SCIENCE.md`.
+
 ## Crack patterns in shrinking layers
 - `bohn_2005_hierarchical_crack_pattern_II.pdf`: Bohn, Platkiewicz, Andreotti, Adda-Bedia, Couder, "Hierarchical
   crack pattern as formed by successive domain divisions. II. From disordered to deterministic behavior", Phys. Rev. E
