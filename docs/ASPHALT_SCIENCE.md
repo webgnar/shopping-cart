@@ -64,7 +64,7 @@ references. No big-bang refactor.
 | Transverse onset | rate 0.8 climate ox per year, opens at 1.6 x spacing gap | Placeholder | Chen 2022: average spacing is 3/4 of the largest gap (halving) |
 | Lane joint | 0.45 per year from 0.8 yr | Placeholder | |
 | Growth speeds | 3.5, 1.2, 0.5 + 0.3 f m/yr | Placeholder | |
-| Junctions | T 55 %, stop short 25 %, look-ahead 8 cm, turn 0.35 | Placeholder | Shorlin: mean 90 deg, SD 15 deg. **We get 69 deg** |
+| Junctions | Look-ahead = asphalt thickness, turning harder as the tip nears; shrinkage branches leave at 90 +- 15 deg; 25 % stop short | Sourced (look-ahead: Bohn, influence ~ layer thickness; turn: local symmetry; branches: Shorlin) / stop short placeholder | Shorlin: 90 deg, SD 15 deg. **Shrinkage cracks now 79.5 +- 9.5 deg** (10 seeds, 48 junctions; was 71 +- 20). Fatigue cracks 69 deg: LTPP says "sharp-angled", no measured target. Fatigue branch angles still placeholders |
 | Slippage | crescent sets in the wheel paths | Placeholder | Not an LTPP distress; ASTM D6433 / Austroads |
 | Edge cracking, fretting | rates 0.5/yr, 0.025 m/yr | Placeholder | LTPP ACP 3 severity: breakup over <= 10 % / > 10 % of the length |
 | Reflection | AC-over-AC through overlays, 1.5-5 yr delay | Placeholder | LTPP ACP 5 is only over concrete joints; AC-on-AC is recorded as ACP 4 / 6. Chen: rises about 2.5 cm/yr |
@@ -142,7 +142,8 @@ What this shows:
 
 ## Next steps
 
-0. Done (Nov 26 2026): the build-up as data (`PavementBuildup`, Table 3B baseline). Next: the cross-section drawing
+0. Done (Nov 26 2026): the build-up as data (`PavementBuildup`, Table 3B baseline); junctions by crack type. Next:
+   the cross-section drawing
    as a slice of the build-up, then the build-up's variation across the plan (replacing `structure` and `weak`).
 1. Add a survey layer: `AsphaltSim` reports LTPP quantities by severity (m2 of fatigue and block, m of
    longitudinal 4a/4b and transverse, number and m2 of patches and potholes, rut depth). Lab panel and tests use

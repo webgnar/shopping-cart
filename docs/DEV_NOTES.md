@@ -1878,3 +1878,23 @@ tensile_strength) are gone.
   (62 deg, limit 65; the junction rule is a placeholder, Shorlin measures 90, and each input moves this
   ~100-junction mean by 2-3 deg) and "30 years simulate quickly" (6.2-7.4 s against 4.7 s before, limit 4 s: the
   smaller cells mean 5,247 network edges instead of 3,369). The baked lots (asphalt_lot, lot90) are not re-baked yet.
+
+## Asphalt: crack junctions by crack type (Nov 26 2026)
+
+The "cracks meet about square on" check mixed crack types: 90 % of the junctions it measured were fatigue
+(wheel-path) cracks, which LTPP describes as "many-sided, sharp-angled" pieces, while Shorlin's 90 +- 15 degrees is
+for shrinkage cracks. Measured over ten seeds, shrinkage cracks met at 71 +- 20 degrees. Changes:
+- The look-ahead near another crack is the asphalt thickness (Bohn: a crack face disturbs the stress over about
+  the layer thickness), not a fixed 8 cm, and the tip turns harder the closer it is, not a fixed 35 % a step.
+- The "turn and run alongside" rule (and `t_junctions`) is gone: a crack that hits another joins it at a T, or
+  dies just short of it (`stop_short`, still a placeholder).
+- Side branches of shrinkage cracks leave at 90 +- 15 degrees (Shorlin: new cracks start from the sides of
+  existing ones at right angles). Fatigue branches keep their angles.
+- Wheel-path cracks start only on loaded cells that have no crack yet (fewer random draws: same rules, different
+  roads for a seed).
+Shrinkage cracks now meet at 79.5 +- 9.5 degrees (48 junctions). The test check is now "shrinkage cracks meet about
+square on": mean over 75 degrees (Shorlin's mean less one SD) over four seeds, at least 20 junctions; it prints the
+fatigue mean beside it. Both baked lots re-baked (lot90.tscn also dropped stale chip-seal shader parameters).
+"30 years simulate quickly" still fails: 5.4-6.0 s here against 5.0 s for the code before the build-up (limit 4 s).
+Its timer starts at year 15 of the first sim but runs through five more sims and two replays (about 90 simulated
+years); years 15-24 of one sim take 0.6-0.8 s.

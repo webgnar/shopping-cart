@@ -70,8 +70,7 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 @export var aggregate_size := 0.012                     ## m: the stones; the fine strength noise is this size
 @export_range(0.0, 1.0, 0.05) var crack_bias := 0.6    ## how hard cracks seek the weaker mix as they grow
 @export_range(0.0, 1.0, 0.05) var branching := 0.15    ## side branches per metre of freely growing crack
-@export_range(0.0, 1.0, 0.05) var t_junctions := 0.55  ## share of cracks that run into another and join it at a T
-@export_range(0.0, 1.0, 0.05) var stop_short := 0.25   ## share that die out just short of it (the rest turn and run along it)
+@export_range(0.0, 1.0, 0.05) var stop_short := 0.25   ## share of cracks that die out just short of another (the rest join it at a T)
 
 @export_group("Crack networks")
 @export_range(0.0, 1.0, 0.05) var block_onset := 0.55   ## oxidation (0..1) at which the first blocks crack
@@ -115,6 +114,7 @@ var ny := 0
 var weak := PackedFloat32Array()      ## 0..1 subgrade weakness (soft spots, poor support)
 var pond := PackedFloat32Array()      ## 0..1 low spots where water stands after rain
 var load := PackedFloat32Array()      ## traffic load per cell (wheel paths)
+var _wheel_cells := PackedInt32Array()  ## cells with load >= 0.25 (where wheel-path cracks can start)
 var fatigue := PackedFloat32Array()   ## accumulated fatigue; cracks start at 1, break up into cells past FATIGUE_CELLS
 var damage := PackedFloat32Array()    ## water damage under open cracks; a pothole breaks out at 1
 var hole := PackedFloat32Array()      ## pothole depth, m
@@ -159,8 +159,7 @@ const FATIGUE_CELL := Vector2(0.7, 1.0)
 const REF_THICKNESS := 0.076   ## m the fatigue rate was tuned for (a 3 in lot)
 const DEFAULT_BUILDUP := preload("res://assets/asphalt/buildups/c620_table3b_cbr9.tres")
 const BOND_FULL_DEPTH := 0.1e6 ## Pa: placeholder shear strength for full-depth asphalt on the subgrade (no source yet)
-const T_LOOK := 0.08      ## m ahead a growing crack feels another crack's stress shadow ...
-const T_TURN := 0.35      ## ... and turns this share of the way per step to meet it square on
+const BRANCH_SCATTER := 0.26   ## rad (15 degrees): spread of a shrinkage branch's angle (Shorlin et al. 1999)
 const FATIGUE_CELLS := 1.2            ## fatigue past which the wheel paths break up into crocodile cells
 
 
@@ -188,7 +187,6 @@ class Crack:
 	var local := 1.0                  ## how fast it opens where it is: traffic, support, standing water, climate
 	var surf0 := 0.0                  ## when the surface it is in was laid
 	var ox_k := 0.11                  ## binder ageing rate, 1/years
-	var deflects := 0                 ## times it has turned to run along another crack
 
 	## Opening drive from year t0 to t1: thermal cycling and traffic, both worse as the binder hardens
 	## (0.4 + 0.9 x oxidation, integrated).
@@ -283,6 +281,10 @@ func reset() -> void:
 			for w in wheel_paths:
 				l += exp(-pow((p.x - w) / wheel_path_width, 2.0))
 			load[i] = l if paved(p) else 0.0
+	_wheel_cells.clear()
+	for i in nx * ny:
+		if load[i] >= 0.25:
+			_wheel_cells.append(i)
 	_build_networks()
 	changed.emit()
 
@@ -812,18 +814,17 @@ func _initiate(age: float, ox: float) -> void:
 		if _free(p, 0.15):
 			_twin(Kind.JOINT, p, PI * 0.5, 0.05, 0.35, 1.2, 1.0)
 	# Wheel-path cracks where fatigue has built up, branching into alligator cells as it goes on.
-	for i in nx * ny:
+	for i in _wheel_cells:
 		var f := fatigue[i]
-		if f < 1.0 or load[i] < 0.25:
+		if f < 1.0 or crack_len[i] >= 0.01:
 			continue
 		var p := cell_center(i) + Vector2(_rng.randf_range(-0.5, 0.5), _rng.randf_range(-0.5, 0.5)) * CELL
 		if not paved(p):
 			continue
-		if crack_len[i] < 0.01:
-			if _rng.randf() < DT * 0.2 * (f - 0.9) and _free(p, 0.08):
-				var c := _twin(Kind.WHEELPATH, p, PI * 0.5, 0.2, 0.12, 0.5 + 0.3 * f, 0.9)
-				for k in [c, c - 1]:
-					cracks[k].max_len = _rng.randf_range(0.8, 2.5)
+		if _rng.randf() < DT * 0.2 * (f - 0.9) and _free(p, 0.08):
+			var c := _twin(Kind.WHEELPATH, p, PI * 0.5, 0.2, 0.12, 0.5 + 0.3 * f, 0.9)
+			for k in [c, c - 1]:
+				cracks[k].max_len = _rng.randf_range(0.8, 2.5)
 	# Fatigue (crocodile) cells in the wheel paths and block cracking across the road: edges of the networks open.
 	_open_edges(age, ox)
 	# Edge cracking near the unsealed shoulders.
@@ -938,18 +939,25 @@ func _grow(ci: int, dist: float) -> void:
 						best = score
 						pick = d + o
 				d = pick
-			# Next to another crack the stress left runs along it, so a tip coming up to one turns to meet it square
-			# on (shrinkage crack patterns join at about 90 degrees: Bohn et al. 2005, Shorlin et al. 2000).
+			# Another crack's free face takes the stress across it off, over a distance of about the layer
+			# thickness (Bohn et al. 2005), so the stress left near it runs along it. The tip follows the local
+			# stress (principle of local symmetry): the closer it gets, the more it turns to meet the crack square
+			# on (shrinkage cracks meet at 90 +- 15 degrees: Shorlin et al. 1999).
 			if c.kind != Kind.SLIPPAGE:
-				var ahead := _hit(p + Vector2.from_angle(d) * T_LOOK, ci, c)
-				if ahead.x >= 0 and cracks[ahead.x].pts.size() >= 2:
-					var o := cracks[ahead.x]
-					var k := clampi(ahead.y, 1, o.pts.size() - 1)
-					var along := (o.pts[k] - o.pts[k - 1]).angle()
-					var square := along + PI * 0.5
-					if absf(angle_difference(d, square)) > PI * 0.5:
-						square += PI
-					d = lerp_angle(d, square, T_TURN)
+				var zone := thickness()
+				var s_ahead := STEP
+				while s_ahead <= zone:
+					var ahead := _hit(p + Vector2.from_angle(d) * s_ahead, ci, c)
+					if ahead.x >= 0 and cracks[ahead.x].pts.size() >= 2:
+						var o := cracks[ahead.x]
+						var k := clampi(ahead.y, 1, o.pts.size() - 1)
+						var along := (o.pts[k] - o.pts[k - 1]).angle()
+						var square := along + PI * 0.5
+						if absf(angle_difference(d, square)) > PI * 0.5:
+							square += PI
+						d = lerp_angle(d, square, 1.0 - (s_ahead - STEP) / zone)
+						break
+					s_ahead += STEP
 			c.dir = d
 			q = p + Vector2.from_angle(c.dir) * STEP
 		if not paved(q) or patch_of[cell_index(q)] != patch_of[cell_index(p)] and c.kind != Kind.SEAM:
@@ -959,8 +967,7 @@ func _grow(ci: int, dist: float) -> void:
 			var hit := _hit(q, ci, c)
 			if hit.x >= 0:
 				var other := cracks[hit.x]
-				var r := _rng.randf()
-				if r < t_junctions or c.deflects >= 3 or other.pts.size() < 2:
+				if _rng.randf() >= stop_short or other.pts.size() < 2:
 					# Runs into it and stops at a T: the other crack's free edge takes the stress off. It joins at the
 					# nearest point of the other crack, so the last step meets it square on.
 					var hk := mini(hit.y, other.pts.size() - 1)
@@ -973,30 +980,33 @@ func _grow(ci: int, dist: float) -> void:
 					_append(c, ci, q)
 					c.growing = false
 					break
-				if r < t_junctions + stop_short:
-					# Dies out just short of it, in the other crack's stress shadow.
-					c.growing = false
-					break
-				# Turns and runs alongside it for a while before joining.
-				var k := clampi(hit.y, 1, other.pts.size() - 1)
-				var along := (other.pts[k] - other.pts[k - 1]).angle()
-				if absf(angle_difference(c.dir, along)) > PI * 0.5:
-					along += PI
-				c.dir = lerp_angle(c.dir, along, 0.7)
-				c.pref = along
-				c.deflects += 1
-				continue
+				# Dies out just short of it, in the other crack's stress shadow.
+				c.growing = false
+				break
 		_append(c, ci, q)
 		# Now and then a side branch splits off (more as the binder gets brittle).
 		if c.guide.is_empty() and branching > 0.0 and c.kind != Kind.SLIPPAGE \
 				and _rng.randf() < branching * STEP * (0.5 + c.local * 0.5):
 			var side := 1.0 if _rng.randf() < 0.5 else -1.0
-			var b := _crack(c.kind, q, c.dir + side * _rng.randf_range(0.5, 1.0), c.pref + side * 0.6,
-				c.wander * 1.5, c.steer * 0.5, c.speed * 0.8, _rng.randf_range(0.15, 0.9), c.widen * 0.7)
+			var heading := c.dir + side * _rng.randf_range(0.5, 1.0)
+			var pref := c.pref + side * 0.6
+			if _shrinkage(c.kind):
+				# A shrinkage crack starting from the side of another leaves it at right angles (Shorlin et al. 1999:
+				# junctions 90 +- 15 degrees), where the stress left runs along the parent.
+				heading = c.dir + side * (PI * 0.5 + _rng.randfn(0.0, BRANCH_SCATTER))
+				pref = heading
+			var b := _crack(c.kind, q, heading, pref, c.wander * 1.5, c.steer * 0.5, c.speed * 0.8,
+				_rng.randf_range(0.15, 0.9), c.widen * 0.7)
 			cracks[b].parent = ci
 			c = cracks[ci]
 		if c.length >= c.max_len:
 			c.growing = false
+
+
+## Cracks the cold opens (shrinkage of the layer), as opposed to wheel fatigue and slippage.
+func _shrinkage(kind: int) -> bool:
+	return kind == Kind.TRANSVERSE or kind == Kind.JOINT or kind == Kind.BLOCK or kind == Kind.REFLECTION \
+		or kind == Kind.SEAM
 
 
 func _append(c: Crack, ci: int, q: Vector2) -> void:

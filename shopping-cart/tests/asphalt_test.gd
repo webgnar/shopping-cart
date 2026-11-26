@@ -254,9 +254,6 @@ func _run() -> void:
 	mx.advance_to(18.0)
 	var on_crack := 0.0
 	var n_on := 0
-	var ends := 0
-	var joined := 0
-	var t_angle := 0.0
 	var branches := 0
 	for c in mx.cracks:
 		if not c.alive or c.guide.size() > 0 or c.kind == K.SLIPPAGE:
@@ -266,22 +263,6 @@ func _run() -> void:
 			n_on += 1
 		if c.parent >= 0:
 			branches += 1
-		if not c.growing and c.length < c.max_len - 0.03 and c.pts.size() > 2:
-			ends += 1
-			var tip := c.pts[c.pts.size() - 1]
-			for o in mx.cracks:
-				if o != c and o.alive and o.pts.size() > 1 and _near_line(o.pts, tip, 0.006):
-					joined += 1
-					# the angle they meet at: the last 7.5 cm of this crack against the other one there
-					var k := 1
-					for j in range(1, o.pts.size()):
-						if o.pts[j].distance_squared_to(tip) < o.pts[k].distance_squared_to(tip):
-							k = j
-					var a := (tip - c.pts[maxi(0, c.pts.size() - 4)]).angle()
-					var b := (o.pts[k] - o.pts[k - 1]).angle()
-					var ang := absf(angle_difference(a, b))
-					t_angle += rad_to_deg(minf(ang, PI - ang))
-					break
 	var anywhere := 0.0
 	var rng := RandomNumberGenerator.new()
 	for i in 4000:
@@ -290,10 +271,24 @@ func _run() -> void:
 	anywhere /= 4000.0
 	_check("cracks follow the weaker mix", on_crack > anywhere + 0.03, "%.2f on cracks, %.2f anywhere" % [on_crack, anywhere])
 	_check("cracks branch", branches > 5, "%d branches" % branches)
-	var share := float(joined) / maxf(ends, 1)
-	var mean_angle := t_angle / maxf(joined, 1)
-	_check("cracks meet about square on", mean_angle > 65.0, "mean %.0f degrees at %d junctions" % [mean_angle, joined])
-	_check("not every crack ends at a T", share > 0.3 and share < 0.9, "%d of %d ends join another crack" % [joined, ends])
+	# Junctions over four seeds. Shrinkage cracks (transverse, lane joint) meet at 90 +- 15 degrees (Shorlin et
+	# al. 1999); fatigue pieces are "many-sided, sharp-angled" (LTPP DIM, ACP 1), with no measured angle to hold them to.
+	var jn := _junctions(mx)
+	for sd in [2, 3, 4]:
+		var more := _sim([], sd)
+		more.advance_to(24.0)
+		var m2 := _junctions(more)
+		for key in ["shrink", "fatigue", "other"]:
+			jn[key].append_array(m2[key])
+		jn.seam += m2.seam
+		jn.ends += m2.ends
+		more.free()
+	var shrink_mean := _mean(jn.shrink)
+	_check("shrinkage cracks meet about square on", jn.shrink.size() >= 20 and shrink_mean > 75.0,
+		"mean %.0f degrees at %d junctions (fatigue cracks: %.0f at %d)" % [shrink_mean, jn.shrink.size(), _mean(jn.fatigue), jn.fatigue.size()])
+	var joined: int = jn.shrink.size() + jn.fatigue.size() + jn.other.size() + jn.seam
+	var share := float(joined) / maxf(jn.ends, 1)
+	_check("not every crack ends at a T", share > 0.3 and share < 0.9, "%d of %d ends join another crack" % [joined, jn.ends])
 	var wide_far := _sim()
 	# A slippery base (a quarter of the cohesion and friction): the cracks space out about 4x wider.
 	wide_far.buildup = wide_far.pavement().duplicate(true)
@@ -399,6 +394,47 @@ func _run() -> void:
 	print("\n%s: %d failure(s)" % ["FAIL" if failures else "PASS", failures])
 	quit(1 if failures else 0)
 
+
+
+## Angles (degrees) at which freely growing cracks meet another crack: shrinkage cracks (transverse, lane joint),
+## fatigue cracks and the rest (edge); lane joint pieces meeting end on (`seam`); and how many crack ends there are.
+func _junctions(sim: AsphaltSim) -> Dictionary:
+	var out := { shrink = [], fatigue = [], other = [], seam = 0, ends = 0 }
+	for c in sim.cracks:
+		if not c.alive or c.guide.size() > 0 or c.kind == K.SLIPPAGE:
+			continue
+		if c.growing or c.length >= c.max_len - 0.03 or c.pts.size() <= 2:
+			continue
+		out.ends += 1
+		var tip := c.pts[c.pts.size() - 1]
+		for o in sim.cracks:
+			if o != c and o.alive and o.pts.size() > 1 and _near_line(o.pts, tip, 0.006):
+				# the angle they meet at: the last 7.5 cm of this crack against the other one there
+				var k := 1
+				for j in range(1, o.pts.size()):
+					if o.pts[j].distance_squared_to(tip) < o.pts[k].distance_squared_to(tip):
+						k = j
+				var a := (tip - c.pts[maxi(0, c.pts.size() - 4)]).angle()
+				var b := (o.pts[k] - o.pts[k - 1]).angle()
+				var ang := absf(angle_difference(a, b))
+				var deg := rad_to_deg(minf(ang, PI - ang))
+				if c.kind == K.JOINT and o.kind == K.JOINT:
+					out.seam += 1        # two pieces of the paving seam meeting end on: one crack, not a junction
+				elif c.kind == K.WHEELPATH or c.kind == K.FATIGUE:
+					out.fatigue.append(deg)
+				elif c.kind == K.TRANSVERSE or c.kind == K.JOINT:
+					out.shrink.append(deg)
+				else:
+					out.other.append(deg)
+				break
+	return out
+
+
+func _mean(v: Array) -> float:
+	var m := 0.0
+	for x in v:
+		m += x
+	return m / maxf(v.size(), 1)
 
 func _sim_at(t: float) -> AsphaltSim:
 	var s := _sim()

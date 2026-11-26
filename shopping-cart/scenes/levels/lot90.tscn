@@ -10,7 +10,6 @@
 [ext_resource type="Image" path="res://assets/asphalt/baked/lot90/section_0_0_height.res" id="7_isgui"]
 [ext_resource type="Shader" path="res://assets/asphalt/asphalt_base.gdshader" id="8_hg7t3"]
 [ext_resource type="PackedScene" path="res://scenes/curb/curb.tscn" id="9_0d85t"]
-[ext_resource type="Texture2D" path="res://assets/asphalt/textures/chip_seal.png" id="9_igrkg"]
 [ext_resource type="Texture2D" path="res://assets/asphalt/textures/fresh_hotmix.png" id="10_7xsct"]
 [ext_resource type="PackedScene" path="res://scenes/lot_gen/island_fill.tscn" id="11_io5lc"]
 [ext_resource type="Texture2D" path="res://assets/asphalt/baked/lot90/section_0_1_color.webp" id="12_py6fn"]
@@ -68,7 +67,7 @@
 material = ExtResource("3_sidewalk")
 size = Vector2(400, 400)
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_8s6xl"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fuw4i"]
 resource_local_to_scene = true
 shader = ExtResource("8_hg7t3")
 shader_parameter/height_mode = null
@@ -76,7 +75,6 @@ shader_parameter/size_m = null
 shader_parameter/surface_age = null
 shader_parameter/ravel = null
 shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
 shader_parameter/wheel_paths = null
 shader_parameter/lane_joint = null
 shader_parameter/shoulder = null
@@ -85,10 +83,6 @@ shader_parameter/age_scale = null
 shader_parameter/fresh_color = null
 shader_parameter/aged_color = null
 shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
 shader_parameter/fresh_texture = ExtResource("10_7xsct")
 shader_parameter/fresh_texture_m = null
 shader_parameter/use_fresh_texture = null
@@ -98,7 +92,7 @@ size = Vector2(10, 10)
 subdivide_width = 499
 subdivide_depth = 499
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_isgui"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8s6xl"]
 resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
@@ -108,36 +102,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_py6fn"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_isgui"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_py6fn"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_tc87a"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_batrt"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -146,36 +135,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_6dix5"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_batrt"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6dix5"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_rt7yt"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_yh7my"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -184,36 +168,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_8orgn"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_yh7my"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8orgn"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_tbs63"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ff7f4"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -222,36 +201,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_errjn"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_ff7f4"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_errjn"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_kxay2"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_uglg4"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -260,36 +234,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_njn31"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_uglg4"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_njn31"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_fcjkd"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_gpcrh"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -298,36 +267,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_gljr0"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_gpcrh"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gljr0"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ymd30"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_hyun1"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -336,36 +300,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_cmud2"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_hyun1"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cmud2"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_c3xxy"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_aqkug"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -374,36 +333,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_7qeo4"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_aqkug"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_7qeo4"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sxm0m"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_lubsw"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -412,36 +366,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_bsd0o"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_lubsw"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bsd0o"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hihv5"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_4wj0c"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -450,36 +399,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_kb4pp"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_4wj0c"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_kb4pp"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_0gcj8"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_kdsal"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -488,36 +432,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_jjqwj"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_kdsal"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_jjqwj"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_knoti"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_xeaek"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -526,36 +465,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_4uiox"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_xeaek"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4uiox"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_s6nls"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_oe5ul"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -564,36 +498,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_q0bm0"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_oe5ul"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_q0bm0"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hku2u"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_g5tvu"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -602,36 +531,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_86ak5"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_g5tvu"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_86ak5"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_apa1e"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_j7bla"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -640,36 +564,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_f7xyn"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_j7bla"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_f7xyn"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_rmkdb"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_1dvmp"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -678,36 +597,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_0wc8i"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_1dvmp"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0wc8i"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_eo34y"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_bd8w0"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -716,36 +630,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_4kous"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_bd8w0"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_4kous"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_r56m4"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_qyjaj"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -754,36 +663,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_p7wg8"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_qyjaj"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_p7wg8"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_3nik2"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_k5gtv"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -792,36 +696,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_740m2"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_k5gtv"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_740m2"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_s7ia2"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_irhre"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -830,36 +729,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_8gpxm"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_irhre"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8gpxm"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_jxxdg"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_30wd6"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -868,36 +762,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_703qo"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_30wd6"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_703qo"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_g07lf"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_mmcjm"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -906,36 +795,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_dxjdj"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_mmcjm"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dxjdj"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_a1u1x"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_hgrgi"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -944,36 +828,31 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_cj47a"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_hgrgi"]
 resource_local_to_scene = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cj47a"]
+resource_local_to_scene = true
+shader = ExtResource("8_hg7t3")
+shader_parameter/height_mode = null
+shader_parameter/size_m = null
+shader_parameter/surface_age = null
+shader_parameter/ravel = null
+shader_parameter/rut_depth = null
+shader_parameter/wheel_paths = null
+shader_parameter/lane_joint = null
+shader_parameter/shoulder = null
+shader_parameter/seed = null
+shader_parameter/age_scale = null
+shader_parameter/fresh_color = null
+shader_parameter/aged_color = null
+shader_parameter/stone_color = null
+shader_parameter/fresh_texture = ExtResource("10_7xsct")
+shader_parameter/fresh_texture_m = null
+shader_parameter/use_fresh_texture = null
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_a87yo"]
 resource_local_to_scene = true
-shader = ExtResource("8_hg7t3")
-shader_parameter/height_mode = null
-shader_parameter/size_m = null
-shader_parameter/surface_age = null
-shader_parameter/ravel = null
-shader_parameter/rut_depth = null
-shader_parameter/chip_seal = null
-shader_parameter/wheel_paths = null
-shader_parameter/lane_joint = null
-shader_parameter/shoulder = null
-shader_parameter/seed = null
-shader_parameter/age_scale = null
-shader_parameter/fresh_color = null
-shader_parameter/aged_color = null
-shader_parameter/stone_color = null
-shader_parameter/chip_color = null
-shader_parameter/chip_texture = ExtResource("9_igrkg")
-shader_parameter/chip_texture_m = null
-shader_parameter/use_chip_texture = null
-shader_parameter/fresh_texture = ExtResource("10_7xsct")
-shader_parameter/fresh_texture_m = null
-shader_parameter/use_fresh_texture = null
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_iiba1"]
-resource_local_to_scene = true
 render_priority = 0
 shader = ExtResource("19_8cfmg")
 shader_parameter/height_texel = null
@@ -982,7 +861,7 @@ shader_parameter/exaggeration = null
 shader_parameter/detail_bump = null
 shader_parameter/roughness = null
 
-[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_va8l8"]
+[sub_resource type="HeightMapShape3D" id="HeightMapShape3D_iiba1"]
 resource_local_to_scene = true
 
 [sub_resource type="Curve3D" id="Curve3D_qyjaj"]
@@ -1045,14 +924,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(2.8016005, 7.9782, 8.288, 7.9782)
 
 [node name="Base" parent="LotGenerator/Sections/Section_0_0/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_8s6xl")
+material = SubResource("ShaderMaterial_fuw4i")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_0_0" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_isgui")
+surface_material_override/0 = SubResource("ShaderMaterial_8s6xl")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_0_0/Body" index="0"]
-shape = SubResource("HeightMapShape3D_py6fn")
+shape = SubResource("HeightMapShape3D_isgui")
 
 [node name="Section_0_1" parent="LotGenerator/Sections" index="1" unique_id=803232013 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, -5)
@@ -1067,14 +946,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array()
 
 [node name="Base" parent="LotGenerator/Sections/Section_0_1/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_tc87a")
+material = SubResource("ShaderMaterial_py6fn")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_0_1" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_batrt")
+surface_material_override/0 = SubResource("ShaderMaterial_tc87a")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_0_1/Body" index="0"]
-shape = SubResource("HeightMapShape3D_6dix5")
+shape = SubResource("HeightMapShape3D_batrt")
 
 [node name="Section_0_2" parent="LotGenerator/Sections" index="2" unique_id=2089339057 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, 5)
@@ -1089,14 +968,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array()
 
 [node name="Base" parent="LotGenerator/Sections/Section_0_2/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_rt7yt")
+material = SubResource("ShaderMaterial_6dix5")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_0_2" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_yh7my")
+surface_material_override/0 = SubResource("ShaderMaterial_rt7yt")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_0_2/Body" index="0"]
-shape = SubResource("HeightMapShape3D_8orgn")
+shape = SubResource("HeightMapShape3D_yh7my")
 
 [node name="Section_0_3" parent="LotGenerator/Sections" index="3" unique_id=1055093401 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 5, 0, 15)
@@ -1111,14 +990,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(7.1983995, 7.9782, 1.7119999, 7.9782)
 
 [node name="Base" parent="LotGenerator/Sections/Section_0_3/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_tbs63")
+material = SubResource("ShaderMaterial_8orgn")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_0_3" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_ff7f4")
+surface_material_override/0 = SubResource("ShaderMaterial_tbs63")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_0_3/Body" index="0"]
-shape = SubResource("HeightMapShape3D_errjn")
+shape = SubResource("HeightMapShape3D_ff7f4")
 
 [node name="Section_1_0" parent="LotGenerator/Sections" index="4" unique_id=875764818 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 15, 0, -15)
@@ -1133,14 +1012,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(2.8016005, 0.56900024, 8.288, 0.56900024, 2.8016005, 3.1597996, 8.288, 3.1597996, 2.8016005, 5.7506, 8.288, 5.7506, 2.8016005, 8.3414, 8.288, 8.3414)
 
 [node name="Base" parent="LotGenerator/Sections/Section_1_0/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_kxay2")
+material = SubResource("ShaderMaterial_errjn")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_1_0" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_uglg4")
+surface_material_override/0 = SubResource("ShaderMaterial_kxay2")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_1_0/Body" index="0"]
-shape = SubResource("HeightMapShape3D_njn31")
+shape = SubResource("HeightMapShape3D_uglg4")
 
 [node name="Section_1_1" parent="LotGenerator/Sections" index="5" unique_id=1598795908 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 15, 0, -5)
@@ -1155,14 +1034,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(5.4864, 0.56900024, 0, 0.56900024, 5.4864, 3.1597996, 0, 3.1597996, 5.4864, 5.7506, 0, 5.7506, 5.4864, 8.3414, 0, 8.3414)
 
 [node name="Base" parent="LotGenerator/Sections/Section_1_1/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_fcjkd")
+material = SubResource("ShaderMaterial_njn31")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_1_1" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_gpcrh")
+surface_material_override/0 = SubResource("ShaderMaterial_fcjkd")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_1_1/Body" index="0"]
-shape = SubResource("HeightMapShape3D_gljr0")
+shape = SubResource("HeightMapShape3D_gpcrh")
 
 [node name="Section_1_2" parent="LotGenerator/Sections" index="6" unique_id=853275408 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 15, 0, 5)
@@ -1177,14 +1056,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(4.5136, 0.56900024, 10, 0.56900024, 4.5136, 3.1597996, 10, 3.1597996, 4.5136, 5.7506, 10, 5.7506, 4.5136, 8.3414, 10, 8.3414)
 
 [node name="Base" parent="LotGenerator/Sections/Section_1_2/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_ymd30")
+material = SubResource("ShaderMaterial_gljr0")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_1_2" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_hyun1")
+surface_material_override/0 = SubResource("ShaderMaterial_ymd30")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_1_2/Body" index="0"]
-shape = SubResource("HeightMapShape3D_cmud2")
+shape = SubResource("HeightMapShape3D_hyun1")
 
 [node name="Section_1_3" parent="LotGenerator/Sections" index="7" unique_id=1630594475 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 15, 0, 15)
@@ -1199,14 +1078,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(7.1983995, 0.56900024, 1.7119999, 0.56900024, 7.1983995, 3.1597996, 1.7119999, 3.1597996, 7.1983995, 5.7506, 1.7119999, 5.7506, 7.1983995, 8.3414, 1.7119999, 8.3414)
 
 [node name="Base" parent="LotGenerator/Sections/Section_1_3/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_c3xxy")
+material = SubResource("ShaderMaterial_cmud2")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_1_3" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_aqkug")
+surface_material_override/0 = SubResource("ShaderMaterial_c3xxy")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_1_3/Body" index="0"]
-shape = SubResource("HeightMapShape3D_7qeo4")
+shape = SubResource("HeightMapShape3D_aqkug")
 
 [node name="Section_2_0" parent="LotGenerator/Sections" index="8" unique_id=199180219 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 25, 0, -15)
@@ -1221,14 +1100,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(2.8016005, 0.9321995, 8.288, 0.9321995, 2.8016005, 3.5230007, 8.288, 3.5230007, 2.8016005, 6.1138, 8.288, 6.1138, 2.8016005, 8.704599, 8.288, 8.704599)
 
 [node name="Base" parent="LotGenerator/Sections/Section_2_0/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_sxm0m")
+material = SubResource("ShaderMaterial_7qeo4")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_2_0" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_lubsw")
+surface_material_override/0 = SubResource("ShaderMaterial_sxm0m")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_2_0/Body" index="0"]
-shape = SubResource("HeightMapShape3D_bsd0o")
+shape = SubResource("HeightMapShape3D_lubsw")
 
 [node name="Section_2_1" parent="LotGenerator/Sections" index="9" unique_id=1628233357 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 25, 0, -5)
@@ -1243,14 +1122,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(5.4864, 0.9321995, 0, 0.9321995, 5.4864, 3.5230007, 0, 3.5230007, 5.4864, 6.1138, 0, 6.1138, 5.4864, 8.704599, 0, 8.704599)
 
 [node name="Base" parent="LotGenerator/Sections/Section_2_1/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_hihv5")
+material = SubResource("ShaderMaterial_bsd0o")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_2_1" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_4wj0c")
+surface_material_override/0 = SubResource("ShaderMaterial_hihv5")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_2_1/Body" index="0"]
-shape = SubResource("HeightMapShape3D_kb4pp")
+shape = SubResource("HeightMapShape3D_4wj0c")
 
 [node name="Section_2_2" parent="LotGenerator/Sections" index="10" unique_id=2063611687 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 25, 0, 5)
@@ -1265,14 +1144,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(4.5136, 0.9321995, 10, 0.9321995, 4.5136, 3.5230007, 10, 3.5230007, 4.5136, 6.1138, 10, 6.1138, 4.5136, 8.704599, 10, 8.704599)
 
 [node name="Base" parent="LotGenerator/Sections/Section_2_2/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_0gcj8")
+material = SubResource("ShaderMaterial_kb4pp")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_2_2" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_kdsal")
+surface_material_override/0 = SubResource("ShaderMaterial_0gcj8")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_2_2/Body" index="0"]
-shape = SubResource("HeightMapShape3D_jjqwj")
+shape = SubResource("HeightMapShape3D_kdsal")
 
 [node name="Section_2_3" parent="LotGenerator/Sections" index="11" unique_id=1820436791 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 25, 0, 15)
@@ -1287,14 +1166,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(7.1983995, 0.9321995, 1.7119999, 0.9321995, 7.1983995, 3.5230007, 1.7119999, 3.5230007, 7.1983995, 6.1138, 1.7119999, 6.1138, 7.1983995, 8.704599, 1.7119999, 8.704599)
 
 [node name="Base" parent="LotGenerator/Sections/Section_2_3/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_knoti")
+material = SubResource("ShaderMaterial_jjqwj")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_2_3" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_xeaek")
+surface_material_override/0 = SubResource("ShaderMaterial_knoti")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_2_3/Body" index="0"]
-shape = SubResource("HeightMapShape3D_4uiox")
+shape = SubResource("HeightMapShape3D_xeaek")
 
 [node name="Section_3_0" parent="LotGenerator/Sections" index="12" unique_id=20398708 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 35, 0, -15)
@@ -1309,14 +1188,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(2.8016005, 1.2954006, 8.288, 1.2954006, 2.8016005, 3.8862, 8.288, 3.8862, 2.8016005, 6.477001, 8.288, 6.477001, 2.8016005, 9.067799, 8.288, 9.067799)
 
 [node name="Base" parent="LotGenerator/Sections/Section_3_0/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_s6nls")
+material = SubResource("ShaderMaterial_4uiox")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_3_0" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_oe5ul")
+surface_material_override/0 = SubResource("ShaderMaterial_s6nls")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_3_0/Body" index="0"]
-shape = SubResource("HeightMapShape3D_q0bm0")
+shape = SubResource("HeightMapShape3D_oe5ul")
 
 [node name="Section_3_1" parent="LotGenerator/Sections" index="13" unique_id=936012623 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 35, 0, -5)
@@ -1331,14 +1210,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(5.4864, 1.2954006, 0, 1.2954006, 5.4864, 3.8862, 0, 3.8862, 5.4864, 6.477001, 0, 6.477001, 5.4864, 9.067799, 0, 9.067799)
 
 [node name="Base" parent="LotGenerator/Sections/Section_3_1/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_hku2u")
+material = SubResource("ShaderMaterial_q0bm0")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_3_1" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_g5tvu")
+surface_material_override/0 = SubResource("ShaderMaterial_hku2u")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_3_1/Body" index="0"]
-shape = SubResource("HeightMapShape3D_86ak5")
+shape = SubResource("HeightMapShape3D_g5tvu")
 
 [node name="Section_3_2" parent="LotGenerator/Sections" index="14" unique_id=2076374130 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 35, 0, 5)
@@ -1353,14 +1232,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(4.5136, 1.2954006, 10, 1.2954006, 4.5136, 3.8862, 10, 3.8862, 4.5136, 6.477001, 10, 6.477001, 4.5136, 9.067799, 10, 9.067799)
 
 [node name="Base" parent="LotGenerator/Sections/Section_3_2/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_apa1e")
+material = SubResource("ShaderMaterial_86ak5")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_3_2" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_j7bla")
+surface_material_override/0 = SubResource("ShaderMaterial_apa1e")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_3_2/Body" index="0"]
-shape = SubResource("HeightMapShape3D_f7xyn")
+shape = SubResource("HeightMapShape3D_j7bla")
 
 [node name="Section_3_3" parent="LotGenerator/Sections" index="15" unique_id=1996222435 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 35, 0, 15)
@@ -1375,14 +1254,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(7.1983995, 1.2954006, 1.7119999, 1.2954006, 7.1983995, 3.8862, 1.7119999, 3.8862, 7.1983995, 6.477001, 1.7119999, 6.477001, 7.1983995, 9.067799, 1.7119999, 9.067799)
 
 [node name="Base" parent="LotGenerator/Sections/Section_3_3/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_rmkdb")
+material = SubResource("ShaderMaterial_f7xyn")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_3_3" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_1dvmp")
+surface_material_override/0 = SubResource("ShaderMaterial_rmkdb")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_3_3/Body" index="0"]
-shape = SubResource("HeightMapShape3D_0wc8i")
+shape = SubResource("HeightMapShape3D_1dvmp")
 
 [node name="Section_4_0" parent="LotGenerator/Sections" index="16" unique_id=2003002636 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 45, 0, -15)
@@ -1397,14 +1276,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(2.8016005, 1.6585999, 8.288, 1.6585999, 2.8016005, 4.249401, 8.288, 4.249401, 2.8016005, 6.8401985, 8.288, 6.8401985, 2.8016005, 9.431, 8.288, 9.431)
 
 [node name="Base" parent="LotGenerator/Sections/Section_4_0/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_eo34y")
+material = SubResource("ShaderMaterial_0wc8i")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_4_0" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_bd8w0")
+surface_material_override/0 = SubResource("ShaderMaterial_eo34y")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_4_0/Body" index="0"]
-shape = SubResource("HeightMapShape3D_4kous")
+shape = SubResource("HeightMapShape3D_bd8w0")
 
 [node name="Section_4_1" parent="LotGenerator/Sections" index="17" unique_id=2073102350 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 45, 0, -5)
@@ -1419,14 +1298,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(5.4864, 1.6585999, 0, 1.6585999, 5.4864, 4.249401, 0, 4.249401, 5.4864, 6.8401985, 0, 6.8401985, 5.4864, 9.431, 0, 9.431)
 
 [node name="Base" parent="LotGenerator/Sections/Section_4_1/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_r56m4")
+material = SubResource("ShaderMaterial_4kous")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_4_1" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_qyjaj")
+surface_material_override/0 = SubResource("ShaderMaterial_r56m4")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_4_1/Body" index="0"]
-shape = SubResource("HeightMapShape3D_p7wg8")
+shape = SubResource("HeightMapShape3D_qyjaj")
 
 [node name="Section_4_2" parent="LotGenerator/Sections" index="18" unique_id=2035033793 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 45, 0, 5)
@@ -1441,14 +1320,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(4.5136, 1.6585999, 10, 1.6585999, 4.5136, 4.249401, 10, 4.249401, 4.5136, 6.8401985, 10, 6.8401985, 4.5136, 9.431, 10, 9.431)
 
 [node name="Base" parent="LotGenerator/Sections/Section_4_2/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_3nik2")
+material = SubResource("ShaderMaterial_p7wg8")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_4_2" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_k5gtv")
+surface_material_override/0 = SubResource("ShaderMaterial_3nik2")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_4_2/Body" index="0"]
-shape = SubResource("HeightMapShape3D_740m2")
+shape = SubResource("HeightMapShape3D_k5gtv")
 
 [node name="Section_4_3" parent="LotGenerator/Sections" index="19" unique_id=1507083138 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 45, 0, 15)
@@ -1463,14 +1342,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(7.1983995, 1.6585999, 1.7119999, 1.6585999, 7.1983995, 4.249401, 1.7119999, 4.249401, 7.1983995, 6.8401985, 1.7119999, 6.8401985, 7.1983995, 9.431, 1.7119999, 9.431)
 
 [node name="Base" parent="LotGenerator/Sections/Section_4_3/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_s7ia2")
+material = SubResource("ShaderMaterial_740m2")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_4_3" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_irhre")
+surface_material_override/0 = SubResource("ShaderMaterial_s7ia2")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_4_3/Body" index="0"]
-shape = SubResource("HeightMapShape3D_8gpxm")
+shape = SubResource("HeightMapShape3D_irhre")
 
 [node name="Section_5_0" parent="LotGenerator/Sections" index="20" unique_id=1699827663 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 55, 0, -15)
@@ -1485,14 +1364,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(2.8016005, 2.021801, 8.288, 2.021801)
 
 [node name="Base" parent="LotGenerator/Sections/Section_5_0/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_jxxdg")
+material = SubResource("ShaderMaterial_8gpxm")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_5_0" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_30wd6")
+surface_material_override/0 = SubResource("ShaderMaterial_jxxdg")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_5_0/Body" index="0"]
-shape = SubResource("HeightMapShape3D_703qo")
+shape = SubResource("HeightMapShape3D_30wd6")
 
 [node name="Section_5_1" parent="LotGenerator/Sections" index="21" unique_id=1018811451 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 55, 0, -5)
@@ -1507,14 +1386,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array()
 
 [node name="Base" parent="LotGenerator/Sections/Section_5_1/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_g07lf")
+material = SubResource("ShaderMaterial_703qo")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_5_1" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_mmcjm")
+surface_material_override/0 = SubResource("ShaderMaterial_g07lf")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_5_1/Body" index="0"]
-shape = SubResource("HeightMapShape3D_dxjdj")
+shape = SubResource("HeightMapShape3D_mmcjm")
 
 [node name="Section_5_2" parent="LotGenerator/Sections" index="22" unique_id=1963908588 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 55, 0, 5)
@@ -1529,14 +1408,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array()
 
 [node name="Base" parent="LotGenerator/Sections/Section_5_2/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_a1u1x")
+material = SubResource("ShaderMaterial_dxjdj")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_5_2" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_hgrgi")
+surface_material_override/0 = SubResource("ShaderMaterial_a1u1x")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_5_2/Body" index="0"]
-shape = SubResource("HeightMapShape3D_cj47a")
+shape = SubResource("HeightMapShape3D_hgrgi")
 
 [node name="Section_5_3" parent="LotGenerator/Sections" index="23" unique_id=940476514 instance=ExtResource("5_section")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 55, 0, 15)
@@ -1551,14 +1430,14 @@ traffic = 0.35
 paint_lines = PackedVector2Array(7.1983995, 2.021801, 1.7119999, 2.021801)
 
 [node name="Base" parent="LotGenerator/Sections/Section_5_3/ColorViewport" index="0"]
-material = SubResource("ShaderMaterial_a87yo")
+material = SubResource("ShaderMaterial_cj47a")
 
 [node name="Surface" parent="LotGenerator/Sections/Section_5_3" index="2"]
 mesh = SubResource("PlaneMesh_surface")
-surface_material_override/0 = SubResource("ShaderMaterial_iiba1")
+surface_material_override/0 = SubResource("ShaderMaterial_a87yo")
 
 [node name="Shape" parent="LotGenerator/Sections/Section_5_3/Body" index="0"]
-shape = SubResource("HeightMapShape3D_va8l8")
+shape = SubResource("HeightMapShape3D_iiba1")
 
 [node name="ParkingBlock" parent="LotGenerator/WheelStops" index="0" unique_id=1662605783 instance=ExtResource("7_agv5t")]
 transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 9.2736, 0, -17.6784)
