@@ -16,6 +16,8 @@ extends CanvasLayer
 @onready var _track: Control = %Track
 @onready var _force_sign: Control = %ForceSign
 @onready var _force_view: ForceDiagram = %ForceView
+@onready var _graph_sign: Control = %GraphSign
+@onready var _graphs: TelemetryGraph = %Graphs
 @onready var _markers := {"L": %LeftHand, "R": %RightHand}
 
 const BAR_HALF := 0.26   ## m: half the handlebar's width, the track's half length
@@ -25,7 +27,7 @@ const BAR_HALF := 0.26   ## m: half the handlebar's width, the track's half leng
 }
 
 
-## F cycles the handle-forces sign: both views, side, top, hidden.
+## F cycles the handle-forces sign: both views, side, top, hidden. G shows or hides the graphs (telemetry_graph.gd).
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("forces"):
 		if not _force_sign.visible:
@@ -38,11 +40,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			_force_sign.visible = false
 		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("graphs"):
+		_graph_sign.visible = not _graph_sign.visible
+		_graphs.clear()
+		get_viewport().set_input_as_handled()
 
 
 func show_cart(cart: ShoppingCart) -> void:
 	if _force_sign.visible:
 		_force_view.show_cart(cart)
+	if _graph_sign.visible:
+		_graphs.show_cart(cart)
 	var v := cart.frame_velocity()
 	_speed.text = "%d" % roundi(Vector2(v.x, v.z).length() * 3.6)
 	_turn.text = "%d°/s" % roundi(rad_to_deg(cart.frame_spin()))

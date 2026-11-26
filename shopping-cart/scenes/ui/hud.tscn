@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/ui/force_diagram.gd" id="4_forces"]
 [ext_resource type="Texture2D" path="res://assets/ui/cart_side.png" id="5_side"]
 [ext_resource type="Texture2D" path="res://assets/ui/cart_top.png" id="6_top"]
+[ext_resource type="Script" path="res://scripts/ui/telemetry_graph.gd" id="7_graph"]
 
 [sub_resource type="SystemFont" id="SystemFont_cms"]
 font_names = PackedStringArray("Consolas", "DejaVu Sans Mono", "Monospace")
@@ -827,7 +828,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 9
-text = "P RESET · M MULTIPLAYER · F FORCES · F11 FULL SCREEN
+text = "P RESET · L NEXT LANE · M MULTIPLAYER · F FORCES · G GRAPHS · F11 FULL SCREEN
 CLICK TO LOOK · ESC TO RELEASE · SCROLL TO ZOOM"
 horizontal_alignment = 0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
@@ -873,3 +874,36 @@ mouse_filter = 2
 script = ExtResource("4_forces")
 side_texture = ExtResource("5_side")
 top_texture = ExtResource("6_top")
+
+[node name="GraphSign" type="PanelContainer" parent="Screen"]
+unique_name_in_owner = true
+visible = false
+offset_left = 16.0
+offset_top = 118.0
+offset_right = 16.0
+offset_bottom = 118.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_meter")
+
+[node name="Lines" type="VBoxContainer" parent="Screen/GraphSign"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Plaque" type="PanelContainer" parent="Screen/GraphSign/Lines"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_styles/panel = SubResource("Style_plaque")
+
+[node name="Caption" type="Label" parent="Screen/GraphSign/Lines/Plaque"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 8
+text = "LAST 5 SECONDS"
+horizontal_alignment = 1
+
+[node name="Graphs" type="Control" parent="Screen/GraphSign/Lines"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(400, 294)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("7_graph")
