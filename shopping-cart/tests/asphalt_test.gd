@@ -295,7 +295,10 @@ func _run() -> void:
 	_check("cracks meet about square on", mean_angle > 65.0, "mean %.0f degrees at %d junctions" % [mean_angle, joined])
 	_check("not every crack ends at a T", share > 0.3 and share < 0.9, "%d of %d ends join another crack" % [joined, ends])
 	var wide_far := _sim()
-	wide_far.base_shear_strength = 0.025e6     # a slippery base: the cracks space out 4x wider
+	# A slippery base (a quarter of the cohesion and friction): the cracks space out about 4x wider.
+	wide_far.buildup = wide_far.pavement().duplicate(true)
+	wide_far.buildup.base().cohesion *= 0.25
+	wide_far.buildup.base().friction_tan *= 0.25
 	wide_far.reset()
 	wide_far.advance_to(18.0)
 	_check("thermal spacing sets the cross cracks", wide_far.stats().by_kind[K.TRANSVERSE] < mx.stats().by_kind[K.TRANSVERSE],

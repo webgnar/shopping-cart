@@ -33,14 +33,17 @@ references. No big-bang refactor.
 |---|---|---|---|
 | Wheel paths | 4 paths at x 1.95, 3.75, 6.25, 8.05 m; Gaussian load, e-fold 0.35 m | Placeholder | LTPP fig. 136: 0.76 m bands centred 0.76 m and 2.9 m from the edge stripe (highway, 3.66 m lane). That's a survey band, not a load spread: lateral wander comes from MEPDG. Parking lots need their own (car traffic in aisles). |
 | Edge zone | fretting up to 0.6 m | Sourced | LTPP ACP 3: edge cracking within 0.6 m of the edge, unpaved shoulders only |
-| Thickness | 0.076 m | Sourced | c620 parking lot tables |
-| E (warm), nu, subgrade k | 3 GPa, 0.35, 60 MPa/m | Typical values | No citation yet. Li & Marasteanu MnROAD: E 16-17.6 GPa at -18 C |
-| Cold tensile strength | 3 MPa | Typical value | Li & Marasteanu: 2.25-2.40 MPa at -18 C (IDT) |
-| Base shear strength | 0.1 MPa | Typical value | Li & Marasteanu: unfrozen base cohesion 62-77 kPa; frozen likely 1.5-2x |
-| Slip length | sigma_t h / tau | Sourced | Li & Marasteanu eq. 4 (rho g tan phi term dropped: about 3 % at 3 in) |
-| Transverse spacing | 2.0 -> 0.6 slip lengths (4.6 -> 1.4 m) | Derived | Li & Marasteanu: 1.5 Xc (4.0 m at 3 in). The aged 0.6 has no reference |
-| Block size | 0.7 x 1.0 slip lengths (1.6 x 2.3 m, 3.6 m2) | Derived | LTPP ACP 2: blocks 0.1-10 m2, occurrence at least 15 m long. Consistent |
-| Crocodile cell | 0.7 x 1.0 Westergaard radius (0.15 x 0.21 m) | Derived | LTPP ACP 1: pieces usually under 0.3 m on the longest side. Consistent |
+| Build-up | `PavementBuildup` resource, layers top to bottom plus subgrade CBR; baseline `assets/asphalt/buildups/c620_table3b_cbr9.tres` | Sourced | c620 Table 3B: 3.0 in asphalt on 4.0 in untreated aggregate base, good subgrade CBR 9 |
+| Asphalt thickness | 0.0762 m (sum of the bound asphalt layers) | Sourced | c620 Table 3B |
+| Asphalt E (warm), nu | 3 GPa, 0.35 | Typical values | No citation yet. Li & Marasteanu MnROAD: E 16-17.6 GPa at -18 C (cold, not warm) |
+| Asphalt cold tensile strength, density | 2.27 MPa, 2289 kg/m3 | Sourced | Li & Marasteanu Table 4 (MnROAD cell 18, AC 20, -18 C) |
+| Aggregate base cohesion, friction | 62.1 kPa, tan phi 1.299 | Sourced | Li & Marasteanu Table 4 (Mn/DOT Class 6, room temperature; frozen base likely 1.5-2x the cohesion) |
+| Subgrade k | 146 MPa/m from CBR 9 (was 60 by hand) | Correlation | Mr = 2555 CBR^0.64 psi (MEPDG, one of several CBR correlations), k = Mr / 19.4 (AASHTO 1993, plate load). Primary texts not yet read. The aggregate base's support is left out |
+| Slip length | 2.69 m (was 2.28) | Sourced | Li & Marasteanu eq. 4, the full form: sigma_t / (C/h + rho g tan phi). Full-depth asphalt (no base) uses a 0.1 MPa placeholder |
+| Transverse spacing | 2.0 -> 0.6 slip lengths (5.4 -> 1.6 m) | Derived | Li & Marasteanu: 1.5 Xc (4.0 m). Their MnROAD cracks were closer than predicted. The aged 0.6 has no reference |
+| Block size | 0.7 x 1.0 slip lengths (1.9 x 2.7 m, 5.1 m2) | Derived | LTPP ACP 2: blocks 0.1-10 m2, occurrence at least 15 m long. Consistent |
+| Crocodile cell | 0.7 x 1.0 Westergaard radius (0.12 x 0.17 m; was 0.15 x 0.21) | Derived | LTPP ACP 1: pieces usually under 0.3 m on the longest side. Consistent. Westergaard is a slab-on-springs model, standing in for layered elastic analysis |
+| `structure` slider, `weak` noise | still in use | Placeholder | To be replaced by the build-up (thickness, compaction) and a subgrade CBR field across the plan |
 
 ### Ageing, fatigue, water
 
@@ -139,6 +142,8 @@ What this shows:
 
 ## Next steps
 
+0. Done (Nov 26 2026): the build-up as data (`PavementBuildup`, Table 3B baseline). Next: the cross-section drawing
+   as a slice of the build-up, then the build-up's variation across the plan (replacing `structure` and `weak`).
 1. Add a survey layer: `AsphaltSim` reports LTPP quantities by severity (m2 of fatigue and block, m of
    longitudinal 4a/4b and transverse, number and m2 of patches and potholes, rut depth). Lab panel and tests use
    it. No visual change; it is the measuring stick for everything after.

@@ -1860,3 +1860,21 @@ zack: a repaint repair, and spot sealcoat should cover the paint. `Action.REPAIN
 (an overlay does too); paint wear (`paint_left`) and its dirt count from it. Spot sealcoat no longer restripes.
 AsphaltCanvas draws the paint under everything, then again on top of the sealcoat spots, patches and fills made
 before the last repaint; `bake_height` paints over repairs no newer than `paint_born`. Lab: "Repaint stripes".
+
+## Asphalt: the pavement build-up as data, c620 Table 3B baseline (Nov 26 2026)
+
+zack: the project is about how a pavement's cross-section makes its surface. First step: the build-up is data.
+`PavementLayer` and `PavementBuildup` (scripts/asphalt/) hold the layers top to bottom (asphalt courses, untreated
+aggregate base) and the subgrade CBR; `AsphaltSim.buildup` takes one (empty: the baseline). Baseline
+`assets/asphalt/buildups/c620_table3b_cbr9.tres`: 3.0 in asphalt on 4.0 in aggregate base, CBR 9 (c620 Table 3B);
+asphalt cold strength and density and the base's cohesion and friction from Li & Marasteanu 2005 Table 4. The sim's
+loose Pavement exports (thickness, stiffness_warm, poisson, subgrade_modulus, base_shear_strength,
+tensile_strength) are gone.
+- Slip length is now Li & Marasteanu eq. 4 in full: 2.69 m (was 2.28). Subgrade k comes from CBR (Mr = 2555 CBR^0.64
+  psi, k = Mr / 19.4 pci): 146 MPa/m (was 60 by hand), so crocodile cells are 0.12 x 0.17 m (were 0.15 x 0.21).
+  Both still inside LTPP's ranges. docs/ASPHALT_SCIENCE.md has the sources and status of each number.
+- `structure` and `weak` stay until the build-up's variation across the plan replaces them.
+- Two asphalt_test checks fail with the sourced numbers and were left failing: "cracks meet about square on"
+  (62 deg, limit 65; the junction rule is a placeholder, Shorlin measures 90, and each input moves this
+  ~100-junction mean by 2-3 deg) and "30 years simulate quickly" (6.2-7.4 s against 4.7 s before, limit 4 s: the
+  smaller cells mean 5,247 network edges instead of 3,369). The baked lots (asphalt_lot, lot90) are not re-baked yet.

@@ -59,16 +59,11 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 @export_range(0.0, 2.0, 0.05) var ponding := 1.0       ## how much water sits in low spots (poor grading)
 
 @export_group("Pavement")
-## Real pavement numbers. The crack spacings and cell sizes are worked out from them (thermal_spacing(),
-## block_cell(), fatigue_cell()), as the spring-mesh experiment (CrackLattice) showed: a shrinking layer that slides
-## on its base cracks about every 2 x strength x thickness / base shear strength, and a wheel's bending breaks the
-## wheel path into cells about Westergaard's radius across.
-@export var thickness := 0.076                          ## m of asphalt (3 in over gravel: c620 parking lot tables)
-@export var stiffness_warm := 3.0e9                     ## Pa: asphalt's modulus on a mild day, when traffic bends it
-@export var poisson := 0.35
-@export var subgrade_modulus := 60.0e6                  ## Pa/m: how firm the ground is (CBR 3..9 is about 30..80e6)
-@export var base_shear_strength := 0.1e6                ## Pa: past this the asphalt slides on its base
-@export var tensile_strength := 3.0e6                   ## Pa: the asphalt's cold tensile strength
+## The pavement's cross-section: layers and subgrade (assets/asphalt/buildups/). The crack spacings and cell sizes are
+## worked out from it (thermal_spacing(), block_cell(), fatigue_cell()): a shrinking layer that slides on its base
+## cracks a slip length apart (Li & Marasteanu 2005), and a wheel's bending breaks the wheel path into cells about
+## Westergaard's radius across (as the CrackLattice runs showed). Empty: the c620 Table 3B baseline.
+@export var buildup: PavementBuildup
 
 @export_group("Mix and crack paths")
 @export_range(0.0, 1.0, 0.05) var mix_variation := 0.5 ## how uneven the asphalt's strength is (compaction, segregation)
@@ -162,6 +157,8 @@ const THERMAL_SPACING := Vector2(2.0, 0.6)
 const BLOCK_CELL := Vector2(0.7, 1.0)
 const FATIGUE_CELL := Vector2(0.7, 1.0)
 const REF_THICKNESS := 0.076   ## m the fatigue rate was tuned for (a 3 in lot)
+const DEFAULT_BUILDUP := preload("res://assets/asphalt/buildups/c620_table3b_cbr9.tres")
+const BOND_FULL_DEPTH := 0.1e6 ## Pa: placeholder shear strength for full-depth asphalt on the subgrade (no source yet)
 const T_LOOK := 0.08      ## m ahead a growing crack feels another crack's stress shadow ...
 const T_TURN := 0.35      ## ... and turns this share of the way per step to meet it square on
 const FATIGUE_CELLS := 1.2            ## fatigue past which the wheel paths break up into crocodile cells
@@ -349,14 +346,36 @@ func repair_year(action: int) -> float:
 	return -1.0
 
 
-## m over which friction on the base builds the layer back up to full strength once it slides.
+## The build-up in use: `buildup`, or the c620 Table 3B baseline.
+func pavement() -> PavementBuildup:
+	return buildup if buildup else DEFAULT_BUILDUP
+
+
+## m of bound asphalt.
+func thickness() -> float:
+	return pavement().asphalt_thickness()
+
+
+## m from a crack to where friction on the base has built the layer back up to its cold strength: Li & Marasteanu
+## 2005 eq. 4, Xc = sigma_t / (C / h + rho g tan(phi)), with the base's cohesion C and friction angle phi. Full-depth
+## asphalt on the subgrade (no aggregate base) is not covered by it yet: it uses BOND_FULL_DEPTH.
 func slip_length() -> float:
-	return tensile_strength * thickness / base_shear_strength
+	var b := pavement()
+	var s := b.surface()
+	var g := b.base()
+	var h := b.asphalt_thickness()
+	if g == null:
+		return s.tensile_strength * h / BOND_FULL_DEPTH
+	return s.tensile_strength / (g.cohesion / h + s.density * 9.81 * g.friction_tan)
 
 
-## m: Westergaard's radius of relative stiffness, how far a wheel's bending spreads in the layer.
+## m: Westergaard's radius of relative stiffness, how far a wheel's bending spreads in the layer, on the subgrade's
+## modulus of reaction (PavementBuildup.subgrade_k()).
 func wheel_spread() -> float:
-	return pow(stiffness_warm * pow(thickness, 3.0) / (12.0 * (1.0 - poisson * poisson) * subgrade_modulus), 0.25)
+	var b := pavement()
+	var s := b.surface()
+	return pow(s.stiffness_warm * pow(b.asphalt_thickness(), 3.0)
+		/ (12.0 * (1.0 - s.poisson * s.poisson) * b.subgrade_k()), 0.25)
 
 
 ## m between thermal cracks: new binder, fully aged.
@@ -713,7 +732,7 @@ func _step() -> void:
 
 func _fatigue_and_water(ox: float) -> void:
 	# A wheel bends the layer harder the thinner it is (Westergaard: stress ~ load / thickness^2).
-	var k_f := 0.085 * traffic / structure * pow(REF_THICKNESS / thickness, 2.0)
+	var k_f := 0.085 * traffic / structure * pow(REF_THICKNESS / thickness(), 2.0)
 	var k_d := 0.6 * drainage * climate
 	for i in nx * ny:
 		if load[i] <= 0.0:

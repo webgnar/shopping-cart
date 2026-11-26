@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="PavementBuildup" format=3]
+
+[ext_resource type="Script" path="res://scripts/asphalt/pavement_layer.gd" id="1_pdewx"]
+[ext_resource type="Script" path="res://scripts/asphalt/pavement_buildup.gd" id="2_i0hjp"]
+
+[sub_resource type="Resource" id="Resource_06mkm"]
+script = ExtResource("1_pdewx")
+title = "Asphalt surface"
+thickness = 0.07619999999999999
+source = "Thickness: c620 Table 3 B (3.0 in). Cold tensile strength 2.27 MPa at -18 C and bulk specific gravity 2.289: Li & Marasteanu 2005, Table 4 (MnROAD cell 18, AC 20). Warm modulus 3 GPa and Poisson's ratio 0.35: typical values, not yet sourced."
+stiffness_warm = 3000000000.0
+poisson = 0.35
+tensile_strength = 2270000.0
+density = 2289.0
+
+[sub_resource type="Resource" id="Resource_wq7tq"]
+script = ExtResource("1_pdewx")
+title = "Untreated aggregate base"
+kind = 1
+thickness = 0.1016
+source = "Thickness: c620 Table 3 B (4.0 in). Cohesion 62.1 kPa and tan(phi) 1.299: Li & Marasteanu 2005, Table 4 (Mn/DOT Class 6 aggregate, triaxial at room temperature; frozen base is likely 1.5-2x the cohesion)."
+cohesion = 62100.0
+friction_tan = 1.299
+
+[resource]
+script = ExtResource("2_i0hjp")
+title = "c620 Table 3B: 3 in asphalt on 4 in aggregate base, good subgrade"
+source = "References/Levels/c620content.pdf, Table 3 B (parking lots under 50 spaces, untreated aggregate base): good subgrade, CBR 9: 4.0 in base, 3.0 in asphalt surface, 7.0 in total."
+layers = Array[ExtResource("1_pdewx")]([SubResource("Resource_06mkm"), SubResource("Resource_wq7tq")])
+subgrade_cbr = 9.0

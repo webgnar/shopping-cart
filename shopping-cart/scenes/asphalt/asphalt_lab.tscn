@@ -13,6 +13,7 @@
 [ext_resource type="Texture2D" uid="uid://bcfgjyp2yokpn" path="res://assets/asphalt/textures/base_course.png" id="12_base"]
 [ext_resource type="Texture2D" uid="uid://dq4ocup0ey4je" path="res://assets/asphalt/textures/gravel_shoulder.png" id="13_shoulder"]
 [ext_resource type="Shader" path="res://assets/asphalt/asphalt_surface_3d.gdshader" id="14_surface3d"]
+[ext_resource type="Resource" path="res://assets/asphalt/buildups/c620_table3b_cbr9.tres" id="40_buildup"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_color"]
 shader = ExtResource("4_shader")
@@ -132,6 +133,7 @@ preview_camera = NodePath("PreviewViewport/CameraPivot/Camera")
 
 [node name="Sim" type="Node" parent="."]
 script = ExtResource("2_sim")
+buildup = ExtResource("40_buildup")
 paint_lines = PackedVector2Array(0.8, 1.25, 6.2, 1.25, 0.8, 3.75, 6.2, 3.75, 0.8, 6.25, 6.2, 6.25, 0.8, 8.75, 6.2, 8.75, 0.8, 0, 0.8, 10)
 
 [node name="ColorViewport" type="SubViewport" parent="."]
