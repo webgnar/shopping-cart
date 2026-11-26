@@ -140,6 +140,45 @@ What this shows:
   layer (fatigue areas, blocks, transverse cracks by severity, patches, potholes) is needed before the sim can be
   compared with LTPP surveys.
 
+## LTPP appendix A: the distress map and its symbols
+
+Appendix A ("Manual for Distress Surveys") says how a survey is drawn and totalled. Read in full: figs. 134
+(section limits), 136 (wheel paths), 137 (map symbols for asphalt), 138 (an example map) and data sheets 1-3.
+
+- **The section** (fig. 134): one lane, from the edge stripe to the centreline stripe, extended to a joint, crack or
+  pavement edge within 0.3 m outside them. A 152.5 m LTPP section is mapped on five sheets of two 15.25 m strips.
+- **The map** (fig. 138): distance along the lane left to right (direction of travel), offset from the edge bottom
+  to top (0-5 m, feet on the right), a fine grid, both wheel paths marked (fig. 136: drawn where the traffic runs,
+  0.76 m wide by default). Each distress is drawn to scale and labelled with a circled code: its number, a/b for
+  longitudinal, L/M/H, and "s" beside well-sealed cracks (e.g. "4aH", "6Ms").
+- **The symbols** (fig. 137): 1 fatigue an outlined area of X's; 2 block the cracks forming blocks; 3 edge a hatched
+  strip at the edge; 4 longitudinal and 6 transverse the crack lines (S sealed); 5 reflection at joints (concrete
+  joints only, not recorded); 7 patch solid black; 8 pothole an ellipse with a cross; 9 rutting and 14 dropoff
+  not drawn; 10 shoving a box of wavy lines; 11 bleeding curved hatch; 12 polished aggregate short slashes; 13
+  raveling circles in a dotted outline; 15 water bleeding/pumping chevrons along the crack; 16 other, described.
+  Sealant applied without aggregate is 16, not a patch.
+- **Data sheets 1-2** total the map by severity: m2 (1, 2), m (3, 4a, 4b and their sealed lengths), number and m
+  (6), number and m2 (7, 8), m2 (10-13), number and m (15). Sheet 3 is straightedge rutting every 15.25 m (SPS-3).
+
+In the sim: `AsphaltSurvey` (scripts/asphalt/asphalt_survey.gd) classifies the road by these rules, each lane an
+LTPP section (lane 1 left of the paving joint). The lab's "Distress map (LTPP)" view (`DistressMapCanvas`) draws
+both lanes as one sheet with the fig. 137 symbols and the sheet 1-2 totals; the cross-section uses the same survey
+rules (severity, straightedge, codes). Judgment calls, each a placeholder until checked against LTPP maps:
+
+| What | Choice | Why |
+|---|---|---|
+| Fatigue severity | M once crack density reaches 0.08 m per 10 cm cell (a complete crocodile network at the 3B cell size), H once cracks pass 5 mm (spalling) or a pothole touches it | The manual's words are "few connecting cracks", "complete pattern", "spalled" |
+| Fatigue occurrence | patches closer than 0.3 m are one area, rated at its worst severity, drawn as a rounded outline round it | "an area"; fig. 138 draws one outline per occurrence |
+| Block area | the box the block cracks span, less fatigue, patches and potholes | Approximation of "the area divided into blocks" |
+| Twins | a crack grown both ways from one start is one crack | The sim grows each crack as two |
+| Labels | cracks under 0.6 m drawn and counted, not labelled | Legibility; the manual labels every distress |
+| Not done | "adjacent random cracking within 0.3 m raises severity" | Needs a random-cracking test per crack |
+| Not simulated | 10 shoving, 11 bleeding, 12 polished aggregate, 13 raveling, 15 pumping | The base shader draws polish and ravel, but the sim has no state for them |
+
+Findings from the map: a 10 m section can never meet block cracking's 15 m occurrence rule (noted on the sheet);
+straightedge rut depths include the broken surface of failed wheel paths (37 mm against the rut model's 25 mm cap)
+and potholes under the straightedge (up to 89 mm), as a real straightedge would.
+
 ## Next steps
 
 0. Done (Nov 26 2026): the build-up as data (`PavementBuildup`, Table 3B baseline); junctions by crack type; the

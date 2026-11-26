@@ -11,6 +11,7 @@ extends Control
 @export var relief_exaggeration := 6.0       ## slopes are shaded this many times steeper than they are
 @export var preview_view: TextureRect        ## the 3D preview: the road displaced by the real height map
 @export var section_view: CrossSectionCanvas  ## the cross-section across the road; click or drag on the plan to move it
+@export var map_view: DistressMapCanvas      ## the LTPP distress map of both lanes, with the data sheet totals
 @export var preview_road: MeshInstance3D
 @export var preview_pivot: Node3D            ## drag on the preview to orbit it, wheel to zoom
 @export var preview_camera: Camera3D
@@ -60,6 +61,8 @@ func _process(delta: float) -> void:
 			draw_preview()
 		if section_view.visible:
 			section_view.refresh()
+		if map_view.visible:
+			map_view.refresh()
 	if not playing:
 		return
 	# Keep our own clock: one frame is far less than a simulation step, so adding a frame to sim.time each time
@@ -162,12 +165,14 @@ func _on_view_selected(index: int) -> void:
 	relief_view.visible = index == 3
 	preview_view.visible = index == 4
 	section_view.visible = index == 5
+	map_view.visible = index == 6
+	color_view.get_parent().visible = index != 6
 	color_view.queue_redraw()
 	_queue_relief()
 
 
 func _queue_relief() -> void:
-	if (relief_view.visible or preview_view.visible or section_view.visible) and _relief_at < 0:
+	if (relief_view.visible or preview_view.visible or section_view.visible or map_view.visible) and _relief_at < 0:
 		_relief_at = Time.get_ticks_msec() + (400 if playing else 50)
 
 

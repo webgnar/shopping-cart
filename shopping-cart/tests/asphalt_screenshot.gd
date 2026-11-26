@@ -2,7 +2,7 @@ extends SceneTree
 ## Renders the asphalt lab at stages of its life, with and without repairs. Run from the Godot project folder:
 ##   xvfb-run godot --rendering-method gl_compatibility -s res://tests/asphalt_screenshot.gd -- <out dir>
 ## Writes <stage>_color.png and <stage>_height.png (the whole 10 x 10 m section), <stage>_zoom.png (a 2.5 m
-## close-up of a wheel path), lab.png (the lab window) and section_<stage>.png (the lab's plan + cross-section view).
+## close-up of a wheel path), lab.png (the lab window) and section_<stage>.png (the lab's plan + cross-section view) and map_<stage>.png (its LTPP distress map).
 
 const LAB := preload("res://scenes/asphalt/asphalt_lab.tscn")
 
@@ -86,6 +86,19 @@ func _run() -> void:
 		section.set_cut(_worst_row(sim))
 		await _frames(3)
 		root.get_texture().get_image().save_png("%s/section_%s.png" % [out, st[0]])
+	# The LTPP distress map (appendix A symbols) at the same stages.
+	view.select(6)
+	view.item_selected.emit(6)
+	var map: DistressMapCanvas = lab.get_node("Stage/MapView")
+	for st: Array in SECTIONS:
+		sim.events.clear()
+		for e: Array in st[2]:
+			sim.events.append({ t = e[0], action = e[1] })
+		sim.reset()
+		sim.advance_to(st[1])
+		map.refresh()
+		await _frames(3)
+		root.get_texture().get_image().save_png("%s/map_%s.png" % [out, st[0]])
 	quit()
 
 

@@ -1914,3 +1914,26 @@ bake_height too), and is drawn dashed. What the drawing shows up: ruts only lowe
 stay flat), and potholes go 90 mm deep through 76 mm of asphalt into the base. Tests: "cross-section slices the
 road", "clicking the plan moves the cut". `tests/asphalt_screenshot.gd` also writes section_<stage>.png. No change to
 how the road ages (no re-bake).
+
+## Asphalt: LTPP survey, distress map view, LTPP-style cross-section (Nov 26 2026)
+
+zack: use the LTPP manual's appendix A graphics: every distress has its symbol. Studied figs. 134, 136, 137, 138
+and data sheets 1-3 (notes and the symbol table in docs/ASPHALT_SCIENCE.md).
+- `scripts/asphalt/asphalt_survey.gd` (`AsphaltSurvey.take(sim, heights, res)`): an LTPP survey of the sim, each lane
+  an LTPP section. Classifies cracks (4a/4b/6 by predominant direction and wheel path, 2 block, 3 edge, 7 patch
+  seams, 16 slippage), fatigue areas (1), patches (7, heavy and cold, >= 0.1 m2), potholes (8, a 150 mm circle
+  fits, severity by depth), spot sealcoat (16, sealant without aggregate), straightedge rutting, and totals data
+  sheets 1-2 per lane. Severity by the manual's width bands; transverse cracks at the worst severity over >= 10 %
+  of the length; cracks under 0.3 m and small holes not counted. Judgment calls are listed in the science register.
+- `scripts/asphalt/distress_map_canvas.gd` (`DistressMapCanvas`), lab view "Distress map (LTPP)": both lanes as one
+  map sheet (fig. 138 layout, fig. 137 symbols, circled codes, s for sealed, comments lines) beside the totals.
+- The cross-section is redrawn in the manual's style: line art on white, cut A-B (flags on the plan), shoulder
+  hatched and boxed, centreline, LANE, pavement edges, rut depth under the 1.2 m straightedge and crack width
+  between arrows (figs. 1, 31, 43), heavy patch solid black with its code, drafting hatches for the layers. It uses
+  the survey's rules (`AsphaltSurvey.straightedge_rut`, `severity_of_width`).
+- Gotcha: a GDScript parse error in a `-s` script leaves Godot running (it never reaches quit()), and output piped
+  through grep is lost when `timeout` kills it, so it looks like a hang. Send output to a file. Also draw thousands
+  of small shapes with one draw_multiline: one draw_arc per circle made each frame very slow in the software
+  renderer.
+- Tests: "LTPP survey keeps the manual's rules", "distress map view shows the survey"; asphalt_screenshot.gd also
+  writes map_<stage>.png.

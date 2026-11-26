@@ -286,6 +286,27 @@ func _run() -> void:
 	var shrink_mean := _mean(jn.shrink)
 	_check("shrinkage cracks meet about square on", jn.shrink.size() >= 20 and shrink_mean > 75.0,
 		"mean %.0f degrees at %d junctions (fatigue cracks: %.0f at %d)" % [shrink_mean, jn.shrink.size(), _mean(jn.fatigue), jn.fatigue.size()])
+	# The LTPP survey keeps the manual's rules (DIM, FHWA-HRT-13-092).
+	var sv := AsphaltSurvey.take(mx)
+	var rules_ok := true
+	var why := ""
+	for a in sv.areas:
+		if a.type == 8 and a.counted:
+			var rect: Rect2 = a.rect
+			var band := "L" if a.depth < 0.025 else ("M" if a.depth <= 0.05 else "H")
+			if minf(rect.size.x, rect.size.y) < 0.15 or a.area < 0.02 or a.severity != band:
+				rules_ok = false
+				why = "pothole %s %.2f x %.2f m, %.0f mm" % [a.code, rect.size.x, rect.size.y, a.depth * 1000.0]
+	for l in sv.lines:
+		if l.counted and l.type != 16 and l.length < 0.3 and l.type != 6:
+			rules_ok = false
+			why = "%s only %.2f m" % [l.code, l.length]
+	var fatigue_m2 := 0.0
+	for lane in 2:
+		for v in sv.totals_for(lane)["1"]:
+			fatigue_m2 += v
+	_check("LTPP survey keeps the manual's rules", rules_ok and fatigue_m2 > 0.0,
+		"%.1f m2 fatigue, %d areas, %d lines %s" % [fatigue_m2, sv.areas.size(), sv.lines.size(), why])
 	var joined: int = jn.shrink.size() + jn.fatigue.size() + jn.other.size() + jn.seam
 	var share := float(joined) / maxf(jn.ends, 1)
 	_check("not every crack ends at a T", share > 0.3 and share < 0.9, "%d of %d ends join another crack" % [joined, jn.ends])
@@ -403,6 +424,7 @@ func _run() -> void:
 		depth_ok = depth_ok and cr.x >= 0.0 and cr.x <= lsim.size.x and (cr.sealed or is_equal_approx(cr.depth, lsim.crack_depth(cr.width)))
 	_check("cross-section slices the road", section.visible and section.profile.size() == int(round(lsim.size.x / section.res)) + 1
 		and depth_ok, "%d profile samples, %d cracks crossed at %.2f m" % [section.profile.size(), across.size(), section.cut_y])
+	var plan := lab.get_node("Stage/Views/ColorView") as TextureRect
 	var r := section.plan_rect()
 	var click := InputEventMouseButton.new()
 	click.button_index = MOUSE_BUTTON_LEFT
@@ -410,6 +432,13 @@ func _run() -> void:
 	click.position = r.position + Vector2(r.size.x * 0.5, r.size.y * 0.25)
 	lab._on_plan_input(click)
 	_check("clicking the plan moves the cut", absf(section.cut_y - lsim.size.y * 0.25) < 0.05, "cut at %.2f m" % section.cut_y)
+	# LTPP distress map: the survey drawn with the appendix A symbols, and the data sheet totals.
+	view.select(6)
+	view.item_selected.emit(6)
+	var map: DistressMapCanvas = lab.get_node("Stage/MapView")
+	map.refresh()
+	_check("distress map view shows the survey", map.visible and not section.visible and not plan.get_parent().visible
+		and map.survey != null and not map.survey.areas.is_empty(), "%d areas, %d crack lines" % [map.survey.areas.size(), map.survey.lines.size()])
 
 	print("\n%s: %d failure(s)" % ["FAIL" if failures else "PASS", failures])
 	quit(1 if failures else 0)
