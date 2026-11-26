@@ -119,6 +119,7 @@ var fatigue := PackedFloat32Array()   ## accumulated fatigue; cracks start at 1,
 var damage := PackedFloat32Array()    ## water damage under open cracks; a pothole breaks out at 1
 var hole := PackedFloat32Array()      ## pothole depth, m
 var fill_born := PackedFloat32Array() ## year a throw-and-roll fill went in, -1 for none
+var fill_depth := PackedFloat32Array() ## m: how deep the hole was that the fill went into (for the cross-section)
 var patch_of := PackedInt32Array()    ## index of the heavy patch covering the cell, -1 for none
 var crack_len := PackedFloat32Array() ## m of crack in the cell
 var open_len := PackedFloat32Array()  ## m of unsealed crack in the cell
@@ -241,7 +242,7 @@ func reset() -> void:
 	nx = int(round(size.x / CELL))
 	ny = int(round(size.y / CELL))
 	var n := nx * ny
-	for a in [weak, pond, load, fatigue, damage, hole, crack_len, open_len]:
+	for a in [weak, pond, load, fatigue, damage, hole, crack_len, open_len, fill_depth]:
 		a.resize(n)
 		a.fill(0.0)
 	fill_born.resize(n)
@@ -589,7 +590,7 @@ func bake_height(res := 0.01) -> PackedFloat32Array:
 			continue
 		for k in c.pts.size() - 1:
 			var cw := c.width(k, time)
-			var depth := clampf(cw * 4.0, 0.004, 0.05)
+			var depth := crack_depth(cw)
 			var half := cw * 0.5
 			var spall := (minf(cw * 2.2 + 0.008, 0.06) * 0.5) if cw > 0.005 else 0.0
 			var reach := maxf(maxf(half, spall), res * 0.75)
@@ -640,6 +641,12 @@ func bake_height(res := 0.01) -> PackedFloat32Array:
 				if e < n:
 					out[iy * w + ix] *= smoothstep(0.0, 1.0, float(e) / n)
 	return out
+
+
+## m: how deep an open crack of width w goes. Placeholder (4 x the width, 4 to 50 mm): no source yet; the
+## cross-section draws it hatched until crack depth comes from the models.
+func crack_depth(w: float) -> float:
+	return clampf(w * 4.0, 0.004, 0.05)
 
 
 func _stamp_disk(out: PackedFloat32Array, w: int, h: int, res: float, c: Vector2, r: float, v: float, down: bool) -> void:
@@ -1361,6 +1368,7 @@ func _pothole_fill() -> String:
 	for i in filled:
 		if _cell_seed[i] >= 0:
 			plucked[_cell_seed[i]] = 0.0
+		fill_depth[i] = hole[i]
 		hole[i] = 0.0
 		fill_born[i] = time
 		damage[i] = 0.35
@@ -1475,6 +1483,7 @@ func _heavy_patch() -> String:
 				damage[i] = 0.0
 				hole[i] = 0.0
 				fill_born[i] = -1.0
+				fill_depth[i] = 0.0
 				weak[i] *= 0.4
 				if _cell_seed[i] >= 0:
 					plucked[_cell_seed[i]] = 0.0
@@ -1674,6 +1683,7 @@ func _resurface() -> String:
 	for i in nx * ny:
 		hole[i] = 0.0
 		fill_born[i] = -1.0
+		fill_depth[i] = 0.0
 		patch_of[i] = -1
 		damage[i] *= 0.3
 		fatigue[i] *= 0.45

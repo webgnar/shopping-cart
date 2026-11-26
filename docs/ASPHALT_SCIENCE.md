@@ -54,7 +54,7 @@ references. No big-bang refactor.
 | Fatigue rate | 0.085 x traffic / structure x (h0/h)^2 x multipliers | Placeholder (1/h^2 sourced) | MEPDG allowable loads from tensile strain, Miner's sum, logistic damage -> % area cracked |
 | Fatigue thresholds | crack at 1.0, cells at 1.2, broken at 1.4 | Placeholder | MEPDG damage -> area transfer function |
 | Water damage, pothole birth | k_d 0.6, birth at damage 1.0 | Placeholder | LTPP data; pumping is ACP 15 |
-| Pothole depth | starts 12 mm, +30 mm/yr, stops at 90 mm | Placeholder | LTPP ACP 8 severity classes: < 25, 25-50, > 50 mm |
+| Pothole depth | starts 12 mm, +30 mm/yr, stops at 90 mm | Placeholder | LTPP ACP 8 severity classes: < 25, 25-50, > 50 mm. The cross-section shows 90 mm cuts 14 mm into the base under 76 mm of asphalt, though the code says holes stop at the base course |
 
 ### Cracks
 
@@ -73,9 +73,9 @@ references. No big-bang refactor.
 
 | What | Now | Status | Source / next |
 |---|---|---|---|
-| Crack depth | 4 x width, 4-50 mm | Placeholder | |
+| Crack depth | 4 x width, 4-50 mm (`AsphaltSim.crack_depth`) | Placeholder | Drawn dashed in the cross-section. Next: top-down / bottom-up cracks and how far through the layers they have gone |
 | Spalls | 2.2 x width + 8 mm wide, 6 mm deep | Placeholder | LTPP: "spalled" is part of the fatigue and patch severity words |
-| Rutting | 1.1 mm/yr x traffic / structure, capped at 25 mm | Placeholder | MEPDG rutting; LTPP measures it with a 1.2 m straightedge, patch severity uses < 6, 6-12, > 12 mm |
+| Rutting | 1.1 mm/yr x traffic / structure, capped at 25 mm; only the surface sinks (the cross-section shows the layer interfaces flat) | Placeholder | MEPDG rutting splits it between asphalt, base and subgrade; LTPP measures it with a 1.2 m straightedge, patch severity uses < 6, 6-12, > 12 mm |
 | Shoulder drop, fret drop | -25 mm, -35 mm (fixed) | Placeholder | LTPP ACP 14 (not measured in LTPP) |
 | Patch, fill, sealant, paint proud | 3, 4, 1.5, 0.8 mm | Placeholder | |
 | Bleeding, shoving | none | Missing | LTPP ACP 10, 11 |
@@ -142,9 +142,9 @@ What this shows:
 
 ## Next steps
 
-0. Done (Nov 26 2026): the build-up as data (`PavementBuildup`, Table 3B baseline); junctions by crack type. Next:
-   the cross-section drawing
-   as a slice of the build-up, then the build-up's variation across the plan (replacing `structure` and `weak`).
+0. Done (Nov 26 2026): the build-up as data (`PavementBuildup`, Table 3B baseline); junctions by crack type; the
+   lab's "Plan + section" view (`CrossSectionCanvas`). Next: the build-up's variation across the plan (replacing
+   `structure` and `weak`), then crack depth through the layers (the section lattice would inform it).
 1. Add a survey layer: `AsphaltSim` reports LTPP quantities by severity (m2 of fatigue and block, m of
    longitudinal 4a/4b and transverse, number and m2 of patches and potholes, rut depth). Lab panel and tests use
    it. No visual change; it is the measuring stick for everything after.

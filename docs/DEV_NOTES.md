@@ -1898,3 +1898,19 @@ fatigue mean beside it. Both baked lots re-baked (lot90.tscn also dropped stale 
 "30 years simulate quickly" still fails: 5.4-6.0 s here against 5.0 s for the code before the build-up (limit 4 s).
 Its timer starts at year 15 of the first sim but runs through five more sims and two replays (about 90 simulated
 years); years 15-24 of one sim take 0.6-0.8 s.
+
+## Asphalt lab: plan + cross-section view (Nov 26 2026)
+
+zack: the section (the pavement build-up) is what makes the plan, so the lab draws both. View "Plan + section":
+the colour plan above and a full-width cross-section below (the views now sit in a `Stage` VBox, so lab node paths
+are `Stage/Views/...` and `Stage/SectionView`). Click or drag on the plan to move the cut (A-A).
+`scripts/asphalt/cross_section_canvas.gd` (`CrossSectionCanvas`) slices the road across at the cut, to scale from
+`AsphaltSim.pavement()` and `bake_height()` (baked once per change, so moving the cut is cheap): asphalt, aggregate
+base and subgrade with their thicknesses and CBR, the surface profile (ruts, potholes, shoulders, fretted edge),
+every crack the cut crosses at its real width, full-depth heavy patches, cold patch down to the hole it filled
+(new `AsphaltSim.fill_depth`), sealant, sealcoat and paint. Depth is drawn at the largest of 20/10/5/2/1x that fits
+(10x in the lab). Crack depth is still the 4 x width placeholder, now `AsphaltSim.crack_depth()` (used by
+bake_height too), and is drawn dashed. What the drawing shows up: ruts only lower the surface (the layer interfaces
+stay flat), and potholes go 90 mm deep through 76 mm of asphalt into the base. Tests: "cross-section slices the
+road", "clicking the plan moves the cut". `tests/asphalt_screenshot.gd` also writes section_<stage>.png. No change to
+how the road ages (no re-bake).

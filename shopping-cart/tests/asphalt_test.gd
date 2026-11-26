@@ -387,9 +387,29 @@ func _run() -> void:
 	(lab.get_node("Panel/Scroll/Box/PlayRow/View") as OptionButton).select(3)
 	(lab.get_node("Panel/Scroll/Box/PlayRow/View") as OptionButton).item_selected.emit(3)
 	lab.draw_relief()
-	var relief: TextureRect = lab.get_node("Views/ReliefView")
+	var relief: TextureRect = lab.get_node("Stage/Views/ReliefView")
 	_check("relief view shows the height map", relief.visible and relief.texture != null and relief.texture.get_width() == 501,
 		"%s" % [relief.texture.get_size() if relief.texture else "no texture"])
+	# Plan + section: the cross-section slices the road at the cut, and clicking on the plan moves the cut.
+	var view := lab.get_node("Panel/Scroll/Box/PlayRow/View") as OptionButton
+	view.select(5)
+	view.item_selected.emit(5)
+	var section: CrossSectionCanvas = lab.get_node("Stage/SectionView")
+	lsim.seek(16.0)
+	section.refresh()
+	var across := section.crossings()
+	var depth_ok := not across.is_empty()
+	for cr in across:   # on the road, and as deep as the height map cuts it
+		depth_ok = depth_ok and cr.x >= 0.0 and cr.x <= lsim.size.x and (cr.sealed or is_equal_approx(cr.depth, lsim.crack_depth(cr.width)))
+	_check("cross-section slices the road", section.visible and section.profile.size() == int(round(lsim.size.x / section.res)) + 1
+		and depth_ok, "%d profile samples, %d cracks crossed at %.2f m" % [section.profile.size(), across.size(), section.cut_y])
+	var r := section.plan_rect()
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	click.position = r.position + Vector2(r.size.x * 0.5, r.size.y * 0.25)
+	lab._on_plan_input(click)
+	_check("clicking the plan moves the cut", absf(section.cut_y - lsim.size.y * 0.25) < 0.05, "cut at %.2f m" % section.cut_y)
 
 	print("\n%s: %d failure(s)" % ["FAIL" if failures else "PASS", failures])
 	quit(1 if failures else 0)

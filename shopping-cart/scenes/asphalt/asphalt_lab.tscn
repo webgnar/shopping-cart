@@ -14,6 +14,7 @@
 [ext_resource type="Texture2D" uid="uid://dq4ocup0ey4je" path="res://assets/asphalt/textures/gravel_shoulder.png" id="13_shoulder"]
 [ext_resource type="Shader" path="res://assets/asphalt/asphalt_surface_3d.gdshader" id="14_surface3d"]
 [ext_resource type="Resource" path="res://assets/asphalt/buildups/c620_table3b_cbr9.tres" id="40_buildup"]
+[ext_resource type="Script" path="res://scripts/asphalt/cross_section_canvas.gd" id="41_section"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_color"]
 shader = ExtResource("4_shader")
@@ -114,7 +115,7 @@ OptionButton/styles/normal = SubResource("StyleBoxFlat_button")
 OptionButton/styles/hover = SubResource("StyleBoxFlat_button_hover")
 OptionButton/styles/pressed = SubResource("StyleBoxFlat_button_hover")
 
-[node name="AsphaltLab" type="Control" node_paths=PackedStringArray("sim", "color_view", "height_view", "relief_view", "preview_view", "preview_road", "preview_pivot", "preview_camera")]
+[node name="AsphaltLab" type="Control" node_paths=PackedStringArray("sim", "color_view", "height_view", "relief_view", "preview_view", "section_view", "preview_road", "preview_pivot", "preview_camera")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -123,10 +124,11 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_lab")
 sim = NodePath("Sim")
-color_view = NodePath("Views/ColorView")
-height_view = NodePath("Views/HeightView")
-relief_view = NodePath("Views/ReliefView")
-preview_view = NodePath("Views/PreviewView")
+color_view = NodePath("Stage/Views/ColorView")
+height_view = NodePath("Stage/Views/HeightView")
+relief_view = NodePath("Stage/Views/ReliefView")
+preview_view = NodePath("Stage/Views/PreviewView")
+section_view = NodePath("Stage/SectionView")
 preview_road = NodePath("PreviewViewport/Road")
 preview_pivot = NodePath("PreviewViewport/CameraPivot")
 preview_camera = NodePath("PreviewViewport/CameraPivot/Camera")
@@ -225,7 +227,7 @@ transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 
 fov = 60.0
 near = 0.02
 
-[node name="Views" type="HBoxContainer" parent="."]
+[node name="Stage" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -238,34 +240,48 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 12
 
-[node name="ColorView" type="TextureRect" parent="Views"]
+[node name="Views" type="HBoxContainer" parent="Stage"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="ColorView" type="TextureRect" parent="Stage/Views"]
 layout_mode = 2
 size_flags_horizontal = 3
 texture = SubResource("ViewportTexture_color")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="HeightView" type="TextureRect" parent="Views"]
+[node name="HeightView" type="TextureRect" parent="Stage/Views"]
 layout_mode = 2
 size_flags_horizontal = 3
 texture = SubResource("ViewportTexture_height")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ReliefView" type="TextureRect" parent="Views"]
+[node name="ReliefView" type="TextureRect" parent="Stage/Views"]
 visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 expand_mode = 1
 stretch_mode = 5
 
-[node name="PreviewView" type="TextureRect" parent="Views"]
+[node name="PreviewView" type="TextureRect" parent="Stage/Views"]
 visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 texture = SubResource("ViewportTexture_preview")
 expand_mode = 1
 stretch_mode = 5
+
+[node name="SectionView" type="Control" parent="Stage" node_paths=PackedStringArray("sim", "plan_view")]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 1.0
+script = ExtResource("41_section")
+sim = NodePath("../../Sim")
+plan_view = NodePath("../Views/ColorView")
 
 [node name="Panel" type="PanelContainer" parent="."]
 layout_mode = 1
@@ -328,7 +344,7 @@ text = "Play"
 layout_mode = 2
 size_flags_horizontal = 3
 selected = 2
-item_count = 5
+item_count = 6
 popup/item_0/text = "Colour"
 popup/item_0/id = 0
 popup/item_1/text = "Height"
@@ -339,6 +355,8 @@ popup/item_3/text = "Colour + relief"
 popup/item_3/id = 3
 popup/item_4/text = "3D preview"
 popup/item_4/id = 4
+popup/item_5/text = "Plan + section"
+popup/item_5/id = 5
 
 [node name="StartHere" type="Button" parent="Panel/Scroll/Box"]
 unique_name_in_owner = true
@@ -545,7 +563,8 @@ autowrap_mode = 3
 [connection signal="toggled" from="Panel/Scroll/Box/PlayRow/PlayButton" to="." method="_on_play_toggled"]
 [connection signal="toggled" from="Panel/Scroll/Box/StartHere" to="." method="_on_start_here_toggled"]
 [connection signal="item_selected" from="Panel/Scroll/Box/PlayRow/View" to="." method="_on_view_selected"]
-[connection signal="gui_input" from="Views/PreviewView" to="." method="_on_preview_input"]
+[connection signal="gui_input" from="Stage/Views/PreviewView" to="." method="_on_preview_input"]
+[connection signal="gui_input" from="Stage/Views/ColorView" to="." method="_on_plan_input"]
 [connection signal="value_changed" from="Panel/Scroll/Box/SeedRow/Seed" to="." method="_on_seed_changed"]
 [connection signal="toggled" from="Panel/Scroll/Box/Repair0" to="." method="_on_repair_toggled" binds= [0]]
 [connection signal="toggled" from="Panel/Scroll/Box/Repair1" to="." method="_on_repair_toggled" binds= [1]]

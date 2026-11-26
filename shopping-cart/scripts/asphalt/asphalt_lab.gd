@@ -10,6 +10,7 @@ extends Control
 @export var relief_res := 0.02               ## m per relief pixel
 @export var relief_exaggeration := 6.0       ## slopes are shaded this many times steeper than they are
 @export var preview_view: TextureRect        ## the 3D preview: the road displaced by the real height map
+@export var section_view: CrossSectionCanvas  ## the cross-section across the road; click or drag on the plan to move it
 @export var preview_road: MeshInstance3D
 @export var preview_pivot: Node3D            ## drag on the preview to orbit it, wheel to zoom
 @export var preview_camera: Camera3D
@@ -57,6 +58,8 @@ func _process(delta: float) -> void:
 			draw_relief()
 		if preview_view.visible:
 			draw_preview()
+		if section_view.visible:
+			section_view.refresh()
 	if not playing:
 		return
 	# Keep our own clock: one frame is far less than a simulation step, so adding a frame to sim.time each time
@@ -158,11 +161,13 @@ func _on_view_selected(index: int) -> void:
 	height_view.visible = index == 1 or index == 2
 	relief_view.visible = index == 3
 	preview_view.visible = index == 4
+	section_view.visible = index == 5
+	color_view.queue_redraw()
 	_queue_relief()
 
 
 func _queue_relief() -> void:
-	if (relief_view.visible or preview_view.visible) and _relief_at < 0:
+	if (relief_view.visible or preview_view.visible or section_view.visible) and _relief_at < 0:
 		_relief_at = Time.get_ticks_msec() + (400 if playing else 50)
 
 
@@ -201,6 +206,18 @@ func draw_preview() -> void:
 	var color: Image = color_view.texture.get_image()
 	color.generate_mipmaps()
 	mat.set_shader_parameter("albedo_map", ImageTexture.create_from_image(color))
+
+
+## With the section shown, clicking or dragging on the plan moves the cut.
+func _on_plan_input(event: InputEvent) -> void:
+	if not section_view.visible:
+		return
+	var press: bool = event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
+	var drag: bool = event is InputEventMouseMotion and event.button_mask & MOUSE_BUTTON_MASK_LEFT
+	if press or drag:
+		var y := section_view.plan_to_y(event.position)
+		if y >= 0.0:
+			section_view.set_cut(y)
 
 
 func _on_preview_input(event: InputEvent) -> void:
