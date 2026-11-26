@@ -1860,3 +1860,105 @@ zack: a repaint repair, and spot sealcoat should cover the paint. `Action.REPAIN
 (an overlay does too); paint wear (`paint_left`) and its dirt count from it. Spot sealcoat no longer restripes.
 AsphaltCanvas draws the paint under everything, then again on top of the sealcoat spots, patches and fills made
 before the last repaint; `bake_height` paints over repairs no newer than `paint_born`. Lab: "Repaint stripes".
+
+## Cart: force ledger and the player as a runner (Nov 26 2026)
+
+Real physics is the spec (zack's decision). `scripts/cart.gd`, `scenes/cart/cart.tscn`,
+`assets/physics/human/*.tres`, `scripts/ui/force_diagram.gd`, `tests/drive_test.gd`.
+
+- **Force ledger.** Every force the script puts on a body goes through `_apply(name, side, body, force, point)`,
+  which applies it at a world point and appends it to `ledger` (name, side, body, point, force, torque). The only
+  torques left are bearing friction, through `_apply_bearing`: each wheel's rolling resistance about its axle
+  (the same as the tyre's contact force leaning ahead of the axle) and each caster's swivel friction, an equal and
+  opposite pair on fork and frame. `_update_wheel_loads` balances the ledger's forces on the frame. The force
+  diagram draws the ledger, summed by name, where each force acts. The hidden torques became forces:
+  - `spin_grip` and `grip_yaw_damping` -> "hold line": a sideways force at each hand against the bar swinging
+    under it (`arm_side_damping` 80 N per m/s, up to `arm_side_max` 80 N per hand), while both hands drive the
+    same way or work against a spin.
+  - Both haul-upright torques -> "haul": the hand grabs the fallen cart's high end (`_haul_point`: the handle,
+    or the top of the basket's front wall) and lifts it the way it turns toward upright.
+  - Settle brake -> "rest friction" at each wheel's contact, in proportion to its load (the stickiness of the
+    bearings and swivels that Jolt's rolling contacts don't have).
+  - Forks' `angular_damp 2` -> swivel bearing friction (`swivel_friction` 0.03 N*m, `swivel_damping`
+    0.003 N*m*s), a torque pair that costs the cart's own yaw nothing. (The old damping was small anyway: on a
+    0.6 kg fork it was about 0.003 N*m per rad/s of the cart's yaw.)
+  - The engine's default damping (0.02 linear, 0.05 angular) is off on the frame, wheels and forks
+    (`*_damp_mode = Replace`, 0); air drag is a ledger force at the basket's middle (`drag_area` 0.25 m^2).
+- **The player is a runner** (`Body` exports). The body follows the bar along the nose (`body_speed`, `body_gap`):
+  the legs push the floor to keep the shoulders `gap_rest` 0.32 m behind the bar, up to `leg_force` 600 N from a
+  standstill, falling along `leg_force_velocity` to nothing at `top_speed` 6.4 m/s (`back_speed` 2.5 backing up),
+  and brake with up to `leg_brake` 500 N. The arms' push comes back on the body. The trunk leans into the legs'
+  push (tan lean = leg force / body weight), lowering the shoulders from 1.42 m to about 1.2 m sprinting. Closer
+  than `gap_min` the body presses on the bar ("body" in the ledger) instead of passing through it.
+- **The arms** push along the line from the shoulder to the hand, flattened to `force_slope` 0.25 of its angle
+  (a bent elbow carries torque; measured forces are near level). Force = effort (`effort_ramp` over seconds held,
+  times `arm_strength` 200 N per hand) times `force_velocity` (Hill), `arm_reach_strength`,
+  `arm_height_strength` and `fatigue_strength`. All six curves are `.tres` files in `assets/physics/human/`.
+  The cart catching up the runner is what tops it out.
+- **S** presses `press_angle` 25 degrees back from straight down (toward the player's feet). The handle is only
+  6.85 cm behind the rear axle, so pressing straight down can't lift the front (it would take about 1.6 kN against
+  the weight's 108 N*m); the back part, at handle height, does it on a rolling cart. `lean_base` 60 N,
+  `lean_ramp` 240 N/s and `lean_relax` 1000 N/s (was 20, 120 and 400): leaning bodyweight on takes a moment.
+
+Measured (`drive_test.gd`, 120 Hz, groceries in, 28.9 kg): 0 to 10 km/h in 0.53 s (target 0.6); top speed
+20.6 km/h (target 20 to 25); a hard push takes the rear wheels' load from 141 N to 0 and pitches the nose 4 degrees
+down, but on open ground it can't tip the cart, because the runner can't push harder than the cart speeds up
+(about 170 N; tipping takes about 200 N plus the grip's hold). With the front wheels against the test strip's
+curb it lifts the rear in 0.3 s. Braking from 18 km/h: 3.9 m/s^2, stopped in 3.6 m, front wheels' load to 0;
+the front stays down, because a 75 kg body braking with its feet can hold back a 29 kg cart with only about
+165 N before the arms stop lengthening, and the pull angles up (which presses the front down). S on a rolling
+cart pops the front up 0.35 m. Coasting at 2.3 m/s it slows 0.19 m/s^2 (rolling plus air predict 0.17).
+
+**Wheels sink at speed (Jolt, 120 Hz).** The coast-down "extra loss" (0.31 m/s^2 at 6 m/s against 0.15 from
+rolling resistance) was two things. The engine's default linear damping of 0.02 took 0.02 * v (0.12 m/s^2 at
+6 m/s); that is now real air drag (0.19 m/s^2 at 6 m/s). The rest is the wheels sinking into the floor: Jolt keeps
+contact points in each body's own frame, so in the position solve a sphere's contact point has turned with the
+wheel by its spin times the step (29 degrees at 60 rad/s and 120 Hz), and it sits r(1 - cos) above the tyre's
+bottom. The solver is fooled and leaves that much penetration: 8 mm at 60 rad/s, about 3 to 5 cm near the
+120 rad/s cap. The wheel then rolls on a shorter radius, over-spins (up to the cap) and ploughs. Measured coasting
+from 7 m/s: front wheel centres from 6.3 cm down to 1.4 to 2.6 cm above the floor, wheel slip up to 2 m/s, and
+0.5 to 0.9 m/s^2 of extra drag at 6 m/s. It also drags the hinge joints out of line (front wheel 1 to 2 cm off
+its axle) and pitches the cart nose-down while pushing, which is the -11 degree creep seen before. Lifting the
+spin cap (600 rad/s) makes it worse (9 mm left under the wheel); 240 Hz leaves 8 mm at 6 m/s, 480 Hz 3 mm, and at
+both the coast-down matches rolling plus air. **Proposed fix (not built):** give the wheels a contact that
+doesn't spin: the collision sphere (or a short ray or shape cast) on a body that only steers (the fork, or a
+non-spinning hub on the rear axle), with the rolling, the tyre's sideways grip and a stiff, damped tyre spring
+done as ledger forces from the contact. The spinning wheel bodies stay for the visuals and sounds. That also
+gives wheel compliance and jitter a place to live, and frees the spin cap. Cheaper stopgap: 240 Hz physics
+(twice the physics cost for every level).
+
+Interface for the HUD's live graphs (the sandbox/HUD thread hosts the panel): `cart.ledger` as above, and
+`cart.human_curves()`, a Dictionary of name -> {curve, x (where it's being read now, in the curve's units),
+x_label, y_label} for force_velocity, reach, height, effort_ramp, fatigue and legs. `cart.hand_force` (N along
+each arm, + push) and `cart.body_point(side)`, `cart.body_gap`, `cart.body_speed`, `cart.body_lean` for the body.
+
+Still open: other tests set the removed `power_base`, `power_ramp` and `drive_max` (`garage_test`,
+`parking_lot_test`, `supermarket_check`, `cart_stack_test`, `cart_stack_screenshot`) and need moving to
+`arm_strength` and `effort_ramp`. The one-hand push surges a little during launch when the arms straighten
+faster than the legs follow. "A spin, then D" stops in 0.97 s against the test's 1.0 s, so it has little margin. S held past about a second swings the cart past its balance point (47 degrees)
+and it goes over backwards with the hands off.
+
+### Cart: reference numbers
+
+| Quantity | Used | Real world | Source |
+|---|---|---|---|
+| Player mass | 75 kg | adult means about 70 to 90 kg | CDC NHANES 2015-18 anthropometric reference data |
+| Shoulder (acromion) height, standing | 1.42 m | men about 1.44 m, women about 1.33 m | ANSUR II (US Army 2012) |
+| Shoulder width (biacromial) | 0.38 m | men about 0.40 m, women about 0.36 m | ANSUR II |
+| Arm, shoulder to grip | 0.66 m | men about 0.65 to 0.70 m | ANSUR II (acromion-radiale + forearm + grip) |
+| Legs' horizontal force from a standstill | 8 N/kg (600 N) | 6 to 10 N/kg | Samozino et al. 2016, sprint force-velocity profiles |
+| Top running speed behind a cart | 6.4 m/s | sprint v0 7 to 11 m/s unencumbered; arms on a bar shorten it | Samozino et al. 2016; estimate |
+| Backpedalling speed | 2.5 m/s | about 2.5 to 3.5 m/s | estimate from backward-running studies |
+| Two-hand push or pull, standing, elbow height | 400 N (200 per hand) | about 300 to 500 N for men | Chaffin, Andres & Garg 1983; Snook & Ciriello 1991 |
+| Hill curvature a/F0 | 0.25 | 0.15 to 0.4 | Hill 1938 |
+| Eccentric force plateau | 1.4 x isometric | 1.2 to 1.5 in vivo | Westing, Seger & Thorstensson 1990 |
+| Unloaded hand speed, pushing | 3 m/s | 2 to 3 m/s peak in light bench throws | ballistic bench press studies (estimate) |
+| Hand force angle from level, cart push/pull | flattened to 0.25 of arm angle (about 12 degrees) | about 10 to 25 degrees | Lee, Chaffin, Herrin & Waikar 1991; Hoozemans et al. 1998 |
+| Push strength against handle height | best 0.9 to 1.15 m, 75 % at 0.65 m | lower at knee height | Snook & Ciriello 1991 |
+| Shoe on dry asphalt | leg_brake 500 N (0.68 g) | friction 0.7 to 0.9 | pedestrian slip-resistance tests |
+| Caster wheel | 127 mm (5 in), trail 38 mm | 100 to 127 mm, trail 30 to 40 mm | cart caster catalogues |
+| Caster rolling resistance | 0.015 of load | 0.01 to 0.02 on smooth floors | caster maker data for polyurethane treads |
+| Swivel bearing friction | 0.03 N*m | 0.02 to 0.05 N*m at 70 N on a dry ball race | estimate: rolling-ball friction about 0.005 x load x 25 mm race |
+| Air density | 1.2 kg/m^3 | 1.2 at 20 C, sea level | ISA |
+| Drag area (Cd x A) | 0.25 m^2 | about 0.5 m^2 frontal, wire mesh solidity about 0.3 | screen drag data (Idelchik); estimate |
+| Fatigue | 0.55 of strength spent | sustained 50 % effort lasts about a minute | Rohmert 1960 endurance curve |

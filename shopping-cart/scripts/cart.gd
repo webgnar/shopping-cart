@@ -763,7 +763,7 @@ func _apply_hands(delta: float) -> void:
 			hand_force[side] = dir * f
 			push_along += force.dot(fwd)
 			if dist >= arm_length:
-				st = "can't reach"
+				st = "arms straight"
 			else:
 				st = ("pushing %d N" if dir > 0 else "pulling %d N") % roundi(f)
 		if dir != 0 or hand_grip[side] > 0.05:
