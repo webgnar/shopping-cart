@@ -7,6 +7,8 @@
 [ext_resource type="Texture2D" path="res://assets/ui/cart_side.png" id="5_side"]
 [ext_resource type="Texture2D" path="res://assets/ui/cart_top.png" id="6_top"]
 [ext_resource type="Script" path="res://scripts/ui/telemetry_graph.gd" id="7_graph"]
+[ext_resource type="Script" path="res://scripts/ui/curve_panel.gd" id="8_curves"]
+[ext_resource type="Script" path="res://scripts/ui/curve_view.gd" id="9_curve_view"]
 
 [sub_resource type="SystemFont" id="SystemFont_cms"]
 font_names = PackedStringArray("Consolas", "DejaVu Sans Mono", "Monospace")
@@ -828,7 +830,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 9
-text = "P RESET · L NEXT LANE · M MULTIPLAYER · F FORCES · G GRAPHS · F11 FULL SCREEN
+text = "P RESET · L NEXT LANE · M MULTIPLAYER · F FORCES · G GRAPHS · C CURVES · F11 FULL SCREEN
 CLICK TO LOOK · ESC TO RELEASE · SCROLL TO ZOOM"
 horizontal_alignment = 0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
@@ -907,3 +909,90 @@ custom_minimum_size = Vector2(400, 294)
 layout_mode = 2
 mouse_filter = 2
 script = ExtResource("7_graph")
+
+[node name="CurveSign" type="PanelContainer" parent="Screen" node_paths=PackedStringArray("save_button", "revert_button", "status_label")]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -160.0
+offset_top = 12.0
+offset_right = 160.0
+offset_bottom = 12.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("Style_meter")
+script = ExtResource("8_curves")
+save_button = NodePath("Lines/Buttons/Save")
+revert_button = NodePath("Lines/Buttons/Revert")
+status_label = NodePath("Lines/Status")
+
+[node name="Lines" type="VBoxContainer" parent="Screen/CurveSign"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Plaque" type="PanelContainer" parent="Screen/CurveSign/Lines"]
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Style_plaque")
+
+[node name="Caption" type="Label" parent="Screen/CurveSign/Lines/Plaque"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 8
+text = "CURVES"
+horizontal_alignment = 1
+
+[node name="ForceSpeed" type="Control" parent="Screen/CurveSign/Lines"]
+custom_minimum_size = Vector2(320, 112)
+layout_mode = 2
+script = ExtResource("9_curve_view")
+title = "FORCE AGAINST HAND SPEED"
+x_label = "HAND SPEED M/S"
+y_label = "× DRIVE"
+cart_property = "force_speed_curve"
+input_key = "hand_speed"
+
+[node name="StrengthHeight" type="Control" parent="Screen/CurveSign/Lines"]
+custom_minimum_size = Vector2(320, 112)
+layout_mode = 2
+script = ExtResource("9_curve_view")
+title = "STRENGTH AGAINST HANDLE HEIGHT"
+x_label = "HANDLE HEIGHT M"
+y_label = "× STRENGTH"
+cart_property = "strength_height_curve"
+input_key = "handle_height"
+
+[node name="Fatigue" type="Control" parent="Screen/CurveSign/Lines"]
+custom_minimum_size = Vector2(320, 112)
+layout_mode = 2
+script = ExtResource("9_curve_view")
+title = "FATIGUE"
+x_label = "FATIGUE 0-1"
+y_label = "× STRENGTH"
+cart_property = "fatigue_curve"
+input_key = "fatigue"
+
+[node name="Status" type="Label" parent="Screen/CurveSign/Lines"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.69, 0, 1)
+theme_override_font_sizes/font_size = 9
+horizontal_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="Screen/CurveSign/Lines"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="Save" type="Button" parent="Screen/CurveSign/Lines/Buttons"]
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 11
+text = "SAVE TO .TRES"
+
+[node name="Revert" type="Button" parent="Screen/CurveSign/Lines/Buttons"]
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 11
+text = "REVERT"

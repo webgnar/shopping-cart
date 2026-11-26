@@ -18,6 +18,7 @@ extends CanvasLayer
 @onready var _force_view: ForceDiagram = %ForceView
 @onready var _graph_sign: Control = %GraphSign
 @onready var _graphs: TelemetryGraph = %Graphs
+@onready var _curve_sign: CurvePanel = %CurveSign
 @onready var _markers := {"L": %LeftHand, "R": %RightHand}
 
 const BAR_HALF := 0.26   ## m: half the handlebar's width, the track's half length
@@ -28,6 +29,7 @@ const BAR_HALF := 0.26   ## m: half the handlebar's width, the track's half leng
 
 
 ## F cycles the handle-forces sign: both views, side, top, hidden. G shows or hides the graphs (telemetry_graph.gd).
+## C opens or closes the curve editor (curve_panel.gd) and frees the mouse to edit with.
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("forces"):
 		if not _force_sign.visible:
@@ -44,6 +46,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		_graph_sign.visible = not _graph_sign.visible
 		_graphs.clear()
 		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("curves"):
+		_curve_sign.visible = not _curve_sign.visible
+		if _curve_sign.visible:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		get_viewport().set_input_as_handled()
 
 
 func show_cart(cart: ShoppingCart) -> void:
@@ -51,6 +58,8 @@ func show_cart(cart: ShoppingCart) -> void:
 		_force_view.show_cart(cart)
 	if _graph_sign.visible:
 		_graphs.show_cart(cart)
+	if _curve_sign.visible:
+		_curve_sign.show_cart(cart)
 	var v := cart.frame_velocity()
 	_speed.text = "%d" % roundi(Vector2(v.x, v.z).length() * 3.6)
 	_turn.text = "%d°/s" % roundi(rad_to_deg(cart.frame_spin()))

@@ -21,7 +21,7 @@ const KEYS := {
 	"push_left": KEY_Q, "pull_left": KEY_A,
 	"push_right": KEY_E, "pull_right": KEY_D,
 	"lift": KEY_W, "press": KEY_S, "reset": KEY_P,
-	"fullscreen": KEY_F11, "forces": KEY_F, "next_lane": KEY_L, "graphs": KEY_G,
+	"fullscreen": KEY_F11, "forces": KEY_F, "next_lane": KEY_L, "graphs": KEY_G, "curves": KEY_C,
 }
 
 var cart: ShoppingCart
