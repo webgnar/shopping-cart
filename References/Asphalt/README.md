@@ -30,6 +30,14 @@ in this folder with the file names below.
   Temperatures on Air Temperatures in Large Cities", LBNL-43442 (2000). Measured albedo of asphalt pavements against
   age (fig. 1): 0.04 fresh, 0.12 +- 0.03 after 5 years; chip seal about 2/3 of the aggregate's albedo.
 
+## Mix design (aggregate gradation and volumetrics)
+- `fhwa_1998_rd-98-087_superpave_summary.pdf`: FHWA Research and Development, "Superpave Mixture Design" summary
+  chart, FHWA-RD-98-087 (1998), 2 pp. Public domain (US DOT). https://rosap.ntl.bts.gov/view/dot/89514
+  Gradation control points by nominal maximum size; for 12.5 mm: 100 % passing 19.0, 90-100 at 12.5, 28-58 at
+  2.36, 2-10 at 0.075 mm; restricted zone 39.1 (2.36), 25.6-31.6 (1.18), 19.1-23.1 (0.60), 15.5 (0.30). Minimum VMA
+  14 % (12.5 mm); design air voids 4 % (Ndes at 96 % Gmm); VFA 65-78 % (0.3-3 million ESALs). Limits, not a mix:
+  a job-mix formula (LTPP test AG04 for a section) gives the actual curve.
+
 ## Crack patterns in shrinking layers
 - `bohn_2005_hierarchical_crack_pattern_II.pdf`: Bohn, Platkiewicz, Andreotti, Adda-Bedia, Couder, "Hierarchical
   crack pattern as formed by successive domain divisions. II. From disordered to deterministic behavior", Phys. Rev. E
