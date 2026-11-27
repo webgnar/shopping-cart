@@ -12,6 +12,16 @@ in this folder with the file names below.
   fatigue pieces usually under 0.3 m, blocks 0.1-10 m2, edge cracking within 0.6 m of the edge. Our notes on it:
   `docs/ASPHALT_SCIENCE.md`.
 
+## Binder ageing
+- `Long-Term Aging of Asphalt Mixtures for Performance Testing and Prediction Phase I & II Results .pdf`: Kim et al.,
+  NCHRP Research Report 871 (2018). The original NCHRP 09-54 work: lab ageing procedure, the first Pavement Aging Model.
+- `Long-Term Aging of Asphalt Mixtures for Performance Testing and Prediction Phase III Results .pdf`: Kim et al.,
+  NCHRP Research Report 973 (2021). The field-calibrated Pavement Aging Model (Table 9), inputs from the binder's PG
+  (eqs. 26-28), and the AMAC model (chapter 6). Notes: docs/ASPHALT_SCIENCE.md, Model 1.
+- `glover_2014_tti_0-6009-2_binder_aging.pdf`: Glover et al., "Evaluation of Binder Aging and Its Influence in Aging of
+  Hot Mix Asphalt Concrete", TTI report FHWA/TX-14/0-6009-2 (2014), 526 pp. Pavement temperature model, oxidation
+  kinetics, diffusion with depth. https://library.ctr.utexas.edu/hostedPDFs/tti/0-6009-2.pdf
+
 ## Crack patterns in shrinking layers
 - `bohn_2005_hierarchical_crack_pattern_II.pdf`: Bohn, Platkiewicz, Andreotti, Adda-Bedia, Couder, "Hierarchical
   crack pattern as formed by successive domain divisions. II. From disordered to deterministic behavior", Phys. Rev. E

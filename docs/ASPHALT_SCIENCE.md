@@ -230,6 +230,60 @@ Findings from the map: a 10 m section can never meet block cracking's 15 m occur
 straightedge rut depths include the broken surface of failed wheel paths (37 mm against the rut model's 25 mm cap)
 and potholes under the straightedge (up to 89 mm), as a real straightedge would.
 
+## Model 1: binder ageing, the NCHRP 973 Pavement Aging Model (proposal for review)
+
+**Source:** Kim et al., NCHRP Research Report 973 (2021), "Long-Term Aging of Asphalt Mixtures for Performance
+Testing and Prediction: Phase III Results", chapters 2, 4 and 5, Table 9 (`References/Asphalt/Long-Term Aging ...
+Phase III Results .pdf`). It builds on NCHRP Report 871 (Phases I and II, same folder). Field-calibrated on cores
+from 8 US states and Manitoba (LTPP SPS-8 sections, WesTrack, FHWA ALF, NCAT, MnROAD), with the oxidation
+kinetics of Glaser et al. (2013). The report finds it predicts field ageing better than the MEPDG's Global Aging
+System (R2 0.71 against 0.38 over all depths, fig. 34).
+
+**What it predicts:** the binder's stiffness, log |G\*| at 64 C and 10 rad/s (kPa), at any age t and depth z.
+Higher |G\*| is harder, more brittle binder.
+
+**Equations (report numbering):**
+
+1. Surface kinetics, integrated hour by hour over the surface temperature T (K), log |G\*| carried as the state
+   from one hour to the next (fig. 17):
+   log|G\*|kin = log|G\*|0 + M [ (1 - kc/kf)(1 - e^(-kf t)) + kc t ]   (1), t in days
+   kf = Af exp(-Eaf / RT), kc = Ac exp(-Eac / RT)   (2), (3)
+   Af = 1.25e3, Eaf = 95.04 kJ/mol, Ac = 3.68e7, Eac = 62.21 kJ/mol, R = 0.008314 kJ/mol K (Table 1, universal).
+   Two reactions: a fast one that runs out, and a slow constant one. Hours below 20 C add almost nothing.
+2. Depth (z in cm), from the surface ageing:
+   APt = (log|G\*|kin,t - log|G\*|0) / M,  APmax = (4.5 - log|G\*|0) / M,  N = 0.477 exp(-0.226 AP(t=10 yr))
+   log|G\*|t,z = log|G\*|0 + M ((0.916 z + APmax) / (z + 1)) (1 - exp(-N APt))   (22)
+   At the surface it heads for log |G\*| = 4.5; deep down for 0.916 M above the start. The gradient with depth
+   (oxygen reaching less far, UV at the top) comes out of this equation.
+3. Asphalt content off the Superpave optimum: x (1 - 0.149 %ACdev)   (23). We take the optimum (factor 1).
+
+**Inputs:**
+
+- log |G\*|0 and M, the binder's: from its high performance grade (HPG), the report's least accurate route but the
+  one that needs no lab tests: log|G\*|0 = 6.552 / (1 + (HPG / 107.167)^-4.068)   (26),
+  M = 0.94 / (1 + (HPG / 82.68)^7.96)   (27). PG 64-22: log |G\*|0 = 0.72 (5.2 kPa), M = 0.83 (eq. 28 agrees: 0.82).
+  The binder grade becomes a build-up input (on the asphalt layer).
+- The surface temperature, hour by hour, for the site. This is the open piece: the report used the MEPDG's
+  climate model (EICM) on MERRA-2 weather. Candidates: the LTPP section's MERRA-2 weather (InfoPave) through a
+  sourced pavement-temperature model, such as the one in TTI 0-6009-2 (Glover et al. 2014,
+  `glover_2014_tti_0-6009-2_binder_aging.pdf`, to be read next).
+
+**What it drives, in plan and section:**
+
+- Section: binder stiffness through the asphalt layer, drawn as a gradient (hardest at the top), each year.
+- Plan: the surface's ageing state. The colour change from black to grey has no equation in these sources; the
+  proposal is a declared visual mapping from the model's surface ageing (the fraction 1 - exp(-N APt) of the way
+  to saturation) to the fresh-to-aged colour, labelled as a mapping, not a result.
+- Later models: thermal cracking (a stiffer, more brittle layer) and fatigue, through NCHRP 973 chapter 6
+  (the AMAC model: binder |G\*| to mixture properties), read when those models start.
+
+**Checks before it is trusted:** the equations reproduce the report's numbers (Table 1 constants, eq. 26-28 for a
+known HPG, the surface saturating at 4.5 and the deep value at 0.916 M); its depth profiles have the shape of
+figs. 35-39 for a site of similar climate; ageing stalls in cold years and runs in hot ones.
+
+**Not in it:** RAP, warm mix and polymer-modified binders (the report's outliers); air voids (found
+insignificant); UV beyond what the depth calibration absorbs.
+
 ## Next steps
 
 Done (Nov 2026): the build-up as data and editable; LTPP survey, distress map and cross-section; the sim split by
