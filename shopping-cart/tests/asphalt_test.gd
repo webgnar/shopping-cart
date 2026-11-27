@@ -416,6 +416,30 @@ func _run() -> void:
 	click.position = r.position + Vector2(r.size.x * 0.5, r.size.y * 0.25)
 	lab._on_plan_input(click)
 	_check("clicking the plan moves the cut", absf(section.cut_y - lsim.size.y * 0.25) < 0.05, "cut at %.2f m" % section.cut_y)
+	# T2 -> T0: the binder grade box edits the copy, and the section shades the asphalt by the model's stiffness,
+	# worked out again here from the site and grade, at the top, middle and bottom of each asphalt layer.
+	(lab.get_node("Panel/Scroll/Box/BinderRow/BinderPG") as SpinBox).value = 70.0
+	lab._process(0.0)
+	lsim.advance_to(16.0)
+	section.refresh()
+	var model := BinderAgeing.for_layer(lsim.site(), lsim.pavement().surface(), 20)
+	var age := lsim.surface_age()
+	var grad_ok := lsim.pavement().surface().binder_hpg == 70.0 and AsphaltSim.DEFAULT_BUILDUP.surface().binder_hpg == 64.0 and age > 1.0
+	var top_d := 0.0
+	var last_tint := 2.0
+	for l in lsim.pavement().layers:
+		if l.kind != PavementLayer.Kind.ASPHALT:
+			break
+		for f: float in [0.0, 0.5, 1.0]:
+			var d := top_d + l.thickness * f
+			var tint := section.binder_tint(d)
+			grad_ok = grad_ok and absf(section.binder_log_g(d) - model.log_g(d, age)) < 1e-9 and tint < last_tint
+			last_tint = tint
+		top_d += l.thickness
+	var top_tint := section.binder_tint(0.0)
+	grad_ok = grad_ok and top_tint > 0.0 and is_equal_approx(top_tint, (model.log_g(0.0, age) - model.log_g0) / (4.5 - model.log_g0))
+	_check("the section's stiffness gradient is the model's", grad_ok, "PG %.0f at %.1f years: log |G*| %.2f at the top, %.2f at %.0f mm; shade %.2f to %.2f"
+		% [lsim.pavement().surface().binder_hpg, age, section.binder_log_g(0.0), section.binder_log_g(top_d), top_d * 1000.0, top_tint, last_tint])
 	# LTPP distress map: the survey drawn with the appendix A symbols, and the data sheet totals.
 	view.select(6)
 	view.item_selected.emit(6)

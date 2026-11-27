@@ -34,6 +34,7 @@ var _rebuild_at := -1  ## msec: rebuild the road once the build-up spin boxes se
 @onready var _asphalt_mm: SpinBox = %AsphaltMM
 @onready var _base_mm: SpinBox = %BaseMM
 @onready var _cbr: SpinBox = %Cbr
+@onready var _binder_pg: SpinBox = %BinderPG
 
 
 func _ready() -> void:
@@ -44,6 +45,7 @@ func _ready() -> void:
 	_asphalt_mm.set_value_no_signal(b.asphalt_thickness() * 1000.0)
 	_base_mm.set_value_no_signal(b.base().thickness * 1000.0 if b.base() else 0.0)
 	_cbr.set_value_no_signal(b.subgrade_cbr)
+	_binder_pg.set_value_no_signal(b.surface().binder_hpg)
 	_show_section()
 	sim.changed.connect(_update_ui)
 	sim.changed.connect(_queue_relief)
@@ -99,6 +101,7 @@ func _show_section() -> void:
 	for l in b.layers:
 		lines.append("  %s: %.0f mm (%.1f in)" % [l.title, l.thickness * 1000.0, l.thickness / 0.0254])
 	lines.append("  Subgrade: CBR %.0f" % b.subgrade_cbr)
+	lines.append("Binder PG %.0f, aged in the %s climate (NCHRP 973)." % [b.surface().binder_hpg, sim.site().title])
 	lines.append("Slip length %.2f m (Li & Marasteanu 2005), wheel spread %.2f m (Westergaard)." % [sim.slip_length(), sim.wheel_spread()])
 	lines.append("Sources: " + b.source)
 	_section_info.text = "\n".join(lines)
@@ -127,8 +130,9 @@ func _on_play_toggled(on: bool) -> void:
 	_play_t = sim.time
 
 
-## A build-up spin box changed: the road is rebuilt on a copy of the build-up with the new asphalt and base thicknesses
-## and subgrade CBR, from year 0 (a moment after the last change). The asphalt box sets the top (only) asphalt layer.
+## A build-up spin box changed: the road is rebuilt on a copy of the build-up with the new asphalt and base thicknesses,
+## subgrade CBR and binder grade, from year 0 (a moment after the last change). The asphalt and binder boxes set the
+## top (only) asphalt layer.
 func _on_buildup_changed(_value: float) -> void:
 	if sim.buildup == null or sim.buildup.resource_path != "":   # the shared preset: edit a copy
 		sim.buildup = sim.pavement().duplicate(true)
@@ -138,6 +142,7 @@ func _on_buildup_changed(_value: float) -> void:
 	if b.base():
 		b.base().thickness = _base_mm.value / 1000.0
 	b.subgrade_cbr = _cbr.value
+	b.layers[0].binder_hpg = _binder_pg.value
 	_show_section()
 	_rebuild_at = Time.get_ticks_msec() + 300
 

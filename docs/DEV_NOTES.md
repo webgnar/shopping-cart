@@ -2019,3 +2019,12 @@ wired into the sim yet.
 Table 3B preset. `BinderAgeing.unaged_log_g()` and `susceptibility()` are NCHRP 973 eqs. 26 and 27 (log |G*|0 0.717,
 M 0.832 for PG 64), and `BinderAgeing.for_layer(climate, layer, years)` ages a layer's binder. The test now takes
 the grade from the preset. Not in the lab panel yet; the sim doesn't use it yet.
+
+## Asphalt T2 step 5: the section draws the binder stiffness (Nov 27 2026)
+
+`AsphaltSim.site_climate` (SiteClimate, empty = Burlington; the lab scene sets Burlington) and `binder()`, a
+BinderAgeing for the site and the surface layer's grade, rebuilt only when either changes (about 0.25 s for 40
+years); `binder_log_g(depth)` uses `surface_age()`, so the placeholder overlay restarts the ageing. The section
+shades the asphalt in 24 bands from paper (unaged) to `stiff_ink` (log |G*| 4.5) under the stipple, and the
+asphalt layer's label adds the grade and the top and bottom log |G*|. Lab: a Binder grade PG box (46-82, step 6)
+on the build-up. Check "the section's stiffness gradient is the model's" recomputes the model independently.

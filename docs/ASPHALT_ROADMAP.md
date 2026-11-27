@@ -156,8 +156,8 @@ Steps (one commit each, each with its own check):
 - [x] 1. Climate resource with the NOAA normals and latitude (`SiteClimate`, `assets/asphalt/climates/`; check "climate holds the NOAA normals")
 - [x] 2. Pavement temperature: reproduces the Python chain's hours above 20 C (`PavementTemperature`; Burlington 4,399 h, Concord 5,600 h, -8.4 to 50.0 C and 4.9 to 53.8 C at the surface; checks "LTPP pavement temperature equations", "pavement temperature matches the chain")
 - [x] 3. Surface kinetics and depth: reproduces the chain table (`BinderAgeing`; Burlington surface 0.96 / 1.75 / 2.47 at 1 / 5 / 10 years, Concord 1.05 / 1.97 / 2.74; checks "NCHRP 973 kinetics constants", "binder ageing matches the chain", "binder hardens with age, most at the surface", "a hotter climate ages the binder faster")
-- [x] 4. Binder grade on the build-up; inputs from HPG (PG 64: 0.72, 0.832) (`PavementLayer.binder_hpg`, 64 on the c620 preset; `BinderAgeing.unaged_log_g()`, `susceptibility()`, `for_layer()`; check "binder grade sets the ageing inputs". Not editable in the lab yet)
-- [ ] 5. Section draws the stiffness gradient
+- [x] 4. Binder grade on the build-up; inputs from HPG (PG 64: 0.72, 0.832) (`PavementLayer.binder_hpg`, 64 on the c620 preset; `BinderAgeing.unaged_log_g()`, `susceptibility()`, `for_layer()`; check "binder grade sets the ageing inputs"; lab box added in step 5)
+- [x] 5. Section draws the stiffness gradient (`CrossSectionCanvas`: asphalt shaded paper to grey from unaged binder to log abs(G*) 4.5, 24 bands, under the stipple; PG and top/bottom log abs(G*) in the layer label. The sim takes a `site_climate` (Burlington by default) and caches `binder()` per climate and grade, aged by `surface_age()`, so a placeholder overlay restarts it. Lab: Binder grade PG box. Check "the section's stiffness gradient is the model's")
 - [ ] 6. Plan grey from albedo
 - [ ] 7. Roadmap and science register updated
 
@@ -235,7 +235,7 @@ appear only on the distress map's second axis.
 | Subgrade CBR; Mr; k | -, Pa, Pa/m | Input; T1 | T1, T4 | `PavementBuildup.subgrade_mr()`, `subgrade_k()` | Built |
 | Binder high grade HPG | C | Input (asphalt layer) | T2 | `PavementLayer.binder_hpg` | Built |
 | Road layout: lanes, wheel paths, markings | m | Input | T4, T0 | `AsphaltSim` exports | Built |
-| Monthly air high and low, latitude | C, degrees | Input (climate) | T2, T3 | `SiteClimate` (stored in F as NOAA publishes) | Built |
+| Monthly air high and low, latitude | C, degrees | Input (climate) | T2, T3 | `SiteClimate` (stored in F as NOAA publishes); the sim's `site_climate` | Built |
 | Pavement temperature T(depth, hour) | C | T2 | T2, T3, T4 | `PavementTemperature` | Built |
 | Binder stiffness log abs(G*)(depth, year) | log kPa (64 C, 10 rad/s) | T2 | T3, T4 (through AMAC), T0 section | `BinderAgeing.log_g()` | Built |
 | Surface ageing p | - (0 to 1) | T2 | T2 albedo | `BinderAgeing.surface_progress()` | Built |
@@ -259,7 +259,7 @@ as soon as both of its topics exist.
 | Plan and section agree: every crack crossing the cut appears in the section, the section's rut equals the height map's | T0 | Built |
 | With `placeholders` off nothing without a source is drawn | all | Built ("the lab shows only sourced models") |
 | A hotter climate ages the binder faster | T2 | Built |
-| The section's stiffness gradient is the model's, layer by layer | T2, T0 | T2 step 5 |
+| The section's stiffness gradient is the model's, layer by layer | T2, T0 | Built |
 | A thicker asphalt layer gives a longer slip length and wider crack spacing | T1, T3 | T3 |
 | A more aged (stiffer) binder cracks sooner in the cold | T2, T3 | T3 |
 | A colder climate gives more thermal cracks | T2, T3 | T3 |
@@ -313,4 +313,5 @@ merged before the next topic's thread starts.
 | Nov 27 2026 | all | This roadmap | 4621cd9 |
 | Nov 27 2026 | T2 | Steps 1-2: climate table, pavement temperature | e9e64ca |
 | Nov 27 2026 | T2 | Step 3: surface kinetics and depth (`BinderAgeing`) | a4a8d82 |
-| Nov 27 2026 | T2 | Step 4: binder grade on the build-up, inputs from HPG | this commit |
+| Nov 27 2026 | T2 | Step 4: binder grade on the build-up, inputs from HPG | 9d2391a |
+| Nov 27 2026 | T2 | Step 5: section draws the stiffness gradient | this commit |

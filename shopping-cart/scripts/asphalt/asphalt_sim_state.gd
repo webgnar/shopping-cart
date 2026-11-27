@@ -49,6 +49,9 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 ## cracks a slip length apart (Li & Marasteanu 2005), and a wheel's bending breaks the wheel path into cells about
 ## Westergaard's radius across (as the CrackLattice runs showed). Empty: the c620 Table 3B baseline.
 @export var buildup: PavementBuildup
+## The site's climate (assets/asphalt/climates/): its pavement temperatures age the binder (BinderAgeing, T2).
+## Empty: Burlington, Vermont.
+@export var site_climate: SiteClimate
 
 @export_group("Mix and crack paths")
 @export_range(0.0, 1.0, 0.05) var mix_variation := 0.5 ## how uneven the asphalt's strength is (compaction, segregation)
@@ -92,6 +95,8 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 var time := 0.0
 ## When the current wearing surface went down (overlay or seal) and what it is.
 var surface_born := 0.0
+var _binder: BinderAgeing
+var _binder_key := []
 var paint_born := 0.0                     ## year the lines were last painted
 var rut_born := 0.0
 var cracks: Array[Crack] = []
@@ -151,6 +156,8 @@ const BLOCK_CELL := Vector2(0.7, 1.0)
 const FATIGUE_CELL := Vector2(0.7, 1.0)
 const REF_THICKNESS := 0.076   ## m the fatigue rate was tuned for (a 3 in lot)
 const DEFAULT_BUILDUP := preload("res://assets/asphalt/buildups/c620_table3b_cbr9.tres")
+const DEFAULT_CLIMATE := preload("res://assets/asphalt/climates/burlington_vt.tres")
+const AGEING_YEARS := 40       ## years of binder ageing worked out; older surfaces stay at the last year
 const BOND_FULL_DEPTH := 0.1e6 ## Pa: placeholder shear strength for full-depth asphalt on the subgrade (no source yet)
 const BRANCH_SCATTER := 0.26   ## rad (15 degrees): spread of a shrinkage branch's angle (Shorlin et al. 1999)
 const FATIGUE_CELLS := 1.2            ## fatigue past which the wheel paths break up into crocodile cells
@@ -212,6 +219,26 @@ class Crack:
 ## The build-up in use: `buildup`, or the c620 Table 3B baseline.
 func pavement() -> PavementBuildup:
 	return buildup if buildup else DEFAULT_BUILDUP
+
+
+## The site's climate in use: `site_climate`, or Burlington.
+func site() -> SiteClimate:
+	return site_climate if site_climate else DEFAULT_CLIMATE
+
+
+## The surface binder's ageing (T2) for this site and the build-up's binder grade, worked out again only when
+## either changes.
+func binder() -> BinderAgeing:
+	var key := [site(), pavement().surface().binder_hpg]
+	if _binder == null or key != _binder_key:
+		_binder = BinderAgeing.for_layer(site(), pavement().surface(), AGEING_YEARS)
+		_binder_key = key
+	return _binder
+
+
+## log |G*| (kPa, 64 C, 10 rad/s) of the binder `depth_m` below the surface, at the surface's age.
+func binder_log_g(depth_m: float) -> float:
+	return binder().log_g(depth_m, surface_age())
 
 
 ## m of bound asphalt.

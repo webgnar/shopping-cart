@@ -14,6 +14,7 @@
 [ext_resource type="Texture2D" uid="uid://dq4ocup0ey4je" path="res://assets/asphalt/textures/gravel_shoulder.png" id="13_shoulder"]
 [ext_resource type="Shader" path="res://assets/asphalt/asphalt_surface_3d.gdshader" id="14_surface3d"]
 [ext_resource type="Resource" path="res://assets/asphalt/buildups/c620_table3b_cbr9.tres" id="40_buildup"]
+[ext_resource type="Resource" path="res://assets/asphalt/climates/burlington_vt.tres" id="41_climate"]
 [ext_resource type="Script" path="res://scripts/asphalt/cross_section_canvas.gd" id="41_section"]
 [ext_resource type="Script" path="res://scripts/asphalt/distress_map_canvas.gd" id="42_map"]
 [ext_resource type="Theme" path="res://assets/asphalt/paper_theme.tres" id="43_paper"]
@@ -95,6 +96,7 @@ preview_camera = NodePath("PreviewViewport/CameraPivot/Camera")
 [node name="Sim" type="Node" parent="."]
 script = ExtResource("2_sim")
 buildup = ExtResource("40_buildup")
+site_climate = ExtResource("41_climate")
 placeholders = false
 paint_lines = PackedVector2Array(1.4, 0, 1.4, 10, 8.6, 0, 8.6, 10, 5, 1, 5, 4.048)
 paint_colors = PackedColorArray(0.92, 0.92, 0.88, 1, 0.92, 0.92, 0.88, 1, 0.95, 0.74, 0.16, 1)
@@ -354,6 +356,23 @@ step = 1.0
 value = 76.0
 suffix = "mm"
 
+[node name="BinderRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
+layout_mode = 2
+
+[node name="Name" type="Label" parent="Panel/Scroll/Box/BinderRow"]
+custom_minimum_size = Vector2(115, 0)
+layout_mode = 2
+text = "Binder grade PG"
+
+[node name="BinderPG" type="SpinBox" parent="Panel/Scroll/Box/BinderRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 46.0
+max_value = 82.0
+step = 6.0
+value = 64.0
+
 [node name="BaseRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
 layout_mode = 2
 
@@ -426,3 +445,4 @@ autowrap_mode = 3
 [connection signal="value_changed" from="Panel/Scroll/Box/AsphaltRow/AsphaltMM" to="." method="_on_buildup_changed"]
 [connection signal="value_changed" from="Panel/Scroll/Box/BaseRow/BaseMM" to="." method="_on_buildup_changed"]
 [connection signal="value_changed" from="Panel/Scroll/Box/CbrRow/Cbr" to="." method="_on_buildup_changed"]
+[connection signal="value_changed" from="Panel/Scroll/Box/BinderRow/BinderPG" to="." method="_on_buildup_changed"]

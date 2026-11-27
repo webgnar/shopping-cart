@@ -9,6 +9,8 @@ extends Control
 ## same style (asphalt stippled, aggregate base circles, subgrade earth hatch). Crack depth is still a placeholder
 ## (AsphaltSim.crack_depth): its solid notch is the opening, the dashed line below it the guessed depth. Depth is
 ## exaggerated by the largest of EXAGGERATIONS that fits. The cut is marked on `plan_view` (the colour map).
+## The asphalt is shaded by its binder's stiffness (T2, BinderAgeing): paper for unaged binder, `stiff_ink` at the
+## surface limit log |G*| = 4.5, in BINDER_SLICES bands through the asphalt, darkest at the top as it ages.
 
 @export var sim: AsphaltSim
 @export var plan_view: TextureRect             ## the plan (colour map) the cut line is drawn on
@@ -19,6 +21,7 @@ extends Control
 @export var paper := Color(1.0, 1.0, 1.0)
 @export var ink := Color(0.0, 0.0, 0.0)
 @export var plan_mark := Color(1.0, 1.0, 1.0)   ## the cut line on the colour plan
+@export var stiff_ink := Color(0.5, 0.5, 0.5)   ## the asphalt's shade when its binder reaches log |G*| = 4.5
 
 enum M { AIR, ASPHALT, BASE, SUBGRADE, SHOULDER, PATCH, FILL }
 
@@ -27,6 +30,7 @@ const GUTTER := 150.0                           ## px on the right for the layer
 const FOOT := 58.0                              ## px at the bottom: legend and caption
 const EXAGGERATIONS := [20.0, 10.0, 5.0, 2.0, 1.0]   ## depth scales tried, largest first (section drawings use 10-20x)
 const FONT := 10                                ## px: LTPP figure lettering is small sans
+const BINDER_SLICES := 24                       ## bands of binder stiffness drawn through the asphalt
 
 var _hmap := PackedFloat32Array()               ## the whole height map at `res`, baked once per sim change
 var _w := 0                                     ## height-map columns
@@ -124,6 +128,17 @@ func rut_depths() -> Array[Dictionary]:
 	for wp in sim.wheel_paths:
 		out.append(AsphaltSurvey.straightedge_rut(profile, res, wp))
 	return out
+
+
+## log |G*| (kPa, 64 C, 10 rad/s) the section draws `depth_m` below the design surface: the model's (T2).
+func binder_log_g(depth_m: float) -> float:
+	return sim.binder_log_g(maxf(depth_m, 0.0))
+
+
+## 0..1: how dark the asphalt is drawn at `depth_m`, from the unaged binder (0) to the surface limit 4.5 (1).
+func binder_tint(depth_m: float) -> float:
+	var b := sim.binder()
+	return clampf((binder_log_g(depth_m) - b.log_g0) / (BinderAgeing.SURFACE_LIMIT - b.log_g0), 0.0, 1.0)
 
 
 ## Where the plan image sits inside plan_view (the texture is square and kept centred).
@@ -226,6 +241,26 @@ func _draw() -> void:
 		poly.append(Vector2(X.call(ii[0] * res), Y.call(-h_total)))
 		if poly.size() >= 3:
 			draw_colored_polygon(poly, ink)
+	# Binder stiffness: each slice of the asphalt in its shade, under the stipple; runs of columns merged.
+	for k in BINDER_SLICES:
+		var z0 := -h_a * k / BINDER_SLICES
+		var z1 := -h_a * (k + 1) / BINDER_SLICES
+		var shade := paper.lerp(stiff_ink, binder_tint(-(z0 + z1) * 0.5))
+		var run_top := INF
+		var run_i := -1
+		for i in n + 1:
+			var top := INF
+			if i < n:
+				for band in cols[i]:
+					if band[0] == M.ASPHALT and band[1] > z1 and band[2] < z0:
+						top = minf(z0, band[1])
+			if top != run_top or i == n:
+				if run_i >= 0 and run_top != INF:
+					var xa: float = X.call(run_i * res) - col_w * 0.5
+					var xb: float = X.call((i - 1) * res) + col_w * 0.5
+					draw_rect(Rect2(xa, Y.call(run_top), xb - xa, Y.call(z1) - Y.call(run_top)), shade)
+				run_top = top
+				run_i = i
 	var hatch := PackedVector2Array()
 	# Diagonal hatch lines, column by column: shoulder (LTPP's shoulder hatch, one way), subgrade (the other way,
 	# wider), cold patch (both ways).
@@ -388,6 +423,9 @@ func _draw() -> void:
 		if z == 0.0 and sim.surface_born > 0.0:
 			note += ", relaid yr %.0f" % sim.surface_born
 		draw_string(font, Vector2(gx, mid + 10.0), note, HORIZONTAL_ALIGNMENT_LEFT, GUTTER - 18.0, FONT - 1, ink)
+		if l.kind == PavementLayer.Kind.ASPHALT:
+			draw_string(font, Vector2(gx, mid + 20.0), "PG %.0f, log|G*| %.2f-%.2f" % [b.surface().binder_hpg,
+				binder_log_g(-z), binder_log_g(-z + l.thickness)], HORIZONTAL_ALIGNMENT_LEFT, GUTTER - 18.0, FONT - 1, ink)
 		z -= l.thickness
 	var smid: float = Y.call(-h_total - subgrade_shown * 0.5)
 	draw_line(Vector2(area.end.x + 1.0, smid), Vector2(gx - 3.0, smid), ink, 0.5)
@@ -416,7 +454,7 @@ func _draw() -> void:
 	draw_string(font, Vector2(bx + sx + 24.0, by), "50 mm", HORIZONTAL_ALIGNMENT_LEFT, -1, FONT - 1, ink)
 	draw_string(font, Vector2(MARGIN.x, size.y - 22.0), "SECTION A-B", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, ink)
 	draw_string(font, Vector2(MARGIN.x + 1.0, size.y - 22.0), "SECTION A-B", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, ink)
-	draw_string(font, Vector2(MARGIN.x, size.y - 9.0), "Across the road at %.2f m, year %.1f.  %s.  Depth drawn %.0fx." % [
+	draw_string(font, Vector2(MARGIN.x, size.y - 9.0), "Across the road at %.2f m, year %.1f.  %s.  Depth drawn %.0fx.  Asphalt grey by binder stiffness (NCHRP 973)." % [
 		cut_y, sim.time, b.title, exag], HORIZONTAL_ALIGNMENT_LEFT, -1, FONT, ink)
 
 
@@ -452,6 +490,9 @@ func _swatch(r: Rect2, m: int) -> void:
 		M.PATCH:
 			draw_rect(r, ink)
 		M.ASPHALT:
+			for k in 8:
+				draw_rect(Rect2(r.position + Vector2(0.0, r.size.y * k / 8.0), Vector2(r.size.x, r.size.y / 8.0 + 0.5)),
+					paper.lerp(stiff_ink, 1.0 - k / 8.0))
 			for k in 14:
 				var d := r.position + Vector2(_hash(k, 3) * r.size.x, _hash(3, k) * r.size.y)
 				draw_rect(Rect2(d, Vector2(1, 1)), ink)
