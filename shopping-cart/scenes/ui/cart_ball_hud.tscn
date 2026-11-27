@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/cart_ball_hud.gd" id="1_hud"]
+[ext_resource type="Theme" path="res://assets/ui/road_sign_theme.tres" id="9_theme"]
 
 [sub_resource type="SystemFont" id="SystemFont_bold"]
 font_names = PackedStringArray("Arial Black", "Helvetica Neue", "DejaVu Sans", "Sans-Serif")
@@ -24,19 +25,6 @@ content_margin_right = 18.0
 bg_color = Color(0.86, 0.16, 0.14, 0.92)
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_final"]
-content_margin_left = 28.0
-content_margin_top = 20.0
-content_margin_right = 28.0
-content_margin_bottom = 20.0
-bg_color = Color(0.05882353, 0.07058824, 0.09411765, 0.86)
-border_width_top = 3
-border_color = Color(0.9529412, 0.7764706, 0.25490198, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
 
 [node name="CartBallHUD" type="CanvasLayer"]
 layer = 4
@@ -167,16 +155,15 @@ offset_right = 230.0
 offset_bottom = 110.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_final")
+theme = ExtResource("9_theme")
 
 [node name="Rows" type="VBoxContainer" parent="FullTime"]
 layout_mode = 2
 theme_override_constants/separation = 10
+alignment = 1
 
 [node name="Title" type="Label" parent="FullTime/Rows"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.9529412, 0.7764706, 0.25490198, 1)
-theme_override_fonts/font = SubResource("SystemFont_bold")
 theme_override_font_sizes/font_size = 30
 text = "FULL TIME"
 horizontal_alignment = 1
@@ -184,8 +171,6 @@ horizontal_alignment = 1
 [node name="FinalScore" type="Label" parent="FullTime/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.92, 0.94, 0.97, 1)
-theme_override_fonts/font = SubResource("SystemFont_bold")
 theme_override_font_sizes/font_size = 34
 text = "GREEN 0  –  0 RED"
 horizontal_alignment = 1
@@ -193,14 +178,13 @@ horizontal_alignment = 1
 [node name="FinalLine" type="Label" parent="FullTime/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.92, 0.94, 0.97, 1)
 theme_override_font_sizes/font_size = 20
 text = "Green wins!"
 horizontal_alignment = 1
 
 [node name="Hint" type="Label" parent="FullTime/Rows"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.5411765, 0.5764706, 0.6509804, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 0.75)
 theme_override_font_sizes/font_size = 15
 text = "Open the console (~) and type ball to play again"
 horizontal_alignment = 1

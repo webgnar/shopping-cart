@@ -1,19 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/pause_menu.gd" id="1_pause"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-content_margin_left = 28.0
-content_margin_top = 22.0
-content_margin_right = 28.0
-content_margin_bottom = 24.0
-bg_color = Color(0.05882353, 0.07058824, 0.09411765, 0.94)
-border_width_bottom = 2
-border_color = Color(0.43529412, 0.8156863, 0.54901963, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
+[ext_resource type="Theme" path="res://assets/ui/road_sign_theme.tres" id="2_theme"]
 
 [node name="PauseMenu" type="CanvasLayer"]
 process_mode = 3
@@ -35,11 +23,11 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("2_theme")
 
 [node name="Panel" type="PanelContainer" parent="Center"]
 custom_minimum_size = Vector2(620, 0)
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
 [node name="Rows" type="VBoxContainer" parent="Center/Panel"]
 layout_mode = 2
@@ -53,8 +41,9 @@ horizontal_alignment = 1
 
 [node name="PlacesLabel" type="Label" parent="Center/Panel/Rows"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.43529412, 0.8156863, 0.54901963, 1)
-text = "Places"
+size_flags_horizontal = 0
+theme_type_variation = &"SignHeading"
+text = "PLACES"
 
 [node name="Places" type="GridContainer" parent="Center/Panel/Rows"]
 unique_name_in_owner = true
@@ -65,8 +54,9 @@ columns = 4
 
 [node name="CommandsLabel" type="Label" parent="Center/Panel/Rows"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.43529412, 0.8156863, 0.54901963, 1)
-text = "Commands"
+size_flags_horizontal = 0
+theme_type_variation = &"SignHeading"
+text = "COMMANDS"
 
 [node name="Commands" type="GridContainer" parent="Center/Panel/Rows"]
 unique_name_in_owner = true
@@ -102,7 +92,7 @@ text = "Resume (Esc)"
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(1, 0.5411765, 0.47843137, 1)
+theme_type_variation = &"StopButton"
 theme_override_font_sizes/font_size = 18
 text = "Quit game"
 

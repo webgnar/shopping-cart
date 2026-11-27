@@ -1872,3 +1872,17 @@ seal_life, when the crack counts as open again; a failed piece shows the crack d
 pulls out 0.8 to 2.8 years later; the overband wears down to the crack under tyres in a few years (traffic x load)
 and much slower between the wheel paths. The sealant greys over 6 years. Canvas and bake_height both use
 sealant_at. SEAL_LIFE now only times a patch's tar band.
+
+## 2026-11-27: menus restyled to match the road-sign HUD
+
+zack asked for the pause menu and the other menus to match the HUD's highway signs, leaving the in-game HUDs alone.
+`assets/ui/road_sign_theme.tres` now carries the whole look and is set on the pause menu, multiplayer menu, console
+and the results boxes (race, sweep, collect, cart ball full time):
+
+- Panels are guide signs: green `#006C50`, white border, rounded corners. Buttons are small guide signs that light up
+  white when pressed; Quit and Leave game are stop-red (`StopButton`). Section headings are yellow plaques with black
+  capitals (`SignHeading`). Text fields are white regulatory plaques, tooltips yellow warning signs.
+- The console, the games list and the results tables are changeable message signs: amber monospace on black
+  (`MessageSignPanel`, `MessageSignInput`, `MessageSign`).
+- Not touched: the driving HUD, the mode HUDs' clocks, scores, countdowns and toasts.
+- Screenshots of every screen: `xvfb-run godot --rendering-method gl_compatibility --resolution 1920x1080 -s res://tests/ui_screenshot.gd -- <out dir>`.

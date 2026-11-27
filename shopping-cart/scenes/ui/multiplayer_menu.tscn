@@ -1,19 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/multiplayer_menu.gd" id="1_menu"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-content_margin_left = 18.0
-content_margin_top = 14.0
-content_margin_right = 18.0
-content_margin_bottom = 16.0
-bg_color = Color(0.05882353, 0.07058824, 0.09411765, 0.94)
-border_width_bottom = 2
-border_color = Color(0.43529412, 0.8156863, 0.54901963, 1)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
+[ext_resource type="Theme" path="res://assets/ui/road_sign_theme.tres" id="2_theme"]
 
 [node name="MultiplayerMenu" type="CanvasLayer"]
 process_mode = 3
@@ -33,7 +21,7 @@ offset_right = 280.0
 offset_bottom = 300.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+theme = ExtResource("2_theme")
 
 [node name="Rows" type="VBoxContainer" parent="Panel"]
 layout_mode = 2
@@ -46,8 +34,9 @@ text = "Multiplayer"
 
 [node name="HostHeading" type="Label" parent="Panel/Rows"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.43529412, 0.8156863, 0.54901963, 1)
-text = "Host a game online"
+size_flags_horizontal = 0
+theme_type_variation = &"SignHeading"
+text = "HOST A GAME ONLINE"
 
 [node name="HostRow" type="HBoxContainer" parent="Panel/Rows"]
 layout_mode = 2
@@ -95,8 +84,9 @@ layout_mode = 2
 
 [node name="JoinHeading" type="Label" parent="Panel/Rows"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.43529412, 0.8156863, 0.54901963, 1)
-text = "Join a game"
+size_flags_horizontal = 0
+theme_type_variation = &"SignHeading"
+text = "JOIN A GAME"
 
 [node name="JoinRow" type="HBoxContainer" parent="Panel/Rows"]
 layout_mode = 2
@@ -133,8 +123,9 @@ layout_mode = 2
 
 [node name="LanHeading" type="Label" parent="Panel/Rows"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.43529412, 0.8156863, 0.54901963, 1)
-text = "Same network (LAN)"
+size_flags_horizontal = 0
+theme_type_variation = &"SignHeading"
+text = "SAME NETWORK (LAN)"
 
 [node name="LanRow" type="HBoxContainer" parent="Panel/Rows"]
 layout_mode = 2
@@ -167,6 +158,7 @@ layout_mode = 2
 [node name="LeaveButton" type="Button" parent="Panel/Rows/BottomRow"]
 unique_name_in_owner = true
 layout_mode = 2
+theme_type_variation = &"StopButton"
 text = "Leave game"
 
 [node name="Spacer" type="Control" parent="Panel/Rows/BottomRow"]
