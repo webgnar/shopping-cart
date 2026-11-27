@@ -53,6 +53,7 @@ func _run() -> void:
 	# The grain NoiseTexture2D is generated on a thread; wait for it.
 	await _frames(30)
 	var sim: AsphaltSim = lab.get_node("Sim")
+	sim.placeholders = true   # the stages show the placeholder road, as the game's lots run it (the lab itself runs without)
 	var color_vp: SubViewport = lab.get_node("ColorViewport")
 	var height_vp: SubViewport = lab.get_node("HeightViewport")
 	for st: Array in STAGES:

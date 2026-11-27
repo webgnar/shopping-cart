@@ -357,7 +357,7 @@ func _run() -> void:
 		worst = minf(worst, crew.stats().pci)
 	_check("road crew keeps it above 20", worst > 20.0, "worst %.0f over 40 years, %d repairs" % [worst, crew.log_lines.size()])
 
-	# The lab scene: repair buttons work, the slider scrubs.
+	# The lab scene: the slider scrubs, the lab runs only sourced models.
 	var lab: Control = LAB.instantiate()
 	root.add_child(lab)
 	await process_frame
@@ -365,36 +365,10 @@ func _run() -> void:
 	(lab.get_node("Panel/Scroll/Box/Timeline") as HSlider).value = 12.0
 	await process_frame
 	_check("timeline scrubs the lab", is_equal_approx(lsim.time, 12.0), "year %.1f" % lsim.time)
-	var fill := lab.get_node("Panel/Scroll/Box/Repair0") as CheckBox
-	fill.button_pressed = true
-	_check("ticking a repair does it at this year", lsim.events.size() == 1 and lsim.events[0].action == A.CRACK_FILL
-		and lsim.log_lines.size() == 1 and is_equal_approx(lsim.time, 12.0), "%s, %s" % [lsim.events, lsim.log_lines])
-	var tl := lab.get_node("Panel/Scroll/Box/Timeline") as HSlider
-	tl.value = 15.0
-	await process_frame
-	(lab.get_node("Panel/Scroll/Box/Repair2") as CheckBox).button_pressed = true
-	tl.value = 17.0
-	await process_frame
-	_check("repairs of different kinds stack up", lsim.events.size() == 2 and lsim.log_lines.size() == 2,
-		"year %.1f, %s" % [lsim.time, lsim.log_lines])
-	fill.button_pressed = false
-	_check("unticking one undoes only it", lsim.events.size() == 1 and lsim.events[0].action == A.HEAVY_PATCH
-		and lsim.log_lines.size() == 1 and is_equal_approx(lsim.time, 17.0), "year %.1f, %s" % [lsim.time, lsim.log_lines])
-	tl.value = 10.0
-	await process_frame
-	_check("scrubbing before a repair shows the road without it", lsim.log_lines.is_empty() and
-		(lab.get_node("Panel/Scroll/Box/Repair2") as CheckBox).button_pressed, str(lsim.log_lines))
-	tl.value = 17.0
-	await process_frame
-	var start := lab.get_node("Panel/Scroll/Box/StartHere") as Button
-	start.button_pressed = true
-	_check("timeline can start at this year", tl.value == 0.0 and is_equal_approx(lsim.time, 17.0), "slider %.1f, year %.1f" % [tl.value, lsim.time])
-	tl.value = 30.0
-	await process_frame
-	_check("and run on from it", is_equal_approx(lsim.time, 47.0) and lsim.log_lines.size() == 1, "year %.1f, %s" % [lsim.time, lsim.log_lines])
-	start.button_pressed = false
-	tl.value = 10.0
-	await process_frame
+	# The lab shows only what is sourced: no placeholder damage, ruts or repairs (docs/ASPHALT_SCIENCE.md, Scope).
+	_check("the lab shows only sourced models", not lsim.placeholders and lsim.cracks.is_empty() and lsim.rut_depth() == 0.0
+		and lab.get_node_or_null("Panel/Scroll/Box/Repair0") == null, "year %.1f, %d cracks, rut %.1f mm" % [lsim.time,
+		lsim.cracks.size(), lsim.rut_depth() * 1000.0])
 	var panel := lab.get_node("Panel") as Control
 	_check("side panel keeps its width", panel.size.x <= 331.0, "%.0f px" % panel.size.x)
 
@@ -424,7 +398,9 @@ func _run() -> void:
 	view.select(5)
 	view.item_selected.emit(5)
 	var section: CrossSectionCanvas = lab.get_node("Stage/SectionView")
-	lsim.seek(16.0)
+	lsim.placeholders = true   # the drawings are checked on the placeholder road, which has distresses to draw
+	lsim.reset()
+	lsim.advance_to(16.0)
 	section.refresh()
 	var across := section.crossings()
 	var depth_ok := not across.is_empty()

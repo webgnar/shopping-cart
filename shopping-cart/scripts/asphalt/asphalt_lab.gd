@@ -1,6 +1,6 @@
 extends Control
-## The 2D asphalt lab (scenes/asphalt/asphalt_lab.tscn): scrub or play the years, try repairs, see the pavement
-## section it is built on, and watch the colour and height maps of the road section. Everything here is UI wiring; the
+## The 2D asphalt lab (scenes/asphalt/asphalt_lab.tscn): scrub or play the years, set the pavement section it is
+## built on, and watch the colour and height maps of the road section. Everything here is UI wiring; the
 ## simulation is AsphaltSim and the drawing is AsphaltCanvas.
 
 @export var sim: AsphaltSim
@@ -22,7 +22,6 @@ extends Control
 var playing := false
 var _dragging := false
 var _play_t := 0.0     ## years: where Play has got to (the sim catches up a step at a time)
-var _epoch := 0.0      ## road year the timeline starts at ("Start timeline here"); it runs max_years on from it
 var _relief_at := -1   ## msec: redraw the relief view (it takes a moment, so not every frame)
 var _rebuild_at := -1  ## msec: rebuild the road once the build-up spin boxes settle
 
@@ -30,9 +29,6 @@ var _rebuild_at := -1  ## msec: rebuild the road once the build-up spin boxes se
 @onready var _timeline: HSlider = %Timeline
 @onready var _play: Button = %PlayButton
 @onready var _stats: Label = %Stats
-@onready var _history: Label = %History
-@onready var _start_here: Button = %StartHere
-@onready var _repairs: Array[CheckBox] = [%Repair0, %Repair1, %Repair2, %Repair3, %Repair4, %Repair5]   ## by AsphaltSim.Action
 @onready var _seed: SpinBox = %Seed
 @onready var _section_info: Label = %SectionInfo
 @onready var _asphalt_mm: SpinBox = %AsphaltMM
@@ -42,8 +38,6 @@ var _rebuild_at := -1  ## msec: rebuild the road once the build-up spin boxes se
 
 func _ready() -> void:
 	_timeline.max_value = max_years
-	for r in _repairs:
-		r.set_meta("name", r.text)
 	_seed.set_value_no_signal(sim.seed)
 	# The spin boxes show the build-up the sim starts with.
 	var b := sim.pavement()
@@ -76,29 +70,20 @@ func _process(delta: float) -> void:
 	# would never reach the next step.
 	if absf(_play_t - sim.time) > AsphaltSim.DT:
 		_play_t = sim.time   # scrubbed or replayed while playing
-	_play_t = minf(_play_t + years_per_second * delta, _epoch + max_years)
+	_play_t = minf(_play_t + years_per_second * delta, max_years)
 	sim.advance_to(_play_t)
-	if _play_t >= _epoch + max_years:
+	if _play_t >= max_years:
 		_play.button_pressed = false
 
 
 func _update_ui() -> void:
-	_timeline.set_value_no_signal(sim.time - _epoch)
-	for a in _repairs.size():
-		var at := sim.repair_year(a)
-		_repairs[a].set_pressed_no_signal(at >= 0.0)
-		_repairs[a].text = _repairs[a].get_meta("name") + ("  (year %.1f)" % at if at >= 0.0 else "")
+	_timeline.set_value_no_signal(sim.time)
+	_year.text = "Year %.1f" % sim.time
+	if not sim.placeholders:
+		_stats.text = "Surface %.1f years old.\nSimulated so far: the structure (layers, slip length, wheel spread). No time-driven model is sourced yet, so the road does not age; see docs/ASPHALT_SCIENCE.md." % sim.surface_age()
+		return
 	var s := sim.stats()
-	_year.text = _year_text(sim.time - _epoch)
-	var kinds := PackedStringArray()
-	for k in AsphaltSim.Kind.size():
-		if s.by_kind[k] > 0.05:
-			kinds.append("  %s %.1f m" % [AsphaltSim.KIND_NAMES[k], s.by_kind[k]])
-	_stats.text = "Surface: %.1f years old\nCondition index: %.0f / 100\nOpen cracks: %.0f m (%.0f m wider than 3 mm)\n%s\nFatigue cells: %.1f %% of the road\nPotholes: %d (%.1f %%)\nFilled %.1f %%, patched %.1f %%" % [
-		s.surface_age, s.pci, s.crack_m, s.wide_crack_m, "\n".join(kinds), s.alligator_pct,
-		s.potholes, s.pothole_pct, s.filled_pct, s.patched_pct]
-	var lines := sim.log_lines
-	_history.text = "\n".join(lines.slice(maxi(0, lines.size() - 8))) if lines.size() > 0 else "No repairs yet."
+	_stats.text = "Placeholder models on (not sourced).\nSurface %.1f years old, open cracks %.0f m." % [s.surface_age, s.crack_m]
 
 
 func _replay() -> void:
@@ -120,9 +105,9 @@ func _show_section() -> void:
 
 
 func _on_timeline_value_changed(value: float) -> void:
-	_year.text = _year_text(value)
+	_year.text = "Year %.1f" % value
 	if not _dragging:
-		sim.seek(_epoch + value)
+		sim.seek(value)
 
 
 func _on_timeline_drag_started() -> void:
@@ -131,33 +116,15 @@ func _on_timeline_drag_started() -> void:
 
 func _on_timeline_drag_ended(_changed: bool) -> void:
 	_dragging = false
-	sim.seek(_epoch + _timeline.value)
+	sim.seek(_timeline.value)
 
 
 func _on_play_toggled(on: bool) -> void:
 	playing = on
 	_play.text = "Pause" if on else "Play"
-	if on and sim.time >= _epoch + max_years - 0.01:
-		sim.seek(_epoch)
+	if on and sim.time >= max_years - 0.01:
+		sim.seek(0.0)
 	_play_t = sim.time
-
-
-## The slider counts years from where the timeline starts.
-func _year_text(value: float) -> String:
-	return "Year %.1f" % value if _epoch <= 0.0 else "Year %.1f (road year %.1f)" % [value, _epoch + value]
-
-
-## Pressed: the timeline starts at this year and runs max_years on, to age the road (and its repairs) further.
-## Released: back to the road's own years.
-func _on_start_here_toggled(on: bool) -> void:
-	_epoch = sim.time if on else 0.0
-	_start_here.text = "Timeline starts at road year %.1f" % _epoch if on else "Start timeline here"
-	_update_ui()
-
-
-## Ticked: that repair is done at the slider's year. Unticked: it never happened.
-func _on_repair_toggled(on: bool, action: int) -> void:
-	sim.set_repair(action, on, sim.time)
 
 
 ## A build-up spin box changed: the road is rebuilt on a copy of the build-up with the new asphalt and base thicknesses

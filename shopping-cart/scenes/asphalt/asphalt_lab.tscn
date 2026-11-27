@@ -95,6 +95,7 @@ preview_camera = NodePath("PreviewViewport/CameraPivot/Camera")
 [node name="Sim" type="Node" parent="."]
 script = ExtResource("2_sim")
 buildup = ExtResource("40_buildup")
+placeholders = false
 paint_lines = PackedVector2Array(1.4, 0, 1.4, 10, 8.6, 0, 8.6, 10, 5, 1, 5, 4.048)
 paint_colors = PackedColorArray(0.92, 0.92, 0.88, 1, 0.92, 0.92, 0.88, 1, 0.95, 0.74, 0.16, 1)
 
@@ -325,53 +326,6 @@ popup/item_5/id = 5
 popup/item_6/text = "Distress map (LTPP)"
 popup/item_6/id = 6
 
-[node name="StartHere" type="Button" parent="Panel/Scroll/Box"]
-unique_name_in_owner = true
-layout_mode = 2
-tooltip_text = "Start the timeline at this year, so it runs 30 more years on from here and you can watch your repairs age. Press again to go back to the road's own years."
-toggle_mode = true
-text = "Start timeline here"
-
-[node name="RepairsHeader" type="Label" parent="Panel/Scroll/Box"]
-layout_mode = 2
-text = "REPAIRS (tick to do one at this year, untick to undo it)"
-
-[node name="Repair0" type="CheckBox" parent="Panel/Scroll/Box"]
-unique_name_in_owner = true
-layout_mode = 2
-tooltip_text = "Pour hot rubberised sealant into the open cracks and overband it. Stops water and stops them opening, for about 6 years."
-text = "Fill cracks"
-
-[node name="Repair1" type="CheckBox" parent="Panel/Scroll/Box"]
-unique_name_in_owner = true
-layout_mode = 2
-tooltip_text = "Shovel cold mix into each pothole and roll it with the truck. Quick and cheap; it usually ravels out again."
-text = "Fill potholes (throw and roll)"
-
-[node name="Repair2" type="CheckBox" parent="Panel/Scroll/Box"]
-unique_name_in_owner = true
-layout_mode = 2
-tooltip_text = "Saw-cut a rectangle round each fatigue area and pothole, dig it out and replace it full depth. The cut edges crack later."
-text = "Heavy patch (saw cut)"
-
-[node name="Repair3" type="CheckBox" parent="Panel/Scroll/Box"]
-unique_name_in_owner = true
-layout_mode = 2
-tooltip_text = "Squeegee black sealer over a few of the roughest spots. Flat black, so only the texture under it shows; it greys and wears off the wheel paths in a few years, and the cracks show back through."
-text = "Spot sealcoat"
-
-[node name="Repair4" type="CheckBox" parent="Panel/Scroll/Box"]
-unique_name_in_owner = true
-layout_mode = 2
-tooltip_text = "Cold plane the top and pave a new asphalt layer. Resets the surface and edges; old cracks reflect through in a few years."
-text = "Mill and overlay"
-
-[node name="Repair5" type="CheckBox" parent="Panel/Scroll/Box"]
-unique_name_in_owner = true
-layout_mode = 2
-tooltip_text = "Repaint the stall lines: fresh paint over everything, patches and sealcoat included. It wears again from here."
-text = "Repaint stripes"
-
 [node name="SectionHeader" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2
 text = "PAVEMENT SECTION"
@@ -453,18 +407,9 @@ value = 1.0
 
 [node name="StatsHeader" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2
-text = "CONDITION"
+text = "SIMULATION"
 
 [node name="Stats" type="Label" parent="Panel/Scroll/Box"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 10
-
-[node name="HistoryHeader" type="Label" parent="Panel/Scroll/Box"]
-layout_mode = 2
-text = "HISTORY"
-
-[node name="History" type="Label" parent="Panel/Scroll/Box"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
@@ -474,7 +419,6 @@ autowrap_mode = 3
 [connection signal="drag_started" from="Panel/Scroll/Box/Timeline" to="." method="_on_timeline_drag_started"]
 [connection signal="drag_ended" from="Panel/Scroll/Box/Timeline" to="." method="_on_timeline_drag_ended"]
 [connection signal="toggled" from="Panel/Scroll/Box/PlayRow/PlayButton" to="." method="_on_play_toggled"]
-[connection signal="toggled" from="Panel/Scroll/Box/StartHere" to="." method="_on_start_here_toggled"]
 [connection signal="item_selected" from="Panel/Scroll/Box/PlayRow/View" to="." method="_on_view_selected"]
 [connection signal="gui_input" from="Stage/Views/PreviewView" to="." method="_on_preview_input"]
 [connection signal="gui_input" from="Stage/Views/ColorView" to="." method="_on_plan_input"]
@@ -482,9 +426,3 @@ autowrap_mode = 3
 [connection signal="value_changed" from="Panel/Scroll/Box/AsphaltRow/AsphaltMM" to="." method="_on_buildup_changed"]
 [connection signal="value_changed" from="Panel/Scroll/Box/BaseRow/BaseMM" to="." method="_on_buildup_changed"]
 [connection signal="value_changed" from="Panel/Scroll/Box/CbrRow/Cbr" to="." method="_on_buildup_changed"]
-[connection signal="toggled" from="Panel/Scroll/Box/Repair0" to="." method="_on_repair_toggled" binds= [0]]
-[connection signal="toggled" from="Panel/Scroll/Box/Repair1" to="." method="_on_repair_toggled" binds= [1]]
-[connection signal="toggled" from="Panel/Scroll/Box/Repair2" to="." method="_on_repair_toggled" binds= [2]]
-[connection signal="toggled" from="Panel/Scroll/Box/Repair3" to="." method="_on_repair_toggled" binds= [3]]
-[connection signal="toggled" from="Panel/Scroll/Box/Repair4" to="." method="_on_repair_toggled" binds= [4]]
-[connection signal="toggled" from="Panel/Scroll/Box/Repair5" to="." method="_on_repair_toggled" binds= [5]]

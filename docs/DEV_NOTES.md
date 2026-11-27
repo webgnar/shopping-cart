@@ -1971,3 +1971,16 @@ mm) and the subgrade CBR (3-20), the ranges of the c620 thickness tables. A chan
 shared preset file is left alone) and rebuilds the road from year 0 a moment later. Test: "the build-up can be
 edited". docs/ASPHALT_SCIENCE.md now opens with the scope: what the simulation studies (structure, then binder
 ageing, thermal cracking, load fatigue, their consequences, repairs) and what it doesn't.
+
+## Asphalt lab: placeholders out; goal written down (Nov 27 2026)
+
+zack: strip out everything that isn't sourced rather than leave it in. New `AsphaltSim.placeholders` (default on,
+so the game's lots are unchanged: fingerprint identical): off, the sim runs none of asphalt_sim_rules.gd, ruts stay
+0, paint doesn't wear, and `look_age()` keeps the canvas's time-driven looks (greying, ravel, paint dirt) at new.
+The lab turns it off, so its road shows only the structure and does not age until the sourced models arrive. The
+lab's repair checkboxes, "Start timeline here", repair history and condition index are gone (all placeholders);
+the panel says what is simulated. The drawing checks and asphalt_screenshot.gd turn the placeholders on, to have
+distresses to draw. docs/ASPHALT_SCIENCE.md opens with the goal: an accurate visual representation in plan and
+section, every visible feature from a sourced model.
+Gotcha: removing the last node blocks of a .tscn with a regex took the [connection] lines after them too; compare
+node lists and connections with git afterwards.

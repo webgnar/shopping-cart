@@ -68,7 +68,7 @@ func _refresh() -> void:
 		base.size = sim.size * px_per_m
 		var m := (base as CanvasItem).material as ShaderMaterial
 		if m:
-			var age := sim.surface_age()
+			var age := sim.look_age(sim.surface_age())
 			m.set_shader_parameter("size_m", sim.size)
 			m.set_shader_parameter("surface_age", age * sim.climate)
 			m.set_shader_parameter("ravel", clampf((age * sim.climate - 6.0) / 18.0, 0.0, 1.0))
@@ -93,7 +93,7 @@ func _hc(h: float) -> Color:
 
 
 func _aged(age: float) -> Color:
-	return fresh_asphalt.lerp(aged_asphalt, 1.0 - exp(-maxf(age, 0.0) * sim.climate / oxidation_years))
+	return fresh_asphalt.lerp(aged_asphalt, 1.0 - exp(-maxf(sim.look_age(age), 0.0) * sim.climate / oxidation_years))
 
 
 func _poly(pts: PackedVector2Array, c: Color, scale := 1.0) -> void:
@@ -116,7 +116,7 @@ func _surface(pts: PackedVector2Array, c: Color, scale: float, tex: Texture2D, m
 
 ## How far a repair `age` years old has greyed towards aged_asphalt (fills grey faster: `speed` < 1).
 func _greying(age: float, speed: float) -> float:
-	return 0.85 * (1.0 - exp(-maxf(age, 0.0) * sim.climate / (oxidation_years * speed)))
+	return 0.85 * (1.0 - exp(-maxf(sim.look_age(age), 0.0) * sim.climate / (oxidation_years * speed)))
 
 
 ## A polygon (pixels) filled with a tiling texture `metres` across, then washed with `wash` at `amount`.
@@ -362,7 +362,7 @@ func _draw() -> void:
 ## cut through them); with `restriped`, drawn again on top of the repairs made before the last repaint.
 func _draw_paint(restriped: bool) -> void:
 	var hm := mode == Mode.HEIGHT
-	var paint_dirt := clampf((sim.time - sim.paint_born) / 20.0, 0.0, 1.0) * 0.3
+	var paint_dirt := clampf(sim.look_age(sim.time - sim.paint_born) / 20.0, 0.0, 1.0) * 0.3
 	for k in range(0, sim.paint_lines.size() - 1, 2):
 		var a := sim.paint_lines[k]
 		var b := sim.paint_lines[k + 1]

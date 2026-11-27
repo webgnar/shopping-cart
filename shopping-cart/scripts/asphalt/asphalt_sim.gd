@@ -161,16 +161,17 @@ func _step() -> void:
 	_apply_due()
 	if auto_maintain:
 		_auto_maintain()
-	var age := surface_age()
-	var ox := 1.0 - exp(-age * climate / oxidation_years)
-	_fatigue_and_water(ox)
-	_initiate(age, ox)
-	for i in cracks.size():
-		var c := cracks[i]
-		if c.alive and c.growing and not c.sealed(time):
-			_grow(i, c.speed * DT * (0.6 + 0.4 * climate))
-	_reflect()
-	_edges(age)
+	if placeholders:
+		var age := surface_age()
+		var ox := 1.0 - exp(-age * climate / oxidation_years)
+		_fatigue_and_water(ox)
+		_initiate(age, ox)
+		for i in cracks.size():
+			var c := cracks[i]
+			if c.alive and c.growing and not c.sealed(time):
+				_grow(i, c.speed * DT * (0.6 + 0.4 * climate))
+		_reflect()
+		_edges(age)
 	time += DT
 	if time >= _seal_check:
 		_seal_check = INF

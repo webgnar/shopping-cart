@@ -9,6 +9,21 @@ Status words used below:
 - **Derived**: worked out in our own experiment (the CrackLattice runs), not yet checked against a reference.
 - **Placeholder**: set by eye so the road looked right.
 
+## Goal
+
+**An accurate visual representation of an asphalt pavement as it ages, in plan and in section.**
+
+- **Plan:** the road surface seen from above: the colour map, the height map and the LTPP distress map.
+- **Section:** the pavement cut across: the build-up (asphalt, base, subgrade) and what happens through it
+  (cracks, ruts, potholes, patches).
+- Plan and section are two slices of one state. The build-up, the climate and the traffic make that state through
+  sourced equations; the plan view comes out of the section, not the other way round.
+- Every visible feature must come from a sourced model. What has no source yet is taken out, not hidden or
+  guessed (the lab runs with `AsphaltSim.placeholders` off). The drawings follow the LTPP manual.
+- It is checked against a real LTPP section: its build-up, climate and traffic in, its yearly distress surveys
+  as the target.
+- The picture is the purpose; the science is how we earn it. Keep to what the picture needs.
+
 ## Scope: what the simulation studies, and what it doesn't
 
 One pavement: an asphalt surface on an untreated aggregate base over a soil subgrade, on a two-lane road (LTPP
@@ -217,13 +232,15 @@ and potholes under the straightedge (up to 89 mm), as a real straightedge would.
 
 ## Next steps
 
-0. Done (Nov 26 2026): the build-up as data (`PavementBuildup`, Table 3B baseline); junctions by crack type; the
-   lab's "Plan + section" view (`CrossSectionCanvas`). Next: the build-up's variation across the plan (replacing
-   `structure` and `weak`), then crack depth through the layers (the section lattice would inform it).
-1. Add a survey layer: `AsphaltSim` reports LTPP quantities by severity (m2 of fatigue and block, m of
-   longitudinal 4a/4b and transverse, number and m2 of patches and potholes, rut depth). Lab panel and tests use
-   it. No visual change; it is the measuring stick for everything after.
-2. LTPP InfoPave: pick sections like our lots (thin AC over granular base, several climates) and read their
-   survey time series. These are the targets.
-3. Replace the models one at a time against those targets: ageing, then thermal cracking, then fatigue, then
-   width, potholes, rutting and repairs.
+Done (Nov 2026): the build-up as data and editable; LTPP survey, distress map and cross-section; the sim split by
+concern; the placeholders taken out of the lab (`placeholders` off: it shows the structure only, and the road
+does not age yet).
+
+1. **Binder ageing** (scope step 2): read TTI 0-6009-2 (pavement temperature, oxidation kinetics, oxygen
+   diffusion with depth, hardening); write the model and its equations here for review; then code it as its own
+   file with its own checks. It drives the surface's greying in plan and the hardening with depth in section.
+2. **The LTPP section:** verify a candidate on InfoPave (down for maintenance on Nov 27) and take its build-up,
+   climate and traffic as the lab's inputs and its distress surveys as the target. Shortlist (unverified): 50-1002
+   Vermont, 56-1007 Wyoming, 83-1801 Manitoba.
+3. **Thermal cracking** (scope step 3), then **load fatigue** (step 4), each replacing its part of
+   asphalt_sim_rules.gd.

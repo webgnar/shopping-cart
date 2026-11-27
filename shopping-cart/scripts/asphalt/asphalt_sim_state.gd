@@ -82,6 +82,12 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 @export_group("Maintenance")
 @export var auto_maintain := false                      ## a road crew repairs the road on its own (see _auto_maintain)
 
+@export_group("Science")
+## Run the placeholder models: the damage rules (asphalt_sim_rules.gd), rutting, paint wear and the time-driven looks
+## (greying, ravelling), none of which is sourced yet (docs/ASPHALT_SCIENCE.md). On for the game's lots, which were
+## built with them; the lab turns it off, so it shows only what is sourced.
+@export var placeholders := true
+
 ## Time since the road was built, years.
 var time := 0.0
 ## When the current wearing surface went down (overlay or seal) and what it is.
@@ -250,6 +256,12 @@ func fatigue_cell() -> Vector2:
 	return FATIGUE_CELL * wheel_spread()
 
 
+## Years of ageing the looks show (greying, ravelling, paint dirt): none while the placeholders are off, since no
+## sourced model drives them yet.
+func look_age(years: float) -> float:
+	return years if placeholders else 0.0
+
+
 func surface_age() -> float:
 	return time - surface_born
 
@@ -261,6 +273,8 @@ func mix_weakness(p: Vector2) -> float:
 
 ## How much paint is left at p, 0..1: it wears with age and traffic (fastest in the wheel paths), in patches.
 func paint_left(p: Vector2) -> float:
+	if not placeholders:
+		return 1.0
 	var wear := (time - paint_born) * traffic * (0.15 + load[cell_index(p)]) / paint_life
 	if wear <= 0.0:
 		return 1.0
@@ -302,6 +316,8 @@ func cell_center(i: int) -> Vector2:
 
 ## m the wheel paths have sunk since the last overlay (traffic rutting).
 func rut_depth() -> float:
+	if not placeholders:
+		return 0.0
 	return minf(0.025, 0.0011 * (time - rut_born) * traffic / structure)
 
 
