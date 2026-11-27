@@ -10,7 +10,8 @@ extends SceneTree
 ## guest follows, with matching loose bodies, everything frozen on its side, its bots off and its cart upright. Last,
 ## the host starts a race in the garage: the guest lines up, sees the count, is held until GO and gets the results.
 ## Then a supermarket sweep: the guest lines up, its cart is parked by the coffee and five cans drop into it on the
-## host; the guest sees them in its basket, its score and pop-ups, and the results.
+## host; the guest sees them in its basket, its score and pop-ups, and the results. Then the host types
+## `race downhill`: the guest follows to the highway, lines up, is held until GO and gets the results.
 
 const LEVELS := ["res://scenes/main.tscn", "res://scenes/levels/supermarket.tscn",
 	"res://scenes/levels/parking_lot.tscn", "res://scenes/levels/parking_garage.tscn"]
@@ -210,6 +211,7 @@ func _run() -> void:
 			_check(name + ": guest's cart where the host has it", err < 0.05, "%.3f m off" % err)
 	await _race(gid)
 	await _sweep(gid)
+	await _downhill(gid)
 	OS.kill(pid)
 	_finish()
 
@@ -305,6 +307,62 @@ func _sweep(gid: int) -> void:
 			SweepHUD.money(int(e.my_cents)), e.toast_seen])
 		_check("sweep: guest's display sign counts down", int(e.coffee_left) == 5, "%d left" % e.coffee_left)
 		_check("sweep: guest's results list everyone", e.results_shown and int(e.shoppers) == sweep.shoppers.size(), "")
+
+
+## The host types `race downhill` (players only): the guest follows to the highway, lines up on its grid, is held
+## through the count and freed at GO, and its finish shows up in the results on both sides.
+func _downhill(gid: int) -> void:
+	var console := root.get_node("Console") as DebugConsole
+	console.run_command("race downhill")
+	var deadline := Time.get_ticks_msec() + 15000
+	var race: Race = null
+	while Time.get_ticks_msec() < deadline:
+		await physics_frame
+		race = get_first_node_in_group("race") as Race
+		if race and current_scene and current_scene.scene_file_path == "res://scenes/levels/downhill_highway.tscn":
+			break
+		race = null
+	_check("downhill: host travels to the highway", race != null, "")
+	if race == null:
+		return
+	while race.phase in [Race.Phase.IDLE, Race.Phase.WAITING] and Time.get_ticks_msec() < deadline:
+		await physics_frame
+	_check("downhill: counting down once the guest has loaded", race.phase == Race.Phase.COUNTDOWN,
+		"phase %d, %d racers" % [race.phase, race.racers.size()])
+	_check("downhill: players only", race.racers.size() == 2, "%d racers" % race.racers.size())
+	var guest_cart: ShoppingCart = net.carts.get(gid)
+	var slot := race.slots()[1]
+	_check("downhill: guest lined up in the second slot", guest_cart != null and guest_cart.cart_origin().distance_to(slot.global_position) < 0.15,
+		"%s vs %s" % [guest_cart.cart_origin() if guest_cart else "?", slot.global_position])
+	_check("downhill: guest's cart is held during the count", guest_cart != null and guest_cart.locked, "")
+	while race.phase == Race.Phase.COUNTDOWN:
+		await physics_frame
+	guest_cart = net.carts.get(gid)
+	_check("downhill: GO frees the guest's cart", race.phase == Race.Phase.RACING and not guest_cart.locked, "")
+	# Put the guest's cart, then ours, just over the line at the bottom.
+	var line: Vector3 = race.finish.global_position
+	net.place_guest_cart(gid, Vector3(line.x + 0.6, line.y + 0.1, -1.5), 0.0)
+	await _wait(1.0)
+	current_scene.spawn_cart(Vector3(line.x + 0.6, line.y + 0.1, 1.5), 0.0)
+	race.finish_grace = 2.0
+	deadline = Time.get_ticks_msec() + 10000
+	while race.phase != Race.Phase.DONE and Time.get_ticks_msec() < deadline:
+		await physics_frame
+	var res := race.results()
+	_check("downhill: guest finishes first, host second", res.size() == 2 and res[0].id == gid and res[1].id == 1
+		and res[1].time > 0.0, ", ".join(res.map(func(x): return "%s %.2f" % [x.name, x.time])))
+	var r := _guest_result()
+	deadline = Time.get_ticks_msec() + 15000
+	while not r.has("downhill") and Time.get_ticks_msec() < deadline:
+		await _wait(0.25)
+		r = _guest_result()
+	_check("downhill: guest reports", r.has("downhill"), "")
+	if r.has("downhill"):
+		var g: Dictionary = r.downhill
+		_check("downhill: guest saw 3, 2, 1", g.counts.has(3.0) and g.counts.has(2.0) and g.counts.has(1.0) and g.hud_shown,
+			"counts %s" % str(g.counts))
+		_check("downhill: guest's results list both with its time", g.results_shown and int(g.racers) == res.size()
+			and absf(g.my_time - res[0].time) < 0.01, "%d racers, my time %.2f" % [g.racers, g.my_time])
 
 
 func _finish() -> void:

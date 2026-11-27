@@ -52,7 +52,7 @@ of this to work on how the cart drives.
   it), then a new kickoff. First to `goals_to_win` (5) wins; the clock counts up unless `match_time` sets a limit.
   Console `ball` loads the arena and starts a match. Multiplayer: the host plays Green and guests join Red, Green,
   Red... kicking off from the arena's `GreenSpots` / `RedSpots`; the Red bots play only while no player is on Red
-  (else they wait at `Bench`). The host runs the match and sends it to guests (BALL message); the replay moves the
+  (else they wait at `Bench`). Each kickoff's count waits (up to `guest_wait`) for guests to load the arena. The host runs the match and sends it to guests (BALL message); the replay moves the
   real bodies on the host, so guests see it through the snapshots.
 - `scenes/levels/downhill_highway.tscn` (console `downhill`; `race downhill` races it) — a 600 m dead-straight two-lane
   highway down a grassy canyon at 30 %, Jersey barriers both sides, for multiplayer races (players only, no
@@ -110,7 +110,7 @@ From `shopping-cart/`:
 - Wheel sounds (all levels): `godot --headless --fixed-fps 120 -s res://tests/rolling_sound_test.gd`
 - Sandbox screenshots (spawn, overview, test strip, 2 km out): `xvfb-run godot -s res://tests/sandbox_screenshot.gd -- <out prefix>`
 - Supermarket level check: `xvfb-run godot -s res://tests/supermarket_check.gd -- <out dir>`
-- Multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/multiplayer_test.gd`
+- Multiplayer, host plus a second Godot as guest, with the garage race, sweep and downhill race (real time, no --fixed-fps): `godot --headless -s res://tests/multiplayer_test.gd`
 - Rendezvous service, and online play by join code over WebRTC (from `services/rendezvous`, after `npm install`):
   `npm test` and `npm run test:godot`
 - Downhill highway race (`race downhill`, drives down to the finish): `godot --headless --fixed-fps 120 -s res://tests/downhill_test.gd`

@@ -86,16 +86,20 @@ func _run() -> void:
 	var sweep_seen := {"counts": {}, "toast": false}
 	while true:
 		await physics_frame
-		# A race the host starts: what we see of it (the count, our cart held still, the results).
+		# A race the host starts: what we see of it (the count, our cart held still, the results). The garage's is
+		# reported as "race", the downhill highway's as "downhill".
 		var race := get_first_node_in_group("race") as Race
-		if race and race.phase != Race.Phase.IDLE and not result.has("race"):
+		var race_key := "downhill" if current_scene and current_scene.scene_file_path.ends_with("downhill_highway.tscn") else "race"
+		if race_key != race_seen.get("key", "race"):
+			race_seen = {"phases": {}, "counts": {}, "key": race_key}   # a fresh race
+		if race and race.phase != Race.Phase.IDLE and not result.has(race_key):
 			race_seen.phases[race.phase] = true
 			if race.phase == Race.Phase.COUNTDOWN:
 				race_seen.counts[ceili(race.clock)] = true
 				race_seen["hud_shown"] = race.hud.visible and race.hud.get_node("%Countdown").visible
 			if race.phase == Race.Phase.DONE:
 				var me := race.results().filter(func(r): return r.id == net.my_id)
-				result.race = {"phases": race_seen.phases.keys(), "counts": race_seen.counts.keys(),
+				result[race_key] = {"phases": race_seen.phases.keys(), "counts": race_seen.counts.keys(),
 					"hud_shown": race_seen.get("hud_shown", false), "racers": race.racers.size(),
 					"my_time": me[0].time if not me.is_empty() else -2.0,
 					"results_shown": race.hud.get_node("%Results").visible}
@@ -132,6 +136,8 @@ func _run() -> void:
 		var path := current_scene.scene_file_path if current_scene else ""
 		if path == seen or net.level == null or net.level != current_scene:
 			continue
+		if race_key == "downhill":
+			continue   # the downhill race: not one of the toured levels, and the 2 s report would miss its count
 		var start: int = net.stats.snapshots_received
 		var t0 := Time.get_ticks_msec()
 		await _wait(2.0)

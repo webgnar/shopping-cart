@@ -12,7 +12,8 @@ extends Node
 ##
 ## Multiplayer: the host plays Green; guests join Red, Green, Red... in the order they joined, and kick off from the
 ## arena's GreenSpots / RedSpots markers. The Red bots play only while no player is on Red; otherwise they wait on the
-## Bench. The host runs the match and sends its state to the guests (BALL, net_protocol.gd) whenever it changes and
+## Bench. Each kickoff's count waits (up to guest_wait) until every guest has loaded the arena, so nobody misses the
+## start; guests who join during the wait are lined up when it ends. The host runs the match and sends its state to the guests (BALL, net_protocol.gd) whenever it changes and
 ## every sync_interval; guests show the scoreboard, banners and the replay (the replay moves the real bodies on the
 ## host, so it reaches guests in the snapshots like any other play).
 ##
@@ -41,6 +42,7 @@ enum Phase { IDLE, KICKOFF, PLAYING, GOAL, REPLAY, FULL_TIME }
 @export var red_spots: Node3D              ## Marker3D children: Red guests' kickoff spots, in order
 @export var bench: Node3D                  ## Marker3D children: where the bots wait while players fill Red
 @export var sync_interval := 0.5           ## s between the host's match updates to its guests
+@export var guest_wait := 10.0             ## s a kickoff waits for guests to load the arena before the count
 @export var green_goal: Node3D            ## Green's goal (the bots read where the goals are from here)
 @export var red_goal: Node3D
 @export var hud: CartBallHUD
@@ -71,6 +73,8 @@ var _was_frozen := {}     ## body -> its freeze before the replay
 ## Who plays: [{id: int (1 the host, else a guest's network id), team: Team}]. Bots aren't listed.
 var players: Array[Dictionary] = []
 var _sync_clock := 0.0
+var _waited := 0.0        ## s this kickoff has waited for guests to load
+var _holding := false     ## host: the kickoff count is waiting for guests
 
 
 func bots() -> Array[BallBot]:
@@ -158,6 +162,14 @@ func _kickoff() -> void:
 	_phase_time = 0.0
 	_place_ball()
 	ball.freeze = true
+	_waited = 0.0
+	_line_up()
+	_tape.clear()
+	_send_state()
+
+
+## Host: picks the teams and puts every cart on its kickoff spot (the bots on theirs, or the bench), held.
+func _line_up() -> void:
 	_pick_teams()
 	level().spawn_cart(kickoff_spot.global_position, kickoff_spot.global_rotation.y)
 	var next := {Team.GREEN: 0, Team.RED: 0}
@@ -181,8 +193,15 @@ func _kickoff() -> void:
 			benched += 1
 			b.cart.place(seat.global_position, seat.global_rotation.y)
 	_lock_carts(true)
-	_tape.clear()
-	_send_state()
+
+
+## Host: whether the kickoff count should wait: a guest is still loading the arena, for up to guest_wait s.
+func _wait_for_guests(delta: float) -> bool:
+	var net := _net()
+	if net == null or not net.is_host() or net.guests_loaded() or _waited >= guest_wait:
+		return false
+	_waited += delta
+	return true
 
 
 func _place_ball() -> void:
@@ -219,7 +238,14 @@ func _physics_process(delta: float) -> void:
 	match phase:
 		Phase.KICKOFF:
 			_lock_carts(true)   # every tick: a cart reset during the count is a new cart
-			if _phase_time >= float(countdown):
+			var was_holding := _holding
+			_holding = _wait_for_guests(delta)
+			if _holding:
+				_phase_time = 0.0   # the count stays on 3
+			elif was_holding:
+				_line_up()   # guests who joined during the wait
+				_send_state()
+			elif _phase_time >= float(countdown):
 				phase = Phase.PLAYING
 				_phase_time = 0.0
 				ball.freeze = false
@@ -382,7 +408,7 @@ func _process(_delta: float) -> void:
 		Phase.KICKOFF:
 			var n := ceili(float(countdown) - _phase_time)
 			hud.show_banner(str(n), Color.WHITE, _phase_time - floorf(_phase_time))
-			status = "Kickoff"
+			status = "Waiting for players to load" if _holding else "Kickoff"
 		Phase.PLAYING:
 			hud.show_banner("GO!" if _phase_time < go_hold else "", Color.WHITE, _phase_time / go_hold)
 		Phase.GOAL:

@@ -2,8 +2,8 @@ extends SceneTree
 ## Cart Ball with two players on one machine: this process hosts the arena and starts a second Godot as the guest
 ## (tests/cart_ball_multiplayer_guest.gd), which joins over 127.0.0.1. Real time (no --fixed-fps), about a minute:
 ##   godot --headless -s res://tests/cart_ball_multiplayer_test.gd
-## Checks: the guest is put on Red at a Red kickoff spot and the bots go to the bench; its cart is held through the
-## count; goals at both ends count on the host and reach the guest, which watches the replay from the replay camera;
+## Checks: a kickoff's count waits while the guest loads the arena; the guest is put on Red at a Red kickoff spot
+## and the bots go to the bench; its cart is held through the count; goals at both ends count on the host and reach the guest, which watches the replay from the replay camera;
 ## first to five ends the match and the guest sees full time with the right score.
 
 var failures := 0
@@ -51,9 +51,23 @@ func _run() -> void:
 	var pid := OS.create_process(OS.get_executable_path(), ["--headless", "--path",
 		ProjectSettings.globalize_path("res://"), "-s", "res://tests/cart_ball_multiplayer_guest.gd", "--", str(port), out])
 	var deadline := Time.get_ticks_msec() + 40000
-	while (net._guests.is_empty() or not net.guests_loaded()) and Time.get_ticks_msec() < deadline:
+	var game := get_first_node_in_group("cart_ball") as CartBall
+	while net._guests.is_empty() and Time.get_ticks_msec() < deadline:
 		await physics_frame
+	# A kickoff while the guest is still loading the arena: the count waits for it.
+	game.start()
+	var held := 0
+	var ran_early := false
+	while not net._guests.is_empty() and not net.guests_loaded() and Time.get_ticks_msec() < deadline:
+		await physics_frame
+		if net.guests_loaded():
+			break
+		held += 1
+		ran_early = ran_early or game.phase != CartBall.Phase.KICKOFF or game._phase_time > 0.0
 	_check("guest joins and loads the arena", not net._guests.is_empty() and net.guests_loaded(), "")
+	_check("kickoff count waits while the guest loads", held > 0 and not ran_early, "%d ticks held" % held)
+	await _until(game, CartBall.Phase.PLAYING, 6.0)
+	_check("then the count runs", game.phase == CartBall.Phase.PLAYING, "")
 	if net._guests.is_empty():
 		OS.kill(pid)
 		_finish()
@@ -62,7 +76,6 @@ func _run() -> void:
 	await _wait(1.0)
 
 	# A new match with the guest in it.
-	var game := get_first_node_in_group("cart_ball") as CartBall
 	game.start()
 	await _wait(0.2)
 	var teams := {}
