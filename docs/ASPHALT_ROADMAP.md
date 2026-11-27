@@ -158,7 +158,10 @@ flowchart LR
 | NCAT 19-09 (2019), Quantifying Pavement Albedo | Read (model, ch. on asphalt) | Albedo against age and aggregate grayscale, field (step 6b) |
 | FHWA-HRT-25-100 (2025) macrotexture TechBrief; VTRC 23-R15 (2023) | Read | MPD target for the packed surface: 0.35 mm predicted, 0.39-0.49 measured (step 6b) |
 | FHWA AIMS2 HIF-11-030 (aggregate shape) | Wanted (FHWA page erroring) | Stone shapes (step 6b) |
-| Physics-engine / DEM packing of asphalt (Wan et al.; Xu) | Wanted | Packing method (step 6b) |
+| Xu et al. 2010, polyhedral aggregate generation and packing | Read | Stone shapes and packing (step 6b; prototype `docs/asphalt_checks/stone_packing.py`: 38.5 % stone against the mix's 38.1 %) |
+| Herold & Roberts 2005, spectral ageing of asphalt roads | Read | What ageing, cracks, ravelling and repairs do to reflectance (step 6b) |
+| Physics-engine / DEM packing of asphalt (Wan et al.) | Not needed for the bulk | The stones float in the mastic at 38 %; random packing guided by a free-space map reaches it |
+| Mastic level at the surface; stone orientation under compaction | Wanted | Makes MPD a check instead of a calibration (step 6b) |
 
 Steps (one commit each, each with its own check):
 - [x] Model written up for review (ASPHALT_SCIENCE.md, Model 1)

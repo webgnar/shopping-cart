@@ -429,6 +429,50 @@ its mean profile depth becomes a **check**, not an input: FHWA-HRT-25-100 (2025,
 18 (Cu 11.1, P8 57.3 %, P200 4.6 %, VFA 79.1 %); VTRC 23-R15 (2023, filed) measured 0.39-0.49 mm on Virginia
 dense-graded surfaces. Exposure then has a place to happen: the binder film wears off the stone tops first.
 
+### Model 1b, third pass (Nov 27): what each topic does to the albedo; the packing prototype
+
+**Which sources do what.** Every number is sourced, but sources play three roles:
+- *Inputs* (what the surface is made of): the mix (MnROAD cell 18, Mn/DOT 97-06), the component albedos
+  (Pomerantz Table 1: binder 0.05, aggregates 0.10-0.28), the stone shapes and packing rules (Xu 2010).
+- *Mechanism* (why it changes): binder wears off the stones by abrasion, oxidation alone does not lighten it
+  (TRR 2022); ageing exposes minerals, cracks darken by shadow, seals stay dark, patches look fresh (Herold &
+  Roberts 2005).
+- *Targets* (what the result must reproduce): pavement albedo against age measured in the field (Pomerantz fig.
+  1, California; NCAT 19-09, seven central and eastern states, by aggregate colour); mean profile depth
+  (FHWA-HRT-25-100, VTRC 23-R15). NCAT's equation is a regression through its field data, not a mechanism: it
+  calibrates and checks the model, it isn't the model.
+
+**Every topic that changes the surface changes the albedo** (zack): the plan is an area-weighted sum of what lies
+on it, each with its reflectance.
+
+| Topic | What it does to the surface | Source so far |
+|---|---|---|
+| T2 binder ageing | Oxidation: no measurable albedo change (0.05) | TRR 2022 |
+| T4 traffic | Abrasion strips binder off the stone tops, wheel paths first | TRR 2022 (mechanism), Pomerantz, NCAT (totals); rate per pass wanted |
+| Climate | Weathering wears binder; wet surfaces darker; winter sand and salt | NCAT names it; numbers wanted |
+| T3, T4 cracks | Dark by shadow (up to 7-8 % at high severity), expose fresher binder | Herold & Roberts |
+| T5 potholes | Exposed base, standing water | Wanted |
+| T6 repairs | Overlay and patch: fresh (0.05); crack seal about 5 %; chip seal brighter | Pomerantz, Herold & Roberts |
+| The mix | Stone sizes, rock albedo, share exposed | Cell 18; Pomerantz; Xu |
+
+Until T4 exists, age stands in for wear (one rate, calibrated on the field targets).
+
+**Packing prototype** (`docs/asphalt_checks/stone_packing.py`): Xu stones (convex, 4-10 faces, Lmax/Lmin <= 5;
+none beyond Superpave's 5:1 flat-and-elongated limit, 7 % beyond 3:1), packed largest first with Xu's
+smaller-stone fallback into a 100 x 100 mm tile of cell 18's 38 mm wear course, periodic across. Learned from the
+volumetrics: the stones fill only 38 % of the mix, below any settled packing (~55-60 %), so they float in the
+mastic and **no physics settling is needed** in the bulk. Learned from the sim's grids: random tries jam at 24 %;
+a voxel map of free space (0.5 mm), shrunk by each stone's half size, proposes only positions with room, and the
+exact separating-axis test still decides (speed only, not the result). The roller turns stones near the surface
+onto their most upward face and pushes them against it (a convex body pressed by a plate rests on a face).
+Results: 7,333 stones, **38.5 % stone volume (mix 38.1 %)**, every size class at its share; Delesse: averaged
+vertical cuts 38.7 % (sd 1.0 per cut); stone share by depth 27 % in the top 4 mm (the roller's wall effect), about
+40 % below; stone tops reach the surface over 14 % of the plan. 900 s in Python, once per mix and seed (a compiled
+bake would be far faster). **Not yet a check:** the mean profile depth depends on how far the mastic sits below
+the stone tops, which nothing here predicts: 0.45-0.6 mm gives 0.35-0.49 mm (FHWA-HRT-25-100 and VTRC 23-R15).
+Until a source sets that level (binder film and mastic at the surface), MPD calibrates it and the albedo targets
+check it. Also wanted: a source for how compaction orients stones near the surface (CT studies).
+
 **Rock weathering and dirt: still Gaps.** No measurement for asphalt aggregate found. The nearest are concrete
 studies (Levinson and Akbari, LBNL: simulated weathering, soiling and abrasion changed concrete albedo by about
 -0.06, -0.05 and -0.19), which are not our material and are not used. NCAT names winter maintenance (sand, salt)
