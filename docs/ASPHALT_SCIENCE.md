@@ -105,8 +105,8 @@ references. No big-bang refactor.
 |---|---|---|---|
 | Binder oxidation | 1 - exp(-t climate / 9 yr) | Placeholder | Field oxidation kinetics (Glover group, Texas A&M) |
 | Crack opening drive | 0.4 + 0.9 x oxidation | Placeholder | Thermal stress E alpha dT from a climate record |
-| Fatigue rate | 0.085 x traffic / structure x (h0/h)^2 x multipliers | Placeholder (1/h^2 sourced) | MEPDG allowable loads from tensile strain, Miner's sum, logistic damage -> % area cracked |
-| Fatigue thresholds | crack at 1.0, cells at 1.2, broken at 1.4 | Placeholder | MEPDG damage -> area transfer function |
+| Fatigue rate | 0.085 x traffic / structure x (h0/h)^2 x multipliers | Placeholder (1/h^2 sourced) | Model 3 (T4): MEPDG eqs. 5-4, 5-5 (allowable loads from tensile strain, Miner's sum) |
+| Fatigue thresholds | crack at 1.0, cells at 1.2, broken at 1.4 | Placeholder | Model 3 (T4): MEPDG eq. 5-6 (damage -> % lane area) |
 | Water damage, pothole birth | k_d 0.6, birth at damage 1.0 | Placeholder | LTPP data; pumping is ACP 15 |
 | Pothole depth | starts 12 mm, +30 mm/yr, stops at 90 mm | Placeholder | LTPP ACP 8 severity classes: < 25, 25-50, > 50 mm. The cross-section shows 90 mm cuts 14 mm into the base under 76 mm of asphalt, though the code says holes stop at the base course |
 
@@ -129,7 +129,7 @@ references. No big-bang refactor.
 |---|---|---|---|
 | Crack depth | 4 x width, 4-50 mm (`AsphaltSim.crack_depth`) | Placeholder | Drawn dashed in the cross-section. Next: top-down / bottom-up cracks and how far through the layers they have gone |
 | Spalls | 2.2 x width + 8 mm wide, 6 mm deep | Placeholder | LTPP: "spalled" is part of the fatigue and patch severity words |
-| Rutting | 1.1 mm/yr x traffic / structure, capped at 25 mm; only the surface sinks (the cross-section shows the layer interfaces flat) | Placeholder | MEPDG rutting splits it between asphalt, base and subgrade; LTPP measures it with a 1.2 m straightedge, patch severity uses < 6, 6-12, > 12 mm |
+| Rutting | 1.1 mm/yr x traffic / structure, capped at 25 mm; only the surface sinks (the cross-section shows the layer interfaces flat) | Placeholder | Model 3 (T4): MEPDG eqs. 5-1, 5-2 split it between asphalt, base and subgrade; LTPP measures it with a 1.2 m straightedge, patch severity uses < 6, 6-12, > 12 mm |
 | Shoulder drop, fret drop | -25 mm, -35 mm (fixed) | Placeholder | LTPP ACP 14 (not measured in LTPP) |
 | Patch, fill, sealant, paint proud | 3, 4, 1.5, 0.8 mm | Placeholder | |
 | Bleeding, shoving | none | Missing | LTPP ACP 10, 11 |
@@ -690,6 +690,204 @@ build-up's binder, aged about 12 years) give alpha and aged creep and strength f
 TCMODEL's calibration and the level 3 creep and strength correlations), NCHRP 1-37A Part 3 ch. 3 (same site);
 the AASHTO MEPDG Manual of Practice (2020, paywalled); Hiltunen and Roque 1994 and Jones et al. 1968 (AAPT,
 paywalled); Alaska DOT AK-RD-86-26 (crack widths; host refused).
+
+## Model 3: loads, bottom-up fatigue cracking and rutting (proposal for review; T4)
+
+**Status: written up from the sources below; not yet checked in Python; no code.** Every number quoted is from
+the source named next to it. "Derived" marks our own algebra on a sourced equation; "assumption" marks a choice
+with no source; gaps are listed at the end. Units: the MEPDG equations are in inches, psi and F, so they keep
+those units inside each equation and are converted at the edges (the sim stays SI).
+
+### Sources, and what each gives
+
+| Source (References/Asphalt) | Read for | What T4 takes |
+|---|---|---|
+| AASHTO, *Mechanistic-Empirical Pavement Design Guide: A Manual of Practice*, interim edition, July 2008 (`AASHTO08.pdf`, filed by zack) | ch. 3-5, 8, 9.1, 11.5 | **Primary text.** Rutting, eqs. 5-1 to 5-3; bottom-up fatigue, eqs. 5-4 to 5-7, all with the NCHRP 1-40D recalibration constants; JULEA as the response model (p. 28, 34); temperature quintiles (fig. 5-1); dual tires 12 in apart, 120 psi, wander 10 in (p. 82-83); design limits (Table 8-1); level 3 unbound moduli (Table 11-10) |
+| Von Quintus et al. 2024, MassDOT 24-067 (`massdot_2024_...`, filed for T3) | ch. 4.1, 6.1 | The same equations with the **2015 global constants** as Pavement ME runs them (screenshots, figs. 1, 2, 36, 37); hourly instead of quintiles; wander as a "traffic path" index |
+| Schwartz & Carvalho 2007, *Implementation of the NCHRP 1-37A Design Guide*, vol. 2, Maryland SHA SP0077B41 (`MDSHAEvaluation...Volume2.pdf`, filed by zack) | ch. 3.2.4-3.2.5 | How the guide uses layered elastic theory (Burmister's assumptions, JULEA); sublayering rules; evaluation depths and the plan grid of evaluation points (fig. 4, from NCHRP 2004); the 1-37A fatigue constants (k1 0.00432) and the unbound rutting model in full (eqs. 36-41), which the MOP gives only in part |
+| Ali 2005, *Evaluation of the MEPDG (NCHRP 1-37A)*, NRC Canada RR-216 (`20377776.pdf`, filed by zack) | ch. 3.4, App. | Wander "assumed normally distributed and the standard deviation is used as a measure for it" (p. 15); default 10 in; Mr = 2555 CBR^0.64 as the 1-37A level 2 correlation (appendix table) |
+| Gungor & Al-Qadi 2018, ICT-20-010, Illinois Center for Transportation (`gungor_alqadi_2018_ict-20-010_wheel_wander.pdf`, filed this thread) | ch. 2-3 | How NCHRP 2004 applies wander to fatigue: damage averaged at five offsets, 20 % of traffic each (fig. 3); for rutting the guide "modifies the actual pavement responses" without saying how; the damage profile across the lane under wander as an expectation (figs. 25-28) |
+| Sharpe 2001, NCHRP 1-37 overview slides (`2003-Overview-of-NCHRP-1-37A.pdf`, filed by zack) | all | Background only (project history); nothing quantitative used |
+| Stroup-Gardiner & Newcomb 1997, Mn/DOT 97-06 (`mndot_1997_...`, filed for T2) | Table 5.1 | Measured resilient modulus of the MnROAD AC-20 Marshall mix (cell 18's mix design) at -18, 1, 25 and 40 C: a candidate for the unaged warm mix modulus (below) |
+| c620 (`References/Levels/c620content.pdf`) | Tables 3-6 | Build-ups and design traffic in ESALs (Table 5) |
+| LTPP Distress Identification Manual (FHWA-HRT-13-092) | ACP 1, 9; fig. 136 | Fatigue definition and severities, rutting, wheel path positions |
+| FHWA-RD-03-094 (LTPP traffic, phase 2) and the LTPP release notes | search summaries only (FHWA page erroring, InfoPave blocked) | What LTPP records for traffic: axle load spectra from WIM, ESALs only for comparison and QA (below) |
+
+### What it predicts
+
+For each wheel path, year by year: the bottom-up fatigue damage at the bottom of the asphalt, the area of
+alligator cracking it gives (percent of lane area), and the permanent deformation in the asphalt, the base and
+the subgrade, which add up to the rut. Across the lane, wander spreads both into a profile.
+
+### How the sources disagree, and the choice proposed
+
+1. **Two sets of constants, never to be mixed.** The 2008 MOP gives the NCHRP 1-40D recalibration; Pavement ME
+   now runs the 2015 global set (MassDOT 24-067 figs. 1, 2, 36, 37):
+
+   | Model | 2008 MOP (1-40D) | 2015 global (MassDOT) |
+   |---|---|---|
+   | Asphalt rutting | k1r -3.35412, N exponent 0.4791, T exponent 1.5606, beta all 1 | k1r -2.45, k3r 0.22 (N), k2r 3.01 (T); beta1r 0.40, beta3r 1.36 (N), beta2r 0.52 (T) |
+   | Unbound rutting ks1 | 1.673 granular, 1.35 fine | 0.965 granular and coarse soils, 0.675 fine, 0.635 sandy |
+   | Fatigue Nf | kf1 0.007566, kf2 -3.9492, kf3 -1.281 | kf1 3.75, kf2 2.87, kf3 1.46 on 1/eps and 1/E; betaf1 0.02054 (under 5 in), betaf2 1.38, betaf3 0.88 |
+   | Area transfer | C1 1.0, C2 1.0, C4 6,000 | C1 1.31, C2 2.1585 (under 5 in), C3 6,000 |
+
+   (The two documents label k2r and k3r the other way round; the exponent of N is about 0.3-0.48 and of T about
+   1.56 in both.) For 3 in of asphalt the 2008 set puts 50 % cracking at damage 1.0; the 2015 set at damage
+   0.164 if its damage is a fraction (derived). **A misprint or a unit trap in the 2015 restatement:** MassDOT
+   eq. 23 defines FD already in percent (x 100) and eq. 24 then takes log(FD x 100); the MOP's eq. 5-6a takes
+   log(DI x 100) with DI a fraction. One of MassDOT's two 100s is extra; only the 2015 or 2020 MOP can say which.
+   **Proposed: the 2008 MOP set for the first code, because it is the primary text in hand and complete; the
+   2015 set as a swap of constants once the newer MOP is filed. zack's call.**
+2. **The unbound rutting model is given in pieces.** The MOP gives eq. 5-2a and the inputs of beta, rho and C0
+   (eqs. 5-2b-d) but not eps0/epsr. MDSHA vol. 2 (eqs. 37a-38, quoting NCHRP 2004) gives it with an older
+   constant set (10^7, a1 = 1.094 x 10^-18 Er^3.52, a9 = 0.0316 Er^0.5) and prints "log(eps0/epsr) =". Proposed
+   (reconstructed): MDSHA's form with the MOP's constants,
+   eps0/epsr = (e^(rho^beta) a1 Mr^b1 + e^((rho/10^9)^beta) a9 Mr^b9) / 2, a1 = 0.15, a9 = 20, b1 = b9 = 0.
+   Checked by arithmetic: with rho from eq. 5-2c the two terms come out exactly equal (22.3 at Wc 7 %, 23.8 at
+   10 %, 31.9 at 18 %), which is how rho was built, so the form fits the constants; read as a log the ratio
+   would be 10^23, so MDSHA's "log" is a misprint. Two more misprints, by arithmetic: the MOP's eq. 5-2d prints
+   "C0 = ln(a1 Mr^b1 / a9 Mr^b9) = 0.0075", which is ln(0.0075) = -4.89; MDSHA's eq. 41 divides by k where its own
+   eq. 40 has alpha.
+3. **MEPDG uses axle load spectra, not ESALs** (MOP p. 17). Our traffic input is ESALs (c620 Table 5) until the
+   LTPP section is in. Proposed: one ESAL = one pass of the standard axle that defines it, an 80 kN single axle
+   on dual tires (the LTPP traffic report's definition), each tire 20 kN at 120 psi (827 kPa; MOP p. 83), contact
+   radius 87.7 mm (derived), duals 12 in (305 mm) apart centre to centre (MOP p. 82). **Assumption, stated:**
+   damage from a real mix of trucks is not ESAL-equivalent in MEPDG (the ESAL is AASHO's fourth-power
+   equivalence); with an LTPP section the spectra replace it.
+4. **Wander.** Normal, zero mean, standard deviation 10 in (254 mm), used for all of the calibration (MOP p. 83;
+   Ali p. 15; ICT-20-010 p. 3). For fatigue NCHRP 2004 averages the damage at five offsets of 20 % each (ICT-20-010
+   fig. 3); for rutting the method is not published (ICT-20-010 p. 4 quoting NCHRP). Proposed (derived): compute
+   the damage, and the resilient strains for rutting, on a lateral grid for a load at one position, then take the
+   expectation over the wander (ICT-20-010 fig. 27, without ICT-20-010's truncation: the nearer lane edge is 0.76 m, 3 sigma, from
+   the outer wheel path, so the tail cut off is 0.1 %, derived). For fatigue this is exact under Miner's rule (damage is linear in passes). For rutting, which is
+   not linear in N, the expectation of the rut profile is an approximation (as ICT-20-010 applies it); the Python
+   check compares the five-point average with it at the peak.
+5. **The structural response: layered elastic theory, primary text Wanted.** The MEPDG computes strains with
+   JULEA, a Burmister multilayer linear elastic solution: homogeneous isotropic linear elastic layers, weightless
+   and infinite in plan, the last a half-space, uniform circular loads, full continuity at the interfaces,
+   wheels combined by superposition (MDSHA vol. 2 p. 25, citing Huang). The equations themselves (Burmister 1945;
+   Huang, *Pavement Analysis and Design*, ch. 2) are not in References, and the hosts that serve Burmister's
+   reports (DTIC, trb.org) are blocked here. **Until they are filed, the strain solver has no sourced equations
+   and cannot be coded.** This replaces T1's Westergaard radius, a slab-on-springs stand-in.
+
+### Equations of the proposal (2008 MOP numbering unless stated)
+
+1. **Sublayers and points** (MDSHA vol. 2 p. 25, from NCHRP 2004). Asphalt: two 0.5 in sublayers, then 1 in
+   sublayers to 4 in, the rest one sublayer (3 in: 0.5, 0.5, 1, 1). Base: rule given only for bases over 6 in
+   (gap for the 4 in default; proposed: two equal sublayers, assumption). Subgrade: per eqs. 40-41 below.
+   Fatigue at the bottom of the asphalt; rutting at the middle of each sublayer, at the top of the subgrade and
+   6 in below it. In plan, the strains are taken across the lane through the dual set (the guide's line Y1,
+   MDSHA fig. 4, extended across the lane for the profile).
+2. **Material state each month.** Asphalt sublayer modulus E(z, T, year) from the mix modulus (the shared
+   quantity; see Inputs) at the temperature of each of five quintiles of the month at that depth (MOP fig. 5-1;
+   traffic split equally among them), T from T2's `PavementTemperature`. Base and subgrade: Mr at optimum
+   moisture (no seasonal change; gap). Poisson's ratios: build-up.
+3. **Responses.** For the standard axle: horizontal tensile strain eps_t at the bottom of the asphalt, vertical
+   resilient strain eps_r (asphalt sublayers) and eps_v (unbound sublayers) at each point, on a lateral grid.
+4. **Fatigue** (eqs. 5-4a-d, 5-5):
+   Nf = kf1 C CH betaf1 eps_t^(kf2 betaf2) E^(kf3 betaf3), E in psi; C = 10^M, M = 4.84 (Vbe / (Va + Vbe) - 0.69);
+   CH = 1 / (0.000398 + 0.003602 / (1 + e^(11.02 - 3.49 H))), H the asphalt thickness in in (3 in: CH = 583).
+   DI(x) = sum over months, quintiles and wander of n / Nf (Miner). The MOP's optional endurance limit is left
+   out (excluded from the global calibration, MOP p. 28).
+5. **Area cracked** (eqs. 5-6a-c): FC = (1/60) C4 / (1 + e^(C1 C1\* + C2 C2\* log10(DI x 100))) percent of lane
+   area, C2\* = -2.40874 - 39.748 (1 + H)^-2.856, C1\* = -2 C2\*; DI is the lane's largest (the wheel-path peak).
+   3 in: 0.18 / 4.0 / 50 % at DI 0.01 / 0.1 / 1 (derived). Scatter: se = 32.7 + 995.1 / (1 + e^(2 - 2 log10(FC +
+   0.0001))) (eq. 5-7, as Ali's appendix prints it; the MOP's typesetting of it is garbled).
+6. **Asphalt rutting** (eqs. 5-1a-d): Delta_p = beta1r kz eps_r 10^k1r n^(k2r beta2r) T^(k3r beta3r) h, T in F;
+   kz = (C1 + C2 D) 0.328196^D, C1 = -0.1039 H^2 + 2.4868 H - 17.342, C2 = 0.0172 H^2 - 1.7331 H + 27.428, D the
+   depth in in. Summed over sublayers. Months are joined by strain hardening (named, MOP p. 36; proposed reading:
+   for each new month find the number of passes that gives the plastic strain already reached under that
+   month's conditions, then add the month's passes; derived, steps in NCHRP 1-37A Part 3 ch. 3, Wanted).
+7. **Base and subgrade rutting** (eq. 5-2a with item 2 of the choices): Delta_p = betas1 ks1 eps_v h (eps0/epsr)
+   e^(-(rho/n)^beta), log beta = -0.61119 - 0.017638 Wc (5-2b), rho = 10^9 (C0 / (1 - (10^9)^beta))^(1/beta) (5-2c),
+   C0 = ln(0.0075). Water content from the groundwater table (MDSHA eq. 39, 1-37A):
+   Wc = 51.712 CBR^(-0.3586 GWT^0.1192), GWT in ft, with Mr/2555 to the power 1/0.64 written as CBR (derived).
+   Subgrade, a half-space: eps_p(z) = eps_p0 e^(-alpha z), alpha from the plastic strains at its top and 6 in
+   down, integrated to bedrock (MDSHA eqs. 40-41; no bedrock: eps_p0 / alpha, derived).
+8. **Across the lane** (choice 4): every profile above is a load-at-one-position profile g(x); the drawn one is
+   E[g(x - s)], s ~ N(0, 254 mm), centred on the LTPP wheel paths.
+
+### Inputs, and where they come from
+
+| Input | Value proposed (source) | Arrives from |
+|---|---|---|
+| Asphalt thickness H, sublayer depths; Poisson's ratios | build-up (c620 Table 3B: 3.0 in); 0.35 asphalt (build-up, unsourced; NRC RR-216 gives 0.15-0.5 for asphalt) | T1, built |
+| Subgrade Mr | 2555 CBR^0.64 psi (now also found restated as the 1-37A level 2 correlation in NRC RR-216); CBR 9: 104 MPa | T1, built |
+| **Base Mr** | A-1-a 40,000 psi (276 MPa) for a flexible base (MOP Table 11-10, LTPP medians); MnROAD Class 6 as A-1-a is an assumption until its gradation is classified (Mn/ROAD aggregate profile, in hand) | **New input on the base layer** |
+| **Soil class** of base and subgrade (granular or fine, for ks1) | granular base; subgrade class unknown for c620's "good, CBR 9" (assumption needed) | **New input** |
+| **Groundwater table depth** (for Wc) | none in hand (gap; c620 doesn't give one) | **New input** |
+| Pavement temperature T(z, hour) | `PavementTemperature` | T2, built |
+| Binder log abs(G\*)(z, year) | `BinderAgeing.log_g()` | T2, built |
+| **Mix modulus E(z, T, loading time, year)** | **Not derived here.** The aged modulus is Model 2's AMAC step (NCHRP 973 eq. 51, c = 1.71) applied to an unaged mix master curve; T4 needs the curve at 0-50 C, where Model 2's (creep of the 64-22 granite lab mix at -24 to 0 C) does not reach. Candidate for the hub: Mn/DOT 97-06 Table 5.1, AC-20 50-blow Marshall mix (cell 18's mix design, the build-up's own), resilient modulus at 0.1 s load: 12.1-15.1 GPa at -18 C, 6.6-7.7 at 1 C, 2.2-2.6 at 25 C, 0.70-0.80 at 40 C. Caveats: indirect tension resilient modulus, not the |E\*| in compression the MEPDG calibration used (97-06 Tables 5.7-5.8 hold axial complex moduli at 0.1 and 1 Hz to compare); loading time from speed is in 1-37A (Wanted), 0.1 s proposed. The same report has the mix's low-temperature creep and strength (Tables 5.14-5.15), so T3 could move to it and **both threads use one mix** | **Shared quantity, one owner, agreed in the hub before either codes.** Replaces T1's unsourced 3 GPa |
+| Mix volumetrics Va, Vbe | cell 18 wear course: Va 3.2 %, VMA 15.3 % (Mn/DOT 97-06 Table 3.5), so Vbe = VMA - Va = 12.1 % (identity), M = 0.488, C = 3.08 | **New inputs on the asphalt layer** |
+| **Traffic: ESALs per year** | c620 Table 5 gives design totals, not yearly, and no design life: lightest row "up to 10,000 ESALs" (2.5 in on 8.5 in, CBR 6-9); the default build-up (3.0 on 4.0, Table 3B, under 50 spaces) has no ESAL figure. Yearly number for the default road: zack's call | **New input** |
+| **Lateral wander sigma** | 254 mm (MOP p. 83; 203 mm for lanes under 10 ft, 305 mm over 12 ft) | **New input** (constant for now) |
+| Standard axle | 80 kN, duals 305 mm apart, 827 kPa (choice 3) | constant |
+| Wheel paths | LTPP fig. 136 (built) | road layout, built |
+
+**What LTPP records for traffic** (from the FHWA traffic report's and release notes' summaries; the PDFs could not
+be fetched): axle load spectra by axle type from WIM, truck volumes by class for the study lane, and yearly ESAL
+estimates (tables TRF_HIST_EST_ESAL, TRF_MON_EST_ESAL, later TRF_ESAL_COMPUTED, TRF_TREND,
+MEPDG_AXLE_LOAD_DIST_FACTOR) kept "mainly for comparison and quality assurance". The V thread takes the spectra.
+
+### What it drives
+
+- **Plan:** alligator cracking in the wheel paths: its amount is FC x lane area (sourced); where along the path
+  it appears and the cells' size are gaps (below). The rut as the height map: the surface profile across each
+  lane from eq. 8, deepest in the wheel paths.
+- **Section:** rut depth by layer: the surface drops by the total, the top of the base by base plus subgrade, the
+  top of the subgrade by the subgrade's share, each interface following its own wander profile; inside the
+  asphalt, each sublayer's thickness change from eq. 6. Fatigue cracks drawn through the full asphalt depth where
+  the plan shows alligator cracking.
+- **Distress map and survey:** ACP 1 fatigue area (m2) in the wheel paths; ACP 9 rut depth, measured as T0 does;
+  ACP 1 severity not until a source exists (gap).
+
+### Checks (the Python run, next step)
+
+1. Transfer function arithmetic: CH, C1\*, C2\* for 3 in; FC 50 % at DI 1 (2008); both readings of MassDOT's 2015
+   eq. 24.
+2. Layered elastic solver (once its equations are filed): the one-layer case against Boussinesq's closed form
+   for a circular load; a published multilayer example (Huang's, when filed).
+3. Unbound rutting: eps0/epsr from the reconstructed form, its two terms equal (above); Wc for CBR 9.
+4. Mix modulus (with the hub's choice): the fitted master curve through 97-06 Table 5.1, and AMAC's shift with
+   T2's log abs(G\*) at 1, 5, 10, 20 years, Burlington.
+5. Wander: the five-point average (NCHRP) against the full expectation at the wheel path peak, fatigue and rut.
+6. Against design intent: each c620 Table 5 build-up at its own ESAL row over 20 years (assumed life) should land
+   near the MOP's limits for low-volume roads (Table 8-1: 35 % area, 0.65 in rut for "others"), and the thicker
+   ones should not fail sooner: the roadmap check "a thicker structure gives less fatigue and less rutting; more
+   ESALs give more".
+7. The 2008 and 2015 constant sets side by side for the default road, to show what the choice changes (asphalt
+   rutting: eps_p/(eps_r kz) is about 250 with 2008 and 68 with 2015 at 10^6 passes and 70 F, derived).
+
+### Not in it, and gaps
+
+- **Layered elastic equations: Wanted, blocking the strain solver.** Burmister 1945, J. Applied Physics 16,
+  89-94, 126-127, 296-302; or Huang, *Pavement Analysis and Design* (2004), ch. 2 and its KENLAYER appendix; or
+  the JULEA documentation in NCHRP 1-37A.
+- **NCHRP 1-37A Part 3 ch. 3 (flexible design) and Part 2 ch. 2-4 (inputs, loading time from speed): Wanted**
+  (onlinepubs.trb.org blocked): the wander discretisation for rutting, strain hardening steps, eps0/epsr in the
+  original.
+- **AASHTO MEPDG Manual of Practice, 2015 or 2020 edition: Wanted** (paywalled): settles the 2015 constants and
+  the FD x 100 question.
+- **Where along the wheel path the cracking appears: Gap.** MEPDG gives an amount for the lane; the road in the
+  sim is uniform, so nothing places the first patches. MEPDG's scatter (eq. 5-7) is section to section, not within
+  one. Options for zack: (a) leave placement out and draw the amount as a band of the right area centred on the
+  wheel path, (b) take a measured along-road variability (thickness, modulus) once one is sourced.
+- **Crocodile cell size: Gap.** LTPP ACP 1: pieces usually under 0.3 m. The present 0.7 x 1.0 Westergaard radius
+  rule is derived, not sourced, and goes with Westergaard.
+- **LTPP fatigue severity (L/M/H): Gap.** MEPDG predicts area only.
+- **Top-down (longitudinal) cracking: left out of this pass.** The MOP's eq. 5-8 was replaced in 2015 by a new
+  model (MassDOT 6.1.2, in hand for later).
+- **Rut shoulders (the humps beside a rut from shear flow): not in MEPDG**, which predicts vertical deformation
+  only. Gap.
+- **Seasonal base and subgrade moduli** (the EICM's frozen and thaw-weakened months, MOP p. 35): left out; Mr at
+  optimum all year.
+- **Cold months in the asphalt rutting model:** T^1.56 with T in F is undefined below 0 F; how Pavement ME treats
+  it is not stated (gap; such hours add almost nothing).
+- **Fatigue through NCHRP 973's own route** (AMAC on S-VECD properties, FlexPAVE): not chosen; it needs AMPT
+  cyclic tests of the mix, and MEPDG's route is the one calibrated on LTPP.
+- **Cracks don't weaken the structure** for a new pavement in MEPDG (damaged moduli are for rehabilitation): kept
+  out, as the roadmap says.
 
 ## Next steps
 

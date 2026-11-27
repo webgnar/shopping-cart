@@ -119,6 +119,32 @@ in this folder with the file names below.
   `nchrp_1-37a_2004_appendix_hh_thermal_cracking.pdf`; NCHRP 1-37A Part 3 ch. 3; AASHTO MEPDG Manual of Practice
   (2020); Hiltunen & Roque 1994 and Jones, Darter & Littlefield 1968 (AAPT); Alaska DOT AK-RD-86-26 (crack widths).
 
+## Loads: fatigue cracking and rutting (T4)
+- `AASHTO08.pdf` (filed by zack): AASHTO, "Mechanistic-Empirical Pavement Design Guide: A Manual of Practice",
+  interim edition (July 2008). Ch. 5: rutting eqs. 5-1 to 5-3 and bottom-up fatigue eqs. 5-4 to 5-7 with the NCHRP
+  1-40D constants; JULEA (pp. 28, 34); temperature quintiles (fig. 5-1); dual tires 12 in, 120 psi, wander 10 in
+  (pp. 82-83); design limits (Table 8-1); level 3 unbound moduli (Table 11-10). Notes: docs/ASPHALT_SCIENCE.md,
+  Model 3.
+- `MDSHAEvaluationofMechanistic-EmpiricalDeisgnProcedure-Volume2.pdf` (filed by zack): Schwartz & Carvalho,
+  "Implementation of the NCHRP 1-37A Design Guide, Vol. 2: Evaluation of Mechanistic-Empirical Design Procedure",
+  Maryland SHA project SP0077B41 (2007). Ch. 3.2.4-3.2.5: layered elastic assumptions, sublayering, evaluation
+  points (fig. 4), 1-37A fatigue and rutting models incl. the unbound model in full (eqs. 36-41).
+- `20377776.pdf` (filed by zack): Ali, "Evaluation of the Mechanistic Empirical Pavement Design Guide (NCHRP 1-37A)",
+  NRC Canada RR-216 (2005), doi 10.4224/20377776. Wander normally distributed, sigma 10 in (p. 15); level 2
+  correlations incl. Mr = 2555 CBR^0.64; standard error equations.
+- `2003-Overview-of-NCHRP-1-37A.pdf` (filed by zack): Sharpe, NCHRP 1-37 project overview slides (TRB 2001).
+  Background only.
+- `gungor_alqadi_2018_ict-20-010_wheel_wander.pdf`: Gungor & Al-Qadi, "Development of a Flexible Pavement Design
+  Framework for Autonomous and Connected Trucks", Illinois Center for Transportation ICT-20-010 (2018),
+  https://rosap.ntl.bts.gov/view/dot/60755. NCHRP 2004's five-point wander average for fatigue (fig. 3); damage
+  profile across the lane under wander as an expectation (figs. 25-28).
+- MassDOT 24-067 (filed under thermal cracking) ch. 4.1 and 6.1: the 2015 global rutting and fatigue constants.
+- Wanted (blocked or paywalled): Burmister 1945, J. Applied Physics 16, 89-94, 126-127, 296-302, or his DTIC
+  reports AD0614693 / AD0646986 (file as `burmister_1945_layered_systems.pdf`); Huang, "Pavement Analysis and
+  Design" (2004) ch. 2; NCHRP 1-37A Part 3 ch. 3, onlinepubs.trb.org/onlinepubs/archive/mepdg/Part3_Chapter3_FlexibleDesign.pdf
+  (file as `nchrp_1-37a_2004_part3_ch3_flexible_design.pdf`); AASHTO MEPDG Manual of Practice 2015 or 2020;
+  FHWA-RD-03-094 (LTPP traffic, phase 2), www.fhwa.dot.gov/pavement/ltpp/03094/03094.pdf (FHWA server erroring).
+
 ## Crack spacing in pavements
 - `chen_2022_transverse_crack_spacing_semi_rigid_base.pdf`: Chen, Li, Zhao et al., "Investigation of transverse
   crack spacing in an asphalt pavement with a semi-rigid base", Scientific Reports 12, 18079 (2022).
