@@ -172,21 +172,68 @@ Steps (one commit each, each with its own check):
 - [ ] 6b. Surface composition: **written up for review (ASPHALT_SCIENCE.md, Model 1b, with a second pass: wear not oxidation drives the albedo, Jolt packing of low-poly stones, macrotexture from the stones checked against MPD) and checked in Python (`docs/asphalt_checks/surface_composition.py`); waiting for zack's review before code.** Mix: MnROAD cell 18 wear course (Mn/DOT 97-06). Original note: binder (0.05) and exposed aggregate (its measured albedo, Pomerantz Table 1: 0.10-0.28) drawn as stones; exposed fraction from the surface ageing up to the chip-seal ceiling (0.67 +- 0.11 of the aggregate's albedo); stone sizes from the gradation, area fraction from the volume fraction (Delesse). The mean albedo then comes out of the picture and becomes a check. Gradation limits in hand: FHWA-RD-98-087 (12.5 mm control points, restricted zone, VMA 14 %, air voids 4 %); an actual curve wanted: LTPP AG04 for the section (InfoPave), or MnROAD cell 18's job-mix formula (AC-20 = PG 64-22, the build-up's strength source; MnDOT library host blocked from this session). Aggregate albedo: Pomerantz Table 1 for now (option A, zack). Gaps: binder lightening with oxidation; aggregate weathering (rock oxidises too: iron staining, feldspar to clay); aggregate shape. The section must draw the same stones: one 3D stone field that the plan (z = 0) and the section (the cut) both slice, so scrubbing the cut moves through it
 - [ ] 7. Roadmap and science register updated
 
-### T3 Thermal cracking: Current (research)
+### T3 Thermal cracking: Current (research; Model 2 written up, waiting for zack's review)
 
 What it does: in cold weather the aged, stiffer layer shrinks, the base holds it back and it cracks across the
-road, at a spacing set by the slip length; later the transverse cracks join into blocks. Places and grows the
-transverse and block cracks (and their widths, for the LTPP severity).
+road where the restrained stress reaches the mix's strength, at a spacing set by the slip length. Places the
+transverse cracks, their depth and their seasonal opening. Model: ASPHALT_SCIENCE.md, Model 2.
+
+```mermaid
+flowchart LR
+  CLD[Daily air minimum<br/>year by year: NEW input] --> PT
+  PT[Pavement temperature<br/>T2, built] --> ST
+  LG["log abs(G*) by depth and year<br/>T2, built"] --> AA["Ageing shift aA<br/>AMAC eq. 51, c 1.71"]
+  MIX[Mix data: creep compliance,<br/>alpha with Tg, strength<br/>Mn/DOT 2007-43] --> RX[Relaxation modulus<br/>TCMODEL eqs. 24-29]
+  AA --> RX
+  RX --> ST[Restrained thermal stress<br/>by depth, eqs. 30-32]
+  MIX --> ST
+  ST --> IN{"stress >= strength<br/>and segment >= 2 Xc?"}
+  XC[Slip length Xc<br/>T1, built] --> IN
+  IN --> CR[Crack at segment middle,<br/>down to where stress < strength]
+  CR --> W[Seasonal opening<br/>derived]
+  CR --> OUT[to T0 plan, section, survey;<br/>to T5, T6]
+  W --> OUT
+```
 
 | Source | Status | Used for |
 |---|---|---|
-| Li & Marasteanu 2005 | Read | Crack spacing from the slip length |
-| Chen et al. 2022 | Read | Spacing halves as cracks are added |
-| Bohn et al. 2005; Shorlin et al. 1999 | Read | How cracks run and meet (90 degrees) |
-| MEPDG thermal cracking model (TCMODEL, NCHRP 1-37A) | Wanted | When cracking starts and how much |
-| NCHRP 973 ch. 6 (AMAC) | In hand | Binder stiffness to the mix's creep and strength |
-| Thermal contraction coefficient of the mix | Gap | Thermal stress |
-| Crack width growth over the years | Gap | LTPP severity (L/M/H by width) |
+| Li & Marasteanu 2005 | Read (for T3) | Strength criterion; slip length eq. 4; spacing 1.5 Xc; Jones alpha eq. 3; MnROAD spacings; TCMODEL predicted none there |
+| Chen et al. 2022 | Read (for T3) | Halving: mean spacing 3/4 of the largest (= Li's 1.5 Xc, derived); measured asphalt alpha 15-22 x 10^-6/C |
+| Bohn et al. 2005; Shorlin et al. 1999 | Read (for T3) | New crack near a domain's middle; 90 deg junctions; spacing proportional to thickness |
+| Mn/DOT 2007-43 (Marasteanu et al.), low-temperature cracking pooled fund | Read (ch. 2, 3-6, 9); filed this thread | TCMODEL as implemented (eqs. 22-40); PG 64-22 mix data (creep, strength, dilatometric alpha, TSRST); MnROAD cores; TCMODEL against field (Table 9.1) |
+| MassDOT 24-067 (Von Quintus et al. 2024) | Read (ch. 5.1); filed | Current TC equations; 2018 calibration kt = 3e-7 MAAT^4.0317 |
+| NCHRP 973 ch. 6 (AMAC) | Read | Binder log abs(G*) change to the mix's modulus master curve shift (eq. 51). **Gives modulus and fatigue, not strength** (corrected) |
+| FHWA-HRT-16-084 (2019) | Read (ch. 1); filed | Mechanisms; widths grow over time (no rate) |
+| NCHRP 1-37A Appendix HH (TCMODEL calibration, level 3 correlations); Part 3 ch. 3 | Wanted: trb.org blocked from this session | Primary text of TCMODEL; for zack to file |
+| AASHTO MEPDG Manual of Practice (2020) | Wanted (paywalled) | Current equations from the primary text |
+| Hiltunen & Roque 1994; Jones et al. 1968 (AAPT) | Wanted (paywalled) | Originals of TCMODEL and of alpha's volumetric estimate |
+| Thermal contraction coefficient of the mix | **Sourced** (was Gap): measured, Mn/DOT 2007-43 Tables 6.19, 6.22 | Thermal stress |
+| Crack width growth over the years | Gap (Alaska AK-RD-86-26 host refused; LTPP surveys in InfoPave, blocked) | LTPP severity (L/M/H by width) |
+| Block cracking | Gap: the criterion predicts no longitudinal crack inside a 3.65 m lane (needs 2 Xc = 5.4 m) | Block cracks |
+
+New quantities Model 2 needs (proposed; to agree in the hub before any code, then added to the shared table):
+
+| Quantity | Unit | Made by | Note |
+|---|---|---|---|
+| Daily air minimum, year by year | C | Input (climate) | NOAA GHCN-Daily for the site; the normals never crack anything |
+| Mix contraction: Tg, alpha_g, alpha_l | C, 1/C | Input (asphalt layer) | Mn/DOT 2007-43 |
+| Mix creep compliance master curve (unaged) and its aT | 1/Pa, - | Input (asphalt layer) | Mn/DOT 2007-43 Table 6.5 |
+| Mix low-temperature strength sigma_t and its scatter | Pa, - | Input (asphalt layer) | Replaces the build-up's 2.27 MPa, which T1's slip length uses: one owner |
+| Ageing shift aA(z, year) | - | T3 (AMAC) | From `BinderAgeing.log_g()` |
+| Thermal stress sigma(z, t) | Pa | T3 | |
+
+Steps (one commit each; stop for zack's review where marked):
+- [x] Sources read and filed; Model 2 written up (ASPHALT_SCIENCE.md) **-> zack's review**
+- [ ] Whole chain checked in Python (`docs/asphalt_checks/thermal_cracking_chain.py`): TSRST fracture of the
+  reference mix (-25.9 C at 2.92 MPa), Li's Table 4, halving to 1.5 Xc, ageing and climate trends, TCMODEL amount
+  beside ours **-> zack's review, before any code**
+- [ ] 1. Daily climate input and the new layer inputs (shared table rows agreed in the hub first)
+- [ ] 2. Relaxation modulus with the AMAC shift, by depth and year (own file)
+- [ ] 3. Restrained thermal stress through the winter, by depth (own file)
+- [ ] 4. Initiation and halving: cracks placed in the sim, with depth
+- [ ] 5. Drawn: plan, section, distress map; seasonal opening
+- [ ] 6. Checks between topics (thicker layer, aged binder, colder climate)
+- [ ] 7. Roadmap and science register updated
 
 ### T4 Loads: fatigue cracking and rutting: Later
 
@@ -253,7 +300,7 @@ appear only on the distress map's second axis.
 | Albedo | - (0 to 1) | T2 | T0 plan | `BinderAgeing.albedo()`, `AsphaltSim.albedo()` | Built (drawn flat; composition in 6b) |
 | Slip length Xc | m | T1 | T3 | `AsphaltSimState.slip_length()` | Built |
 | Westergaard radius (wheel spread) | m | T1 | T4 | `AsphaltSimState.wheel_spread()` | Built; replaced in T4 |
-| Mixture modulus and strength (from binder stiffness) | Pa | T3/T4, via AMAC | T3, T4 | not decided | T3 |
+| Mixture modulus (from binder stiffness; AMAC gives no strength, see T3) | Pa | T3/T4, via AMAC | T3, T4 | not decided | T3 |
 | Traffic: ESALs per year, lateral wander | -, m | Input | T4 | not decided | T4 |
 | Cracks: path, type, width, depth | m | T3, T4 | T5, T6, T0 | `AsphaltSim.cracks` | Built (geometry); widths and depths still placeholders |
 | Rut depth across the road | m | T4 | T0, T6 | not decided | T4 |
@@ -286,7 +333,8 @@ as soon as both of its topics exist.
 | Binder grade of the default road | T2 | PG 64-22 (chosen with zack; LTPP section's when verified) | Chosen; on the c620 preset |
 | Traffic for the default road | T4 | c620 Table 5; then the LTPP section | Not yet |
 | LTPP section: build-up, climate, traffic, yearly surveys | V | InfoPave | Blocked |
-| Mix thermal contraction coefficient | T3 | Gap | Not yet |
+| Mix thermal contraction coefficient | T3 | Mn/DOT 2007-43 dilatometry (PG 64-22 lab mix; MnROAD cell 19 core) | Collected (in Model 2) |
+| Daily air minimum, year by year, for the default site | T3 | NOAA GHCN-Daily | Not yet |
 
 ## Threads and branches
 
@@ -338,3 +386,4 @@ is built: pavement temperature (`PavementTemperature`) and binder stiffness by d
 | Nov 27 2026 | T2 | Step 5: section draws the stiffness gradient | ef9dad2, e4303ad |
 | Nov 27 2026 | T2 | Step 6: plan grey from albedo | 13dba8d |
 | Nov 27 2026 | T2 | Step 6 reopened: photo and scaling out, plan flat at the albedo | this commit |
+| Nov 27 2026 | T3 | Sources read and filed; Model 2 (thermal cracking) written up for review | this commit |

@@ -99,6 +99,26 @@ in this folder with the file names below.
 - Fracture of asphalt concrete, a cohesive zone approach with viscoelastic effects (Illinois thesis).
   https://ideals.illinois.edu/items/84588
 
+## Thermal cracking (T3)
+- `mndot_2007-43_low_temperature_cracking_pooled_fund.pdf`: Marasteanu, Zofka, Turos, Li, Velasquez, Li, Buttlar,
+  Paulino, Braham, Dave, Ojo, Bahia, Williams et al., "Investigation of Low Temperature Cracking in Asphalt
+  Pavements: A Transportation Pooled Fund Study", Mn/DOT report MN/RC 2007-43 (2007).
+  https://rosap.ntl.bts.gov/view/dot/38925. Ch. 2: the MEPDG thermal cracking model (TCMODEL) as implemented,
+  eqs. 22-40; ch. 6: IDT creep (Table 6.5) and strength (6.6), TSRST at 10 C/h (6.17), dilatometric contraction
+  coefficients with Tg (6.19) for 12.5 mm lab mixes incl. PG 64-22 granite; MnROAD field cores (6.13, 6.14, 6.22);
+  ch. 9: TCMODEL against field cracking (Table 9.1). Notes: docs/ASPHALT_SCIENCE.md, Model 2.
+- `massdot_2024_24-067_mepdg_calibration_phase3.pdf`: Von Quintus, Sufian, Brink, Gopisetti, Mogawer, "Improving the
+  Long-Term Condition of Pavements in Massachusetts ... Implementing the AASHTO MEPDG, Phase III", MassDOT 24-067
+  (2024). https://rosap.ntl.bts.gov/view/dot/86815. Ch. 5.1: the transverse cracking equations (eqs. 12-17) and the
+  2018 global calibration kt = 3e-7 MAAT^4.0317 (MAAT < 57 F).
+- `fhwa_2019_hrt-16-084_environmental_factors.pdf`: "Impact of Environmental Factors on Pavement Performance in the
+  Absence of Heavy Loads", FHWA-HRT-16-084 (2019). Ch. 1: transverse cracking mechanisms; shrinkage crack widths
+  grow over time (no rates).
+- Wanted (blocked or paywalled): NCHRP 1-37A Appendix HH, "Field Calibration of the Thermal Cracking Model" (2004),
+  onlinepubs.trb.org/onlinepubs/archive/mepdg/2appendices_HH.pdf, file as
+  `nchrp_1-37a_2004_appendix_hh_thermal_cracking.pdf`; NCHRP 1-37A Part 3 ch. 3; AASHTO MEPDG Manual of Practice
+  (2020); Hiltunen & Roque 1994 and Jones, Darter & Littlefield 1968 (AAPT); Alaska DOT AK-RD-86-26 (crack widths).
+
 ## Crack spacing in pavements
 - `chen_2022_transverse_crack_spacing_semi_rigid_base.pdf`: Chen, Li, Zhao et al., "Investigation of transverse
   crack spacing in an asphalt pavement with a semi-rigid base", Scientific Reports 12, 18079 (2022).
