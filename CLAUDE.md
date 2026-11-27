@@ -27,6 +27,8 @@ potholes) and getting repaired, drawn as a colour map and a height map. In 3D it
 3D preview and the asphalt test lot, until zack asks for more.
 
 - `scripts/asphalt/asphalt_sim.gd` (`AsphaltSim`): the simulation. `bake_height()` gives real heights in metres.
+  It is split by concern into `asphalt_sim_*.gd` parts, each extending the last; the placeholder damage rules are
+  in `asphalt_sim_rules.gd`. `docs/ASPHALT_SCIENCE.md` tracks what is sourced.
 - `scripts/asphalt/asphalt_canvas.gd`: draws the maps. `scripts/asphalt/asphalt_lab.gd`: the lab UI.
 - `scenes/asphalt/asphalt_lab.tscn`: the lab scene. `assets/asphalt/`: the surface shader and grain.
 - `scenes/asphalt/asphalt_section.tscn` (`asphalt_section.gd`): a 10 x 10 m section in 3D, displaced and with matching

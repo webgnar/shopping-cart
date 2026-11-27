@@ -1952,3 +1952,14 @@ and data sheets 1-3 (notes and the symbol table in docs/ASPHALT_SCIENCE.md).
   outlined controls), a pale page behind the views. The figures (section, map) keep the LTPP sans lettering.
 - Distress map: axis titles with units (metres bottom and left; feet top and right, as LTPP prints), a units
   note, and the fig. 137 symbol legend under the data sheet totals.
+
+## Asphalt sim split by concern (Nov 27 2026)
+
+asphalt_sim.gd (1,790 lines) is now seven files, each extending the one before, so scenes and callers still use
+`AsphaltSim`: asphalt_sim_state.gd (`AsphaltSimState`: settings, state, Crack, pavement helpers, queries, stats),
+asphalt_sim_cracks.gd (crack geometry engine), asphalt_sim_networks.gd (crocodile and block networks),
+asphalt_sim_rules.gd (the placeholder damage rules: fatigue, water and potholes, crack initiation, edges, slippage),
+asphalt_sim_repairs.gd, asphalt_sim_height.gd (bake_height) and asphalt_sim.gd (timeline: reset, step, seek, repair
+events). Function bodies moved unchanged; checked identical with a fingerprint (height-map md5, crack and point
+counts, stats, repair log) for three cases (no repairs; all six repairs; road crew) at years 8, 18 and 27. New
+sourced models go in their own files and replace parts of asphalt_sim_rules.gd; nothing new goes into it.
