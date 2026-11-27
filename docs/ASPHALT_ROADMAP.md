@@ -178,7 +178,7 @@ Steps (one commit each, each with its own check):
 - [ ] 6b. Surface composition: **written up for review (ASPHALT_SCIENCE.md, Model 1b, with a second pass: wear not oxidation drives the albedo, Jolt packing of low-poly stones, macrotexture from the stones checked against MPD) and checked in Python (`docs/asphalt_checks/surface_composition.py`); waiting for zack's review before code.** Mix: MnROAD cell 18 wear course (Mn/DOT 97-06). Original note: binder (0.05) and exposed aggregate (its measured albedo, Pomerantz Table 1: 0.10-0.28) drawn as stones; exposed fraction from the surface ageing up to the chip-seal ceiling (0.67 +- 0.11 of the aggregate's albedo); stone sizes from the gradation, area fraction from the volume fraction (Delesse). The mean albedo then comes out of the picture and becomes a check. Gradation limits in hand: FHWA-RD-98-087 (12.5 mm control points, restricted zone, VMA 14 %, air voids 4 %); an actual curve wanted: LTPP AG04 for the section (InfoPave), or MnROAD cell 18's job-mix formula (AC-20 = PG 64-22, the build-up's strength source; MnDOT library host blocked from this session). Aggregate albedo: Pomerantz Table 1 for now (option A, zack). Gaps: binder lightening with oxidation; aggregate weathering (rock oxidises too: iron staining, feldspar to clay); aggregate shape. The section must draw the same stones: one 3D stone field that the plan (z = 0) and the section (the cut) both slice, so scrubbing the cut moves through it
 - [ ] 7. Roadmap and science register updated
 
-### T3 Thermal cracking: Current (research; Model 2 written up, waiting for zack's review)
+### T3 Thermal cracking: Current (research; Model 2 checked in Python, waiting for zack's review)
 
 What it does: in cold weather the aged, stiffer layer shrinks, the base holds it back and it cracks across the
 road where the restrained stress reaches the mix's strength, at a spacing set by the slip length. Places the
@@ -231,9 +231,13 @@ New quantities Model 2 needs (proposed; to agree in the hub before any code, the
 
 Steps (one commit each; stop for zack's review where marked):
 - [x] Sources read and filed; Model 2 written up (ASPHALT_SCIENCE.md) **-> zack's review**
-- [ ] Whole chain checked in Python (`docs/asphalt_checks/thermal_cracking_chain.py`): TSRST fracture of the
-  reference mix (-25.9 C at 2.92 MPa), Li's Table 4, halving to 1.5 Xc, ageing and climate trends, TCMODEL amount
-  beside ours **-> zack's review, before any code**
+- [x] Decisions (zack): daily climate = Burlington GHCN-Daily 1991-2020 (`docs/asphalt_checks/data/`); strength =
+  TSRST 2.92 MPa
+- [x] Whole chain checked in Python (`docs/asphalt_checks/thermal_cracking_chain.py`; results in Model 2). Passes:
+  master curve, Soules recursion, Li's Table 4, halving (1.35 Xc), the ageing / colder / thicker trends, MnROAD's
+  cracks in winter 1995-96. **Fails: TSRST with the measured alpha (-20.7 against -25.9 C); AMAC over-hardens at
+  low temperature against aged MnROAD cores.** Also: all cracks in one winter, half the field's scatter, few
+  full-depth cracks. TCMODEL amount deferred (needs Appendix HH) **-> zack's review: choose the options in Model 2**
 - [ ] 1. Daily climate input and the new layer inputs (shared table rows agreed in the hub first)
 - [ ] 2. Relaxation modulus with the AMAC shift, by depth and year (own file)
 - [ ] 3. Restrained thermal stress through the winter, by depth (own file)
@@ -400,4 +404,5 @@ codes it. T4 adds traffic, wander and rut depth to the shared quantities table o
 | Nov 27 2026 | T2 | Step 5: section draws the stiffness gradient | ef9dad2, e4303ad |
 | Nov 27 2026 | T2 | Step 6: plan grey from albedo | 13dba8d |
 | Nov 27 2026 | T2 | Step 6 reopened: photo and scaling out, plan flat at the albedo | this commit |
-| Nov 27 2026 | T3 | Sources read and filed; Model 2 (thermal cracking) written up for review | this commit |
+| Nov 27 2026 | T3 | Sources read and filed; Model 2 (thermal cracking) written up for review | 67ba5ea |
+| Nov 27 2026 | T3 | Decisions recorded; chain checked in Python (two inputs fail; options in Model 2) | this commit |

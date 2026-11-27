@@ -518,7 +518,7 @@ as a possible factor, without numbers.
 
 ## Model 2: thermal cracking (proposal for review; T3)
 
-**Status: written up; checked in Python (`docs/asphalt_checks/thermal_cracking_chain.py`, results below); no code.**
+**Status: written up; checked in Python (`docs/asphalt_checks/thermal_cracking_chain.py`, results below: two inputs fail their data, options listed); no code.**
 
 **Decisions (zack, Nov 27):** (1) daily temperatures: the sim is not about one place, so take a representative
 cold climate and keep it: the NOAA GHCN-Daily record of the default climate's own station, Burlington VT
@@ -641,7 +641,7 @@ as a cross-check in the Python run (ft per 500 ft against our crack count), not 
 |---|---|---|
 | Pavement temperature T(z, hour) | `PavementTemperature` (FHWA-RD-97-103 eqs. 7, 8) | T2, built |
 | Binder log abs(G\*)(z, year) | `BinderAgeing.log_g()` | T2, built |
-| **Daily air minimum, year by year** | NOAA GHCN-Daily for the site (or the LTPP section's weather) | **New input (climate).** The normals T2 uses make Burlington's coldest surface -8.4 C: never cold enough to crack anything (TSRST fracture of the reference mix: -25.9 C). Thermal cracking is set by the extremes (MnROAD: one -39 C winter). Needs a row in the shared quantities table, agreed in the hub |
+| **Daily air minimum, year by year** | NOAA GHCN-Daily for the site (or the LTPP section's weather) | **New input (climate), decided:** Burlington GHCN-Daily 1991-2020. The normals make the coldest surface -8.4 C, against -25.9 C for the unaged reference mix's TSRST fracture. Thermal cracking is set by the extremes (MnROAD: one -39 C winter). Needs a row in the shared quantities table, agreed in the hub |
 | Contraction coefficient: Tg, alpha_g, alpha_l | PG 64-22 granite lab mix "64-22:U1:4:GR": Tg -27.9 C, alpha_g 10.95, alpha_l 33.20 x 10^-6 /C (Mn/DOT Table 6.19, cooling). For the AC-20 binder of the build-up: MnROAD cell 19 core: -15.3 C, 13.26, 38.60 (Table 6.22, one specimen) | New input on the asphalt layer |
 | Unaged creep compliance (creep stiffness 1/D) | 64-22:U1:4:GR, Table 6.5, simple averages: 0 C 3.17 / 1.18 GPa, -12 C 10.24 / 5.55 GPa, -24 C 23.87 / 18.32 GPa at 60 / 500 s | New input on the asphalt layer (a master curve fitted to these six points: the Python check) |
 | Strength sigma_t | Proposed: the TSRST fracture stress of the same mix, 2.82 and 3.02 MPa at -26.8 and -25.0 C, 10 C/h (Table 6.17): measured under restrained cooling, the load the model describes. IDT at 12.5 mm/min for comparison: 4.16 / 5.98 / 6.28 MPa at 0 / -12 / -24 C (Table 6.6) | Replaces the build-up's 2.27 MPa (cell 18 IDT at a slow rate, Li Table 4), which T1's slip length uses: **one owner for sigma_t, agreed in the hub** |
@@ -662,22 +662,55 @@ build-up's binder, aged about 12 years) give alpha and aged creep and strength f
   through.
 - **Distress map:** transverse cracks (ACP 6) counted and measured; severity stays low until widening has a source.
 
-### Checks (the Python run, next step)
+### Checks: the Python run (Nov 27; `docs/asphalt_checks/thermal_cracking_chain.py`, numpy only)
 
-1. **TSRST:** cool the reference mix at 10 C/h, fully restrained (eqs. 1, 2, 4): the stress reaches the measured
-   2.92 MPa near the measured -25.9 C (Table 6.17). This tests alpha, the master curve and the stress recursion
-   together, against data not used to fit them.
-2. Jones's eq. 3 with cell 18's volumetrics against Li and Marasteanu's 1.862 x 10^-5 /C, and against the measured
-   two-slope curve.
-3. Li and Marasteanu Table 4 reproduced: Xc 6.7 / 5.9 / 7.0 m for cells 18 / 21 / 22.
-4. The halving rule with strength scatter gives a mean spacing near 1.5 Xc and a spread to compare with
-   MnROAD's (cell 18 driving lane 15.8 +- 7.35 ft, Li Table 2; their table says ft and Table 5 confirms it).
-5. Ageing: the restrained-cooling fracture temperature warms with T2's log abs(G\*) at 1, 5, 10, 20 years
-   (Burlington, surface and 2 cm): an aged layer cracks at a milder cold (roadmap check "a more aged binder
-   cracks sooner").
-6. Climate: with the normals nothing cracks; with a daily record the first cracks come in the coldest winters,
-   more in a colder site (roadmap check "a colder climate gives more thermal cracks").
-7. TCMODEL's amount for the same run (eqs. 33-40 with kt 1.74) beside our count, to show the difference.
+| # | Check | Result | Verdict |
+|---|---|---|---|
+| 1 | Master curve fitted to Table 6.5's six points: D = D0 + D1 xi^m, log aT quadratic (NCHRP 973 eq. 37 form) | rms 0.04 in log; m 0.49; glassy limit 1/D0 = 27 GPa (Hirsch's ~30 GPa) | Passes |
+| 2 | Relaxation: the Soules / Prony route (the one code would use) against an exact solve from the compliance | Prony fit within 0.1 %; both give the same TSRST stress to 0.1 C | Passes (implementation) |
+| 3 | **TSRST, 10 C/h from +5 C, with the measured two-slope alpha** | **Fracture at -20.7 C (measured -25.9 C); slope 0.39 MPa/C (measured 0.21)**. R 0.5-4 C changes it by under 0.5 C | **Fails by 5 C** |
+| 3b | The same with one constant alpha | 18.6 x 10^-6/C (Li's Jones value): -25.4 C | Passes, but that alpha isn't this mix's measurement |
+| 4 | Jones eq. 3 with cell 18's wear-course volumetrics | The binder term alone is 17.6 x 10^-6; Li's 18.6 would need B_agg 1.2 x 10^-6 linear (too low for rock) | Li's inputs can't be reconstructed |
+| 5 | Li and Marasteanu Table 4 | Xc 6.68 / 5.94 / 7.04 m (theirs 6.7 / 5.9 / 7.0) | Passes |
+| 6 | Halving with strength scatter (CV 6.5 %), stress well over strength | Mean 1.35 Xc, CV 0.21, range 0.9-2.3 Xc | Near Li's 1.5 Xc; **scatter half the field's** (cell 18: CV 0.47) |
+| 7 | **AMAC with T2's ageing, against aged cores** (MnROAD 19, about 12 years: 13.95 / 9.89 GPa at -12 C, 60 / 500 s) | The cores match a Delta log abs(G\*) of 0.25-0.4; T2 gives 0.7-2.0 in the top 4 cm at 12 years, which AMAC turns into 20-26 GPa | **Over-hardens** (different mix and climate, so a loose check, but by a wide margin) |
+| 8 | TSRST fracture temperature as the binder ages (Burlington) | Surface -20.7 / -18.1 / -9.1 / -2.2 / +1.1 C at 0 / 1 / 5 / 10 / 20 years; 2 cm -20.7 / -15.4 / -11.6 / -6.7 C | Right direction, **implausible size** (fracture above 0 C) |
+| 9 | The road, Burlington, 30 winters, default build-up | All 209 cracks per km (32 per 500 ft) in the 2nd winter (1992-93, surface -24.3 C), spacing 4.8 +- 0.9 m; then none new; depth 2-4 cm at first, the first full-depth cracks in 2006-07 | Shape plausible; no progression after the first event |
+| 10 | No ageing | 1 crack per km in 30 winters | Ageing is what cracks the road (roadmap check: passes) |
+| 11 | Monthly normals | Surface never below -8.8 C, yet 205 cracks by 1998-99: ageing alone breaks it | Implausible: a consequence of 7 |
+| 12 | Colder site (Minneapolis) | 217 per km, 3rd winter; 98 full depth in 1995-96 | More and deeper cracks (roadmap check: passes) |
+| 13 | Thicker layer (152 mm) | 105 per km, spacing 9.4 m, none full depth | Wider spacing (roadmap check: passes) |
+| 14 | **MnROAD cell 18 timing** (200 mm, Minneapolis from 1994, our reference mix) | First cracks in **winter 1995-96**, as in the field; spacing 11.6 m (field 4.8 m); none full depth (6 cm of 20) | Timing passes; spacing 2.4x wide (Li's own finding); depth fails |
+| - | TCMODEL's amount beside ours | Not run: crack growth needs the definitions of Delta K, E_HMA and the sublayer rule from Appendix HH (still Wanted) | Deferred |
+
+**What the run says:**
+1. The mechanics chain is sound: the fitted master curve, the Soules recursion, Li's spacing and the halving
+   agree with their sources, and the cross-topic trends come out the right way (ageing, colder, thicker).
+2. **Two inputs fail their data.**
+   - **Contraction coefficient:** the measured alpha_l (33 x 10^-6) with the measured creep compliance gives
+     twice the measured TSRST stress rate. Either the dilatometric alpha overstates the effective contraction
+     in a restrained specimen, or the IDT creep stiffness overstates the stiffness in TSRST. The data in hand
+     can't tell which. A constant 18.6 x 10^-6 passes but isn't this mix's measurement.
+   - **AMAC carried to low temperature:** a shift of c x Delta log abs(G\*)(64 C) up to 5 decades pushes the
+     aged surface to its glassy limit, so it stops relaxing. Aged MnROAD cores say the real hardening at -12 C
+     is a third of that or less. NCHRP 973 fitted AMAC at 4-40 C and warned about the cold end (p. 82, 105).
+     This is the source of checks 8, 9 (the 17-21 MPa far-field stresses) and 11.
+3. **The halving rule saturates in one event:** once the stress is well over the strength, every segment
+   splits down to Xc-2Xc that night, and nothing changes afterwards. This matches MnROAD's "most cracks in one
+   winter", but not the gradual increase LTPP sections show, and the spread is half the field's.
+4. **Depth:** cracks stop where the stress drops below the strength (warmer, less aged material below). They
+   rarely reach full depth; MnROAD's did.
+
+**Options for zack (no code until chosen):**
+- **Contraction:** (a) keep the measured alpha and accept a TSRST miss of 5 C; (b) take the alpha that
+  reproduces TSRST (about 18 x 10^-6) as a calibration of alpha x E against the restrained test, labelled as
+  one fitted number; (c) look for a mix with both measurements consistent.
+- **Ageing at low temperature:** (a) keep AMAC but bound it by the aged-core data, i.e. a smaller c at low
+  temperature, one fitted number against MnROAD 19 (a different mix); (b) look for a source that relates binder
+  ageing to the mix's low-temperature creep directly (e.g. a BBR / IDT study on aged cores). Wanted.
+- **Progression and spread:** a sourced reason for cracks to keep coming after the first winter is needed:
+  strength loss with age (a Gap), thermal fatigue (the Paris law TCMODEL uses, Appendix HH), or more
+  along-road variability than specimen scatter (no source).
 
 ### Not in it, and gaps
 
