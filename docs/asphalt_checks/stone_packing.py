@@ -118,6 +118,10 @@ class Stone:
         self.r = np.max(np.linalg.norm(verts, axis=1))
         e = {tuple(sorted((f[a], f[(a + 1) % 3]))) for f in self.faces for a in range(3)}
         self.edges = list(e)
+        F = np.array(self.faces)
+        self.n0 = np.cross(verts[F[:, 1]] - verts[F[:, 0]], verts[F[:, 2]] - verts[F[:, 0]])   # local, once
+        E = np.array(self.edges)
+        self.e0 = verts[E[:, 1]] - verts[E[:, 0]]
 
 
 def sieve_scale(verts, size):
@@ -139,18 +143,18 @@ def random_rotation(rnd):
 # ---------------------------------------------------------------- overlap (separating axes)
 
 def placed(st, rot, pos):
-    v = st.v0 @ rot.T + pos
-    n = np.array([np.cross(v[b] - v[a], v[c] - v[a]) for a, b, c in st.faces])
-    e = np.array([v[j] - v[i] for i, j in st.edges])
-    return v, n, e
+    """World vertices, face normals and edge vectors: the local ones turned (no cross products per try)."""
+    return st.v0 @ rot.T + pos, st.n0 @ rot.T, st.e0 @ rot.T
 
 
 def overlap(A, B):
     va, na, ea = A
     vb, nb, eb = B
-    cross = np.cross(ea[:, None, :], eb[None, :, :]).reshape(-1, 3)
+    a, b = ea[:, None, :], eb[None, :, :]
+    cross = np.stack([a[..., 1] * b[..., 2] - a[..., 2] * b[..., 1], a[..., 2] * b[..., 0] - a[..., 0] * b[..., 2],
+                      a[..., 0] * b[..., 1] - a[..., 1] * b[..., 0]], axis=-1).reshape(-1, 3)
     axes = np.vstack([na, nb, cross])
-    axes = axes[np.linalg.norm(axes, axis=1) > 1e-9]
+    axes = axes[np.einsum("ij,ij->i", axes, axes) > 1e-18]
     pa, pb = va @ axes.T, vb @ axes.T
     sep = (pa.max(axis=0) < pb.min(axis=0)) | (pb.max(axis=0) < pa.min(axis=0))
     return not sep.any()
@@ -443,6 +447,10 @@ if __name__ == "__main__":
         S = np.maximum(H, -hm)
         print("  mastic %.2f mm below the roller: MPD %.2f mm" % (hm, mpd(S)))
     if out:
+        os.makedirs(out, exist_ok=True)
+        np.savez_compressed(os.path.join(out, "packing.npz"), H=H,
+                            verts=np.array([g[0] for g in geo], dtype=object), cls=np.array([st.cls for st, _, _ in stones]),
+                            vol=np.array([st.vol for st, _, _ in stones]), tile=TILE, depth=DEPTH, allow_pickle=True)
         from PIL import Image
         os.makedirs(out, exist_ok=True)
         hm = 1.0
