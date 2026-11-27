@@ -153,8 +153,8 @@ flowchart LR
 Steps (one commit each, each with its own check):
 - [x] Model written up for review (ASPHALT_SCIENCE.md, Model 1)
 - [x] Whole chain checked in Python (`docs/asphalt_checks/binder_ageing_chain.py`)
-- [ ] 1. Climate resource with the NOAA normals and latitude
-- [ ] 2. Pavement temperature: reproduces the Python chain's hours above 20 C
+- [x] 1. Climate resource with the NOAA normals and latitude (`SiteClimate`, `assets/asphalt/climates/`; check "climate holds the NOAA normals")
+- [x] 2. Pavement temperature: reproduces the Python chain's hours above 20 C (`PavementTemperature`; Burlington 4,399 h, Concord 5,600 h, -8.4 to 50.0 C and 4.9 to 53.8 C at the surface; checks "LTPP pavement temperature equations", "pavement temperature matches the chain")
 - [ ] 3. Surface kinetics and depth: reproduces the chain table (Burlington surface 0.96 / 1.75 / 2.47 at 1 / 5 / 10 years)
 - [ ] 4. Binder grade on the build-up; inputs from HPG (PG 64: 0.72, 0.832)
 - [ ] 5. Section draws the stiffness gradient
@@ -235,8 +235,8 @@ appear only on the distress map's second axis.
 | Subgrade CBR; Mr; k | -, Pa, Pa/m | Input; T1 | T1, T4 | `PavementBuildup.subgrade_mr()`, `subgrade_k()` | Built |
 | Binder high grade HPG | C | Input (asphalt layer) | T2 | `PavementLayer` | T2 step 4 |
 | Road layout: lanes, wheel paths, markings | m | Input | T4, T0 | `AsphaltSim` exports | Built |
-| Monthly air high and low, latitude | C, degrees | Input (climate) | T2, T3 | Climate resource | T2 step 1 |
-| Pavement temperature T(depth, hour) | C | T2 | T2, T3, T4 | `pavement_temperature.gd` | T2 step 2 |
+| Monthly air high and low, latitude | C, degrees | Input (climate) | T2, T3 | `SiteClimate` (stored in F as NOAA publishes) | Built |
+| Pavement temperature T(depth, hour) | C | T2 | T2, T3, T4 | `PavementTemperature` | Built |
 | Binder stiffness log abs(G*)(depth, year) | log kPa (64 C, 10 rad/s) | T2 | T3, T4 (through AMAC), T0 section | `binder_ageing.gd` | T2 step 3 |
 | Surface ageing p | - (0 to 1) | T2 | T2 albedo | `binder_ageing.gd` | T2 step 3 |
 | Albedo | - (0 to 1) | T2 | T0 plan | `binder_ageing.gd` | T2 step 6 |
@@ -277,6 +277,20 @@ as soon as both of its topics exist.
 | LTPP section: build-up, climate, traffic, yearly surveys | V | InfoPave | Blocked |
 | Mix thermal contraction coefficient | T3 | Gap | Not yet |
 
+## Threads and branches
+
+Threads are grouped under the **Asphalt simulator** thread, like the cart's. Each is named after its topic, and so
+is its git branch:
+
+| Thread | Branch | Status |
+|---|---|---|
+| Asphalt simulator (the hub: roadmap, planning, reviews) | `claude/focused-hamilton-r9x9hq` (made before this rule) | Open |
+| Asphalt T2: binder ageing | `asphalt/t2-binder-ageing` | Open |
+| Asphalt V: LTPP section check | `asphalt/v-ltpp-section` | Waiting for InfoPave |
+
+Later topics get `Asphalt T3: thermal cracking` on `asphalt/t3-thermal-cracking`, and so on. A topic's branch is
+merged before the next topic's thread starts.
+
 ## How we work
 
 - **One coding thread at a time** on the simulator, the lab and the tests, in topic order: each topic uses what the
@@ -296,4 +310,5 @@ as soon as both of its topics exist.
 | Nov 26 2026 | T0 | LTPP survey, distress map, cross-section | see DEV_NOTES |
 | Nov 27 2026 | T0, T1 | Two-lane road, paper style, editable build-up, sim split, placeholders out of the lab | see DEV_NOTES |
 | Nov 27 2026 | T2 | Ageing model written up; chain checked in Python | 095bfbf |
-| Nov 27 2026 | all | This roadmap | this commit |
+| Nov 27 2026 | all | This roadmap | 4621cd9 |
+| Nov 27 2026 | T2 | Steps 1-2: climate table, pavement temperature | this commit |

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SiteClimate" format=3]
+
+[ext_resource type="Script" path="res://scripts/asphalt/site_climate.gd" id="1_clim"]
+
+[resource]
+script = ExtResource("1_clim")
+title = "Concord, California"
+source = "NOAA NCEI 1991-2020 monthly normals, station USW00023254 (Concord Buchanan Fld, CA), MLY-TMAX-NORMAL and MLY-TMIN-NORMAL, deg F; latitude from the same record. The San Francisco Bay Area climate of Pomerantz et al. 2000's albedo measurements, used to calibrate the albedo."
+latitude = 37.9917
+air_high_f = PackedFloat64Array(57.6, 62.1, 66.7, 71.2, 77.5, 84.2, 88.0, 87.9, 85.3, 78.1, 66.1, 58.2)
+air_low_f = PackedFloat64Array(41.2, 43.8, 46.6, 49.1, 53.0, 57.1, 58.7, 59.4, 57.8, 52.6, 45.2, 40.7)

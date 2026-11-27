@@ -424,6 +424,8 @@ func _run() -> void:
 	_check("distress map view shows the survey", map.visible and not section.visible and not plan.get_parent().visible
 		and map.survey != null and not map.survey.areas.is_empty(), "%d areas, %d crack lines" % [map.survey.areas.size(), map.survey.lines.size()])
 
+	_binder_ageing_checks()
+
 	print("\n%s: %d failure(s)" % ["FAIL" if failures else "PASS", failures])
 	quit(1 if failures else 0)
 
@@ -473,3 +475,39 @@ func _sim_at(t: float) -> AsphaltSim:
 	var s := _sim()
 	s.advance_to(t)
 	return s
+
+
+## T2 binder ageing (docs/ASPHALT_ROADMAP.md). Targets from docs/asphalt_checks/binder_ageing_chain.py, the Python
+## check of the whole chain against the NOAA normals.
+func _binder_ageing_checks() -> void:
+	var btv: SiteClimate = load("res://assets/asphalt/climates/burlington_vt.tres")
+	var ccr: SiteClimate = load("res://assets/asphalt/climates/concord_ca.tres")
+
+	# Step 1: the climate table. July is NOAA's 82.4 F high; Jan 1 lies between the December and January normals.
+	_check("climate holds the NOAA normals", btv.air_high_f.size() == 12 and btv.air_low_f.size() == 12
+		and is_equal_approx(btv.air_high(15.2 + 30.4 * 6), SiteClimate.f_to_c(82.4))
+		and absf(btv.air_low(0) - SiteClimate.f_to_c(lerpf(21.3, 12.9, (365 - 349.6) / 30.4))) < 1e-6,
+		"Burlington July high %.1f C, Jan 1 low %.1f C" % [btv.air_high(197.6), btv.air_low(0)])
+
+	# Step 2: pavement temperature. The equations by hand: Tair 30 C, lat 40, surface: 54.32 + 23.4 - 4 - 15.14 log10 25.
+	var by_hand := 54.32 + 0.78 * 30.0 - 0.0025 * 1600.0 - 15.14 * 1.39794
+	var by_hand_low := -1.56 + 0.72 * -10.0 - 0.004 * 1600.0 + 6.26 * 1.39794
+	_check("LTPP pavement temperature equations", absf(PavementTemperature.high(30, 40, 0) - by_hand) < 1e-3
+		and absf(PavementTemperature.low(-10, 40, 0) - by_hand_low) < 1e-3
+		and is_equal_approx(PavementTemperature.day_shape(6), 0.0) and is_equal_approx(PavementTemperature.day_shape(15), 1.0),
+		"high %.2f C, low %.2f C" % [by_hand, by_hand_low])
+	var rows := []
+	var ok := true
+	for site: Array in [[btv, 4399, 50.04, -8.36, 28.173, -6.701], [ccr, 5600, 53.81, 4.90, 40.768, 4.999]]:
+		var c: SiteClimate = site[0]
+		var temps := PavementTemperature.year(c, 0.0)
+		var warm := 0
+		for t in temps:
+			if t >= 20.0:
+				warm += 1
+		var hot := Array(temps).max() as float
+		var cold := Array(temps).min() as float
+		ok = ok and warm == site[1] and absf(hot - site[2]) < 0.01 and absf(cold - site[3]) < 0.01 \
+			and absf(temps[15] - site[4]) < 1e-3 and absf(temps[6] - site[5]) < 1e-3
+		rows.append("%s %d h >= 20 C, %.1f to %.1f C" % [c.title.get_slice(",", 0), warm, cold, hot])
+	_check("pavement temperature matches the chain", ok, "; ".join(rows))

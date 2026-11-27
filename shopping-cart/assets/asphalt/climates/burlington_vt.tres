@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SiteClimate" format=3]
+
+[ext_resource type="Script" path="res://scripts/asphalt/site_climate.gd" id="1_clim"]
+
+[resource]
+script = ExtResource("1_clim")
+title = "Burlington, Vermont"
+source = "NOAA NCEI 1991-2020 monthly normals, station USW00014742 (Burlington Intl AP, VT), MLY-TMAX-NORMAL and MLY-TMIN-NORMAL, deg F; latitude from the same record. The default site: near LTPP candidate section 50-1002 (US-7, Vermont)."
+latitude = 44.4683
+air_high_f = PackedFloat64Array(28.9, 31.5, 40.9, 55.3, 69.0, 77.6, 82.4, 80.7, 72.6, 58.9, 46.4, 35.0)
+air_low_f = PackedFloat64Array(12.9, 14.3, 23.6, 35.9, 47.8, 57.3, 62.4, 60.7, 52.9, 41.8, 32.1, 21.3)

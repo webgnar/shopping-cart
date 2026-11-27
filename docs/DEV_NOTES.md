@@ -1993,3 +1993,12 @@ T6 repairs, V the LTPP section check, G back into the game), a diagram of what p
 sources with their status, a shared quantities table (one name, unit and owner per quantity), the checks between
 topics, the data to collect and how threads work (one coding thread at a time, side threads research only).
 Rutting moved from "consequences" to the loads topic in the science register's scope.
+
+## Asphalt T2 steps 1-2: site climate and pavement temperature (Nov 27 2026)
+
+`SiteClimate` (scripts/asphalt/site_climate.gd): 12 monthly normals of the daily high and low air temperature plus
+the latitude, stored in F exactly as NOAA publishes them; presets Burlington VT (default site) and Concord CA (the
+albedo calibration) in assets/asphalt/climates/. `PavementTemperature`: FHWA-RD-97-103 eqs. 7 and 8 at the surface
+and the 06:00 / 15:00 half-cosine day. Checks reproduce docs/asphalt_checks/binder_ageing_chain.py exactly
+(Burlington 4,399 h a year at or above 20 C, Concord 5,600). Nothing is wired into the sim yet.
+Gotcha: a new class_name isn't known to a `-s` test until `godot --headless --import` has run once.
