@@ -238,16 +238,16 @@ func _run() -> void:
 	pt.advance_to(8.0)
 	var in_path := 0.0
 	var off_path := 0.0
-	for x in [1.95, 3.75, 6.25, 8.05]:
+	for x in pt.wheel_paths:
 		in_path += pt.paint_left(Vector2(x, 5.03)) / 4.0
-	for x in [1.0, 2.85, 7.15, 9.0]:
+	for x in [3.18, 4.62, 5.38, 6.82]:   # between the wheel paths of each lane, and either side of the centreline
 		off_path += pt.paint_left(Vector2(x, 5.03)) / 4.0
 	_check("paint wears in the wheel paths", in_path < off_path - 0.2, "%.2f left in the wheel paths, %.2f between" % [in_path, off_path])
 	pt.do_action(A.REPAINT)
-	_check("repaint makes the lines fresh", pt.paint_left(Vector2(1.95, 5.03)) == 1.0, "%.2f" % pt.paint_left(Vector2(1.95, 5.03)))
+	_check("repaint makes the lines fresh", pt.paint_left(Vector2(pt.wheel_paths[0], 5.03)) == 1.0, "%.2f" % pt.paint_left(Vector2(pt.wheel_paths[0], 5.03)))
 	pt.advance_to(12.0)
 	pt.do_action(A.OVERLAY)
-	_check("overlay repaints the lines", pt.paint_left(Vector2(1.95, 5.03)) == 1.0, "%.2f" % pt.paint_left(Vector2(1.95, 5.03)))
+	_check("overlay repaints the lines", pt.paint_left(Vector2(pt.wheel_paths[0], 5.03)) == 1.0, "%.2f" % pt.paint_left(Vector2(pt.wheel_paths[0], 5.03)))
 
 	# Crack paths and junctions (from the material, not a fixed recipe).
 	var mx := _sim()

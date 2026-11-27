@@ -31,7 +31,8 @@ references. No big-bang refactor.
 
 | What | Now | Status | Source / next |
 |---|---|---|---|
-| Wheel paths | 4 paths at x 1.95, 3.75, 6.25, 8.05 m; Gaussian load, e-fold 0.35 m | Placeholder | LTPP fig. 136: 0.76 m bands centred 0.76 m and 2.9 m from the edge stripe (highway, 3.66 m lane). That's a survey band, not a load spread: lateral wander comes from MEPDG. Parking lots need their own (car traffic in aisles). |
+| Road layout | Two-lane road: 3.65 m (12 ft) lanes, centreline joint at 5 m, 1.35 m gravel shoulders; markings: white edge lines, broken yellow centreline (10 ft dash, 30 ft gap), 4 in wide | Sourced | MUTCD (line widths, broken-line pattern); 12 ft lane as LTPP fig. 136 assumes |
+| Wheel paths | 2.11, 4.25, 5.75, 7.89 m: 0.76 m and 2.9 m in from each edge stripe; load still a Gaussian, e-fold 0.35 m | Sourced (positions) / placeholder (load spread) | LTPP fig. 136. Lateral wander of the load comes from MEPDG |
 | Edge zone | fretting up to 0.6 m | Sourced | LTPP ACP 3: edge cracking within 0.6 m of the edge, unpaved shoulders only |
 | Build-up | `PavementBuildup` resource, layers top to bottom plus subgrade CBR; baseline `assets/asphalt/buildups/c620_table3b_cbr9.tres` | Sourced | c620 Table 3B: 3.0 in asphalt on 4.0 in untreated aggregate base, good subgrade CBR 9 |
 | Asphalt thickness | 0.0762 m (sum of the bound asphalt layers) | Sourced | c620 Table 3B |
@@ -43,7 +44,7 @@ references. No big-bang refactor.
 | Transverse spacing | 2.0 -> 0.6 slip lengths (5.4 -> 1.6 m) | Derived | Li & Marasteanu: 1.5 Xc (4.0 m). Their MnROAD cracks were closer than predicted. The aged 0.6 has no reference |
 | Block size | 0.7 x 1.0 slip lengths (1.9 x 2.7 m, 5.1 m2) | Derived | LTPP ACP 2: blocks 0.1-10 m2, occurrence at least 15 m long. Consistent |
 | Crocodile cell | 0.7 x 1.0 Westergaard radius (0.12 x 0.17 m; was 0.15 x 0.21) | Derived | LTPP ACP 1: pieces usually under 0.3 m on the longest side. Consistent. Westergaard is a slab-on-springs model, standing in for layered elastic analysis |
-| `structure` slider, `weak` noise | still in use | Placeholder | To be replaced by the build-up (thickness, compaction) and a subgrade CBR field across the plan |
+| `structure`, `traffic`, `climate`, `drainage`, `bond`, `ponding` | inside the sim at 1.0 (`bond` 0.7); no longer in the lab UI | Placeholder | Each goes when its model arrives: thickness and compaction (build-up), ESALs (traffic; c620 Table 5 uses them), temperature drop and freeze-thaw cycles (Li, Chen), water |
 
 ### Ageing, fatigue, water
 

@@ -1,6 +1,6 @@
 extends Control
-## The 2D asphalt lab (scenes/asphalt/asphalt_lab.tscn): scrub or play the years, try repairs, change the
-## conditions, and watch the colour and height maps of the road section. Everything here is UI wiring; the
+## The 2D asphalt lab (scenes/asphalt/asphalt_lab.tscn): scrub or play the years, try repairs, see the pavement
+## section it is built on, and watch the colour and height maps of the road section. Everything here is UI wiring; the
 ## simulation is AsphaltSim and the drawing is AsphaltCanvas.
 
 @export var sim: AsphaltSim
@@ -23,7 +23,6 @@ var playing := false
 var _dragging := false
 var _play_t := 0.0     ## years: where Play has got to (the sim catches up a step at a time)
 var _epoch := 0.0      ## road year the timeline starts at ("Start timeline here"); it runs max_years on from it
-var _replay_at := -1   ## msec: replay once the condition sliders settle
 var _relief_at := -1   ## msec: redraw the relief view (it takes a moment, so not every frame)
 
 @onready var _year: Label = %YearLabel
@@ -34,6 +33,7 @@ var _relief_at := -1   ## msec: redraw the relief view (it takes a moment, so no
 @onready var _start_here: Button = %StartHere
 @onready var _repairs: Array[CheckBox] = [%Repair0, %Repair1, %Repair2, %Repair3, %Repair4, %Repair5]   ## by AsphaltSim.Action
 @onready var _seed: SpinBox = %Seed
+@onready var _section_info: Label = %SectionInfo
 
 
 func _ready() -> void:
@@ -41,18 +41,13 @@ func _ready() -> void:
 	for r in _repairs:
 		r.set_meta("name", r.text)
 	_seed.set_value_no_signal(sim.seed)
-	for slider: Range in get_tree().get_nodes_in_group("asphalt_condition"):
-		slider.set_value_no_signal(sim.get(slider.get_meta("property")))
-		_label_condition(slider)
+	_show_section()
 	sim.changed.connect(_update_ui)
 	sim.changed.connect(_queue_relief)
 	_update_ui()
 
 
 func _process(delta: float) -> void:
-	if _replay_at >= 0 and Time.get_ticks_msec() >= _replay_at:
-		_replay_at = -1
-		_replay()
 	if _relief_at >= 0 and Time.get_ticks_msec() >= _relief_at:
 		_relief_at = -1
 		if relief_view.visible:
@@ -100,10 +95,16 @@ func _replay() -> void:
 	sim.advance_to(t)
 
 
-func _label_condition(slider: Range) -> void:
-	var label := slider.get_parent().get_node_or_null("Value") as Label
-	if label:
-		label.text = "%.2f" % slider.value
+## The pavement section the road is built on, layer by layer with its sources (read-only: only vetted inputs).
+func _show_section() -> void:
+	var b := sim.pavement()
+	var lines := PackedStringArray([b.title])
+	for l in b.layers:
+		lines.append("  %s: %.0f mm (%.1f in)" % [l.title, l.thickness * 1000.0, l.thickness / 0.0254])
+	lines.append("  Subgrade: CBR %.0f" % b.subgrade_cbr)
+	lines.append("Slip length %.2f m (Li & Marasteanu 2005), wheel spread %.2f m (Westergaard)." % [sim.slip_length(), sim.wheel_spread()])
+	lines.append("Sources: " + b.source)
+	_section_info.text = "\n".join(lines)
 
 
 func _on_timeline_value_changed(value: float) -> void:
@@ -145,13 +146,6 @@ func _on_start_here_toggled(on: bool) -> void:
 ## Ticked: that repair is done at the slider's year. Unticked: it never happened.
 func _on_repair_toggled(on: bool, action: int) -> void:
 	sim.set_repair(action, on, sim.time)
-
-
-func _on_condition_changed(value: float, property: String) -> void:
-	sim.set(property, value)
-	for slider: Range in get_tree().get_nodes_in_group("asphalt_condition"):
-		_label_condition(slider)
-	_replay_at = Time.get_ticks_msec() + 250
 
 
 func _on_seed_changed(value: float) -> void:

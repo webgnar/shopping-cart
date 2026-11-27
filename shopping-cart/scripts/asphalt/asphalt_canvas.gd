@@ -378,6 +378,7 @@ func _draw_paint(restriped: bool) -> void:
 			var left := sim.paint_left(mid)
 			if left <= 0.02:
 				continue
+			var tint := sim.paint_colors[k / 2] if k / 2 < sim.paint_colors.size() else paint_color
 			var quad := PackedVector2Array([(p0 + side) * px_per_m, (p1 + side) * px_per_m, (p1 - side) * px_per_m, (p0 - side) * px_per_m])
 			if hm:
 				draw_primitive(quad, PackedColorArray([_hc(sim.paint_thickness * left)]), PackedVector2Array())
@@ -385,9 +386,10 @@ func _draw_paint(restriped: bool) -> void:
 				var uvs := PackedVector2Array()
 				for q in quad:
 					uvs.append(q / (paint_texture_m * px_per_m))
-				draw_primitive(quad, PackedColorArray([Color(Color.WHITE.lerp(aged_asphalt, paint_dirt), left)]), uvs, paint_texture)
+				var white := Color.WHITE if k / 2 >= sim.paint_colors.size() else tint
+				draw_primitive(quad, PackedColorArray([Color(white.lerp(aged_asphalt, paint_dirt), left)]), uvs, paint_texture)
 			else:
-				draw_primitive(quad, PackedColorArray([Color(paint_color.lerp(aged_asphalt, paint_dirt), left)]), PackedVector2Array())
+				draw_primitive(quad, PackedColorArray([Color(tint.lerp(aged_asphalt, paint_dirt), left)]), PackedVector2Array())
 
 
 func _under_older_repair(p: Vector2) -> bool:

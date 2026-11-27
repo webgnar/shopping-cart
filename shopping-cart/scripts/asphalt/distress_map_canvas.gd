@@ -14,6 +14,7 @@ extends Control
 
 const FONT := 9
 const TABLE_W := 262.0                          ## px for the data sheet table on the right
+const LEGEND_ROWS := 7                          ## rows the symbol legend takes at the foot of the table column
 const LABEL_MIN := 0.6                          ## m: shorter cracks are drawn and counted but not labelled
 const AXIS := Vector2(54.0, 18.0)               ## px left of / above each strip for its axes
 
@@ -52,16 +53,22 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	draw_string(font, Vector2(12.0, 18.0), "DISTRESS MAP  -  PAVEMENTS WITH ASPHALT CONCRETE SURFACES", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, ink)
 	draw_string(font, Vector2(12.6, 18.0), "DISTRESS MAP", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, ink)
-	draw_string(font, Vector2(12.0, 31.0), "LTPP DIM appendix A (figs. 137, 138).  Lab section, seed %d, %.0f m.  Survey at year %.1f.  %s." % [
-		sim.seed, sim.size.y, survey.year, sim.pavement().title], HORIZONTAL_ALIGNMENT_LEFT, size.x - TABLE_W - 24.0, FONT, ink)
+	var b := sim.pavement()
+	var build := ""
+	for l in b.layers:
+		build += "%.0f mm %s / " % [l.thickness * 1000.0, "asphalt" if l.kind == PavementLayer.Kind.ASPHALT else "base"]
+	draw_string(font, Vector2(12.0, 31.0), "LTPP DIM appendix A (figs. 137, 138).  Lab section, seed %d, %.0f m long.  Survey at year %.1f.  %ssubgrade CBR %.0f." % [
+		sim.seed, sim.size.y, survey.year, build, b.subgrade_cbr], HORIZONTAL_ALIGNMENT_LEFT, size.x - TABLE_W - 24.0, FONT, ink)
+	draw_string(font, Vector2(12.0, 43.0), "Units: metres on the bottom and left axes (LTPP measures in SI); feet on the top and right, as LTPP sheets print them. Grid 0.5 m.",
+		HORIZONTAL_ALIGNMENT_LEFT, size.x - TABLE_W - 24.0, FONT - 1, ink)
 	var map_w := size.x - TABLE_W - 24.0
-	var strip_h := (size.y - 44.0 - 2.0 * (AXIS.y + 34.0)) * 0.5
+	var strip_h := (size.y - 56.0 - 2.0 * (AXIS.y + 44.0)) * 0.5
 	var scale := minf((map_w - AXIS.x - 30.0) / sim.size.y, strip_h / lane_width())
-	var y0 := 44.0
+	var y0 := 56.0
 	for lane in [1, 0]:
 		var origin := Vector2(12.0 + AXIS.x, y0 + AXIS.y + lane_width() * scale)
 		_strip(lane, origin, scale)
-		y0 += AXIS.y + lane_width() * scale + 34.0
+		y0 += AXIS.y + lane_width() * scale + 44.0
 	_sheet(Rect2(size.x - TABLE_W - 8.0, 40.0, TABLE_W, size.y - 48.0))
 
 
@@ -98,6 +105,10 @@ func _strip(lane: int, origin: Vector2, s: float) -> void:
 	while ft * 0.3048 <= W + 0.01:
 		draw_string(font, P.call(Vector2(L, ft * 0.3048)) + Vector2(4.0, 3.0), "%d'" % ft, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT - 1, ink)
 		ft += 5
+	draw_string(font, P.call(Vector2(L * 0.5, 0.0)) + Vector2(-60.0, 22.0), "distance along the lane (m)", HORIZONTAL_ALIGNMENT_LEFT, -1, FONT - 1, ink)
+	draw_string(font, P.call(Vector2(0.0, W)) + Vector2(-50.0, -5.0), "offset (m)", HORIZONTAL_ALIGNMENT_LEFT, -1, FONT - 1, ink)
+	draw_string(font, P.call(Vector2(L * 0.5, W)) + Vector2(-34.0, -5.0), "(ft)", HORIZONTAL_ALIGNMENT_LEFT, -1, FONT - 1, ink)
+	draw_string(font, P.call(Vector2(L, W)) + Vector2(4.0, -6.0), "(ft)", HORIZONTAL_ALIGNMENT_LEFT, -1, FONT - 1, ink)
 	# Wheel paths: 0.76 m bands at the sim's wheel paths (fig. 136: drawn where the traffic actually runs).
 	for wp in sim.wheel_paths:
 		if survey.lane_of(wp) != lane:
@@ -261,7 +272,7 @@ func _strip(lane: int, origin: Vector2, s: float) -> void:
 		_label(pl[0], pl[1], true)
 	# Under the strip: the lane, its direction of travel and the comments.
 	var font2 := ThemeDB.fallback_font
-	var cy := origin.y + 24.0
+	var cy := origin.y + 34.0
 	var note := "Lane %d, traffic left to right.  " % (lane + 1)
 	if small > 0:
 		note += "%d hole%s under the 150 mm minimum drawn, not counted.  " % [small, "" if small == 1 else "s"]
@@ -355,9 +366,77 @@ func _sheet(r: Rect2) -> void:
 	y += 12.0
 	draw_string(font, Vector2(x0, y), "16 Other", HORIZONTAL_ALIGNMENT_LEFT, -1, FONT - 1, ink)
 	y += 10.0
+	var legend_top := r.end.y - LEGEND_ROWS * 14.0 - 22.0
 	for lane in 2:
 		for item in survey.totals_for(lane)["16"]:
-			if y > r.end.y - 6.0:
+			if y > legend_top - 4.0:
 				break
 			draw_string(font, Vector2(x0 + 6.0, y), "Lane %d: %s" % [lane + 1, item], HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 14.0, FONT - 2, ink)
 			y += 9.5
+	_legend(Rect2(r.position.x, legend_top, r.size.x, r.end.y - legend_top))
+
+
+## The symbols used on the map (LTPP fig. 137), each drawn as it appears on the map.
+func _legend(r: Rect2) -> void:
+	var font := ThemeDB.fallback_font
+	draw_line(r.position, Vector2(r.end.x, r.position.y), ink, 0.5)
+	var x0 := r.position.x + 6.0
+	var y := r.position.y + 13.0
+	draw_string(font, Vector2(x0, y), "MAP SYMBOLS (LTPP fig. 137)", HORIZONTAL_ALIGNMENT_LEFT, -1, FONT, ink)
+	y += 6.0
+	var items := [["1", "1 Fatigue (m2)"], ["2", "2 Block (m2)"], ["3", "3 Edge (m)"], ["4", "4a / 4b Longitudinal (m)"],
+		["6", "6 Transverse (no., m)"], ["s", "s Sealed crack"], ["7", "7 Patch (no., m2)"], ["8", "8 Pothole (no., m2)"],
+		["16", "16 Other"], ["wp", "Wheel path, 0.76 m"]]
+	var col := 0
+	for k in items.size():
+		var box := Rect2(x0 + col * (r.size.x * 0.5), y + (k / 2) * 14.0, 20.0, 10.0)
+		col = 1 - col
+		_symbol(box, items[k][0])
+		draw_string(font, box.position + Vector2(24.0, 8.5), items[k][1], HORIZONTAL_ALIGNMENT_LEFT, r.size.x * 0.5 - 30.0, FONT - 2, ink)
+	y += (items.size() + 1) / 2 * 14.0 + 4.0
+	draw_string(font, Vector2(x0, y), "Circled code: number, a/b, severity L/M/H (4aM).", HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 10.0, FONT - 2, ink)
+	draw_string(font, Vector2(x0, y + 10.0), "Not drawn (LTPP): 9 rutting, 14 dropoff.", HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 10.0, FONT - 2, ink)
+
+
+func _symbol(b: Rect2, kind: String) -> void:
+	var c := b.get_center()
+	match kind:
+		"1":
+			draw_rect(b, ink, false, 1.0)
+			for dx in [-5.0, 5.0]:
+				draw_line(c + Vector2(dx - 2.0, -2.0), c + Vector2(dx + 2.0, 2.0), ink, 1.0)
+				draw_line(c + Vector2(dx - 2.0, 2.0), c + Vector2(dx + 2.0, -2.0), ink, 1.0)
+		"2":
+			draw_rect(b, ink, false, 1.0)
+			draw_line(Vector2(c.x, b.position.y), Vector2(c.x, b.end.y), ink, 1.0)
+			draw_line(Vector2(b.position.x, c.y), Vector2(b.end.x, c.y), ink, 1.0)
+		"3":
+			var h := PackedVector2Array()
+			for x in range(int(b.position.x), int(b.end.x), 3):
+				h.append(Vector2(x, b.end.y))
+				h.append(Vector2(minf(x + b.size.y, b.end.x), b.position.y))
+			draw_multiline(h, ink, 1.0)
+			draw_rect(b, ink, false, 1.0)
+		"4":
+			draw_polyline(PackedVector2Array([Vector2(c.x - 1.0, b.position.y), Vector2(c.x + 2.0, c.y), Vector2(c.x - 1.0, b.end.y)]), ink, 1.25)
+		"6":
+			draw_polyline(PackedVector2Array([Vector2(b.position.x, c.y + 1.0), Vector2(c.x, c.y - 2.0), Vector2(b.end.x, c.y + 1.0)]), ink, 1.25)
+		"s":
+			draw_line(Vector2(b.position.x, c.y + 2.0), Vector2(b.end.x, c.y + 2.0), ink, 1.25)
+			draw_string(ThemeDB.fallback_font, Vector2(c.x - 3.0, c.y), "s", HORIZONTAL_ALIGNMENT_LEFT, -1, FONT - 1, ink)
+		"7":
+			draw_rect(b, ink)
+		"8":
+			var ring := PackedVector2Array()
+			for k in 17:
+				ring.append(c + Vector2(cos(TAU * k / 16.0) * 9.0, sin(TAU * k / 16.0) * 4.5))
+			draw_polyline(ring, ink, 1.0)
+			draw_line(c - Vector2(9.0, 0.0), c + Vector2(9.0, 0.0), ink, 0.75)
+			draw_line(c - Vector2(0.0, 4.5), c + Vector2(0.0, 4.5), ink, 0.75)
+		"16":
+			for x in range(int(b.position.x), int(b.end.x), 4):
+				draw_line(Vector2(x, b.position.y), Vector2(x + 2, b.position.y), ink, 1.0)
+				draw_line(Vector2(x, b.end.y), Vector2(x + 2, b.end.y), ink, 1.0)
+		"wp":
+			draw_line(Vector2(b.position.x, b.position.y + 1.0), Vector2(b.end.x, b.position.y + 1.0), ink, 1.0)
+			draw_line(Vector2(b.position.x, b.end.y - 1.0), Vector2(b.end.x, b.end.y - 1.0), ink, 1.0)

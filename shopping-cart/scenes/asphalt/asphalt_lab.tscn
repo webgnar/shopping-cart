@@ -16,6 +16,7 @@
 [ext_resource type="Resource" path="res://assets/asphalt/buildups/c620_table3b_cbr9.tres" id="40_buildup"]
 [ext_resource type="Script" path="res://scripts/asphalt/cross_section_canvas.gd" id="41_section"]
 [ext_resource type="Script" path="res://scripts/asphalt/distress_map_canvas.gd" id="42_map"]
+[ext_resource type="Theme" path="res://assets/asphalt/paper_theme.tres" id="43_paper"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_color"]
 shader = ExtResource("4_shader")
@@ -66,55 +67,10 @@ ambient_light_color = Color(0.78, 0.78, 0.8, 1)
 ambient_light_energy = 0.35
 tonemap_mode = 2
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-content_margin_left = 12.0
-content_margin_top = 10.0
-content_margin_right = 12.0
-content_margin_bottom = 10.0
-bg_color = Color(0.09, 0.1, 0.12, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
-content_margin_left = 8.0
-content_margin_top = 3.0
-content_margin_right = 8.0
-content_margin_bottom = 3.0
-bg_color = Color(0.17, 0.19, 0.23, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
-content_margin_left = 8.0
-content_margin_top = 3.0
-content_margin_right = 8.0
-content_margin_bottom = 3.0
-bg_color = Color(0.26, 0.29, 0.35, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_pressed"]
-content_margin_left = 8.0
-content_margin_top = 3.0
-content_margin_right = 8.0
-content_margin_bottom = 3.0
-bg_color = Color(0.85, 0.45, 0.12, 1)
-corner_radius_top_left = 3
-corner_radius_top_right = 3
-corner_radius_bottom_right = 3
-corner_radius_bottom_left = 3
 
-[sub_resource type="Theme" id="Theme_panel"]
-default_font_size = 11
-Button/styles/normal = SubResource("StyleBoxFlat_button")
-Button/styles/hover = SubResource("StyleBoxFlat_button_hover")
-Button/styles/pressed = SubResource("StyleBoxFlat_button_pressed")
-Button/styles/hover_pressed = SubResource("StyleBoxFlat_button_pressed")
-OptionButton/styles/normal = SubResource("StyleBoxFlat_button")
-OptionButton/styles/hover = SubResource("StyleBoxFlat_button_hover")
-OptionButton/styles/pressed = SubResource("StyleBoxFlat_button_hover")
 
 [node name="AsphaltLab" type="Control" node_paths=PackedStringArray("sim", "color_view", "height_view", "relief_view", "preview_view", "section_view", "map_view", "preview_road", "preview_pivot", "preview_camera")]
 layout_mode = 3
@@ -123,6 +79,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("43_paper")
 script = ExtResource("1_lab")
 sim = NodePath("Sim")
 color_view = NodePath("Stage/Views/ColorView")
@@ -138,7 +95,8 @@ preview_camera = NodePath("PreviewViewport/CameraPivot/Camera")
 [node name="Sim" type="Node" parent="."]
 script = ExtResource("2_sim")
 buildup = ExtResource("40_buildup")
-paint_lines = PackedVector2Array(0.8, 1.25, 6.2, 1.25, 0.8, 3.75, 6.2, 3.75, 0.8, 6.25, 6.2, 6.25, 0.8, 8.75, 6.2, 8.75, 0.8, 0, 0.8, 10)
+paint_lines = PackedVector2Array(1.4, 0, 1.4, 10, 8.6, 0, 8.6, 10, 5, 1, 5, 4.048)
+paint_colors = PackedColorArray(0.92, 0.92, 0.88, 1, 0.92, 0.92, 0.88, 1, 0.95, 0.74, 0.16, 1)
 
 [node name="ColorViewport" type="SubViewport" parent="."]
 disable_3d = true
@@ -194,7 +152,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.05, 0.055, 0.065, 1)
+color = Color(0.93, 0.93, 0.92, 1)
 
 [node name="PreviewViewport" type="SubViewport" parent="."]
 own_world_3d = true
@@ -301,8 +259,6 @@ anchor_bottom = 1.0
 offset_left = -330.0
 grow_horizontal = 0
 grow_vertical = 2
-theme = SubResource("Theme_panel")
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
 [node name="Scroll" type="ScrollContainer" parent="Panel"]
 layout_mode = 2
@@ -322,9 +278,9 @@ text = "Asphalt lab: a 10 x 10 m road section"
 [node name="Subtitle" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(0.65, 0.68, 0.72, 1)
+theme_override_colors/font_color = Color(0.3, 0.3, 0.3, 1)
 autowrap_mode = 3
-text = "Colour map left, height map right. Traffic runs up and down; two lanes, gravel shoulders."
+text = "A standard two-lane road: 3.65 m (12 ft) lanes, gravel shoulders, white edge lines and a broken yellow centreline (MUTCD). Traffic runs up the right lane and down the left."
 
 [node name="YearLabel" type="Label" parent="Panel/Scroll/Box"]
 unique_name_in_owner = true
@@ -378,7 +334,6 @@ text = "Start timeline here"
 
 [node name="RepairsHeader" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.62, 0.25, 1)
 text = "REPAIRS (tick to do one at this year, untick to undo it)"
 
 [node name="Repair0" type="CheckBox" parent="Panel/Scroll/Box"]
@@ -417,120 +372,15 @@ layout_mode = 2
 tooltip_text = "Repaint the stall lines: fresh paint over everything, patches and sealcoat included. It wears again from here."
 text = "Repaint stripes"
 
-[node name="ConditionsHeader" type="Label" parent="Panel/Scroll/Box"]
+[node name="SectionHeader" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.62, 0.25, 1)
-text = "CONDITIONS (replays from year 0)"
+text = "PAVEMENT SECTION"
 
-[node name="StructureRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
+[node name="SectionInfo" type="Label" parent="Panel/Scroll/Box"]
+unique_name_in_owner = true
 layout_mode = 2
-
-[node name="Name" type="Label" parent="Panel/Scroll/Box/StructureRow"]
-custom_minimum_size = Vector2(115, 0)
-layout_mode = 2
-text = "Pavement strength"
-
-[node name="Slider" type="HSlider" parent="Panel/Scroll/Box/StructureRow" groups=["asphalt_condition"]]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-min_value = 0.3
-max_value = 1.5
-step = 0.05
-metadata/property = "structure"
-
-[node name="Value" type="Label" parent="Panel/Scroll/Box/StructureRow"]
-custom_minimum_size = Vector2(30, 0)
-layout_mode = 2
-text = "1.00"
-
-[node name="TrafficRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
-layout_mode = 2
-
-[node name="Name" type="Label" parent="Panel/Scroll/Box/TrafficRow"]
-custom_minimum_size = Vector2(115, 0)
-layout_mode = 2
-text = "Heavy traffic"
-
-[node name="Slider" type="HSlider" parent="Panel/Scroll/Box/TrafficRow" groups=["asphalt_condition"]]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-min_value = 0.0
-max_value = 2.0
-step = 0.05
-metadata/property = "traffic"
-
-[node name="Value" type="Label" parent="Panel/Scroll/Box/TrafficRow"]
-custom_minimum_size = Vector2(30, 0)
-layout_mode = 2
-text = "1.00"
-
-[node name="ClimateRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
-layout_mode = 2
-
-[node name="Name" type="Label" parent="Panel/Scroll/Box/ClimateRow"]
-custom_minimum_size = Vector2(115, 0)
-layout_mode = 2
-text = "Freeze-thaw and sun"
-
-[node name="Slider" type="HSlider" parent="Panel/Scroll/Box/ClimateRow" groups=["asphalt_condition"]]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-min_value = 0.0
-max_value = 2.0
-step = 0.05
-metadata/property = "climate"
-
-[node name="Value" type="Label" parent="Panel/Scroll/Box/ClimateRow"]
-custom_minimum_size = Vector2(30, 0)
-layout_mode = 2
-text = "1.00"
-
-[node name="DrainageRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
-layout_mode = 2
-
-[node name="Name" type="Label" parent="Panel/Scroll/Box/DrainageRow"]
-custom_minimum_size = Vector2(115, 0)
-layout_mode = 2
-text = "Water getting in"
-
-[node name="Slider" type="HSlider" parent="Panel/Scroll/Box/DrainageRow" groups=["asphalt_condition"]]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-min_value = 0.0
-max_value = 2.0
-step = 0.05
-metadata/property = "drainage"
-
-[node name="Value" type="Label" parent="Panel/Scroll/Box/DrainageRow"]
-custom_minimum_size = Vector2(30, 0)
-layout_mode = 2
-text = "1.00"
-
-[node name="BondRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
-layout_mode = 2
-
-[node name="Name" type="Label" parent="Panel/Scroll/Box/BondRow"]
-custom_minimum_size = Vector2(115, 0)
-layout_mode = 2
-text = "Surface bond"
-
-[node name="Slider" type="HSlider" parent="Panel/Scroll/Box/BondRow" groups=["asphalt_condition"]]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-min_value = 0.0
-max_value = 1.0
-step = 0.05
-metadata/property = "bond"
-
-[node name="Value" type="Label" parent="Panel/Scroll/Box/BondRow"]
-custom_minimum_size = Vector2(30, 0)
-layout_mode = 2
-text = "1.00"
+theme_override_font_sizes/font_size = 10
+autowrap_mode = 3
 
 [node name="SeedRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
 layout_mode = 2
@@ -549,7 +399,6 @@ value = 1.0
 
 [node name="StatsHeader" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.62, 0.25, 1)
 text = "CONDITION"
 
 [node name="Stats" type="Label" parent="Panel/Scroll/Box"]
@@ -559,7 +408,6 @@ theme_override_font_sizes/font_size = 10
 
 [node name="HistoryHeader" type="Label" parent="Panel/Scroll/Box"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.62, 0.25, 1)
 text = "HISTORY"
 
 [node name="History" type="Label" parent="Panel/Scroll/Box"]
@@ -583,8 +431,3 @@ autowrap_mode = 3
 [connection signal="toggled" from="Panel/Scroll/Box/Repair3" to="." method="_on_repair_toggled" binds= [3]]
 [connection signal="toggled" from="Panel/Scroll/Box/Repair4" to="." method="_on_repair_toggled" binds= [4]]
 [connection signal="toggled" from="Panel/Scroll/Box/Repair5" to="." method="_on_repair_toggled" binds= [5]]
-[connection signal="value_changed" from="Panel/Scroll/Box/StructureRow/Slider" to="." method="_on_condition_changed" binds= ["structure"]]
-[connection signal="value_changed" from="Panel/Scroll/Box/TrafficRow/Slider" to="." method="_on_condition_changed" binds= ["traffic"]]
-[connection signal="value_changed" from="Panel/Scroll/Box/ClimateRow/Slider" to="." method="_on_condition_changed" binds= ["climate"]]
-[connection signal="value_changed" from="Panel/Scroll/Box/DrainageRow/Slider" to="." method="_on_condition_changed" binds= ["drainage"]]
-[connection signal="value_changed" from="Panel/Scroll/Box/BondRow/Slider" to="." method="_on_condition_changed" binds= ["bond"]]

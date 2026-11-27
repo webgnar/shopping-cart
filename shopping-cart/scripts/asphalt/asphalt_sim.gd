@@ -43,10 +43,12 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 @export var size := Vector2(10.0, 10.0)                 ## m: X across the road, Y along it
 
 @export_group("Road layout")
-@export var shoulder := 0.7                             ## m of unsealed gravel shoulder each side
+## The default is a standard two-lane road: two 3.65 m (12 ft) lanes meeting at the centreline joint, unpaved
+## shoulders, the wheel paths where LTPP fig. 136 puts them (0.76 m and 2.9 m in from each edge stripe).
+@export var shoulder := 1.35                            ## m of unsealed gravel shoulder each side
 @export var unsealed_edges := true                      ## the outer edges crack and fret (off where more pavement butts on)
 @export var lane_joint_x := 5.0                         ## m: the longitudinal paving joint between the lanes
-@export var wheel_paths := PackedFloat32Array([1.95, 3.75, 6.25, 8.05])  ## m: centre of each wheel path
+@export var wheel_paths := PackedFloat32Array([2.11, 4.25, 5.75, 7.89])  ## m: centre of each wheel path
 @export var wheel_path_width := 0.35                    ## m: spread of the wheel load either side of a path
 
 @export_group("Pavement and conditions")
@@ -82,7 +84,8 @@ const SEAL_PROUD := 0.0015  ## m the overbanded crack sealant stands above the r
 @export var edge_feather := 0.15                        ## m round the section easing back to 0 to meet flat ground
 
 @export_group("Paint")
-@export var paint_lines := PackedVector2Array()         ## painted lines (stall lines): start and end point pairs, m
+@export var paint_lines := PackedVector2Array()         ## painted lines: start and end point pairs, m
+@export var paint_colors := PackedColorArray()          ## colour of each line (one per pair); missing: the canvas's paint_color
 @export var paint_width := 0.1                          ## m (4 in, the standard stall line)
 @export var paint_thickness := 0.0008                   ## m fresh traffic paint stands above the asphalt
 @export var paint_life := 8.0                           ## years for the paint to wear off under a wheel path

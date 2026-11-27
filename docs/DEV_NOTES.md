@@ -1937,3 +1937,18 @@ and data sheets 1-3 (notes and the symbol table in docs/ASPHALT_SCIENCE.md).
   renderer.
 - Tests: "LTPP survey keeps the manual's rules", "distress map view shows the survey"; asphalt_screenshot.gd also
   writes map_<stage>.png.
+
+## Asphalt lab: two-lane road base, paper styling, only vetted inputs (Nov 27 2026)
+
+- The default road (AsphaltSim exports) is a standard two-lane road: 3.65 m (12 ft) lanes meeting at the centreline
+  joint (x = 5 m), 1.35 m gravel shoulders, wheel paths where LTPP fig. 136 puts them (0.76 m and 2.9 m in from each
+  edge stripe: 2.11, 4.25, 5.75, 7.89 m). The lab paints MUTCD markings: white edge lines and a broken yellow
+  centreline (10 ft dash, 30 ft gap), 4 in wide. New `AsphaltSim.paint_colors` (one per line). asphalt_section.tscn
+  keeps the old wheel paths, so the game's lots are unchanged (no re-bake).
+- The five condition sliders (pavement strength, traffic, freeze-thaw and sun, water, surface bond) are gone from
+  the lab: none was vetted. The values stay in the sim as placeholders (science register) until their models
+  arrive. The panel shows the pavement section instead (layers, CBR, slip length, sources), read-only.
+- The lab is styled like a paper's figure page: `assets/asphalt/paper_theme.tres` (serif text, black on white,
+  outlined controls), a pale page behind the views. The figures (section, map) keep the LTPP sans lettering.
+- Distress map: axis titles with units (metres bottom and left; feet top and right, as LTPP prints), a units
+  note, and the fig. 137 symbol legend under the data sheet totals.
