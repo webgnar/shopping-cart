@@ -429,6 +429,88 @@ its mean profile depth becomes a **check**, not an input: FHWA-HRT-25-100 (2025,
 18 (Cu 11.1, P8 57.3 %, P200 4.6 %, VFA 79.1 %); VTRC 23-R15 (2023, filed) measured 0.39-0.49 mm on Virginia
 dense-graded surfaces. Exposure then has a place to happen: the binder film wears off the stone tops first.
 
+### Model 1b, third pass (Nov 27): what each topic does to the albedo; the packing prototype
+
+**Which sources do what.** Every number is sourced, but sources play three roles:
+- *Inputs* (what the surface is made of): the mix (MnROAD cell 18, Mn/DOT 97-06), the component albedos
+  (Pomerantz Table 1: binder 0.05, aggregates 0.10-0.28), the stone shapes and packing rules (Xu 2010).
+- *Mechanism* (why it changes): binder wears off the stones by abrasion, oxidation alone does not lighten it
+  (TRR 2022); ageing exposes minerals, cracks darken by shadow, seals stay dark, patches look fresh (Herold &
+  Roberts 2005).
+- *Targets* (what the result must reproduce): pavement albedo against age measured in the field (Pomerantz fig.
+  1, California; NCAT 19-09, seven central and eastern states, by aggregate colour); mean profile depth
+  (FHWA-HRT-25-100, VTRC 23-R15). NCAT's equation is a regression through its field data, not a mechanism: it
+  calibrates and checks the model, it isn't the model.
+
+**Every topic that changes the surface changes the albedo** (zack): the plan is an area-weighted sum of what lies
+on it, each with its reflectance.
+
+| Topic | What it does to the surface | Source so far |
+|---|---|---|
+| T2 binder ageing | Oxidation: no measurable albedo change (0.05) | TRR 2022 |
+| T4 traffic | Abrasion strips binder off the stone tops, wheel paths first | TRR 2022 (mechanism), Pomerantz, NCAT (totals); rate per pass wanted |
+| Climate | Weathering wears binder; wet surfaces darker; winter sand and salt | NCAT names it; numbers wanted |
+| T3, T4 cracks | Dark by shadow (up to 7-8 % at high severity), expose fresher binder | Herold & Roberts |
+| T5 potholes | Exposed base, standing water | Wanted |
+| T6 repairs | Overlay and patch: fresh (0.05); crack seal about 5 %; chip seal brighter | Pomerantz, Herold & Roberts |
+| The mix | Stone sizes, rock albedo, share exposed | Cell 18; Pomerantz; Xu |
+
+Until T4 exists, age stands in for wear (one rate, calibrated on the field targets).
+
+**Packing prototype** (`docs/asphalt_checks/stone_packing.py`): Xu stones (convex, 4-10 faces, Lmax/Lmin <= 5;
+none beyond Superpave's 5:1 flat-and-elongated limit, 7 % beyond 3:1), packed largest first with Xu's
+smaller-stone fallback into a 100 x 100 mm tile of cell 18's 38 mm wear course, periodic across. Learned from the
+volumetrics: the stones fill only 38 % of the mix, below any settled packing (~55-60 %), so they float in the
+mastic and **no physics settling is needed** in the bulk. Learned from the sim's grids: random tries jam at 24 %;
+a voxel map of free space (0.5 mm), shrunk by each stone's half size, proposes only positions with room, and the
+exact separating-axis test still decides (speed only, not the result). The roller turns stones near the surface
+onto their most upward face and pushes them against it (a convex body pressed by a plate rests on a face).
+Results: 7,333 stones, **38.5 % stone volume (mix 38.1 %)**, every size class at its share; Delesse: averaged
+vertical cuts 38.7 % (sd 1.0 per cut); stone share by depth 27 % in the top 4 mm (the roller's wall effect), about
+40 % below; stone tops reach the surface over 14 % of the plan. 900 s in Python, once per mix and seed (a compiled
+bake would be far faster). **Not yet a check:** the mean profile depth depends on how far the mastic sits below
+the stone tops, which nothing here predicts: 0.45-0.6 mm gives 0.35-0.49 mm (FHWA-HRT-25-100 and VTRC 23-R15).
+Until a source sets that level (binder film and mastic at the surface), MPD calibrates it and the albedo targets
+check it. Also wanted: a source for how compaction orients stones near the surface (CT studies).
+
+### Model 1b, fourth pass (Nov 27): from a tile to the road; exposure from the packed stones
+
+**Scale: a tile stands for the mix if it holds enough of every stone size.** Studies of asphalt's representative
+volume put it at about 50-60 mm for dense-graded Superpave mixes (60 mm for a 12.5 mm mix), roughly 4-5 times the
+nominal size (search summaries; Romero & Masad 2001 and Kim et al. 2009 to read). Our check: a 50 mm tile (seed 7)
+against the 100 mm tile (seed 1). The exposure curve agrees within about a point of stone share up to 1.5 mm of
+wear; the 50 mm tile overshoots on the largest stones (one 17 mm stone is 341 % of that class's share in so small a
+tile: 40.3 % stone instead of 38.1 %), the 100 mm tile holds three (114 %). So 50 mm is the smallest that works,
+100 mm is comfortable. Per-cut scatter falls with size as expected (Delesse sd 2.3 % at 50 mm, 1.0 % at 100 mm).
+
+**From the tile to a road, without repeats:** periodic copies of one tile repeat every 100 mm, invisible in the
+plan at 4.9 mm pixels but visible in the section at full scale. The graphics answer is Wang tiles (Cohen et al.,
+SIGGRAPH 2003: a small set of tiles with coloured edges, laid at random with matching edges, tiles the plane
+non-periodically; they fill tiles with Poisson distributions and 3D geometry) or corner tiles (Lagae & Dutré, better
+for Poisson-disk distributions, which is what stone centres are). Proposal: pack a set of tiles (for Wang tiles
+with two edge colours each way, 16) so that the stones crossing each edge colour are shared, then tile the road at
+random from them. Packing cost: 16 tiles, once per mix. Variation at the road scale (wheel paths, wear, repairs)
+does not come from the tiles: it comes from the topics, as a field the sim already carries over the road (traffic
+wears the wheel paths deeper, so more stone shows there). Two scales: the mix in the tile (mm), the state in the
+sim (cm to m).
+
+**Exposure from the packed stones** (`docs/asphalt_checks/surface_exposure.py`): the surface wears to a depth w;
+a stone shows where its top is above the worn level and it still reaches below it (one entirely above has
+ravelled). Share of stone showing A(w), 100 mm tile: 14 % once the binder film is off (0.1 mm), 23 % at 0.5 mm,
+32 % at 1 mm, 42 % at 2 mm; albedo = 0.05 + (a_agg - 0.05) A. Two independent data sets meet here: the MPD
+calibration puts the mastic about 0.5 mm below the stone tops as built, where 23 % of the plan is stone under its
+binder film (microns thick: 6-10 um by the mix-design rule, 0.5-2.4 um measured in one study); once the film wears,
+the albedo is 0.088, against Pomerantz's 0.08 and NCAT's 0.09-0.10 at one year, with nothing fitted to albedo.
+After that, matching Pomerantz needs about 0.75 mm more mastic wear by year 3 and 1.3 mm by year 5, then little;
+NCAT's continued rise (0.12-0.14 at 10 years) needs about 3 mm by year 10. Whether those wear depths are right needs
+measured surface wear rates (Wanted; T4's traffic). A stand-in mechanism for the flattening, not sourced: once the
+stone tops carry the tyres they shield the mastic between them.
+
+**Stone orientation near the surface:** CT studies find compaction orients stones perpendicular to its direction
+(gyratory), slab rolling mimics field orientation better than gyratory compaction (Airey and Collop), and the
+voids are higher at mid-depth than near the surface (search summaries; papers not yet read). Consistent with the
+face-down roller and with fewer stones in the top 4 mm (27 %); quantitative orientation data still Wanted.
+
 **Rock weathering and dirt: still Gaps.** No measurement for asphalt aggregate found. The nearest are concrete
 studies (Levinson and Akbari, LBNL: simulated weathering, soiling and abrasion changed concrete albedo by about
 -0.06, -0.05 and -0.19), which are not our material and are not used. NCAT names winter maintenance (sand, salt)
