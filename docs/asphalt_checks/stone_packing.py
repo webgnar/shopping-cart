@@ -422,7 +422,10 @@ def mpd(surface, px=0.25):
 
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else None
-    classes, target, stones, geo, cls_vol = pack()
+    if len(sys.argv) > 2:                     # optional tile size (mm) and seed, for the scale check
+        TILE = float(sys.argv[2])
+    seed = int(sys.argv[3]) if len(sys.argv) > 3 else 1
+    classes, target, stones, geo, cls_vol = pack(seed)
     _FACES.extend(st.faces for st, _, _ in stones)
     box = TILE * TILE * DEPTH
     phi_target = sum(target) / box

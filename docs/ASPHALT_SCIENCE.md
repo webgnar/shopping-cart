@@ -473,6 +473,44 @@ the stone tops, which nothing here predicts: 0.45-0.6 mm gives 0.35-0.49 mm (FHW
 Until a source sets that level (binder film and mastic at the surface), MPD calibrates it and the albedo targets
 check it. Also wanted: a source for how compaction orients stones near the surface (CT studies).
 
+### Model 1b, fourth pass (Nov 27): from a tile to the road; exposure from the packed stones
+
+**Scale: a tile stands for the mix if it holds enough of every stone size.** Studies of asphalt's representative
+volume put it at about 50-60 mm for dense-graded Superpave mixes (60 mm for a 12.5 mm mix), roughly 4-5 times the
+nominal size (search summaries; Romero & Masad 2001 and Kim et al. 2009 to read). Our check: a 50 mm tile (seed 7)
+against the 100 mm tile (seed 1). The exposure curve agrees within about a point of stone share up to 1.5 mm of
+wear; the 50 mm tile overshoots on the largest stones (one 17 mm stone is 341 % of that class's share in so small a
+tile: 40.3 % stone instead of 38.1 %), the 100 mm tile holds three (114 %). So 50 mm is the smallest that works,
+100 mm is comfortable. Per-cut scatter falls with size as expected (Delesse sd 2.3 % at 50 mm, 1.0 % at 100 mm).
+
+**From the tile to a road, without repeats:** periodic copies of one tile repeat every 100 mm, invisible in the
+plan at 4.9 mm pixels but visible in the section at full scale. The graphics answer is Wang tiles (Cohen et al.,
+SIGGRAPH 2003: a small set of tiles with coloured edges, laid at random with matching edges, tiles the plane
+non-periodically; they fill tiles with Poisson distributions and 3D geometry) or corner tiles (Lagae & Dutré, better
+for Poisson-disk distributions, which is what stone centres are). Proposal: pack a set of tiles (for Wang tiles
+with two edge colours each way, 16) so that the stones crossing each edge colour are shared, then tile the road at
+random from them. Packing cost: 16 tiles, once per mix. Variation at the road scale (wheel paths, wear, repairs)
+does not come from the tiles: it comes from the topics, as a field the sim already carries over the road (traffic
+wears the wheel paths deeper, so more stone shows there). Two scales: the mix in the tile (mm), the state in the
+sim (cm to m).
+
+**Exposure from the packed stones** (`docs/asphalt_checks/surface_exposure.py`): the surface wears to a depth w;
+a stone shows where its top is above the worn level and it still reaches below it (one entirely above has
+ravelled). Share of stone showing A(w), 100 mm tile: 14 % once the binder film is off (0.1 mm), 23 % at 0.5 mm,
+32 % at 1 mm, 42 % at 2 mm; albedo = 0.05 + (a_agg - 0.05) A. Two independent data sets meet here: the MPD
+calibration puts the mastic about 0.5 mm below the stone tops as built, where 23 % of the plan is stone under its
+binder film (microns thick: 6-10 um by the mix-design rule, 0.5-2.4 um measured in one study); once the film wears,
+the albedo is 0.088, against Pomerantz's 0.08 and NCAT's 0.09-0.10 at one year, with nothing fitted to albedo.
+After that, matching Pomerantz needs about 0.75 mm more mastic wear by year 3 and 1.3 mm by year 5, then little;
+NCAT's continued rise (0.12-0.14 at 10 years) needs about 3 mm by year 10. Whether those wear depths are right needs
+measured surface wear rates (Wanted; T4's traffic). A stand-in mechanism for the flattening, not sourced: once the
+stone tops carry the tyres they shield the mastic between them.
+
+**Stone orientation near the surface:** CT studies find compaction orients stones perpendicular to its direction
+(gyratory), slab rolling mimics field orientation better than gyratory compaction (Airey and Collop), and the
+voids are higher at mid-depth than near the surface (search summaries; papers not yet read). Consistent with the
+face-down roller and with fewer stones in the top 4 mm (27 %); quantitative orientation data still Wanted.
+
 **Rock weathering and dirt: still Gaps.** No measurement for asphalt aggregate found. The nearest are concrete
 studies (Levinson and Akbari, LBNL: simulated weathering, soiling and abrasion changed concrete albedo by about
 -0.06, -0.05 and -0.19), which are not our material and are not used. NCAT names winter maintenance (sand, salt)

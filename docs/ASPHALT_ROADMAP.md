@@ -162,6 +162,9 @@ flowchart LR
 | Herold & Roberts 2005, spectral ageing of asphalt roads | Read | What ageing, cracks, ravelling and repairs do to reflectance (step 6b) |
 | Physics-engine / DEM packing of asphalt (Wan et al.) | Not needed for the bulk | The stones float in the mastic at 38 %; random packing guided by a free-space map reaches it |
 | Mastic level at the surface; stone orientation under compaction | Wanted | Makes MPD a check instead of a calibration (step 6b) |
+| RVE size of asphalt (Romero & Masad 2001; Kim et al. 2009) | Wanted (summaries read: 50-60 mm for dense-graded) | Tile size; our 50 vs 100 mm check agrees (step 6b) |
+| Wang / corner tiles (Cohen et al. 2003; Lagae & Dutré) | Wanted (summaries read) | Tiling the road from a few packed tiles without repeats (step 6b) |
+| Surface wear rate under traffic | Wanted | Wear depth against time and traffic, for the exposure (step 6b, then T4) |
 
 Steps (one commit each, each with its own check):
 - [x] Model written up for review (ASPHALT_SCIENCE.md, Model 1)
