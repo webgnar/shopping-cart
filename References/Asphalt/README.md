@@ -38,6 +38,19 @@ in this folder with the file names below.
   14 % (12.5 mm); design air voids 4 % (Ndes at 96 % Gmm); VFA 65-78 % (0.3-3 million ESALs). Limits, not a mix:
   a job-mix formula (LTPP test AG04 for a section) gives the actual curve.
 
+- `mndot_1997_97-06_mnroad_hma_mixtures.pdf`: Stroup-Gardiner & Newcomb, "Investigation of Hot Mix Asphalt Mixtures
+  at Mn/ROAD", Mn/DOT report 97-06 (1997). https://rosap.ntl.bts.gov/view/dot/14717
+  Table 2.1 (p. 10): the job mix formula used for every Mn/ROAD asphalt cell (Crow River partially crushed gravel,
+  fines 66 % and coarse 24 %, plus 10 % crushed granite CA-50; bulk specific gravity 2.702 field); cells 15-19 used
+  AC-20 (PG 64-22). Table 3.5 (p. 25 of the report): as-built tests per cell and lift; cell 18 wear course (4th
+  lift, 38 mm): 100 / 99 / 93 / 84 / 67 / 55 / 43 / 25 / 9 / 4.6 % passing 19 / 16 / 12.5 / 9.0 / 4.75 / 2.0 /
+  1.0 / 0.45 / 0.25 / 0.075 mm, 5.8 % asphalt, 3.2 % air voids, VMA 15.3 %, Gmb 2.360, Gmm 2.439; listed as a
+  50-blow Marshall mix (as the 2001 MnROAD forensic report, 2001MRRDOC006, also lists it).
+- `mndot_1996_mnroad_aggregate_profile.pdf`: "Mn/ROAD Aggregate Profile" (Mn/DOT, 1996), 3 pp.
+  https://sll.dot.state.mn.us/research/pdf/1996MRRDOC002.pdf. Measured gradations of the Class 3sp-6sp base
+  materials (Table 1); Class 6sp (the build-up's base, Li & Marasteanu): 100 / 97.7 / 69.7 / 46 / 27.8 / 15.1 /
+  10.4 / 8.1 / 6.3 / 4.7 % passing 25 / 19 / 9.5 / 4.75 / 2 / 0.85 / 0.425 / 0.25 / 0.15 / 0.075 mm.
+
 ## Crack patterns in shrinking layers
 - `bohn_2005_hierarchical_crack_pattern_II.pdf`: Bohn, Platkiewicz, Andreotti, Adda-Bedia, Couder, "Hierarchical
   crack pattern as formed by successive domain divisions. II. From disordered to deterministic behavior", Phys. Rev. E

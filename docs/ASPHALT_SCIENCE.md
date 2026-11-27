@@ -318,6 +318,71 @@ figs. 35-39 for a site of similar climate; ageing stalls in cold years and runs 
 **Not in it:** RAP, warm mix and polymer-modified binders (the report's outliers); air voids (found
 insignificant); UV beyond what the depth calibration absorbs.
 
+## Model 1b: the surface made of what the mix is made of (proposal for review; T2 step 6b)
+
+**Why:** Model 1 gives one number, the albedo. Drawing the plan from it needs a texture, and a texture set by eye
+(procedural noise, or a picture) is not data. Here the surface is composed from the mix itself: binder and
+aggregate in the volumes the mix design measured, stones sized by the measured gradation, each with its measured
+albedo. The mean albedo then comes out of the composition, and the plan and the section are two slices of one
+3D mix. Like Substance Designer, the texture is computed; unlike it, every distribution is a measured one, and
+the random seed only says where each stone lands.
+
+**Sources (References/Asphalt):**
+- The mix: MnROAD cell 18, wear course (4th lift, 38 mm), as built (Mn/DOT 97-06, Table 3.5): 100 / 99 / 93 / 84
+  / 67 / 55 / 43 / 25 / 9 / 4.6 % passing 19 / 16 / 12.5 / 9.0 / 4.75 / 2.0 / 1.0 / 0.45 / 0.25 / 0.075 mm, 5.8 %
+  asphalt, 3.2 % air voids, VMA 15.3 %. AC-20 (PG 64-22, the build-up's binder); the same cell as the build-up's
+  cold strength (Li & Marasteanu Table 4). Aggregate: 90 % partially crushed Crow River gravel, 10 % crushed
+  granite (97-06 Table 2.1). A 12.5 mm mix in FHWA-RD-98-087's terms (first sieve retaining over 10 %: 9.0 mm);
+  its 2.0 mm value (55 %) sits at the top of the Superpave 2.36 mm band (28-58 %): a Marshall-era fine mix.
+- Albedos: Pomerantz et al. 2000, Table 1: binder 0.05; aggregates 0.10-0.28; a chip seal (stones as exposed as
+  a surface gets) reflects 0.67 +- 0.11 of its aggregate's albedo. Fig. 1: pavement albedo against age.
+- Surface ageing p: Model 1.
+
+**The model:**
+1. Volumes: aggregate 1 - VMA = 84.7 %, effective binder VMA - air = 12.1 %, air 3.2 % (Pomerantz p. 3: about
+   85 / 15).
+2. Stones: the aggregate retained on each sieve from 2.0 mm up, one class per sieve pair (diameter the geometric
+   mean of its sieves), its share of the aggregate volume from the gradation: 1 / 6 / 9 / 17 / 12 % for 16-19 /
+   12.5-16 / 9-12.5 / 4.75-9 / 2-4.75 mm, so stones are 38.1 % of the mix volume. Finer aggregate is part of the
+   mastic (binder + fines + air) and is drawn as the mastic's area average.
+3. The 3D field: stones as spheres at random positions (a Boolean model: overlaps allowed), with intensities set
+   so their union is exactly 38.1 % of the volume (sum lambda_i v_i = -ln(1 - 0.381)). Any plane through it shows
+   stones over the volume fraction of its area (Delesse's principle) and cuts of mean diameter pi/4 d. The plan is
+   the plane z = 0; the section A-B is the vertical plane at the cut. Scrubbing the cut moves through the same
+   stones, and a stone cut at the surface line appears in both.
+4. Albedo of each part: binder 0.05; aggregate a_agg, the rock's measured albedo; exposed aggregate shows a_agg,
+   covered aggregate shows the binder. As the surface ages the binder wears off the aggregate (Pomerantz names
+   this as the main cause), up to a chip seal's 0.67 a_agg:
+   albedo = 0.05 + (0.67 a_agg - 0.05)(1 - e^(-p / p0)),
+   and the share of the aggregate area that shows is (albedo - 0.05) / ((a_agg - 0.05) x 0.847). Each stone gets a
+   random threshold and shows once that share passes it, so the exposed area is the model's at every year.
+5. a_agg for cell 18 (option A, zack): no measured albedo for Crow River gravel; Pomerantz's rows of the same rock
+   types stand in: river pebbles 0.21, granite 0.26-0.28, blended 90 / 10: 0.216. Ceiling 0.145 +- 0.024.
+   **One calibrated number left:** p0, how fast the binder wears off against the surface ageing.
+
+**Check run (docs/asphalt_checks/surface_composition.py):** volumes 84.7 / 12.1 / 3.2 %; a 0.5 m random plane
+covers 37.4 % with stones (38.1 % expected) and its cuts average 0.79 d per class, as theory says (pi / 4); a 10 m
+section through 76 mm of asphalt cuts about 27,000 stones (cheap to draw each time the cut moves). p0 = 0.26 fits
+Pomerantz fig. 1 in Concord with an rms of 0.007: 0.077 / 0.105 / 0.118 / 0.133 at 1 / 3 / 5 / 10 years (his
+0.08 / 0.11 / 0.12 / 0.12); Burlington 0.071 / 0.097 / 0.112 / 0.129. Model 1's two fitted numbers (limit 0.13,
+p0 0.15) become one (p0), the limit now coming from the chip-seal measurement.
+
+**Assumptions, stated:** spheres (aggregate shape: Gap); overlaps allowed (a hard-core packing would be the next
+refinement; the volume and the Delesse fraction are exact either way); the surface is a flat plane through the
+field (macrotexture, the stone tops standing proud: Wanted, for the height map); air voids drawn as binder (pore
+albedo: Gap); exposure tied to the surface ageing (traffic wear is T4's); one albedo per rock type borrowed from
+Pomerantz's California rocks.
+
+**Gaps (left out until sourced):** binder lightening as it oxidises (Pomerantz names it, no number); aggregate
+weathering (rock oxidises too: iron staining, feldspar to clay); stone colour (albedo is broadband; the plan stays
+neutral grey); dirt and oil.
+
+**Later, same method:** the base from its gradation (Class 6sp, Mn/ROAD aggregate profile 1996, Table 1), the
+subgrade from its soil class; the LTPP section's own gradation (AG04) and aggregate when InfoPave is back.
+
+**Scope change this needs:** "the mix's microstructure and stones" moves from *not studied* to studied, for the
+drawing (the crack models still don't use it).
+
 ## Next steps
 
 The roadmap (`docs/ASPHALT_ROADMAP.md`) is the tracker; this list is kept short.
