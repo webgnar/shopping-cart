@@ -61,9 +61,23 @@ in this folder with the file names below.
 - `vtrc_2023_23-r15_dense_graded_surface_functional.pdf`: Boz, Flintsch et al., "Functional Characteristics of
   Dense-Graded Asphalt Surface Mixtures", VTRC 23-R15 (2023). https://rosap.ntl.bts.gov/view/dot/67231. Measured MPD of
   Virginia dense-graded surfaces (Table 3, 0.39-0.49 mm) and a regression (eq. 3).
+- `herold_roberts_2005_spectral_asphalt_road_aging.pdf`: Herold & Roberts, "Spectral characteristics of asphalt road
+  aging and deterioration: implications for remote-sensing applications", Applied Optics 44(20), 4327-4334 (2005).
+  Field spectra (350-2500 nm) of Santa Barbara roads: ageing and erosion raise reflectance (loss of hydrocarbons,
+  more than 10 % in the near IR and SWIR) and bring out the minerals (iron oxide features at 520, 670, 870 nm);
+  cracks darken by shadow (up to 7-8 %); ravelling brightens; slurry crack seal stays at about 5 %; patches look
+  like fresh pavement; chip seal is much brighter. Spectral change is largest in the first years.
 - Not filed (paywalled): "Albedo change mechanism of asphalt concrete surfaces", Transportation Research Record
   2676 (2022) 763-772, doi 10.1177/03611981221082567: lab oxidation leaves albedo at about 0.05; abrasion of the
   surface binder reproduces the field rise.
+
+## Aggregate shape and packing (surface composition, T2 step 6b)
+- `xu_2010_3d_aggregate_generation_packing.pdf`: Xu, Yang, Yin, Yang, Ye, "A three-dimensional aggregate generation
+  and packing algorithm for modeling asphalt mixture with graded aggregates", Journal of Mechanics 26(2), 165-171
+  (2010), doi 10.1017/S1727719100003026. Convex polyhedral stones grown from a random acute triangle (eq. 1:
+  convexity by the sign of the tetrahedron volume), at most 10 faces, sharpness Lmax / Lmin <= 5 (eq. 2); stone
+  counts per size group n_i = 6 phi g_i G / (pi D_i^3 rho) (eq. 4); packing largest first, a smaller stone tried
+  where one doesn't fit; fines under 2.36 mm treated as mastic.
 
 ## Crack patterns in shrinking layers
 - `bohn_2005_hierarchical_crack_pattern_II.pdf`: Bohn, Platkiewicz, Andreotti, Adda-Bedia, Couder, "Hierarchical
