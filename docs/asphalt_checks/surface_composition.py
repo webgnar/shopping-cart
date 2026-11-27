@@ -111,6 +111,39 @@ def surface_p(csv, years=10):
     return name, {y: 1 - math.exp(-N * a) for y, a in ap.items()}
 
 
+def passing_at(d):
+    """% passing a sieve of d mm, straight line in log(size) between the measured sieves."""
+    for k in range(len(SIEVES) - 1):
+        hi, lo = SIEVES[k], SIEVES[k + 1]
+        if lo <= d <= hi:
+            f = math.log(d / lo) / math.log(hi / lo)
+            return PASSING[k + 1] + f * (PASSING[k] - PASSING[k + 1])
+    raise ValueError(d)
+
+
+def size_at(pct):
+    """mm at which pct % passes (inverse of passing_at)."""
+    for k in range(len(SIEVES) - 1):
+        if PASSING[k + 1] <= pct <= PASSING[k]:
+            f = (pct - PASSING[k + 1]) / (PASSING[k] - PASSING[k + 1])
+            return SIEVES[k + 1] * (SIEVES[k] / SIEVES[k + 1]) ** f
+    raise ValueError(pct)
+
+
+def mpd_fhwa():
+    """Mean profile depth (mm) from FHWA-HRT-25-100 eq. 1 (dense-graded: Type 0):
+    MPD = 1.03 + 0.224 Type + 0.0034 Cu - 0.0050 P8 - 0.0105 P200 - 0.0049 VFA."""
+    cu = size_at(60) / size_at(10)
+    p8, p200, vfa = passing_at(2.36), PASSING[-1], (VMA - AIR) / VMA * 100
+    return 1.03 + 0.0034 * cu - 0.0050 * p8 - 0.0105 * p200 - 0.0049 * vfa, cu, p8, vfa
+
+
+def albedo_ncat(age, clr):
+    """NCAT 19-09 fig. 97 (recalibrated): albedo = (0.0001 CLR + 0.0033) ln(age) + (0.0001 CLR + 0.0812), with CLR the
+    coarse aggregate's grayscale (0-255) and age in years; field data, central and eastern US."""
+    return (0.0001 * clr + 0.0033) * math.log(age) + (0.0001 * clr + 0.0812)
+
+
 def albedo(p, p0):
     """Mean albedo: binder, plus exposed aggregate rising to the chip-seal ceiling as the surface ages."""
     return A_BINDER + (A_MAX - A_BINDER) * (1 - math.exp(-p / p0))
@@ -131,6 +164,12 @@ if __name__ == "__main__":
         print("  d %.2f mm: %5d circles, mean cut diameter %.2f mm (sphere theory pi/4 d = %.2f)" % (d, k, mean_cut, math.pi / 4 * d))
     per_cut = sum(l * c[2] for l, c in zip(lam, classes)) * 10000.0 * 76.0
     print("A 10 m section through 76 mm of asphalt cuts about %.0f stones." % per_cut)
+    mpd, cu, p8, vfa = mpd_fhwa()
+    print("Macrotexture target: MPD %.2f mm (FHWA-HRT-25-100 eq. 1; Cu %.1f, P8 %.1f %%, VFA %.1f %%); Virginia dense-graded"
+          " surfaces measured 0.39-0.49 mm (VTRC 23-R15)" % (mpd, cu, p8, vfa))
+    print("NCAT 19-09 albedo by coarse aggregate grayscale: " + "; ".join(
+        "CLR %d: %s" % (c, " / ".join("%.3f" % albedo_ncat(y, c) for y in (1, 3, 5, 10))) for c in (60, 110, 160, 210))
+        + " at 1 / 3 / 5 / 10 yr")
     print("Albedo: binder %.2f, aggregate %.3f (rock-type stand-in), ceiling 0.67 x aggregate = %.3f (+- %.3f)"
           % (A_BINDER, A_AGG, A_MAX, CHIP_SPREAD * A_AGG))
     files = sys.argv[1:]

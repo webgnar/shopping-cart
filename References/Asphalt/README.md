@@ -51,6 +51,20 @@ in this folder with the file names below.
   materials (Table 1); Class 6sp (the build-up's base, Li & Marasteanu): 100 / 97.7 / 69.7 / 46 / 27.8 / 15.1 /
   10.4 / 8.1 / 6.3 / 4.7 % passing 25 / 19 / 9.5 / 4.75 / 2 / 0.85 / 0.425 / 0.25 / 0.15 / 0.075 mm.
 
+## Albedo and macrotexture (surface composition, T2 step 6b)
+- `ncat_2019_19-09_quantifying_pavement_albedo.pdf`: NCAT Report 19-09 / National Concrete Pavement Technology
+  Center, "Quantifying Pavement Albedo" (Dec 2019). https://rosap.ntl.bts.gov/view/dot/62003. Asphalt albedo against
+  surface age and coarse aggregate grayscale (Table 23, figs. 90 and 97); grayscale procedure in the appendix.
+- `fhwa_2025_hrt-25-100_macrotexture_model.pdf`: FHWA TechBrief FHWA-HRT-25-100, "Macrotexture Model Development for
+  Asphalt Mixtures Aimed at Safety Analysis" (2025). https://rosap.ntl.bts.gov/view/dot/88867. Eq. 1: MPD from mix
+  type, Cu, P8, P200 and VFA.
+- `vtrc_2023_23-r15_dense_graded_surface_functional.pdf`: Boz, Flintsch et al., "Functional Characteristics of
+  Dense-Graded Asphalt Surface Mixtures", VTRC 23-R15 (2023). https://rosap.ntl.bts.gov/view/dot/67231. Measured MPD of
+  Virginia dense-graded surfaces (Table 3, 0.39-0.49 mm) and a regression (eq. 3).
+- Not filed (paywalled): "Albedo change mechanism of asphalt concrete surfaces", Transportation Research Record
+  2676 (2022) 763-772, doi 10.1177/03611981221082567: lab oxidation leaves albedo at about 0.05; abrasion of the
+  surface binder reproduces the field rise.
+
 ## Crack patterns in shrinking layers
 - `bohn_2005_hierarchical_crack_pattern_II.pdf`: Bohn, Platkiewicz, Andreotti, Adda-Bedia, Couder, "Hierarchical
   crack pattern as formed by successive domain divisions. II. From disordered to deterministic behavior", Phys. Rev. E

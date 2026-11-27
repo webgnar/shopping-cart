@@ -383,6 +383,57 @@ subgrade from its soil class; the LTPP section's own gradation (AG04) and aggreg
 **Scope change this needs:** "the mix's microstructure and stones" moves from *not studied* to studied, for the
 drawing (the crack models still don't use it).
 
+### Model 1b, second pass (Nov 27): packing, shape, macrotexture, what drives the albedo
+
+**What drives the greying: wear, not oxidation.** "Albedo change mechanism of asphalt concrete surfaces",
+Transportation Research Record 2676 (2022), pp. 763-772, doi 10.1177/03611981221082567 (abstract read; full text
+paywalled, not filed): asphalt mixes aged in the lab by several methods kept an albedo of about 0.05 however much
+they aged; an abrasion procedure that removes the surface binder reproduced the field rise on four field cores.
+So **binder lightening is measured to be negligible** (the gap closes: binder 0.05, constant), and the exposed
+aggregate grows with **wear** (traffic and weather), not with oxidation. Model 1's albedo and Model 1b as written
+drive exposure by the surface ageing p (oxidation): **proposed change: drive it by age now and by traffic once
+T4 exists.** The stiffness gradient (Model 1) is unaffected.
+
+**Field data by aggregate colour.** NCAT Report 19-09, "Quantifying Pavement Albedo" (2019; filed): asphalt
+sites in seven central and eastern US states, under 1 to over 30 years old; albedo rises and approaches a steady
+value; fitted (fig. 97, recalibrated): albedo = (0.0001 CLR + 0.0033) ln(age) + (0.0001 CLR + 0.0812), CLR the
+coarse aggregate's grayscale on 0-255 (measured on a core photo against a printed grey card, appendix); model
+against field: mean difference 0.008, sd 0.029. Pomerantz's California curve (0.08 / 0.11 / 0.12 / 0.12) lies
+inside NCAT's band for mid-grey aggregates (CLR 110-160: 0.092-0.097 / 0.108-0.118 / 0.115-0.128 /
+0.125-0.142): two independent field sets agree. A log in age has no fresh value (age 0) and no ceiling, so it is a
+calibration target for the exposure, not the model. Cell 18's Crow River gravel has no measured CLR: a Gap
+(a photo of a MnROAD core against a grey card would close it).
+
+**Packing: settle the stones with a physics engine.** Random placement can't reach the mix's stone volume
+without overlaps: random sequential addition of equal spheres jams at about 38 %, exactly cell 18's coarse
+fraction. Asphalt microstructure studies pack with discrete elements or a physics engine (e.g. Wan, García,
+Hernández, "manufacture asphalt concrete virtually with a physics engine"; Xu, J. Mechanics, polyhedral
+generation and packing; not yet read). Proposal: an offline bake (a tool, like the section bakes): drop the
+stones of the measured gradation, largest first, as low-poly convex rigid bodies into a periodic box in Jolt
+(already the game's physics), let them settle, compact (press and shake) until the coarse volume fraction is the
+mix's 38 %, then place the 2-4.75 mm class in the remaining space; store the stones (centre, rotation, shape,
+size) as a resource. A 0.2 x 0.2 m tile, 40 mm deep, holds about 16,000 stones (minutes, once per mix and seed),
+repeated across the section (at the plan's 4.9 mm pixels the repeat is not visible; the section at 1:1 shows a
+0.2 m period). Plan and section read the same resource, so they agree stone for stone.
+
+**Shape: low-poly convex polyhedra, as data allows.** In hand: the share of crushed particles (Mn/DOT 97-06,
+Table 2.1: Crow River coarse 61.2 % crushed, granite CA-50 100 %): crushed stones as angular hulls with few faces,
+uncrushed river gravel as rounded hulls with more; Superpave's flat-and-elongated limit (FHWA-RD-98-087: at most
+10 % beyond 5:1). Wanted: measured shape distributions (FHWA AIMS2, HIF-11-030, ch. 3: sphericity, angularity and
+form for crushed gravel, limestone and granite; the FHWA page returned a server error on Nov 27).
+
+**Macrotexture is the stones.** Yes: the surface is the top of the settled stones, with the mastic (binder,
+fines, air) filled between them to the level its volume sets, not a flat cut. The height map comes from it, and
+its mean profile depth becomes a **check**, not an input: FHWA-HRT-25-100 (2025, filed) eq. 1, MPD = 1.03 +
+0.224 Type + 0.0034 Cu - 0.0050 P8 - 0.0105 P200 - 0.0049 VFA (field data, seven States), gives 0.35 mm for cell
+18 (Cu 11.1, P8 57.3 %, P200 4.6 %, VFA 79.1 %); VTRC 23-R15 (2023, filed) measured 0.39-0.49 mm on Virginia
+dense-graded surfaces. Exposure then has a place to happen: the binder film wears off the stone tops first.
+
+**Rock weathering and dirt: still Gaps.** No measurement for asphalt aggregate found. The nearest are concrete
+studies (Levinson and Akbari, LBNL: simulated weathering, soiling and abrasion changed concrete albedo by about
+-0.06, -0.05 and -0.19), which are not our material and are not used. NCAT names winter maintenance (sand, salt)
+as a possible factor, without numbers.
+
 ## Next steps
 
 The roadmap (`docs/ASPHALT_ROADMAP.md`) is the tracker; this list is kept short.
