@@ -172,7 +172,7 @@ Steps (one commit each, each with its own check):
 - [ ] 6b. Surface composition: **written up for review (ASPHALT_SCIENCE.md, Model 1b, with a second pass: wear not oxidation drives the albedo, Jolt packing of low-poly stones, macrotexture from the stones checked against MPD) and checked in Python (`docs/asphalt_checks/surface_composition.py`); waiting for zack's review before code.** Mix: MnROAD cell 18 wear course (Mn/DOT 97-06). Original note: binder (0.05) and exposed aggregate (its measured albedo, Pomerantz Table 1: 0.10-0.28) drawn as stones; exposed fraction from the surface ageing up to the chip-seal ceiling (0.67 +- 0.11 of the aggregate's albedo); stone sizes from the gradation, area fraction from the volume fraction (Delesse). The mean albedo then comes out of the picture and becomes a check. Gradation limits in hand: FHWA-RD-98-087 (12.5 mm control points, restricted zone, VMA 14 %, air voids 4 %); an actual curve wanted: LTPP AG04 for the section (InfoPave), or MnROAD cell 18's job-mix formula (AC-20 = PG 64-22, the build-up's strength source; MnDOT library host blocked from this session). Aggregate albedo: Pomerantz Table 1 for now (option A, zack). Gaps: binder lightening with oxidation; aggregate weathering (rock oxidises too: iron staining, feldspar to clay); aggregate shape. The section must draw the same stones: one 3D stone field that the plan (z = 0) and the section (the cut) both slice, so scrubbing the cut moves through it
 - [ ] 7. Roadmap and science register updated
 
-### T3 Thermal cracking: Next
+### T3 Thermal cracking: Current (research)
 
 What it does: in cold weather the aged, stiffer layer shrinks, the base holds it back and it cracks across the
 road, at a spacing set by the slip length; later the transverse cracks join into blocks. Places and grows the
@@ -297,10 +297,20 @@ is its git branch:
 |---|---|---|
 | Asphalt simulator (the hub: roadmap, planning, reviews) | `claude/focused-hamilton-r9x9hq` (made before this rule) | Open |
 | Asphalt T2: binder ageing | `asphalt/t2-binder-ageing` | Open |
+| Asphalt T3: thermal cracking | `asphalt/t3-thermal-cracking` | Open (started before T2 finished, see below) |
 | Asphalt V: LTPP section check | `asphalt/v-ltpp-section` | Waiting for InfoPave |
 
-Later topics get `Asphalt T3: thermal cracking` on `asphalt/t3-thermal-cracking`, and so on. A topic's branch is
-merged before the next topic's thread starts.
+Later topics follow the same pattern (`Asphalt T4: loads` on `asphalt/t4-loads`, and so on). Normally a topic's branch
+is merged before the next topic's thread starts.
+
+**T2 and T3 overlap (zack, Nov 27).** T3 started while T2 was finishing step 6b, because everything T3 takes from T2
+is built: pavement temperature (`PavementTemperature`) and binder stiffness by depth (`BinderAgeing.log_g()`). Step
+6b is the surface's look in plan, which T3 doesn't use. To keep the two from colliding:
+- T3 reads and writes up first (sources, Model 2 in ASPHALT_SCIENCE.md, a Python check), touching only the docs.
+- When T3 codes, it puts its model in its own new files, its checks in their own function in `asphalt_test.gd`, and
+  edits only its own sections of the docs. It doesn't change `BinderAgeing`, `PavementTemperature` or the surface
+  drawing; if it needs something new from T2, that is a new row in the shared quantities table, agreed in the hub.
+- Both merge the hub branch before each push.
 
 ## How we work
 
