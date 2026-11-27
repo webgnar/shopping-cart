@@ -241,7 +241,7 @@ Steps (one commit each; stop for zack's review where marked):
 - [ ] 6. Checks between topics (thicker layer, aged binder, colder climate)
 - [ ] 7. Roadmap and science register updated
 
-### T4 Loads: fatigue cracking and rutting: Later
+### T4 Loads: fatigue cracking and rutting: Current (research)
 
 What it does: repeated axle loads bend the layer; damage adds up (Miner's rule) until the wheel paths crack into
 crocodile cells; the layers also deform permanently (ruts). Rutting sits here, not in T5, because the same
@@ -352,9 +352,10 @@ is its git branch:
 | Asphalt simulator (the hub: roadmap, planning, reviews) | `claude/focused-hamilton-r9x9hq` (made before this rule) | Open |
 | Asphalt T2: binder ageing | `asphalt/t2-binder-ageing` | Open |
 | Asphalt T3: thermal cracking | `asphalt/t3-thermal-cracking` | Open (started before T2 finished, see below) |
+| Asphalt T4: loads (fatigue and rutting) | `asphalt/t4-loads` | Open (research, alongside T3) |
 | Asphalt V: LTPP section check | `asphalt/v-ltpp-section` | Waiting for InfoPave |
 
-Later topics follow the same pattern (`Asphalt T4: loads` on `asphalt/t4-loads`, and so on). Normally a topic's branch
+Later topics follow the same pattern (`Asphalt T5: water and potholes` on `asphalt/t5-water-potholes`, and so on). Normally a topic's branch
 is merged before the next topic's thread starts.
 
 **T2 and T3 overlap (zack, Nov 27).** T3 started while T2 was finishing step 6b, because everything T3 takes from T2
@@ -365,6 +366,12 @@ is built: pavement temperature (`PavementTemperature`) and binder stiffness by d
   edits only its own sections of the docs. It doesn't change `BinderAgeing`, `PavementTemperature` or the surface
   drawing; if it needs something new from T2, that is a new row in the shared quantities table, agreed in the hub.
 - Both merge the hub branch before each push.
+
+**T4 alongside T3 (zack, Nov 27).** T4 started in research while T3 was in review, on the same rules as T3 (docs
+first; own files and own test function when it codes; nothing of T2's changed). T3 and T4 share one thing: the mix's
+modulus from the aged binder (NCHRP 973 AMAC, eq. 51, written up in Model 2). **One owner computes it**: T4 uses
+Model 2's write-up and doesn't derive its own; the hub decides which thread codes the shared file before either
+codes it. T4 adds traffic, wander and rut depth to the shared quantities table only through the hub.
 
 ## How we work
 
