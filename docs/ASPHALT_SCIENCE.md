@@ -254,7 +254,7 @@ Higher |G\*| is harder, more brittle binder.
    Af = 1.25e13 /day, Eaf = 95.04 kJ/mol, Ac = 3.68e7 /day, Eac = 62.21 kJ/mol, R = 0.008314 kJ/mol K (universal).
    **Misprint found:** NCHRP 973 Tables 1 and 9 print Af = 1.25 x 10^3; NCHRP 871 Table 16 (where the constants were
    fitted) gives 1.25 x 10^13 for every mixture. With 10^3 the fast reaction would be ~10^9 times slower than the
-   constant one and nothing ages; with 10^13, at 95 C kf = 0.40 /day and kc = 0.054 /day, and 8 to 32 lab days raise
+   constant one and nothing ages; with 10^13, at 95 C kf = 0.41 /day and kc = 0.055 /day, and 8 to 32 lab days raise
    log |G\*| by 1 to 2 x M, as the reports' ageing plots show. 871 labels A in s^-1, but its kinetics equation (and
    973's) take t in days; per day is the reading that matches the data.
    Two reactions: a fast one that runs out, and a slow constant one. Hours below 20 C add almost nothing.

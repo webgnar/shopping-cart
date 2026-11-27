@@ -2002,3 +2002,13 @@ albedo calibration) in assets/asphalt/climates/. `PavementTemperature`: FHWA-RD-
 and the 06:00 / 15:00 half-cosine day. Checks reproduce docs/asphalt_checks/binder_ageing_chain.py exactly
 (Burlington 4,399 h a year at or above 20 C, Concord 5,600). Nothing is wired into the sim yet.
 Gotcha: a new class_name isn't known to a `-s` test until `godot --headless --import` has run once.
+
+## Asphalt T2 step 3: surface kinetics and depth (Nov 27 2026)
+
+`BinderAgeing` (scripts/asphalt/binder_ageing.gd): NCHRP 973 eqs. 1-3 integrated hour by hour over a normal year
+of PavementTemperature surface temperatures (hours below 20 C skipped), the state carried through the equivalent
+time (Newton from below instead of the chain's bisection: same answer, faster), then eq. 22 for depth. Built for a
+climate, log |G*|0, M and a number of years (at least 10, for N); `log_g(depth_m, year)` and
+`surface_progress(year)`. Reproduces docs/asphalt_checks/binder_ageing_chain.py to 1e-3 at 1, 5, 10 and 20 years,
+surface and 2 cm, both sites. log |G*|0 and M still come from the test (eqs. 26, 27) until step 4. Nothing is
+wired into the sim yet.

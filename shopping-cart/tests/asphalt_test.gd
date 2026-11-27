@@ -511,3 +511,52 @@ func _binder_ageing_checks() -> void:
 			and absf(temps[15] - site[4]) < 1e-3 and absf(temps[6] - site[5]) < 1e-3
 		rows.append("%s %d h >= 20 C, %.1f to %.1f C" % [c.title.get_slice(",", 0), warm, cold, hot])
 	_check("pavement temperature matches the chain", ok, "; ".join(rows))
+
+	# Step 3: surface kinetics and depth (NCHRP 973 eqs. 1-3, 22). PG 64-22 by eqs. 26, 27 (T2 step 4 moves them
+	# into the build-up): log |G*|0 0.717, M 0.832.
+	var g0 := 6.552 / (1.0 + pow(64.0 / 107.167, -4.068))
+	var mm := 0.94 / (1.0 + pow(64.0 / 82.68, 7.96))
+	# The rates by hand at 95 C with NCHRP 871's constants (Model 1: about 0.4 /day and 0.054 /day), and the
+	# equivalent time inverting eq. 1.
+	var t95 := 95.0 + BinderAgeing.KELVIN
+	var back := BinderAgeing.equivalent_days(BinderAgeing.rise(20.0, t95, mm), t95, mm)
+	_check("NCHRP 973 kinetics constants", absf(BinderAgeing.kf(t95) - 1.25e13 * exp(-95.04 / (0.008314 * 368.15))) < 1e-9
+		and absf(BinderAgeing.kc(t95) - 3.68e7 * exp(-62.21 / (0.008314 * 368.15))) < 1e-9 and absf(BinderAgeing.kf(t95) - 0.4) < 0.01
+		and absf(BinderAgeing.kc(t95) - 0.054) < 0.001
+		and absf(back - 20.0) < 1e-6, "kf %.3f /day, kc %.4f /day at 95 C; 20 days back as %.9f" % [BinderAgeing.kf(t95), BinderAgeing.kc(t95), back])
+	# The chain table, log |G*| at the surface and at 2 cm, and AP, to 1e-3 (chain printed to 5 places).
+	var chain := {
+		btv: [[1, 0.222659, 0.95927, 0.83010], [5, 1.071746, 1.74999, 1.19983], [10, 2.086766, 2.46705, 1.53511], [20, 4.093201, 3.38118, 1.96253]],
+		ccr: [[1, 0.450588, 1.04606, 0.87068], [5, 1.997013, 1.97336, 1.30427], [10, 3.798495, 2.74459, 1.66488], [20, 7.385434, 3.64992, 2.08819]],
+	}
+	var aged := {}
+	ok = true
+	rows = []
+	for c: SiteClimate in chain:
+		var b := BinderAgeing.new(c, g0, mm, 20)
+		aged[c] = b
+		for r: Array in chain[c]:
+			ok = ok and absf(b.ageing(r[0]) - r[1]) < 1e-3 and absf(b.log_g(0.0, r[0]) - r[2]) < 1e-3 and absf(b.log_g(0.02, r[0]) - r[3]) < 1e-3
+		rows.append("%s surface %.2f / %.2f / %.2f at 1 / 5 / 10 yr, 2 cm %.2f at 10" % [c.title.get_slice(",", 0),
+			b.log_g(0.0, 1), b.log_g(0.0, 5), b.log_g(0.0, 10), b.log_g(0.02, 10)])
+	_check("binder ageing matches the chain", ok, "; ".join(rows))
+	# Eq. 22's limits: fully aged, the surface reaches 4.5 and deep down log |G*|0 + 0.916 M; younger is softer, deeper too.
+	var full: BinderAgeing = aged[btv]
+	var saved := full.n
+	full.n = 1e3
+	var top := full.log_g(0.0, 20)
+	var deep := full.log_g(100.0, 20)
+	full.n = saved
+	var falls := true
+	for z in [0.0, 0.01, 0.02, 0.04, 0.06]:
+		for yr in range(1, 21):
+			falls = falls and full.log_g(z, yr) > full.log_g(z, yr - 1) and full.log_g(z, yr) > full.log_g(z + 0.01, yr)
+	_check("binder hardens with age, most at the surface", absf(top - 4.5) < 1e-9 and absf(deep - (g0 + 0.916 * mm)) < 0.01
+		and is_equal_approx(full.log_g(0.0, 0), g0) and falls, "limits %.3f at the surface, %.3f deep" % [top, deep])
+	# Between topics: a hotter climate ages the binder faster, at every depth and year.
+	var hotter := true
+	for z in [0.0, 0.02, 0.06]:
+		for yr in range(1, 21):
+			hotter = hotter and aged[ccr].log_g(z, yr) > aged[btv].log_g(z, yr)
+	_check("a hotter climate ages the binder faster", hotter, "Concord %.2f against Burlington %.2f at the surface, 10 yr"
+		% [aged[ccr].log_g(0.0, 10), aged[btv].log_g(0.0, 10)])
