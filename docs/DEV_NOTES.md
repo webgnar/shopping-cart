@@ -2012,3 +2012,10 @@ climate, log |G*|0, M and a number of years (at least 10, for N); `log_g(depth_m
 `surface_progress(year)`. Reproduces docs/asphalt_checks/binder_ageing_chain.py to 1e-3 at 1, 5, 10 and 20 years,
 surface and 2 cm, both sites. log |G*|0 and M still come from the test (eqs. 26, 27) until step 4. Nothing is
 wired into the sim yet.
+
+## Asphalt T2 step 4: binder grade on the build-up (Nov 27 2026)
+
+`PavementLayer.binder_hpg` (C, asphalt group): the binder's high performance grade; 64 (PG 64-22) on the c620
+Table 3B preset. `BinderAgeing.unaged_log_g()` and `susceptibility()` are NCHRP 973 eqs. 26 and 27 (log |G*|0 0.717,
+M 0.832 for PG 64), and `BinderAgeing.for_layer(climate, layer, years)` ages a layer's binder. The test now takes
+the grade from the preset. Not in the lab panel yet; the sim doesn't use it yet.

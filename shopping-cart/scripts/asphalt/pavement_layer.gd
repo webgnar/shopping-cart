@@ -17,6 +17,7 @@ enum Kind { ASPHALT, AGGREGATE }
 @export var poisson := 0.0
 @export var tensile_strength := 0.0             ## Pa: cold (-18 C) indirect tensile strength
 @export var density := 0.0                      ## kg/m3 (bulk)
+@export var binder_hpg := 0.0                   ## C: the binder's high performance grade (PG 64-22: 64); sets its ageing (BinderAgeing)
 
 @export_group("Aggregate base")
 @export var cohesion := 0.0                     ## Pa: Mohr-Coulomb cohesion (triaxial)

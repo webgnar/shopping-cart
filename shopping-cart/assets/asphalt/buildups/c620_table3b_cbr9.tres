@@ -7,11 +7,12 @@
 script = ExtResource("1_pdewx")
 title = "Asphalt surface"
 thickness = 0.07619999999999999
-source = "Thickness: c620 Table 3 B (3.0 in). Cold tensile strength 2.27 MPa at -18 C and bulk specific gravity 2.289: Li & Marasteanu 2005, Table 4 (MnROAD cell 18, AC 20). Warm modulus 3 GPa and Poisson's ratio 0.35: typical values, not yet sourced."
+source = "Thickness: c620 Table 3 B (3.0 in). Cold tensile strength 2.27 MPa at -18 C and bulk specific gravity 2.289: Li & Marasteanu 2005, Table 4 (MnROAD cell 18, AC 20). Warm modulus 3 GPa and Poisson's ratio 0.35: typical values, not yet sourced. Binder PG 64-22 (high grade 64 C): chosen with zack for the default road until the LTPP section's grade is verified."
 stiffness_warm = 3000000000.0
 poisson = 0.35
 tensile_strength = 2270000.0
 density = 2289.0
+binder_hpg = 64.0
 
 [sub_resource type="Resource" id="Resource_wq7tq"]
 script = ExtResource("1_pdewx")

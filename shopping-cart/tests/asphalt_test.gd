@@ -512,10 +512,19 @@ func _binder_ageing_checks() -> void:
 		rows.append("%s %d h >= 20 C, %.1f to %.1f C" % [c.title.get_slice(",", 0), warm, cold, hot])
 	_check("pavement temperature matches the chain", ok, "; ".join(rows))
 
-	# Step 3: surface kinetics and depth (NCHRP 973 eqs. 1-3, 22). PG 64-22 by eqs. 26, 27 (T2 step 4 moves them
-	# into the build-up): log |G*|0 0.717, M 0.832.
-	var g0 := 6.552 / (1.0 + pow(64.0 / 107.167, -4.068))
-	var mm := 0.94 / (1.0 + pow(64.0 / 82.68, 7.96))
+	# Step 4: the binder grade on the build-up, and the binder's inputs from it (eqs. 26, 27): PG 64-22 gives
+	# log |G*|0 0.717 and M 0.832 (Model 1: 0.72, 0.83); by hand below. Stiffer grades start harder, age less.
+	var asphalt := (load("res://assets/asphalt/buildups/c620_table3b_cbr9.tres") as PavementBuildup).surface()
+	var g0 := BinderAgeing.unaged_log_g(asphalt.binder_hpg)
+	var mm := BinderAgeing.susceptibility(asphalt.binder_hpg)
+	_check("binder grade sets the ageing inputs", asphalt.binder_hpg == 64.0
+		and absf(g0 - 6.552 / (1.0 + pow(64.0 / 107.167, -4.068))) < 1e-12 and absf(mm - 0.94 / (1.0 + pow(64.0 / 82.68, 7.96))) < 1e-12
+		and absf(g0 - 0.7167) < 1e-4 and absf(mm - 0.8317) < 1e-4
+		and BinderAgeing.unaged_log_g(70) > g0 and BinderAgeing.susceptibility(70) < mm,
+		"PG %.0f: log |G*|0 %.3f, M %.3f; PG 70: %.3f, %.3f" % [asphalt.binder_hpg, g0, mm,
+		BinderAgeing.unaged_log_g(70), BinderAgeing.susceptibility(70)])
+
+	# Step 3: surface kinetics and depth (NCHRP 973 eqs. 1-3, 22), with the build-up's PG 64-22.
 	# The rates by hand at 95 C with NCHRP 871's constants (Model 1: about 0.4 /day and 0.054 /day), and the
 	# equivalent time inverting eq. 1.
 	var t95 := 95.0 + BinderAgeing.KELVIN
@@ -533,7 +542,7 @@ func _binder_ageing_checks() -> void:
 	ok = true
 	rows = []
 	for c: SiteClimate in chain:
-		var b := BinderAgeing.new(c, g0, mm, 20)
+		var b := BinderAgeing.for_layer(c, asphalt, 20)
 		aged[c] = b
 		for r: Array in chain[c]:
 			ok = ok and absf(b.ageing(r[0]) - r[1]) < 1e-3 and absf(b.log_g(0.0, r[0]) - r[2]) < 1e-3 and absf(b.log_g(0.02, r[0]) - r[3]) < 1e-3

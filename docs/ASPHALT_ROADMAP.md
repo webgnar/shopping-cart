@@ -156,7 +156,7 @@ Steps (one commit each, each with its own check):
 - [x] 1. Climate resource with the NOAA normals and latitude (`SiteClimate`, `assets/asphalt/climates/`; check "climate holds the NOAA normals")
 - [x] 2. Pavement temperature: reproduces the Python chain's hours above 20 C (`PavementTemperature`; Burlington 4,399 h, Concord 5,600 h, -8.4 to 50.0 C and 4.9 to 53.8 C at the surface; checks "LTPP pavement temperature equations", "pavement temperature matches the chain")
 - [x] 3. Surface kinetics and depth: reproduces the chain table (`BinderAgeing`; Burlington surface 0.96 / 1.75 / 2.47 at 1 / 5 / 10 years, Concord 1.05 / 1.97 / 2.74; checks "NCHRP 973 kinetics constants", "binder ageing matches the chain", "binder hardens with age, most at the surface", "a hotter climate ages the binder faster")
-- [ ] 4. Binder grade on the build-up; inputs from HPG (PG 64: 0.72, 0.832)
+- [x] 4. Binder grade on the build-up; inputs from HPG (PG 64: 0.72, 0.832) (`PavementLayer.binder_hpg`, 64 on the c620 preset; `BinderAgeing.unaged_log_g()`, `susceptibility()`, `for_layer()`; check "binder grade sets the ageing inputs". Not editable in the lab yet)
 - [ ] 5. Section draws the stiffness gradient
 - [ ] 6. Plan grey from albedo
 - [ ] 7. Roadmap and science register updated
@@ -233,11 +233,11 @@ appear only on the distress map's second axis.
 | Layers: thickness h, modulus E, Poisson nu, density rho, cold tensile strength sigma_t | m, Pa, -, kg/m3, Pa | Input (build-up) | T1, T3, T4, T0 section | `PavementBuildup`, `PavementLayer` | Built |
 | Base cohesion C, friction tan phi | Pa, - | Input | T1 | `PavementLayer` | Built |
 | Subgrade CBR; Mr; k | -, Pa, Pa/m | Input; T1 | T1, T4 | `PavementBuildup.subgrade_mr()`, `subgrade_k()` | Built |
-| Binder high grade HPG | C | Input (asphalt layer) | T2 | `PavementLayer` | T2 step 4 |
+| Binder high grade HPG | C | Input (asphalt layer) | T2 | `PavementLayer.binder_hpg` | Built |
 | Road layout: lanes, wheel paths, markings | m | Input | T4, T0 | `AsphaltSim` exports | Built |
 | Monthly air high and low, latitude | C, degrees | Input (climate) | T2, T3 | `SiteClimate` (stored in F as NOAA publishes) | Built |
 | Pavement temperature T(depth, hour) | C | T2 | T2, T3, T4 | `PavementTemperature` | Built |
-| Binder stiffness log abs(G*)(depth, year) | log kPa (64 C, 10 rad/s) | T2 | T3, T4 (through AMAC), T0 section | `BinderAgeing.log_g()` | Built (log abs(G*)0 and M passed in until step 4) |
+| Binder stiffness log abs(G*)(depth, year) | log kPa (64 C, 10 rad/s) | T2 | T3, T4 (through AMAC), T0 section | `BinderAgeing.log_g()` | Built |
 | Surface ageing p | - (0 to 1) | T2 | T2 albedo | `BinderAgeing.surface_progress()` | Built |
 | Albedo | - (0 to 1) | T2 | T0 plan | `binder_ageing.gd` | T2 step 6 |
 | Slip length Xc | m | T1 | T3 | `AsphaltSimState.slip_length()` | Built |
@@ -272,7 +272,7 @@ as soon as both of its topics exist.
 | Data | For | Source | Status |
 |---|---|---|---|
 | Monthly normals (air highs and lows) for the default site | T2, T3 | NOAA 1991-2020 normals | Collected (Burlington, Concord), in `binder_ageing_chain.py` |
-| Binder grade of the default road | T2 | PG 64-22 (chosen with zack; LTPP section's when verified) | Chosen |
+| Binder grade of the default road | T2 | PG 64-22 (chosen with zack; LTPP section's when verified) | Chosen; on the c620 preset |
 | Traffic for the default road | T4 | c620 Table 5; then the LTPP section | Not yet |
 | LTPP section: build-up, climate, traffic, yearly surveys | V | InfoPave | Blocked |
 | Mix thermal contraction coefficient | T3 | Gap | Not yet |
@@ -312,4 +312,5 @@ merged before the next topic's thread starts.
 | Nov 27 2026 | T2 | Ageing model written up; chain checked in Python | 095bfbf |
 | Nov 27 2026 | all | This roadmap | 4621cd9 |
 | Nov 27 2026 | T2 | Steps 1-2: climate table, pavement temperature | e9e64ca |
-| Nov 27 2026 | T2 | Step 3: surface kinetics and depth (`BinderAgeing`) | this commit |
+| Nov 27 2026 | T2 | Step 3: surface kinetics and depth (`BinderAgeing`) | a4a8d82 |
+| Nov 27 2026 | T2 | Step 4: binder grade on the build-up, inputs from HPG | this commit |

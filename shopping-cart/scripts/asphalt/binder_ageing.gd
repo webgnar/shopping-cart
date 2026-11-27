@@ -25,7 +25,7 @@ const SURFACE_LIMIT := 4.5     ## log |G*| the surface heads for (eq. 22, APmax)
 const DEEP_FRACTION := 0.916   ## deep down the binder heads for log |G*|0 + 0.916 M (eq. 22)
 const N_YEAR := 10             ## N is set by the surface ageing at 10 years (eq. 22)
 
-var log_g0 := 0.0              ## log |G*| of the unaged binder, kPa (eq. 26 from the grade: T2 step 4)
+var log_g0 := 0.0              ## log |G*| of the unaged binder, kPa (eq. 26 from the grade)
 var m := 0.0                   ## M, the binder's ageing susceptibility (eq. 27)
 var ap := PackedFloat64Array() ## surface ageing AP at the end of each year; ap[0] = 0, the road as laid
 var n := 0.0                   ## N of eq. 22
@@ -37,6 +37,22 @@ func _init(climate: SiteClimate, binder_log_g0: float, binder_m: float, years: i
 	m = binder_m
 	ap = surface_ageing(climate, m, maxi(years, N_YEAR))
 	n = 0.477 * exp(-0.226 * ap[N_YEAR])
+
+
+## Ages the binder of an asphalt `layer` (its high grade, `binder_hpg`) through `years` years of `climate`.
+static func for_layer(climate: SiteClimate, layer: PavementLayer, years: int) -> BinderAgeing:
+	return BinderAgeing.new(climate, unaged_log_g(layer.binder_hpg), susceptibility(layer.binder_hpg), years)
+
+
+## log |G*| (kPa, 64 C, 10 rad/s) of the unaged binder from its high performance grade `hpg` (C), eq. 26:
+## 6.552 / (1 + (HPG / 107.167)^-4.068). The report's least accurate route, but it needs no lab tests.
+static func unaged_log_g(hpg: float) -> float:
+	return 6.552 / (1.0 + pow(hpg / 107.167, -4.068))
+
+
+## M, the binder's ageing susceptibility, from its high grade (C), eq. 27: 0.94 / (1 + (HPG / 82.68)^7.96).
+static func susceptibility(hpg: float) -> float:
+	return 0.94 / (1.0 + pow(hpg / 82.68, 7.96))
 
 
 ## /day: the fast reaction's rate at `t_k` kelvin (eq. 2).
