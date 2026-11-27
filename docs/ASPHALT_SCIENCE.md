@@ -248,7 +248,12 @@ Higher |G\*| is harder, more brittle binder.
    from one hour to the next (fig. 17):
    log|G\*|kin = log|G\*|0 + M [ (1 - kc/kf)(1 - e^(-kf t)) + kc t ]   (1), t in days
    kf = Af exp(-Eaf / RT), kc = Ac exp(-Eac / RT)   (2), (3)
-   Af = 1.25e3, Eaf = 95.04 kJ/mol, Ac = 3.68e7, Eac = 62.21 kJ/mol, R = 0.008314 kJ/mol K (Table 1, universal).
+   Af = 1.25e13 /day, Eaf = 95.04 kJ/mol, Ac = 3.68e7 /day, Eac = 62.21 kJ/mol, R = 0.008314 kJ/mol K (universal).
+   **Misprint found:** NCHRP 973 Tables 1 and 9 print Af = 1.25 x 10^3; NCHRP 871 Table 16 (where the constants were
+   fitted) gives 1.25 x 10^13 for every mixture. With 10^3 the fast reaction would be ~10^9 times slower than the
+   constant one and nothing ages; with 10^13, at 95 C kf = 0.40 /day and kc = 0.054 /day, and 8 to 32 lab days raise
+   log |G\*| by 1 to 2 x M, as the reports' ageing plots show. 871 labels A in s^-1, but its kinetics equation (and
+   973's) take t in days; per day is the reading that matches the data.
    Two reactions: a fast one that runs out, and a slow constant one. Hours below 20 C add almost nothing.
 2. Depth (z in cm), from the surface ageing:
    APt = (log|G\*|kin,t - log|G\*|0) / M,  APmax = (4.5 - log|G\*|0) / M,  N = 0.477 exp(-0.226 AP(t=10 yr))
@@ -263,19 +268,45 @@ Higher |G\*| is harder, more brittle binder.
   one that needs no lab tests: log|G\*|0 = 6.552 / (1 + (HPG / 107.167)^-4.068)   (26),
   M = 0.94 / (1 + (HPG / 82.68)^7.96)   (27). PG 64-22: log |G\*|0 = 0.72 (5.2 kPa), M = 0.83 (eq. 28 agrees: 0.82).
   The binder grade becomes a build-up input (on the asphalt layer).
-- The surface temperature, hour by hour, for the site. This is the open piece: the report used the MEPDG's
-  climate model (EICM) on MERRA-2 weather. Candidates: the LTPP section's MERRA-2 weather (InfoPave) through a
-  sourced pavement-temperature model, such as the one in TTI 0-6009-2 (Glover et al. 2014,
-  `glover_2014_tti_0-6009-2_binder_aging.pdf`, to be read next).
+- The surface temperature through the year, built from a small climate table instead of hourly records (the
+  report used hourly EICM temperatures from MERRA-2 weather):
+  - Climate: 12 monthly normals of the mean daily high and low air temperature, and the latitude. NOAA 1991-2020
+    normals (www.ncei.noaa.gov, normals-monthly); later the LTPP section's own weather.
+  - Pavement temperature from air temperature: the LTPP models of FHWA-RD-97-103 (Mohseni 1998, from 30 LTPP
+    seasonal monitoring sites; `fhwa_1998_rd-97-103_ltpp_pavement_temperature_models.pdf`), H = depth in mm:
+    high Tpav = 54.32 + 0.78 Tair - 0.0025 Lat^2 - 15.14 log10(H + 25)  (eq. 8, R2 76 %, RMSE 3.0 C)
+    low  Tpav = -1.56 + 0.72 Tair - 0.004 Lat^2 + 6.26 log10(H + 25)    (eq. 7, R2 96 %, RMSE 2.1 C)
+    They were fitted to monthly high (May-Sep) and low (Nov-Mar) temperatures at 25-275 mm; we apply them to each
+    day's normal high and low at the surface (H = 0): a stated extrapolation.
+  - The hours between: a daily cycle, coldest at 06:00, hottest at 15:00 (Pomerantz 2000: the pavement peaks at
+    least an hour after the sun), half-cosines between. An assumption, labelled as one. Hours below 20 C are
+    skipped (NCHRP 973: they add no measurable ageing).
 
 **What it drives, in plan and section:**
 
 - Section: binder stiffness through the asphalt layer, drawn as a gradient (hardest at the top), each year.
-- Plan: the surface's ageing state. The colour change from black to grey has no equation in these sources; the
-  proposal is a declared visual mapping from the model's surface ageing (the fraction 1 - exp(-N APt) of the way
-  to saturation) to the fresh-to-aged colour, labelled as a mapping, not a result.
+- Plan: the surface colour as a parameter, its albedo (solar reflectance, ASTM E1918). Pomerantz et al. 2000
+  (LBNL-43442, `pomerantz_2000_lbnl-43442_pavement_albedo.pdf`, fig. 1): fresh asphalt 0.04-0.05; over 5 years
+  0.12 +- 0.03, never over ~0.16; rising fast for ~4 years then flat. Causes named: binder wearing off the stones,
+  the binder lightening as it oxidises, dirt. Bounded by the aggregate's albedo (0.10-0.28 for their stones).
+  Proposal: albedo = a_fresh + (a_limit - a_fresh)(1 - exp(-p / p0)), p = the model's surface ageing
+  (1 - exp(-N APt)); a_fresh = 0.04 (measured); a_limit and p0 fitted to fig. 1 in the Bay Area climate (Concord
+  normals): about 0.13 and 0.15, giving 0.08 at 1 year, 0.11 at 3, 0.12 at 5 and 10. A two-number calibration
+  against measured data, labelled as such. The grey drawn is the albedo as a linear reflectance.
 - Later models: thermal cracking (a stiffer, more brittle layer) and fatigue, through NCHRP 973 chapter 6
   (the AMAC model: binder |G\*| to mixture properties), read when those models start.
+
+**Chain run (docs/asphalt_checks/binder_ageing_chain.py, PG 64-22, NOAA normals), log |G\*| kPa, start 0.72:**
+
+| Year | Burlington VT surface | at 2 cm | Concord CA surface | at 2 cm |
+|---|---|---|---|---|
+| 1 | 0.96 | 0.83 | 1.05 | 0.87 |
+| 5 | 1.75 | 1.20 | 1.97 | 1.30 |
+| 10 | 2.47 | 1.54 | 2.74 | 1.66 |
+| 20 | 3.38 | 1.96 | 3.65 | 2.09 |
+
+Burlington's surface spends 4,400 h a year above 20 C, Concord's 5,600; the hotter site ages faster, the surface
+heads for 4.5, and 2 cm at 10 years (1.5-1.7) sits in the 1-3 range of the report's field cores (figs. 35-39).
 
 **Checks before it is trusted:** the equations reproduce the report's numbers (Table 1 constants, eq. 26-28 for a
 known HPG, the surface saturating at 4.5 and the deep value at 0.916 M); its depth profiles have the shape of

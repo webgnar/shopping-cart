@@ -22,6 +22,14 @@ in this folder with the file names below.
   Hot Mix Asphalt Concrete", TTI report FHWA/TX-14/0-6009-2 (2014), 526 pp. Pavement temperature model, oxidation
   kinetics, diffusion with depth. https://library.ctr.utexas.edu/hostedPDFs/tti/0-6009-2.pdf
 
+## Pavement temperature and colour
+- `fhwa_1998_rd-97-103_ltpp_pavement_temperature_models.pdf`: Mohseni, "LTPP Seasonal Asphalt Concrete (AC) Pavement
+  Temperature Models", FHWA-RD-97-103 (1998). High and low pavement temperature from air temperature, latitude and
+  depth (eqs. 7, 8), from 30 LTPP seasonal monitoring sites.
+- `pomerantz_2000_lbnl-43442_pavement_albedo.pdf`: Pomerantz, Pon, Akbari, Chang, "The Effect of Pavements'
+  Temperatures on Air Temperatures in Large Cities", LBNL-43442 (2000). Measured albedo of asphalt pavements against
+  age (fig. 1): 0.04 fresh, 0.12 +- 0.03 after 5 years; chip seal about 2/3 of the aggregate's albedo.
+
 ## Crack patterns in shrinking layers
 - `bohn_2005_hierarchical_crack_pattern_II.pdf`: Bohn, Platkiewicz, Andreotti, Adda-Bedia, Couder, "Hierarchical
   crack pattern as formed by successive domain divisions. II. From disordered to deterministic behavior", Phys. Rev. E
