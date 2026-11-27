@@ -2040,3 +2040,9 @@ space so its expected mean equals the albedo. The expected mean blends the binde
 lab render under xvfb, where the drawn lane mean came out 0.038 / 0.064 / 0.096 / 0.113 / 0.128 / 0.131 against
 the model's 0.040 / 0.071 / 0.102 / 0.115 / 0.127 / 0.130 at 0 / 1 / 3 / 5 / 12 / 30 years (Burlington). With the
 placeholders on (the game's lots) the old look by age is unchanged and the ageing isn't computed.
+
+Reopened the same day (zack): the hot-mix photo is a ChatGPT image, not data, and `stone_cover` and
+`fresh_texture_reflectance` were measured off our own render. With `placeholders` off the base shader now draws the
+surface flat at the albedo (to sRGB, no stones, grit, mottle or photo); measured on the lab render 0.0395 / 0.0723 /
+0.1144 / 0.1301 against 0.0400 / 0.0713 / 0.1154 / 0.1297 (8-bit steps). The placeholder look is unchanged. Next:
+the surface composition from binder and aggregate albedos (roadmap step 6b), for review first.

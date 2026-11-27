@@ -21,15 +21,10 @@ uniform vec3 stone_color : source_color = vec3(0.50, 0.49, 0.46);
 uniform sampler2D fresh_texture : source_color, repeat_enable, filter_linear_mipmap;  // fresh rolled hot mix, seamless
 uniform float fresh_texture_m = 1.0;
 uniform bool use_fresh_texture = true;
-// Sourced grey (T2): the surface's mean linear reflectance is drawn as the albedo, white paper being 1. The binder
-// greys and the photo fades by the albedo's progress from albedo_fresh to albedo_limit; then the whole surface is
-// scaled so its expected mean (the binder colour and the photo's measured mean, blended as below) equals `albedo`.
+// Sourced grey (T2, placeholders off): the surface is drawn flat at the model's albedo as a linear reflectance,
+// white paper being 1. No texture: the stones, grit, mottle and photo have no source yet.
 uniform bool use_albedo = false;
 uniform float albedo = 0.04;
-uniform float albedo_fresh = 0.04;
-uniform float albedo_limit = 0.13;
-uniform float fresh_texture_reflectance = 0.0243;   // mean linear value of fresh_texture (measured)
-uniform float stone_cover = 0.37;                   // share of the surface the stones' showing counts for (measured)
 
 vec2 hash2(vec2 p) {
 	p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
@@ -78,10 +73,6 @@ vec2 stones(vec2 p) {
 	return vec2(best, id);
 }
 
-vec3 to_linear(vec3 c) {
-	return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), c));
-}
-
 vec3 to_srgb(vec3 c) {
 	return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - 0.055, step(vec3(0.0031308), c));
 }
@@ -118,10 +109,9 @@ void fragment() {
 			+ band(m.x, wheel_paths.z, 0.35) + band(m.x, wheel_paths.w, 0.35));
 		float v = clamp(0.5 + h / 0.2, 0.0, 1.0);
 		COLOR = vec4(vec3(v), 1.0);
+	} else if (use_albedo) {
+		COLOR = vec4(to_srgb(vec3(albedo)), 1.0);
 	} else {
-		if (use_albedo) {
-			ox = clamp((albedo - albedo_fresh) / (albedo_limit - albedo_fresh), 0.0, 1.0);
-		}
 		vec3 binder = mix(fresh_color, aged_color, ox) * (1.0 + mottle * 0.18) * (0.92 + 0.16 * fines);
 		// Stones show more once the binder film wears off them.
 		float show = 0.08 + 0.45 * ox + 0.4 * ravel;
@@ -133,14 +123,6 @@ void fragment() {
 			// binder greys and the stones show.
 			vec3 fresh = texture(fresh_texture, sp / fresh_texture_m).rgb;
 			col = mix(col, fresh * (1.0 + mottle * 0.12), pow(1.0 - ox, 1.5) * 0.85);
-		}
-		if (use_albedo) {
-			float w = use_fresh_texture ? pow(1.0 - ox, 1.5) * 0.85 : 0.0;
-			vec3 lum = vec3(0.2126, 0.7152, 0.0722);
-			float bl = dot(to_linear(mix(fresh_color, aged_color, ox)), lum);
-			float rl = dot(to_linear(stone_color), lum);
-			float expected = mix(mix(bl, rl, (0.08 + 0.45 * ox) * stone_cover), fresh_texture_reflectance, w);
-			col = to_srgb(clamp(to_linear(col) * albedo / expected, 0.0, 1.0));
 		}
 		// Tyre polish and rubber in the wheel paths; oil and fuel drips down the middle of the lane.
 		col *= 1.0 - 0.10 * clamp(wheel, 0.0, 1.0) * min(surface_age / 3.0, 1.0);

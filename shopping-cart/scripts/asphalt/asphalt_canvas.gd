@@ -82,8 +82,6 @@ func _refresh() -> void:
 			# Without the placeholders the grey is the model's albedo (T2); with them, the old look by age.
 			m.set_shader_parameter("use_albedo", not sim.placeholders)
 			m.set_shader_parameter("albedo", BinderAgeing.ALBEDO_FRESH if sim.placeholders else sim.albedo())
-			m.set_shader_parameter("albedo_fresh", BinderAgeing.ALBEDO_FRESH)
-			m.set_shader_parameter("albedo_limit", BinderAgeing.ALBEDO_LIMIT)
 			m.set_shader_parameter("shoulder", sim.shoulder)
 	queue_redraw()
 

@@ -158,7 +158,8 @@ Steps (one commit each, each with its own check):
 - [x] 3. Surface kinetics and depth: reproduces the chain table (`BinderAgeing`; Burlington surface 0.96 / 1.75 / 2.47 at 1 / 5 / 10 years, Concord 1.05 / 1.97 / 2.74; checks "NCHRP 973 kinetics constants", "binder ageing matches the chain", "binder hardens with age, most at the surface", "a hotter climate ages the binder faster")
 - [x] 4. Binder grade on the build-up; inputs from HPG (PG 64: 0.72, 0.832) (`PavementLayer.binder_hpg`, 64 on the c620 preset; `BinderAgeing.unaged_log_g()`, `susceptibility()`, `for_layer()`; check "binder grade sets the ageing inputs"; lab box added in step 5)
 - [x] 5. Section draws the stiffness gradient (`CrossSectionCanvas`: asphalt shaded paper to grey from unaged binder to log abs(G*) 4.5, 24 bands, under the stipple; PG and top/bottom log abs(G*) in the layer label. The sim takes a `site_climate` (Burlington by default) and caches `binder()` per climate and grade, aged by `surface_age()`, so a placeholder overlay restarts it. Lab: Binder grade PG box. Check "the section's stiffness gradient is the model's")
-- [x] 6. Plan grey from albedo (`BinderAgeing.albedo()`, a_fresh 0.04, a_limit 0.13, p0 0.15; `AsphaltSim.albedo()`. With `placeholders` off the base shader greys the binder by the albedo's progress and scales the surface so its mean linear reflectance is the albedo, white paper being 1; measured on the lab render within 0.007 at 0-30 years. Checks "albedo follows Pomerantz", "the plan is drawn at the model's albedo")
+- [ ] 6. Plan grey from albedo. **Reopened (zack, Nov 27):** the first version greyed a ChatGPT photo and scaled it with two constants measured off our own render; neither is data. Now: `BinderAgeing.albedo()` (a_fresh 0.04, a_limit 0.13, p0 0.15, Pomerantz fig. 1) and `AsphaltSim.albedo()`; with `placeholders` off the plan is drawn **flat** at the albedo as a linear reflectance (white paper = 1), no texture. Checks "albedo follows Pomerantz", "the plan is drawn at the model's albedo". Next: the surface made of what it is made of (6b)
+- [ ] 6b. Surface composition, for review in ASPHALT_SCIENCE.md first: binder (0.05) and exposed aggregate (its measured albedo, Pomerantz Table 1: 0.10-0.28) drawn as stones; exposed fraction from the surface ageing up to the chip-seal ceiling (0.67 +- 0.11 of the aggregate's albedo); stone sizes from the gradation, area fraction from the volume fraction (Delesse). The mean albedo then comes out of the picture and becomes a check. Sources wanted: AASHTO M 323 gradation; binder lightening with oxidation (Gap); aggregate shape (Gap)
 - [ ] 7. Roadmap and science register updated
 
 ### T3 Thermal cracking: Next
@@ -239,7 +240,7 @@ appear only on the distress map's second axis.
 | Pavement temperature T(depth, hour) | C | T2 | T2, T3, T4 | `PavementTemperature` | Built |
 | Binder stiffness log abs(G*)(depth, year) | log kPa (64 C, 10 rad/s) | T2 | T3, T4 (through AMAC), T0 section | `BinderAgeing.log_g()` | Built |
 | Surface ageing p | - (0 to 1) | T2 | T2 albedo | `BinderAgeing.surface_progress()` | Built |
-| Albedo | - (0 to 1) | T2 | T0 plan | `BinderAgeing.albedo()`, `AsphaltSim.albedo()` | Built |
+| Albedo | - (0 to 1) | T2 | T0 plan | `BinderAgeing.albedo()`, `AsphaltSim.albedo()` | Built (drawn flat; composition in 6b) |
 | Slip length Xc | m | T1 | T3 | `AsphaltSimState.slip_length()` | Built |
 | Westergaard radius (wheel spread) | m | T1 | T4 | `AsphaltSimState.wheel_spread()` | Built; replaced in T4 |
 | Mixture modulus and strength (from binder stiffness) | Pa | T3/T4, via AMAC | T3, T4 | not decided | T3 |
@@ -315,4 +316,5 @@ merged before the next topic's thread starts.
 | Nov 27 2026 | T2 | Step 3: surface kinetics and depth (`BinderAgeing`) | a4a8d82 |
 | Nov 27 2026 | T2 | Step 4: binder grade on the build-up, inputs from HPG | 9d2391a |
 | Nov 27 2026 | T2 | Step 5: section draws the stiffness gradient | ef9dad2, e4303ad |
-| Nov 27 2026 | T2 | Step 6: plan grey from albedo | this commit |
+| Nov 27 2026 | T2 | Step 6: plan grey from albedo | 13dba8d |
+| Nov 27 2026 | T2 | Step 6 reopened: photo and scaling out, plan flat at the albedo | this commit |
