@@ -82,7 +82,7 @@ func _update_ui() -> void:
 	_timeline.set_value_no_signal(sim.time)
 	_year.text = "Year %.1f" % sim.time
 	if not sim.placeholders:
-		_stats.text = "Surface %.1f years old.\nSimulated so far: the structure (layers, slip length, wheel spread). No time-driven model is sourced yet, so the road does not age; see docs/ASPHALT_SCIENCE.md." % sim.surface_age()
+		_stats.text = "Surface %.1f years old: binder log |G*| %.2f at the surface, %.2f at 2 cm.\nSimulated so far: the structure (layers, slip length, wheel spread) and the binder ageing (NCHRP 973, drawn in the section). Nothing cracks yet; see docs/ASPHALT_SCIENCE.md." % [sim.surface_age(), sim.binder_log_g(0.0), sim.binder_log_g(0.02)]
 		return
 	var s := sim.stats()
 	_stats.text = "Placeholder models on (not sourced).\nSurface %.1f years old, open cracks %.0f m." % [s.surface_age, s.crack_m]

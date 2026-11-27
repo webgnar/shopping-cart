@@ -454,7 +454,9 @@ func _draw() -> void:
 	draw_string(font, Vector2(bx + sx + 24.0, by), "50 mm", HORIZONTAL_ALIGNMENT_LEFT, -1, FONT - 1, ink)
 	draw_string(font, Vector2(MARGIN.x, size.y - 22.0), "SECTION A-B", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, ink)
 	draw_string(font, Vector2(MARGIN.x + 1.0, size.y - 22.0), "SECTION A-B", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, ink)
-	draw_string(font, Vector2(MARGIN.x, size.y - 9.0), "Across the road at %.2f m, year %.1f.  %s.  Depth drawn %.0fx.  Asphalt grey by binder stiffness (NCHRP 973)." % [
+	draw_string(font, Vector2(MARGIN.x + 110.0, size.y - 22.0), "Asphalt grey by binder stiffness, log |G*| %.1f (paper) to 4.5 (NCHRP 973)."
+		% sim.binder().log_g0, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT, ink)
+	draw_string(font, Vector2(MARGIN.x, size.y - 9.0), "Across the road at %.2f m, year %.1f.  %s.  Depth drawn %.0fx." % [
 		cut_y, sim.time, b.title, exag], HORIZONTAL_ALIGNMENT_LEFT, -1, FONT, ink)
 
 
