@@ -516,6 +516,181 @@ studies (Levinson and Akbari, LBNL: simulated weathering, soiling and abrasion c
 -0.06, -0.05 and -0.19), which are not our material and are not used. NCAT names winter maintenance (sand, salt)
 as a possible factor, without numbers.
 
+## Model 2: thermal cracking (proposal for review; T3)
+
+**Status: written up from the sources below; not yet checked in Python; no code.** Every number quoted is from
+the report named next to it; "derived" marks our own algebra on a sourced equation; gaps are listed at the end.
+
+### Sources, and what each gives
+
+| Source (References/Asphalt) | Read for | What T3 takes |
+|---|---|---|
+| Li, Marasteanu, Dai, Lukanen 2005 (`li_marasteanu_2005_...`) | all | Frictional constraint model, eqs. 2 and 4; Jones's alpha, eq. 3; MnROAD cells 18, 21, 22 (Tables 1, 2, 4, 5); TCMODEL predicted no cracking there (Table 3) |
+| Marasteanu et al. 2007, Mn/DOT 2007-43, "Investigation of Low Temperature Cracking in Asphalt Pavements", pooled fund study (`mndot_2007-43_...`, filed this thread) | ch. 2 (TC model, alpha), ch. 3-6 (mixes, IDT, TSRST, dilatometry), ch. 9 (TCMODEL against field) | TCMODEL as implemented (eqs. 22-40); a measured low-temperature data set for a PG 64-22 mix; MnROAD field cores; TCMODEL's field record |
+| Von Quintus et al. 2024, MassDOT 24-067, Pavement ME calibration phase III (`massdot_2024_...`, filed) | ch. 5.1 | The current transverse cracking equations and the 2018 global calibration (eqs. 12-17) |
+| Kim et al. 2021, NCHRP 973, ch. 6 (`Long-Term Aging ... Phase III ...`) | ch. 6 in full | AMAC: binder log abs(G\*) change to a shift of the mix's modulus master curve (eqs. 37, 51) |
+| Chen et al. 2022 (`chen_...`) | all | Halving of spacing, eqs. 14-15 (mean = 3/4 of the largest uncracked spacing); shear-lag stress, eq. 7; measured asphalt alpha 15-22 x 10^-6/C (Table 2) |
+| Bohn et al. 2005; Shorlin et al. 1999 | all | Cracks one at a time, each dividing a domain near its middle, meeting older cracks at 90 deg; spacing proportional to thickness, larger on a slipperier base |
+| FHWA-HRT-16-084 (2019), LTPP environmental factors (`fhwa_2019_...`, filed) | ch. 1 | Mechanisms named (cold events, repeated cycles with oxidation, long-term shrinkage); widths grow over time; no rates |
+
+### What it predicts
+
+When and where transverse cracks open in a winter, how far down they go, their spacing as the road ages, and the
+seasonal opening of each crack. Not the LTPP severity growth over the years (Gap, below).
+
+### How the sources disagree, and the choice proposed
+
+**The MEPDG thermal cracking model (TCMODEL)** (Hiltunen and Roque 1994, as restated in Mn/DOT 2007-43 ch. 2 and
+MassDOT 24-067 ch. 5.1; the primary text, NCHRP 1-37A Appendix HH, is Wanted):
+1. Thermal stress: the mix's coefficient of contraction (Jones et al. 1968, Mn/DOT eq. 22:
+   alpha_mix = (VMA B_AC + V_agg B_agg) / (3 x 100), B_AC = 3.45 x 10^-4 /C volumetric for every binder),
+   creep compliance from IDT tests at -20, -10 and 0 C fitted to a master curve (eqs. 24-27), converted to a
+   relaxation modulus (eqs. 28-29), and the 1D hereditary integral solved by the Soules recursion (eqs. 30-32).
+2. Crack growth: K_I = sigma (0.45 + 1.99 C0^0.56) (eq. 33), Paris law Delta C = A Delta K^n per daily cycle
+   (eqs. 34-35), n = 0.8 (1 + 1/m) (eq. 38), A = 10^(kt beta_t (4.389 - 2.52 log(E sigma_m n))) (MassDOT eq. 15).
+   The layer is split in four sublayers and a crack crosses at most one per day, so four severe days make one
+   full-depth crack (Li and Marasteanu p. 4).
+3. Amount: TC = beta_t1 N(log(C_d / h_ac) / sigma_d) (MassDOT eq. 17), sigma_d = 0.769, beta_t1 = 400.
+   **The units, checked by arithmetic:** a crack is counted only at full depth, where N(0) = 0.5, so the model
+   gives at most 200 of beta_t1's 400. Mn/DOT 2007-43 says the output is ft per 500 ft and that the model "does not
+   predict more than 50 % of the total possible amount" with a minimum spacing of 15 ft: 400 ft per 500 ft is a
+   full 12 ft lane crack every 15 ft, so beta_t1 is in ft per 500 ft. MassDOT and the Missouri report label TC ft/mi
+   with the same 400; the software converts somewhere, which only Appendix HH or the Manual of Practice can settle.
+4. Calibration has moved: k = 10,000 and beta = 353.5 (Mn/DOT 2007-43 ch. 2, restating the 2004 guide); a level
+   factor 1.0 / 6.0 (version 0.964, Mn/DOT ch. 9); kt per input level, beta_t1 = 400 (2015 manual, Missouri report);
+   **2018 global: kt = 3 x 10^-7 MAAT^4.0317 for MAAT < 57 F** (MassDOT eq. 16), added because the event-based
+   model never predicted cracks in mild climates, where they occur (MassDOT p. 31). Burlington, MAAT 47.6 F from
+   the NOAA normals: kt = 1.74.
+
+Its record: at level 3 it predicted **no** cracking in MnROAD cells 18, 21 and 22, which cracked at 4.8-8.2 m
+(Li and Marasteanu Tables 3, 5); in Mn/DOT 2007-43 (Table 9.1, version 0.964, ft per 500 ft) it was close on MnROAD 03 (192 against 182) and
+34 (0-7 against 6), off by 2-4x on 33, capped below cell 19's observed 547, missed 35 and overpredicted three
+other sections. The Mn/DOT authors call the Paris law step "the weakest link". **It gives an amount
+(length per section), not positions, spacing or widths,** and it saturates at a 9 m spacing (15 ft at the 400
+ceiling).
+
+**The frictional constraint model** (Timm 2001 via Li and Marasteanu): a crack forms at once where the thermal stress
+reaches the mix's strength; friction and cohesion on the base rebuild the stress over the slip length
+Xc = sigma_t / (C/h + rho g tan phi) (eq. 4) from each free end; spacing 1.5 Xc. Against MnROAD it predicts
+spacing about 2x too wide; the authors trace that to base properties measured warm (frozen cohesion is larger;
+1.5-2x would match), and it doesn't tell the driving lane from the passing one.
+
+**Proposed for the picture: TCMODEL's stress calculation (part 1, mechanics) with the frictional constraint
+model's strength criterion and spacing. TCMODEL's Paris law, crack amount and calibration (parts 2-3) are left
+out.** Reasons: the picture needs positions and spacing, which only the frictional model gives; MnROAD's cracks
+formed mostly in one winter at -39 C (Li and Marasteanu p. 4), which a strength criterion describes and the
+four-sublayer rule cannot; parts 2-3 depend on an empirical kt that changed four times. The TCMODEL amount stays
+as a cross-check in the Python run (ft per 500 ft against our crack count), not as a driver. **zack's call.**
+
+### Equations of the proposal
+
+1. **Contraction coefficient, measured.** Mn/DOT 2007-43 dilatometry (eq. in ch. 6, from Bahia et al.):
+   v = c_v + alpha_g (T - Tg) + R (alpha_l - alpha_g) ln(1 + exp((T - Tg)/R)),
+   a two-slope strain-temperature curve: alpha_l above the glass transition Tg, alpha_g below. (The report's
+   definitions after the equation in ch. 5 swap the two; its ch. 2 and ch. 7 text and every table put the larger
+   coefficient, alpha_l, above Tg, as physics requires. We read it that way.) Jones's volumetric estimate
+   (Li and Marasteanu eq. 3) is kept as a cross-check only: it is one number with no Tg.
+2. **Creep compliance and relaxation of the unaged mix** (TCMODEL part 1, Mn/DOT eqs. 24-29): D(xi), xi = t / aT,
+   from IDT creep at three temperatures; Prony series to E(xi).
+3. **Ageing: AMAC** (NCHRP 973 eq. 51, Level 2): log aA = c (log abs(G\*)_aged - log abs(G\*)_STA), both at 64 C
+   and 10 rad/s, **c = 1.71** (the universal value; per-mix c ran 1.00-2.43, Table 21). The aged mix at depth z and
+   age t relaxes like the unaged mix at reduced time xi = t / (aT aA). Delta log abs(G\*) is exactly what T2 gives:
+   `BinderAgeing.log_g(z, t) - log_g0` (PAM's log abs(G\*)_0 is the short-term-aged value, which AMAC's reference
+   is). The temperature shift aT stays the unaged one (AMAC's stated assumption, p. 105).
+4. **Thermal stress, fully restrained, through the depth** (Mn/DOT eqs. 30-32, Soules recursion):
+   sigma_i(t) = e^(-Delta xi / lambda_i) sigma_i(t - Delta t) + Delta epsilon E_i (lambda_i / Delta xi)(1 - e^(-Delta xi / lambda_i)),
+   sigma = sum sigma_i, Delta epsilon = alpha(T) Delta T, with T(z, hour) from T2's `PavementTemperature`.
+5. **Initiation, by strength.** A crack forms in a segment when the stress at its middle reaches the strength:
+   sigma(z, t) >= sigma_t at the surface. It goes down to the depth where sigma(z, t) falls below sigma_t (the
+   colder, stiffer, more aged top cracks first; later events can deepen it). A crack at full depth is a transverse
+   crack in the LTPP sense.
+6. **Where: spacing by halving (derived, linking Li and Chen).** From a free end, friction builds the stress at
+   C/h + rho g tan phi per metre (Li eq. 4), so in a segment of length L between two cracks the stress at its
+   middle is at most (L/2)(C/h + rho g tan phi). A new crack forms at the middle (Bohn: nucleation near the
+   domain's centre; Shorlin: in the middle of segments where the stress is highest) only if the restrained
+   stress reaches sigma_t **and** L >= 2 Xc. Segments therefore end between Xc and 2 Xc long; halving from 2 Xc gives
+   Chen's mean of 3/4 x 2 Xc = **1.5 Xc, the same factor Li and Marasteanu use**: the two papers agree.
+   Order of cracking: cracks don't all appear in the first cold snap. Each segment gets its own strength, drawn
+   from the measured scatter (IDT strength CV mostly 2-19 % on MnROAD cores, Mn/DOT Table 6.14: an assumption that
+   specimen scatter stands for scatter along the road), so the weakest crack first and more follow as the binder
+   ages and colder winters come. When C/h dominates (here 815 against 29 kPa/m), Xc ~ sigma_t h / C: spacing in
+   proportion to thickness, as Bohn and Shorlin found in their layers.
+7. **Seasonal opening (derived, a mechanics consequence of eq. 6; no field source yet).** A segment of length L
+   between two cracks, cooled by Delta T below its stress-free state, closes its gap by the free shrinkage less
+   what friction holds back: w = alpha Delta T L - (C/h + rho g tan phi) L^2 / (4E) for L/2 below the slip
+   distance. For L = 4 m, alpha 2 x 10^-5, Delta T 40 C: w ~ 3.2 mm, the friction term about 0.2 micrometre. That is
+   low severity at the coldest, and it closes in summer. It is not the permanent widening LTPP grades (Gap).
+
+### Inputs, and where they come from
+
+| Input | Value proposed (source) | Arrives from |
+|---|---|---|
+| Pavement temperature T(z, hour) | `PavementTemperature` (FHWA-RD-97-103 eqs. 7, 8) | T2, built |
+| Binder log abs(G\*)(z, year) | `BinderAgeing.log_g()` | T2, built |
+| **Daily air minimum, year by year** | NOAA GHCN-Daily for the site (or the LTPP section's weather) | **New input (climate).** The normals T2 uses make Burlington's coldest surface -8.4 C: never cold enough to crack anything (TSRST fracture of the reference mix: -25.9 C). Thermal cracking is set by the extremes (MnROAD: one -39 C winter). Needs a row in the shared quantities table, agreed in the hub |
+| Contraction coefficient: Tg, alpha_g, alpha_l | PG 64-22 granite lab mix "64-22:U1:4:GR": Tg -27.9 C, alpha_g 10.95, alpha_l 33.20 x 10^-6 /C (Mn/DOT Table 6.19, cooling). For the AC-20 binder of the build-up: MnROAD cell 19 core: -15.3 C, 13.26, 38.60 (Table 6.22, one specimen) | New input on the asphalt layer |
+| Unaged creep compliance (creep stiffness 1/D) | 64-22:U1:4:GR, Table 6.5, simple averages: 0 C 3.17 / 1.18 GPa, -12 C 10.24 / 5.55 GPa, -24 C 23.87 / 18.32 GPa at 60 / 500 s | New input on the asphalt layer (a master curve fitted to these six points: the Python check) |
+| Strength sigma_t | Proposed: the TSRST fracture stress of the same mix, 2.82 and 3.02 MPa at -26.8 and -25.0 C, 10 C/h (Table 6.17): measured under restrained cooling, the load the model describes. IDT at 12.5 mm/min for comparison: 4.16 / 5.98 / 6.28 MPa at 0 / -12 / -24 C (Table 6.6) | Replaces the build-up's 2.27 MPa (cell 18 IDT at a slow rate, Li Table 4), which T1's slip length uses: **one owner for sigma_t, agreed in the hub** |
+| Strength scatter | CV mostly 2-19 %, one 38 % (Mn/DOT Table 6.14, field cores) | Assumption, stated |
+| h, rho, C, tan phi; Xc | build-up; `AsphaltSimState.slip_length()` (2.69 m now; 3.46 m with sigma_t 2.92 MPa) | T1, built |
+| AMAC c | 1.71 (NCHRP 973, Level 2) | constant |
+
+The reference mix (12.5 mm Superpave, PG 64-22, granite, 6.0 % binder, 4 % air) is not cell 18's Marshall mix;
+it is the closest complete data set in hand to the build-up's binder grade. Cell 19's cores (AC-20, the
+build-up's binder, aged about 12 years) give alpha and aged creep and strength for comparison, not an unaged curve.
+
+### What it drives
+
+- **Plan:** transverse cracks across each lane at the segment middles, appearing in the winters where they form;
+  their opening drawn at the season shown (eq. 7). Paths still follow the crack-geometry rules already in the
+  code (Bohn, Shorlin: 90 deg junctions).
+- **Section:** at a cut crossing a crack, the crack from the surface down to its depth (eq. 5); full depth once
+  through.
+- **Distress map:** transverse cracks (ACP 6) counted and measured; severity stays low until widening has a source.
+
+### Checks (the Python run, next step)
+
+1. **TSRST:** cool the reference mix at 10 C/h, fully restrained (eqs. 1, 2, 4): the stress reaches the measured
+   2.92 MPa near the measured -25.9 C (Table 6.17). This tests alpha, the master curve and the stress recursion
+   together, against data not used to fit them.
+2. Jones's eq. 3 with cell 18's volumetrics against Li and Marasteanu's 1.862 x 10^-5 /C, and against the measured
+   two-slope curve.
+3. Li and Marasteanu Table 4 reproduced: Xc 6.7 / 5.9 / 7.0 m for cells 18 / 21 / 22.
+4. The halving rule with strength scatter gives a mean spacing near 1.5 Xc and a spread to compare with
+   MnROAD's (cell 18 driving lane 15.8 +- 7.35 ft, Li Table 2; their table says ft and Table 5 confirms it).
+5. Ageing: the restrained-cooling fracture temperature warms with T2's log abs(G\*) at 1, 5, 10, 20 years
+   (Burlington, surface and 2 cm): an aged layer cracks at a milder cold (roadmap check "a more aged binder
+   cracks sooner").
+6. Climate: with the normals nothing cracks; with a daily record the first cracks come in the coldest winters,
+   more in a colder site (roadmap check "a colder climate gives more thermal cracks").
+7. TCMODEL's amount for the same run (eqs. 33-40 with kt 1.74) beside our count, to show the difference.
+
+### Not in it, and gaps
+
+- **Crack widening over the years (LTPP L/M/H): Gap.** No source with rates found. FHWA-HRT-16-084 (p. 9) says widths
+  of shrinkage cracks "continually increase over time" and reach 1 in in Arizona and Utah; Alaskan instrumented
+  cracks stayed constant or closed slowly (AK-RD-86-26, not reachable from this session). Needed: LTPP yearly
+  transverse crack counts by severity (InfoPave, blocked) or a field width study.
+- **Block cracking: not predicted.** The same criterion across a lane: a longitudinal crack needs half the lane
+  width to reach Xc; 3.65 m / 2 = 1.83 m < 2.69 m, so no longitudinal thermal crack forms inside a lane of the
+  default build-up. LTPP ties block cracking to shrinkage and daily cycling of an aged mix; no model in hand. Gap.
+- **Strength ageing: Gap.** AMAC gives the modulus and fatigue (S-VECD) properties, **not strength** (the roadmap
+  said strength: corrected). Held at the unaged value. Cell 19's aged cores (4.67 / 4.22 / 3.86 MPa at -12 / -24 /
+  -36 C, IDT 12.5 mm/min) only bound it.
+- **AMAC at low temperature: an extrapolation.** It was fitted at 4-40 C, with the Hirsch-limited sigmoid
+  underestimating the modulus at the cold end (NCHRP 973 p. 82, 105); here it shifts creep compliance at 0 to -30 C.
+- **Frozen base:** C and tan phi are room-temperature values (Li and Marasteanu: frozen cohesion larger). Gap.
+- **The paving joint** (the centreline) as a weak plane, its own strength: Gap.
+- **Driving against passing lane** (traffic shortens the spacing, Li and Marasteanu Fig. 2): not modelled (T4).
+- **Long-term shrinkage in mild climates** (the reason for the 2018 kt): out of scope until sourced.
+- **Semi-rigid bases** (Chen's subject: cement- or lime-treated base cracking and reflecting): out of scope.
+
+**Wanted (blocked from this session; zack to file in References/Asphalt if he can get them):**
+`nchrp_1-37a_2004_appendix_hh_thermal_cracking.pdf` (onlinepubs.trb.org/onlinepubs/archive/mepdg/2appendices_HH.pdf:
+TCMODEL's calibration and the level 3 creep and strength correlations), NCHRP 1-37A Part 3 ch. 3 (same site);
+the AASHTO MEPDG Manual of Practice (2020, paywalled); Hiltunen and Roque 1994 and Jones et al. 1968 (AAPT,
+paywalled); Alaska DOT AK-RD-86-26 (crack widths; host refused).
+
 ## Next steps
 
 The roadmap (`docs/ASPHALT_ROADMAP.md`) is the tracker; this list is kept short.
