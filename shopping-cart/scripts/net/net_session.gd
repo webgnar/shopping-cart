@@ -793,6 +793,11 @@ func _guest_receive(packet: PackedByteArray) -> void:
 				var game := get_tree().get_first_node_in_group("cart_ball")
 				if game and game.has_method("apply_state"):
 					game.apply_state(b)
+		NetProtocol.Msg.COLLECT:
+			if b.get_u8() == level_serial and level and is_instance_valid(level):
+				var game := get_tree().get_first_node_in_group("cart_collect")
+				if game and game.has_method("apply_state"):
+					game.apply_state(b)
 
 
 func _load_level(serial: int, bodies: int, path: String) -> void:

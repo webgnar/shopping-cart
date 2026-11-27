@@ -54,6 +54,15 @@ of this to work on how the cart drives.
   Red... kicking off from the arena's `GreenSpots` / `RedSpots`; the Red bots play only while no player is on Red
   (else they wait at `Bench`). The host runs the match and sends it to guests (BALL message); the replay moves the
   real bodies on the host, so guests see it through the snapshots.
+- `scenes/levels/cart_collect_lot.tscn` (console `collect`) — cart collection, a 5 minute round in the 90 degree
+  lot (it inherits `lot90.tscn`) with 30 loose carts scattered under `Carts` and the parking lot's store front along
+  the -X edge. Ram a cart from behind and it nests onto the front of yours (the ordinary nest physics); push the chain
+  into the store's CART RETURN door (`scenes/collect/cart_door.tscn`): your cart stops at its `DropSensor` (the
+  `StopBar` behind it holds back every cart but the loose ones), the carts you were pushing let go, roll on `Inside`
+  and cash in, then stand in rows in the store room. A drop of n carts scores 10 for the first and 5 more for each one
+  after (10, 15, 20...). The round is `scenes/collect/cart_collect.tscn` (`scripts/collect/cart_collect.gd`, HUD
+  `scenes/ui/collect_hud.tscn`, the sweep's HUD with its own captions). The store front's one solid block is swapped
+  for shapes around the opening in the level. Multiplayer: the host runs it (COLLECT message), every guest plays.
 - `scenes/levels/downhill_highway.tscn` (console `downhill`; `race downhill` races it) — a 600 m dead-straight two-lane
   highway down a grassy canyon at 30 %, Jersey barriers both sides, for multiplayer races (players only, no
   bots). The road is CSGPolygon3D cross-sections swept along the `Road` Path3D; after editing it re-bake the collision
@@ -123,5 +132,8 @@ From `shopping-cart/`:
 - Cart Ball (console `ball`, kickoff hold, bots score and keep goal, replay and skip, ball pushed, goals both ends, no-goal on the line, out of bounds, first to five): `godot --headless --fixed-fps 120 -s res://tests/cart_ball_test.gd`
 - Cart Ball multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/cart_ball_multiplayer_test.gd`
 - Cart Ball screenshots: `xvfb-run godot --rendering-method gl_compatibility -s res://tests/cart_ball_screenshot.gd -- <out dir>`
+- Cart collection (console `collect`, count, nest two carts, drop at the door, points, can't drive in, time's up): `godot --headless --fixed-fps 120 -s res://tests/cart_collect_test.gd`
+- Cart collection multiplayer, host plus a second Godot as guest (real time, no --fixed-fps): `godot --headless -s res://tests/cart_collect_multiplayer_test.gd`
+- Cart collection screenshots: `xvfb-run godot --rendering-method gl_compatibility --fixed-fps 120 -s res://tests/cart_collect_screenshot.gd -- <out dir>`
 - Asphalt lab (ageing, crack types, repairs, replay): `godot --headless -s res://tests/asphalt_test.gd`
 - Asphalt lab screenshots (stages, close-ups, height maps): `xvfb-run godot --rendering-method gl_compatibility -s res://tests/asphalt_screenshot.gd -- <out dir>`

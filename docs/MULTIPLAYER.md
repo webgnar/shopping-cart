@@ -30,7 +30,7 @@ Connection setup (phase 1-2):
 Gameplay:
   Guest <======== WebRTC data channels (direct UDP, or Cloudflare TURN) ========> Host
           "state": unordered, no retransmits   -> INPUT (guest), SNAPSHOT (host)
-          "control": reliable, ordered          -> HELLO / WELCOME / LEVEL / RESET / LEFT / RACE / SWEEP / BALL
+          "control": reliable, ordered          -> HELLO / WELCOME / LEVEL / RESET / LEFT / RACE / SWEEP / BALL / COLLECT
 ```
 
 | Design doc piece | Here |
@@ -112,6 +112,14 @@ and runs every rule. BALL (protocol version 8) carries the phase, the clock, the
 player's team; it goes out on every change and twice a second. The ball and the bots' carts are level bodies, and the
 goal replay moves the real bodies on the host, so the snapshots show the replay on every screen; guests switch to the
 replay camera while the phase says so.
+
+**Cart collection.** The same pattern (the console's `collect`, `scripts/collect/cart_collect.gd`): the host puts the
+loose carts back on their spots, lines everyone up at the store, waits for the guests, counts, and runs every rule
+(which carts are nested on the front of each player's cart, the drop at the door, cashing in, the points). The loose
+carts are level bodies, so the snapshots show every chain on every screen. COLLECT (protocol version 9) carries the
+phase, the clock, every player's points, carts returned, longest chain and the carts they are pushing now, and pop-ups
+for a guest's own drops ("+15  cart returned"); it goes out on every change and twice a second. Guests who join
+mid-round get a cart and play on.
 
 ## Phases
 

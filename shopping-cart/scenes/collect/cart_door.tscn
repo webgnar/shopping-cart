@@ -1,0 +1,104 @@
+[gd_scene format=3]
+
+[ext_resource type="PhysicsMaterial" path="res://assets/physics/solid.tres" id="1_solid"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sensor"]
+size = Vector3(0.4, 1.4, 2.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_inside"]
+size = Vector3(11.5, 2.4, 11.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_stop_bar"]
+size = Vector3(0.1, 1.2, 2.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dark"]
+shading_mode = 0
+albedo_color = Color(0.035, 0.04, 0.05, 1)
+
+[sub_resource type="QuadMesh" id="QuadMesh_void"]
+material = SubResource("StandardMaterial3D_dark")
+size = Vector2(3.0, 3.3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_paint"]
+albedo_color = Color(0.93, 0.76, 0.16, 1)
+roughness = 0.85
+
+[sub_resource type="BoxMesh" id="BoxMesh_bay_line"]
+material = SubResource("StandardMaterial3D_paint")
+size = Vector3(5.0, 0.01, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_stop_line"]
+material = SubResource("StandardMaterial3D_paint")
+size = Vector3(0.3, 0.01, 2.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sign"]
+albedo_color = Color(0.11, 0.33, 0.62, 1)
+roughness = 0.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_sign"]
+material = SubResource("StandardMaterial3D_sign")
+size = Vector3(0.08, 0.55, 2.6)
+
+[node name="CartDoor" type="Node3D"]
+
+[node name="DropSensor" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="Shape" type="CollisionShape3D" parent="DropSensor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, 0.7, 0)
+shape = SubResource("BoxShape3D_sensor")
+
+[node name="Inside" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+monitorable = false
+
+[node name="Shape" type="CollisionShape3D" parent="Inside"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.25, 1.2, 0)
+shape = SubResource("BoxShape3D_inside")
+
+[node name="StopBar" type="StaticBody3D" parent="."]
+physics_material_override = ExtResource("1_solid")
+collision_mask = 0
+
+[node name="Shape" type="CollisionShape3D" parent="StopBar"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 0.65, 0)
+shape = SubResource("BoxShape3D_stop_bar")
+
+[node name="StoreRoom" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 0, -5.2)
+
+[node name="Doorway" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.08, 1.65, 0.15)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_void")
+
+[node name="BayLineLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0.006, -1.26)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_bay_line")
+
+[node name="BayLineRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0.006, 1.26)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_bay_line")
+
+[node name="StopLine" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0.006, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_stop_line")
+
+[node name="Sign" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.6, 3.05, 0)
+mesh = SubResource("BoxMesh_sign")
+
+[node name="SignText" type="Label3D" parent="."]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.65, 3.05, 0)
+pixel_size = 0.004
+double_sided = false
+modulate = Color(0.97, 0.97, 0.95, 1)
+text = "CART RETURN"
+font_size = 96
+outline_size = 0

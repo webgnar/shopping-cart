@@ -1,0 +1,28 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/ui/sweep_hud.tscn" id="1_sweep_hud"]
+[ext_resource type="Script" path="res://scripts/ui/collect_hud.gd" id="2_chud"]
+
+[node name="CollectHUD" instance=ExtResource("1_sweep_hud")]
+script = ExtResource("2_chud")
+
+[node name="Clock" parent="." index="0"]
+text = "5:00"
+
+[node name="Caption" parent="Basket/Rows" index="0"]
+text = "POINTS"
+
+[node name="Total" parent="Basket/Rows" index="1"]
+text = "0"
+
+[node name="Detail" parent="Basket/Rows" index="2"]
+text = "0 carts returned"
+
+[node name="Title" parent="Results/Rows" index="0"]
+text = "TIME'S UP"
+
+[node name="Table" parent="Results/Rows" index="1"]
+text = "1st  You      120 pts  9 carts"
+
+[node name="Hint" parent="Results/Rows" index="2"]
+text = "Open the console (~) and type collect to go again"

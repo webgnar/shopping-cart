@@ -39,12 +39,18 @@ extends RefCounted
 ##                                          or with no time limit time played), f32 time limit s (0: none), u8 Green
 ##                                          goals, u8 Red goals, u8 last scorer (CartBall.Team), u8 goals to win,
 ##                                          u8 players, per player: i32 id, u8 team (CartBall.Team)
+##   COLLECT   host -> guests reliable    u8 level serial, u8 phase (CartCollect.Phase: 0 idle, 1 waiting for guests,
+##                                          2 counting down, 3 collecting, 4 over), f32 clock (counting down: s to
+##                                          GO; collecting: s left), f32 round length s, u8 players, per player:
+##                                          i32 id, u32 points, u16 carts returned, u16 longest chain, u16 carts
+##                                          it is pushing now, str name; u8 events, per event: i32 player id,
+##                                          str text (that player's pop-up)
 ## A snapshot too big for one packet is sent as several, each a complete SNAPSHOT for the same tick.
 
-const VERSION := 8
+const VERSION := 9
 ## Bump VERSION whenever a message changes, so old and new builds refuse each other cleanly.
 
-enum Msg { HELLO = 1, WELCOME, REJECT, LEVEL, INPUT, RESET, SNAPSHOT, LEFT, RACE, SWEEP, BALL }
+enum Msg { HELLO = 1, WELCOME, REJECT, LEVEL, INPUT, RESET, SNAPSHOT, LEFT, RACE, SWEEP, BALL, COLLECT }
 
 const POSE_BYTES := 28
 

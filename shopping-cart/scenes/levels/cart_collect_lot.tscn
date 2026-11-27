@@ -1,0 +1,160 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/levels/lot90.tscn" id="1_lot90"]
+[ext_resource type="PackedScene" path="res://scenes/props/parking_lot/store_front.tscn" id="2_store"]
+[ext_resource type="PackedScene" path="res://scenes/collect/cart_door.tscn" id="3_door"]
+[ext_resource type="PackedScene" path="res://scenes/collect/cart_collect.tscn" id="4_collect"]
+[ext_resource type="PackedScene" path="res://scenes/cart/spare_cart.tscn" id="5_spare"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_DoorSideNorthShape"]
+size = Vector3(22.95, 7, 12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_DoorSideSouthShape"]
+size = Vector3(25.05, 7, 12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_DoorFrontNorthShape"]
+size = Vector3(4.8, 7, 0.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_DoorFrontSouthShape"]
+size = Vector3(4.8, 7, 0.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_DoorLintelShape"]
+size = Vector3(2.4, 4.45, 0.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_StoreRoomBackShape"]
+size = Vector3(12, 7, 0.5)
+
+[node name="CartCollectLot" instance=ExtResource("1_lot90")]
+
+[node name="CartSpawn" parent="." index="1"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0, -0.7)
+
+[node name="StoreFront" parent="." instance=ExtResource("2_store")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -5, -0.15, 1.05)
+
+[node name="BuildingShape" parent="StoreFront" index="1"]
+disabled = true
+
+[node name="DoorSideNorthShape" type="CollisionShape3D" parent="StoreFront"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.525, 3.5, -10)
+shape = SubResource("BoxShape3D_DoorSideNorthShape")
+
+[node name="DoorSideSouthShape" type="CollisionShape3D" parent="StoreFront"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.475, 3.5, -10)
+shape = SubResource("BoxShape3D_DoorSideSouthShape")
+
+[node name="DoorFrontNorthShape" type="CollisionShape3D" parent="StoreFront"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.65, 3.5, -4.25)
+shape = SubResource("BoxShape3D_DoorFrontNorthShape")
+
+[node name="DoorFrontSouthShape" type="CollisionShape3D" parent="StoreFront"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55, 3.5, -4.25)
+shape = SubResource("BoxShape3D_DoorFrontSouthShape")
+
+[node name="DoorLintelShape" type="CollisionShape3D" parent="StoreFront"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.05, 4.775, -4.25)
+shape = SubResource("BoxShape3D_DoorLintelShape")
+
+[node name="StoreRoomBackShape" type="CollisionShape3D" parent="StoreFront"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.05, 3.5, -15.75)
+shape = SubResource("BoxShape3D_StoreRoomBackShape")
+
+[node name="CartDoor" parent="." instance=ExtResource("3_door")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, 0)
+
+[node name="CartCollect" parent="." node_paths=PackedStringArray("carts", "door") instance=ExtResource("4_collect")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0, 0)
+carts = NodePath("../Carts")
+door = NodePath("../CartDoor")
+
+[node name="Carts" type="Node3D" parent="."]
+
+[node name="Cart1" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.686092, 0, -0.727515, 0, 1, 0, 0.727515, 0, -0.686092, 16.54, 0.005, 12.72)
+
+[node name="Cart2" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.0996308, 0, -0.995024, 0, 1, 0, 0.995024, 0, 0.0996308, 4.91, 0.005, -13.76)
+
+[node name="Cart3" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.414776, 0, 0.909924, 0, 1, 0, -0.909924, 0, 0.414776, 46.56, 0.005, 13.35)
+
+[node name="Cart4" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.79916, 0, 0.601119, 0, 1, 0, -0.601119, 0, 0.79916, 42.91, 0.005, -14.15)
+
+[node name="Cart5" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.194849, 0, 0.980833, 0, 1, 0, -0.980833, 0, -0.194849, 29.89, 0.005, 14.53)
+
+[node name="Cart6" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.847892, 0, -0.530169, 0, 1, 0, 0.530169, 0, 0.847892, 41.84, 0.005, 8.52)
+
+[node name="Cart7" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.245663, 0, -0.969355, 0, 1, 0, 0.969355, 0, -0.245663, 47.72, 0.005, -13.91)
+
+[node name="Cart8" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.844539, 0, -0.535494, 0, 1, 0, 0.535494, 0, -0.844539, 15.32, 0.005, -16.08)
+
+[node name="Cart9" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.966003, 0, -0.25853, 0, 1, 0, 0.25853, 0, 0.966003, 54.73, 0.005, -6.91)
+
+[node name="Cart10" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.6298, 0, -0.776757, 0, 1, 0, 0.776757, 0, 0.6298, 53.07, 0.005, -12.27)
+
+[node name="Cart11" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.973254, 0, 0.22973, 0, 1, 0, -0.22973, 0, 0.973254, 16.08, 0.005, 15.96)
+
+[node name="Cart12" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.961579, 0, -0.274529, 0, 1, 0, 0.274529, 0, 0.961579, 11.21, 0.005, -4.44)
+
+[node name="Cart13" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.392551, 0, 0.91973, 0, 1, 0, -0.91973, 0, -0.392551, 46.41, 0.005, -9.83)
+
+[node name="Cart14" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.697357, 0, -0.716724, 0, 1, 0, 0.716724, 0, -0.697357, 14.90, 0.005, 5.38)
+
+[node name="Cart15" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.29351, 0, 0.955956, 0, 1, 0, -0.955956, 0, 0.29351, 26.42, 0.005, 13.88)
+
+[node name="Cart16" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.194849, 0, 0.980833, 0, 1, 0, -0.980833, 0, -0.194849, 23.18, 0.005, 9.14)
+
+[node name="Cart17" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.468157, 0, 0.883645, 0, 1, 0, -0.883645, 0, -0.468157, 34.23, 0.005, 12.89)
+
+[node name="Cart18" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.477666, 0, 0.878541, 0, 1, 0, -0.878541, 0, 0.477666, 26.43, 0.005, -14.21)
+
+[node name="Cart19" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.465238, 0, 0.885186, 0, 1, 0, -0.885186, 0, -0.465238, 49.21, 0.005, -1.77)
+
+[node name="Cart20" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.812194, 0, -0.583387, 0, 1, 0, 0.583387, 0, -0.812194, 31.79, 0.005, 2.61)
+
+[node name="Cart21" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.601196, 0, 0.799102, 0, 1, 0, -0.799102, 0, 0.601196, 8.57, 0.005, 9.62)
+
+[node name="Cart22" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.728546, 0, -0.684997, 0, 1, 0, 0.684997, 0, 0.728546, 31.81, 0.005, -10.29)
+
+[node name="Cart23" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.45289, 0, 0.891567, 0, 1, 0, -0.891567, 0, -0.45289, 33.62, 0.005, -2.44)
+
+[node name="Cart24" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.049883, 0, 0.998755, 0, 1, 0, -0.998755, 0, -0.049883, 25.00, 0.005, 4.08)
+
+[node name="Cart25" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.822108, 0, -0.569332, 0, 1, 0, 0.569332, 0, -0.822108, 21.14, 0.005, 12.26)
+
+[node name="Cart26" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.586715, 0, -0.809793, 0, 1, 0, 0.809793, 0, 0.586715, 3.09, 0.005, 7.63)
+
+[node name="Cart27" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.960779, 0, 0.277317, 0, 1, 0, -0.277317, 0, 0.960779, 24.93, 0.005, -1.99)
+
+[node name="Cart28" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.224572, 0, -0.974458, 0, 1, 0, 0.974458, 0, -0.224572, 29.62, 0.005, 8.85)
+
+[node name="Cart29" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(0.750221, 0, 0.661187, 0, 1, 0, -0.661187, 0, 0.750221, 18.40, 0.005, 2.73)
+
+[node name="Cart30" parent="Carts" instance=ExtResource("5_spare")]
+transform = Transform3D(-0.371481, 0, -0.928441, 0, 1, 0, 0.928441, 0, -0.371481, 49.84, 0.005, 14.69)
