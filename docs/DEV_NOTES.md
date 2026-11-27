@@ -1984,3 +1984,12 @@ distresses to draw. docs/ASPHALT_SCIENCE.md opens with the goal: an accurate vis
 section, every visible feature from a sourced model.
 Gotcha: removing the last node blocks of a .tscn with a regex took the [connection] lines after them too; compare
 node lists and connections with git afterwards.
+
+## Asphalt roadmap (Nov 27 2026)
+
+zack: keep the larger topics organised and their links working. New `docs/ASPHALT_ROADMAP.md`: the topics in order
+(T0 drawings, T1 structure, T2 binder ageing, T3 thermal cracking, T4 fatigue and rutting, T5 water and potholes,
+T6 repairs, V the LTPP section check, G back into the game), a diagram of what passes between them, each topic's
+sources with their status, a shared quantities table (one name, unit and owner per quantity), the checks between
+topics, the data to collect and how threads work (one coding thread at a time, side threads research only).
+Rutting moved from "consequences" to the loads topic in the science register's scope.

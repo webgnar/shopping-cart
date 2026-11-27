@@ -9,6 +9,8 @@ Status words used below:
 - **Derived**: worked out in our own experiment (the CrackLattice runs), not yet checked against a reference.
 - **Placeholder**: set by eye so the road looked right.
 
+The topics, their order, what passes between them and where each stands: `docs/ASPHALT_ROADMAP.md`.
+
 ## Goal
 
 **An accurate visual representation of an asphalt pavement as it ages, in plan and in section.**
@@ -45,9 +47,10 @@ the site, from the LTPP section being modelled.
 3. **Thermal cracking (transverse, then block).** Cold shrinks the hardened layer; friction on the base holds it;
    it cracks across the road at a spacing set by the structure. Sources: Li & Marasteanu, Chen; MEPDG thermal
    cracking model later.
-4. **Load fatigue cracking (wheel paths, crocodile cells).** Repeated axle loads bend the layer; damage builds
-   (Miner's rule) until it cracks. Source: MEPDG bottom-up fatigue.
-5. **Consequences of cracking:** crack widening (LTPP severity), water getting in, potholes, rutting.
+4. **Load fatigue cracking and rutting (wheel paths, crocodile cells).** Repeated axle loads bend the layer; damage
+   builds (Miner's rule) until it cracks, and the layers deform permanently. Source: MEPDG bottom-up fatigue and
+   rutting (the same layered analysis drives both).
+5. **Consequences of cracking:** crack widening (LTPP severity), water getting in, potholes.
 6. **Repairs:** crack sealing, patching, overlays, judged against LTPP's maintenance experiments (SPS-3, SPS-5).
 
 Throughout: crack geometry (how cracks run and meet: Bohn, Shorlin) and the LTPP manual's definitions, survey and
@@ -316,6 +319,8 @@ figs. 35-39 for a site of similar climate; ageing stalls in cold years and runs 
 insignificant); UV beyond what the depth calibration absorbs.
 
 ## Next steps
+
+The roadmap (`docs/ASPHALT_ROADMAP.md`) is the tracker; this list is kept short.
 
 Done (Nov 2026): the build-up as data and editable; LTPP survey, distress map and cross-section; the sim split by
 concern; the placeholders taken out of the lab (`placeholders` off: it shows the structure only, and the road
