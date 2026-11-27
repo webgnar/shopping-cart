@@ -294,7 +294,7 @@ Higher |G\*| is harder, more brittle binder.
   the binder lightening as it oxidises, dirt. Bounded by the aggregate's albedo (0.10-0.28 for their stones).
   Proposal: albedo = a_fresh + (a_limit - a_fresh)(1 - exp(-p / p0)), p = the model's surface ageing
   (1 - exp(-N APt)); a_fresh = 0.04 (measured); a_limit and p0 fitted to fig. 1 in the Bay Area climate (Concord
-  normals): about 0.13 and 0.15, giving 0.08 at 1 year, 0.11 at 3, 0.12 at 5 and 10. A two-number calibration
+  normals): about 0.13 and 0.15, giving 0.08 at 1 year, 0.11 at 3, 0.12 at 5 and 0.13 at 10 (0.127; a least-squares fit to 0.08 / 0.11 / 0.12 / 0.12 would give 0.123 and 0.125 instead). A two-number calibration
   against measured data, labelled as such. The grey drawn is the albedo as a linear reflectance.
 - Later models: thermal cracking (a stiffer, more brittle layer) and fatigue, through NCHRP 973 chapter 6
   (the AMAC model: binder |G\*| to mixture properties), read when those models start.

@@ -241,6 +241,11 @@ func binder_log_g(depth_m: float) -> float:
 	return binder().log_g(depth_m, surface_age())
 
 
+## 0 to 1: the surface's albedo at its age (T2), what the plan's grey is drawn from.
+func albedo() -> float:
+	return binder().albedo(surface_age())
+
+
 ## m of bound asphalt.
 func thickness() -> float:
 	return pavement().asphalt_thickness()

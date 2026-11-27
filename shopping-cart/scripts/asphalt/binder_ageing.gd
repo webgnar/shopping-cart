@@ -11,6 +11,9 @@ extends RefCounted
 ##   log|G*|(t, z) = log|G*|0 + M ((0.916 z + APmax) / (z + 1)) (1 - e^(-N AP(t))),  z in cm,
 ##   APmax = (4.5 - log|G*|0) / M,  N = 0.477 e^(-0.226 AP(10 years)).
 ## Reproduces docs/asphalt_checks/binder_ageing_chain.py.
+## Albedo (solar reflectance, ASTM E1918) from the surface ageing p, calibrated on Pomerantz et al. 2000
+## (LBNL-43442, fig. 1: fresh 0.04-0.05, 0.12 +- 0.03 after 5 years, never over ~0.16) in the Concord climate:
+##   albedo = a_fresh + (a_limit - a_fresh)(1 - e^(-p / p0)).
 
 ## NCHRP 871 Table 16, per day. NCHRP 973 Tables 1 and 9 print Af = 1.25e3: a misprint (Model 1).
 const AF := 1.25e13            ## /day, fast reaction
@@ -24,6 +27,9 @@ const HOUR_DAYS := 1.0 / 24.0
 const SURFACE_LIMIT := 4.5     ## log |G*| the surface heads for (eq. 22, APmax)
 const DEEP_FRACTION := 0.916   ## deep down the binder heads for log |G*|0 + 0.916 M (eq. 22)
 const N_YEAR := 10             ## N is set by the surface ageing at 10 years (eq. 22)
+const ALBEDO_FRESH := 0.04     ## fresh asphalt, measured (Pomerantz 2000)
+const ALBEDO_LIMIT := 0.13     ## fitted to Pomerantz fig. 1 (Concord normals): a two-number calibration
+const ALBEDO_P0 := 0.15        ## fitted with ALBEDO_LIMIT
 
 var log_g0 := 0.0              ## log |G*| of the unaged binder, kPa (eq. 26 from the grade)
 var m := 0.0                   ## M, the binder's ageing susceptibility (eq. 27)
@@ -117,6 +123,11 @@ func ageing(year: float) -> float:
 ## 0 to 1: the surface ageing p = 1 - e^(-N AP), how far the surface is along its way to log |G*| = 4.5.
 func surface_progress(year: float) -> float:
 	return 1.0 - exp(-n * ageing(year))
+
+
+## 0 to 1: the surface's albedo after `year` years.
+func albedo(year: float) -> float:
+	return ALBEDO_FRESH + (ALBEDO_LIMIT - ALBEDO_FRESH) * (1.0 - exp(-surface_progress(year) / ALBEDO_P0))
 
 
 ## log |G*| (kPa, 64 C, 10 rad/s) at `depth_m` below the surface after `year` years (eq. 22).

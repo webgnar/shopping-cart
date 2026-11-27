@@ -2028,3 +2028,15 @@ years); `binder_log_g(depth)` uses `surface_age()`, so the placeholder overlay r
 shades the asphalt in 24 bands from paper (unaged) to `stiff_ink` (log |G*| 4.5) under the stipple, and the
 asphalt layer's label adds the grade and the top and bottom log |G*|. Lab: a Binder grade PG box (46-82, step 6)
 on the build-up. Check "the section's stiffness gradient is the model's" recomputes the model independently.
+
+## Asphalt T2 step 6: the plan greys by the albedo (Nov 27 2026)
+
+`BinderAgeing.albedo(year)` = 0.04 + 0.09 (1 - e^(-p / 0.15)), p the surface ageing (Pomerantz 2000 fig. 1,
+calibrated in Concord: 0.08 / 0.11 / 0.12 / 0.127 at 1 / 3 / 5 / 10 years); `AsphaltSim.albedo()` at the surface's
+age. With `placeholders` off, AsphaltCanvas sets `use_albedo` and `albedo` on asphalt_base.gdshader: the binder
+greys and the hot-mix photo fades by the albedo's progress (0.04 -> 0.13), then the surface is scaled in linear
+space so its expected mean equals the albedo. The expected mean blends the binder colour, the stones showing
+(`stone_cover` 0.37) and the photo's measured mean (`fresh_texture_reflectance` 0.0243); both were measured on the
+lab render under xvfb, where the drawn lane mean came out 0.038 / 0.064 / 0.096 / 0.113 / 0.128 / 0.131 against
+the model's 0.040 / 0.071 / 0.102 / 0.115 / 0.127 / 0.130 at 0 / 1 / 3 / 5 / 12 / 30 years (Burlington). With the
+placeholders on (the game's lots) the old look by age is unchanged and the ageing isn't computed.

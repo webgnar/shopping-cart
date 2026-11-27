@@ -365,6 +365,17 @@ func _run() -> void:
 	(lab.get_node("Panel/Scroll/Box/Timeline") as HSlider).value = 12.0
 	await process_frame
 	_check("timeline scrubs the lab", is_equal_approx(lsim.time, 12.0), "year %.1f" % lsim.time)
+	# T2 -> T0: the plan's surface is drawn at the model's albedo (the base shader's sourced grey).
+	var shaded := 0
+	var grey_ok := lsim.albedo() > BinderAgeing.ALBEDO_FRESH
+	for cv: AsphaltCanvas in lab.find_children("*", "AsphaltCanvas", true, false):
+		if cv.base == null or cv.mode != AsphaltCanvas.Mode.COLOR or not (cv.base.material is ShaderMaterial):
+			continue
+		var mat: ShaderMaterial = cv.base.material
+		shaded += 1
+		grey_ok = grey_ok and mat.get_shader_parameter("use_albedo") == true and is_equal_approx(mat.get_shader_parameter("albedo"), lsim.albedo())
+	_check("the plan is drawn at the model's albedo", grey_ok and shaded > 0, "albedo %.3f at year %.1f, %d plan(s)"
+		% [lsim.albedo(), lsim.surface_age(), shaded])
 	# The lab shows only what is sourced: no placeholder damage, ruts or repairs (docs/ASPHALT_SCIENCE.md, Scope).
 	_check("the lab shows only sourced models", not lsim.placeholders and lsim.cracks.is_empty() and lsim.rut_depth() == 0.0
 		and lab.get_node_or_null("Panel/Scroll/Box/Repair0") == null, "year %.1f, %d cracks, rut %.1f mm" % [lsim.time,
@@ -591,5 +602,16 @@ func _binder_ageing_checks() -> void:
 	for z in [0.0, 0.02, 0.06]:
 		for yr in range(1, 21):
 			hotter = hotter and aged[ccr].log_g(z, yr) > aged[btv].log_g(z, yr)
+	# Step 6: albedo against Pomerantz et al. 2000 fig. 1, in the Concord climate it was calibrated on: fresh 0.04,
+	# then 0.08, 0.11 and 0.12 at 1, 3 and 5 years; 0.12 +- 0.03 after 5 years and never over ~0.16.
+	var cc: BinderAgeing = aged[ccr]
+	var alb_ok := (is_equal_approx(cc.albedo(0), 0.04) and absf(cc.albedo(1) - 0.08) < 0.005 and absf(cc.albedo(3) - 0.11) < 0.005
+		and absf(cc.albedo(5) - 0.12) < 0.005)
+	for yr in range(1, 21):
+		alb_ok = alb_ok and cc.albedo(yr) > cc.albedo(yr - 1) and cc.albedo(yr) <= 0.16 and aged[btv].albedo(yr) < cc.albedo(yr)
+		if yr >= 5:
+			alb_ok = alb_ok and absf(cc.albedo(yr) - 0.12) <= 0.03
+	_check("albedo follows Pomerantz", alb_ok, "Concord %.3f / %.3f / %.3f / %.3f / %.3f at 0 / 1 / 3 / 5 / 10 yr; Burlington %.3f at 5"
+		% [cc.albedo(0), cc.albedo(1), cc.albedo(3), cc.albedo(5), cc.albedo(10), aged[btv].albedo(5)])
 	_check("a hotter climate ages the binder faster", hotter, "Concord %.2f against Burlington %.2f at the surface, 10 yr"
 		% [aged[ccr].log_g(0.0, 10), aged[btv].log_g(0.0, 10)])
