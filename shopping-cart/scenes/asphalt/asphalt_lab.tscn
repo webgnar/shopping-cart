@@ -382,6 +382,60 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 10
 autowrap_mode = 3
 
+[node name="AsphaltRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
+layout_mode = 2
+
+[node name="Name" type="Label" parent="Panel/Scroll/Box/AsphaltRow"]
+custom_minimum_size = Vector2(115, 0)
+layout_mode = 2
+text = "Asphalt"
+
+[node name="AsphaltMM" type="SpinBox" parent="Panel/Scroll/Box/AsphaltRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 50.0
+max_value = 300.0
+step = 1.0
+value = 76.0
+suffix = "mm"
+
+[node name="BaseRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
+layout_mode = 2
+
+[node name="Name" type="Label" parent="Panel/Scroll/Box/BaseRow"]
+custom_minimum_size = Vector2(115, 0)
+layout_mode = 2
+text = "Aggregate base"
+
+[node name="BaseMM" type="SpinBox" parent="Panel/Scroll/Box/BaseRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 100.0
+max_value = 600.0
+step = 1.0
+value = 102.0
+suffix = "mm"
+
+[node name="CbrRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
+layout_mode = 2
+
+[node name="Name" type="Label" parent="Panel/Scroll/Box/CbrRow"]
+custom_minimum_size = Vector2(115, 0)
+layout_mode = 2
+text = "Subgrade CBR"
+
+[node name="Cbr" type="SpinBox" parent="Panel/Scroll/Box/CbrRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 3.0
+max_value = 20.0
+step = 1.0
+value = 9.0
+suffix = ""
+
 [node name="SeedRow" type="HBoxContainer" parent="Panel/Scroll/Box"]
 layout_mode = 2
 
@@ -425,6 +479,9 @@ autowrap_mode = 3
 [connection signal="gui_input" from="Stage/Views/PreviewView" to="." method="_on_preview_input"]
 [connection signal="gui_input" from="Stage/Views/ColorView" to="." method="_on_plan_input"]
 [connection signal="value_changed" from="Panel/Scroll/Box/SeedRow/Seed" to="." method="_on_seed_changed"]
+[connection signal="value_changed" from="Panel/Scroll/Box/AsphaltRow/AsphaltMM" to="." method="_on_buildup_changed"]
+[connection signal="value_changed" from="Panel/Scroll/Box/BaseRow/BaseMM" to="." method="_on_buildup_changed"]
+[connection signal="value_changed" from="Panel/Scroll/Box/CbrRow/Cbr" to="." method="_on_buildup_changed"]
 [connection signal="toggled" from="Panel/Scroll/Box/Repair0" to="." method="_on_repair_toggled" binds= [0]]
 [connection signal="toggled" from="Panel/Scroll/Box/Repair1" to="." method="_on_repair_toggled" binds= [1]]
 [connection signal="toggled" from="Panel/Scroll/Box/Repair2" to="." method="_on_repair_toggled" binds= [2]]

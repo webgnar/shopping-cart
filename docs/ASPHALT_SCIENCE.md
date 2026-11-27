@@ -9,6 +9,41 @@ Status words used below:
 - **Derived**: worked out in our own experiment (the CrackLattice runs), not yet checked against a reference.
 - **Placeholder**: set by eye so the road looked right.
 
+## Scope: what the simulation studies, and what it doesn't
+
+One pavement: an asphalt surface on an untreated aggregate base over a soil subgrade, on a two-lane road (LTPP
+GPS-1 type). The causes are studied in order, the most generic first; each is added only when its model is
+sourced, and what is not yet sourced is taken out rather than left in as a guess.
+
+**Inputs (given, not simulated):** the build-up (layer thicknesses, materials, subgrade CBR; editable in the
+lab), the road layout (lanes, wheel paths, markings), and later the climate (temperatures) and traffic (ESALs) of
+the site, from the LTPP section being modelled.
+
+**Studied, in this order:**
+
+1. **The structure (layer thicknesses and stiffness).** How thick and how stiff the layers are sets how the
+   pavement carries load and how far stress spreads (crack spacing, crocodile cell size, fatigue strain). Sources
+   in hand: c620 build-ups, Li & Marasteanu (slip length), Westergaard; layered elastic analysis (MEPDG) next.
+2. **The binder ageing (oxidation).** The asphalt binder hardens and turns brittle with time, fastest at the
+   surface and in heat. Every distress below depends on it. Source: TTI 0-6009-2 (Glover et al. 2014); NCHRP 871
+   and 973 once they are in References.
+3. **Thermal cracking (transverse, then block).** Cold shrinks the hardened layer; friction on the base holds it;
+   it cracks across the road at a spacing set by the structure. Sources: Li & Marasteanu, Chen; MEPDG thermal
+   cracking model later.
+4. **Load fatigue cracking (wheel paths, crocodile cells).** Repeated axle loads bend the layer; damage builds
+   (Miner's rule) until it cracks. Source: MEPDG bottom-up fatigue.
+5. **Consequences of cracking:** crack widening (LTPP severity), water getting in, potholes, rutting.
+6. **Repairs:** crack sealing, patching, overlays, judged against LTPP's maintenance experiments (SPS-3, SPS-5).
+
+Throughout: crack geometry (how cracks run and meet: Bohn, Shorlin) and the LTPP manual's definitions, survey and
+drawings.
+
+**Not studied (out of scope unless decided otherwise):** binder chemistry beyond its ageing rate; the mix's
+microstructure and stones (the lattice is a research tool, not part of the simulation); mix design and
+construction quality; drainage and frost heave; other base types (cement- or lime-treated bases, full-depth
+asphalt, concrete); slippage cracking (not an LTPP distress); bleeding, shoving, polished aggregate and raveling
+(until a source is found); individual vehicles (traffic is counted in ESALs).
+
 ## The ladder of sources
 
 1. **Definitions**: what each distress is and how it is measured. *LTPP Distress Identification Manual (done,

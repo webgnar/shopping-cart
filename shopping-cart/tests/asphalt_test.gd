@@ -411,6 +411,14 @@ func _run() -> void:
 	var relief: TextureRect = lab.get_node("Stage/Views/ReliefView")
 	_check("relief view shows the height map", relief.visible and relief.texture != null and relief.texture.get_width() == 501,
 		"%s" % [relief.texture.get_size() if relief.texture else "no texture"])
+	# The build-up can be edited: thicker asphalt on the same base and subgrade (the shared preset is left alone).
+	var slip0 := lsim.slip_length()
+	(lab.get_node("Panel/Scroll/Box/AsphaltRow/AsphaltMM") as SpinBox).value = 150.0
+	(lab.get_node("Panel/Scroll/Box/CbrRow/Cbr") as SpinBox).value = 6.0
+	lab._process(0.0)
+	_check("the build-up can be edited", is_equal_approx(lsim.thickness(), 0.15) and is_equal_approx(lsim.pavement().subgrade_cbr, 6.0)
+		and lsim.slip_length() > slip0 and is_equal_approx(AsphaltSim.DEFAULT_BUILDUP.asphalt_thickness(), 3.0 * 0.0254),
+		"asphalt %.0f mm, CBR %.0f, slip length %.2f -> %.2f m" % [lsim.thickness() * 1000.0, lsim.pavement().subgrade_cbr, slip0, lsim.slip_length()])
 	# Plan + section: the cross-section slices the road at the cut, and clicking on the plan moves the cut.
 	var view := lab.get_node("Panel/Scroll/Box/PlayRow/View") as OptionButton
 	view.select(5)

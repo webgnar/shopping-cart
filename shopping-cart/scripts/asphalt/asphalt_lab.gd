@@ -24,6 +24,7 @@ var _dragging := false
 var _play_t := 0.0     ## years: where Play has got to (the sim catches up a step at a time)
 var _epoch := 0.0      ## road year the timeline starts at ("Start timeline here"); it runs max_years on from it
 var _relief_at := -1   ## msec: redraw the relief view (it takes a moment, so not every frame)
+var _rebuild_at := -1  ## msec: rebuild the road once the build-up spin boxes settle
 
 @onready var _year: Label = %YearLabel
 @onready var _timeline: HSlider = %Timeline
@@ -34,6 +35,9 @@ var _relief_at := -1   ## msec: redraw the relief view (it takes a moment, so no
 @onready var _repairs: Array[CheckBox] = [%Repair0, %Repair1, %Repair2, %Repair3, %Repair4, %Repair5]   ## by AsphaltSim.Action
 @onready var _seed: SpinBox = %Seed
 @onready var _section_info: Label = %SectionInfo
+@onready var _asphalt_mm: SpinBox = %AsphaltMM
+@onready var _base_mm: SpinBox = %BaseMM
+@onready var _cbr: SpinBox = %Cbr
 
 
 func _ready() -> void:
@@ -41,6 +45,11 @@ func _ready() -> void:
 	for r in _repairs:
 		r.set_meta("name", r.text)
 	_seed.set_value_no_signal(sim.seed)
+	# The spin boxes show the build-up the sim starts with.
+	var b := sim.pavement()
+	_asphalt_mm.set_value_no_signal(b.asphalt_thickness() * 1000.0)
+	_base_mm.set_value_no_signal(b.base().thickness * 1000.0 if b.base() else 0.0)
+	_cbr.set_value_no_signal(b.subgrade_cbr)
 	_show_section()
 	sim.changed.connect(_update_ui)
 	sim.changed.connect(_queue_relief)
@@ -48,6 +57,9 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _rebuild_at >= 0 and Time.get_ticks_msec() >= _rebuild_at:
+		_rebuild_at = -1
+		_replay()
 	if _relief_at >= 0 and Time.get_ticks_msec() >= _relief_at:
 		_relief_at = -1
 		if relief_view.visible:
@@ -146,6 +158,21 @@ func _on_start_here_toggled(on: bool) -> void:
 ## Ticked: that repair is done at the slider's year. Unticked: it never happened.
 func _on_repair_toggled(on: bool, action: int) -> void:
 	sim.set_repair(action, on, sim.time)
+
+
+## A build-up spin box changed: the road is rebuilt on a copy of the build-up with the new asphalt and base thicknesses
+## and subgrade CBR, from year 0 (a moment after the last change). The asphalt box sets the top (only) asphalt layer.
+func _on_buildup_changed(_value: float) -> void:
+	if sim.buildup == null or sim.buildup.resource_path != "":   # the shared preset: edit a copy
+		sim.buildup = sim.pavement().duplicate(true)
+		sim.buildup.title = "Edited from " + sim.pavement().title
+	var b := sim.buildup
+	b.layers[0].thickness = _asphalt_mm.value / 1000.0
+	if b.base():
+		b.base().thickness = _base_mm.value / 1000.0
+	b.subgrade_cbr = _cbr.value
+	_show_section()
+	_rebuild_at = Time.get_ticks_msec() + 300
 
 
 func _on_seed_changed(value: float) -> void:

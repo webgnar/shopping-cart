@@ -1963,3 +1963,11 @@ asphalt_sim_repairs.gd, asphalt_sim_height.gd (bake_height) and asphalt_sim.gd (
 events). Function bodies moved unchanged; checked identical with a fingerprint (height-map md5, crack and point
 counts, stats, repair log) for three cases (no repairs; all six repairs; road crew) at years 8, 18 and 27. New
 sourced models go in their own files and replace parts of asphalt_sim_rules.gd; nothing new goes into it.
+
+## Asphalt lab: editable build-up; scope written down (Nov 27 2026)
+
+The lab's Pavement section panel has spin boxes for the asphalt thickness (50-300 mm), the aggregate base (100-600
+mm) and the subgrade CBR (3-20), the ranges of the c620 thickness tables. A change edits a copy of the build-up (the
+shared preset file is left alone) and rebuilds the road from year 0 a moment later. Test: "the build-up can be
+edited". docs/ASPHALT_SCIENCE.md now opens with the scope: what the simulation studies (structure, then binder
+ageing, thermal cracking, load fatigue, their consequences, repairs) and what it doesn't.
