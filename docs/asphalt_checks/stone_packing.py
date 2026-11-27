@@ -16,7 +16,8 @@ Method:
     separating-axis test still decides, so this changes the speed, not the result. No physics: the mix's stones fill only 38 % of the volume
     (cell 18), below any settled packing (~55-60 %), so they sit apart in the mastic.
   - Tile: periodic in x and y, bounded by the roller above (z = 0) and the lift below.
-  - The roller: stones within half their size of the surface are pushed up against it where they fit.
+  - The roller: stones near the surface turn onto their most upward face and are pushed up against it, where they
+    fit (a convex body pressed by a flat plate rests on a face).
 
 Checks: the stone volume against the mix's (38.1 %); Delesse's principle on a horizontal and a vertical cut;
 the stone counts per class against the mix; the mean profile depth of the surface against FHWA-HRT-25-100
@@ -287,20 +288,47 @@ def add(st, rot, pos, stones, geo, centers, radii):
     radii.append(st.r)
 
 
+def face_up(st, rot):
+    """The smallest turn that lays the stone's most upward-facing face flat (normal +z): a convex body pressed by
+    a flat roller comes to rest on a face, not a corner."""
+    v = st.v0 @ rot.T
+    best, nb = None, -2.0
+    for a, b, c in st.faces:
+        n = np.cross(v[b] - v[a], v[c] - v[a]); n /= np.linalg.norm(n)
+        if n[2] > nb:
+            nb, best = n[2], n
+    z = np.array([0.0, 0.0, 1.0])
+    ax = np.cross(best, z); s_, c_ = np.linalg.norm(ax), best @ z
+    if s_ < 1e-12:
+        return rot
+    ax /= s_
+    K = np.array([[0, -ax[2], ax[1]], [ax[2], 0, -ax[0]], [-ax[1], ax[0], 0]])
+    turn = np.eye(3) + s_ * K + (1 - c_) * K @ K
+    return turn @ rot
+
+
 def press(stones, geo, centers, radii):
-    """The roller: stones whose top is within half their size of the surface move up to it, where they fit."""
+    """The roller: stones whose top is within half their size of the surface turn onto a face and move up
+    against it, where they fit (else they stay as they were)."""
     order = sorted(range(len(stones)), key=lambda i: -geo[i][0][:, 2].max())
+    moved = 0
     for i in order:
         st, rot, pos = stones[i]
-        top = geo[i][0][:, 2].max()
-        gap = -top
-        if gap <= 0 or gap > 0.5 * 2 * st.r:
+        gap = -geo[i][0][:, 2].max()
+        if gap > st.r:
             continue
-        new = pos + np.array([0, 0, gap])
-        if fits(st, rot, new, stones, geo, centers, radii, skip=i):
-            stones[i] = (st, rot, new)
-            geo[i] = placed(st, rot, new)
-            centers[i] = new
+        for r2 in (face_up(st, rot), rot):
+            v = st.v0 @ r2.T
+            new = np.array([pos[0], pos[1], -v[:, 2].max()])
+            if -DEPTH - v[:, 2].min() > new[2]:
+                continue
+            if fits(st, r2, new, stones, geo, centers, radii, skip=i):
+                stones[i] = (st, r2, new)
+                geo[i] = placed(st, r2, new)
+                centers[i] = new
+                moved += 1
+                break
+    print("Roller: %d stones laid against the surface" % moved)
 
 
 # ---------------------------------------------------------------- measuring
