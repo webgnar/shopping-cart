@@ -114,10 +114,19 @@ in this folder with the file names below.
 - `fhwa_2019_hrt-16-084_environmental_factors.pdf`: "Impact of Environmental Factors on Pavement Performance in the
   Absence of Heavy Loads", FHWA-HRT-16-084 (2019). Ch. 1: transverse cracking mechanisms; shrinkage crack widths
   grow over time (no rates).
+- `AASHTO08.pdf` (filed by zack): AASHTO, "Mechanistic-Empirical Pavement Design Guide: A Manual of Practice", July 2008
+  interim edition. Section 5.2.4: the thermal cracking model, eqs. 5-11a to 5-11e (kt 5.0 / 1.5 / 3.0 by input level,
+  beta_t1 400, sigma_d 0.769) and standard errors 5-12. Copyrighted: the PDF says duplication is not allowed.
+- `20377776.pdf` (filed by zack): Ali, "Evaluation of the Mechanistic Empirical Pavement Design Guide (NCHRP 1-37A)", NRC
+  Canada research report RR-216 (2005), https://doi.org/10.4224/20377776. TC model pp. 20-23: ft per 500 ft, 400 ft
+  maximum (a 12 ft crack every 15 ft), 50 % of it predictable; level 3 creep and strength from regressions (p. 43).
+- `MDSHAEvaluationofMechanistic-EmpiricalDeisgnProcedure-Volume2.pdf` (filed by zack): Schwartz & Carvalho,
+  "Implementation of the NCHRP 1-37A Design Guide, Vol. 2: Evaluation of Mechanistic-Empirical Design Procedure",
+  Maryland SHA SP0077B41 (2007). TC model eqs. 29-31 (C_f in ft/500 ft, beta 400; kt by level).
+- `2003-Overview-of-NCHRP-1-37A.pdf` (filed by zack): Sharpe, NCHRP 1-37A project overview slides (2003). Background.
 - Wanted (blocked or paywalled): NCHRP 1-37A Appendix HH, "Field Calibration of the Thermal Cracking Model" (2004),
   onlinepubs.trb.org/onlinepubs/archive/mepdg/2appendices_HH.pdf, file as
-  `nchrp_1-37a_2004_appendix_hh_thermal_cracking.pdf`; NCHRP 1-37A Part 3 ch. 3; AASHTO MEPDG Manual of Practice
-  (2020); Hiltunen & Roque 1994 and Jones, Darter & Littlefield 1968 (AAPT); Alaska DOT AK-RD-86-26 (crack widths).
+  `nchrp_1-37a_2004_appendix_hh_thermal_cracking.pdf`; NCHRP 1-37A Part 3 ch. 3; the 2020 Manual of Practice; Hiltunen & Roque 1994 and Jones, Darter & Littlefield 1968 (AAPT); Alaska DOT AK-RD-86-26 (crack widths).
 
 ## Crack spacing in pavements
 - `chen_2022_transverse_crack_spacing_semi_rigid_base.pdf`: Chen, Li, Zhao et al., "Investigation of transverse

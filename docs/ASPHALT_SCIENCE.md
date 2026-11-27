@@ -518,7 +518,14 @@ as a possible factor, without numbers.
 
 ## Model 2: thermal cracking (proposal for review; T3)
 
-**Status: written up from the sources below; not yet checked in Python; no code.** Every number quoted is from
+**Status: written up; checked in Python (`docs/asphalt_checks/thermal_cracking_chain.py`, results below); no code.**
+
+**Decisions (zack, Nov 27):** (1) daily temperatures: the sim is not about one place, so take a representative
+cold climate and keep it: the NOAA GHCN-Daily record of the default climate's own station, Burlington VT
+(USW00014742), 1991-2020, the same station and period as the normals T2 uses (its monthly means are within 0.7 C
+of them); Minneapolis (USW00014922, next to MnROAD) only for the MnROAD timing check. Both filed in
+`docs/asphalt_checks/data/`. (2) Strength: the TSRST fracture stress, 2.92 MPa, as proposed; one owner (T3), and
+T1's slip length takes it when T3 codes. Every number quoted is from
 the report named next to it; "derived" marks our own algebra on a sourced equation; gaps are listed at the end.
 
 ### Sources, and what each gives
@@ -532,6 +539,8 @@ the report named next to it; "derived" marks our own algebra on a sourced equati
 | Chen et al. 2022 (`chen_...`) | all | Halving of spacing, eqs. 14-15 (mean = 3/4 of the largest uncracked spacing); shear-lag stress, eq. 7; measured asphalt alpha 15-22 x 10^-6/C (Table 2) |
 | Bohn et al. 2005; Shorlin et al. 1999 | all | Cracks one at a time, each dividing a domain near its middle, meeting older cracks at 90 deg; spacing proportional to thickness, larger on a slipperier base |
 | FHWA-HRT-16-084 (2019), LTPP environmental factors (`fhwa_2019_...`, filed) | ch. 1 | Mechanisms named (cold events, repeated cycles with oxidation, long-term shrinkage); widths grow over time; no rates |
+| AASHTO, MEPDG Manual of Practice, 2008 interim edition (`AASHTO08.pdf`, filed by zack) | 5.2.4 | TCMODEL's equations from the primary text (5-11a to 5-11e), kt by input level, standard errors (5-12) |
+| Ali 2005, NRC Canada RR-216 (`20377776.pdf`); Schwartz and Carvalho 2007, Maryland SHA vol. 2 (`MDSHA...pdf`), filed by zack | TC model sections | The ft per 500 ft unit and the 50 % ceiling; TCMODEL does not age the mix (RR-216 p. 43: field ageing "will be incorporated"); level 3 creep and strength come from regressions on Va, VFA, Pen77 and A |
 
 ### What it predicts
 
@@ -541,7 +550,8 @@ seasonal opening of each crack. Not the LTPP severity growth over the years (Gap
 ### How the sources disagree, and the choice proposed
 
 **The MEPDG thermal cracking model (TCMODEL)** (Hiltunen and Roque 1994, as restated in Mn/DOT 2007-43 ch. 2 and
-MassDOT 24-067 ch. 5.1; the primary text, NCHRP 1-37A Appendix HH, is Wanted):
+MassDOT 24-067 ch. 5.1, and in the AASHTO 2008 Manual of Practice, section 5.2.4; NCHRP 1-37A Appendix HH, with
+the calibration and the level 3 creep and strength regressions, is still Wanted):
 1. Thermal stress: the mix's coefficient of contraction (Jones et al. 1968, Mn/DOT eq. 22:
    alpha_mix = (VMA B_AC + V_agg B_agg) / (3 x 100), B_AC = 3.45 x 10^-4 /C volumetric for every binder),
    creep compliance from IDT tests at -20, -10 and 0 C fitted to a master curve (eqs. 24-27), converted to a
@@ -555,9 +565,13 @@ MassDOT 24-067 ch. 5.1; the primary text, NCHRP 1-37A Appendix HH, is Wanted):
    gives at most 200 of beta_t1's 400. Mn/DOT 2007-43 says the output is ft per 500 ft and that the model "does not
    predict more than 50 % of the total possible amount" with a minimum spacing of 15 ft: 400 ft per 500 ft is a
    full 12 ft lane crack every 15 ft, so beta_t1 is in ft per 500 ft. MassDOT and the Missouri report label TC ft/mi
-   with the same 400; the software converts somewhere, which only Appendix HH or the Manual of Practice can settle.
+   with the same 400. **Settled by the sources zack added:** NRC Canada RR-216 (Ali 2005, p. 22) and the Maryland
+   SHA evaluation (Schwartz and Carvalho 2007, eq. 31) both give C_f in ft per 500 ft, "a maximum crack length of
+   400 ft in every 500 ft, ... a crack across a lane width of 12 feet spaced at 15 feet", of which "the model can
+   only predict 50 %". The 2008 Manual of Practice (eq. 5-11e) prints the output in ft/mi, a reporting unit.
 4. Calibration has moved: k = 10,000 and beta = 353.5 (Mn/DOT 2007-43 ch. 2, restating the 2004 guide); a level
-   factor 1.0 / 6.0 (version 0.964, Mn/DOT ch. 9); kt per input level, beta_t1 = 400 (2015 manual, Missouri report);
+   factor 1.0 / 6.0 (version 0.964, Mn/DOT ch. 9); kt = 5.0 / 1.5 / 3.0 for input levels 1 / 2 / 3, beta_t1 = 400,
+   sigma_d = 0.769 (**2008 Manual of Practice, eqs. 5-11a to 5-11e**, the primary text, now filed);
    **2018 global: kt = 3 x 10^-7 MAAT^4.0317 for MAAT < 57 F** (MassDOT eq. 16), added because the event-based
    model never predicted cracks in mild climates, where they occur (MassDOT p. 31). Burlington, MAAT 47.6 F from
    the NOAA normals: kt = 1.74.
@@ -688,7 +702,8 @@ build-up's binder, aged about 12 years) give alpha and aged creep and strength f
 **Wanted (blocked from this session; zack to file in References/Asphalt if he can get them):**
 `nchrp_1-37a_2004_appendix_hh_thermal_cracking.pdf` (onlinepubs.trb.org/onlinepubs/archive/mepdg/2appendices_HH.pdf:
 TCMODEL's calibration and the level 3 creep and strength correlations), NCHRP 1-37A Part 3 ch. 3 (same site);
-the AASHTO MEPDG Manual of Practice (2020, paywalled); Hiltunen and Roque 1994 and Jones et al. 1968 (AAPT,
+the 2020 edition of the Manual of Practice (zack filed the 2008 interim edition, `AASHTO08.pdf`, which carries the
+equations; it is marked "duplication is a violation of applicable law"); Hiltunen and Roque 1994 and Jones et al. 1968 (AAPT,
 paywalled); Alaska DOT AK-RD-86-26 (crack widths; host refused).
 
 ## Next steps

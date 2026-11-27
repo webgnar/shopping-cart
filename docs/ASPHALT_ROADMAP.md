@@ -211,7 +211,8 @@ flowchart LR
 | NCHRP 973 ch. 6 (AMAC) | Read | Binder log abs(G*) change to the mix's modulus master curve shift (eq. 51). **Gives modulus and fatigue, not strength** (corrected) |
 | FHWA-HRT-16-084 (2019) | Read (ch. 1); filed | Mechanisms; widths grow over time (no rate) |
 | NCHRP 1-37A Appendix HH (TCMODEL calibration, level 3 correlations); Part 3 ch. 3 | Wanted: trb.org blocked from this session | Primary text of TCMODEL; for zack to file |
-| AASHTO MEPDG Manual of Practice (2020) | Wanted (paywalled) | Current equations from the primary text |
+| AASHTO MEPDG Manual of Practice, 2008 interim edition (`AASHTO08.pdf`, zack) | Read (5.2.4) | TCMODEL equations from the primary text; kt by input level |
+| NRC Canada RR-216 (Ali 2005); Maryland SHA vol. 2 (Schwartz & Carvalho 2007) (zack) | Read (TC sections) | TC amount is ft per 500 ft, at most 200 of 400; TCMODEL does not age the mix |
 | Hiltunen & Roque 1994; Jones et al. 1968 (AAPT) | Wanted (paywalled) | Originals of TCMODEL and of alpha's volumetric estimate |
 | Thermal contraction coefficient of the mix | **Sourced** (was Gap): measured, Mn/DOT 2007-43 Tables 6.19, 6.22 | Thermal stress |
 | Crack width growth over the years | Gap (Alaska AK-RD-86-26 host refused; LTPP surveys in InfoPave, blocked) | LTPP severity (L/M/H by width) |
