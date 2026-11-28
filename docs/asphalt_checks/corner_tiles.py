@@ -9,7 +9,8 @@ shared between tiles by where their centre lies, and each shared part is packed 
   - a corner patch per colour: centres within R of the lattice point (R = the largest stone's reach);
   - an edge strip per (end colour, end colour) and direction: centres within R of the edge, between the patches;
   - each tile's interior: the rest.
-A part is packed after the parts it touches, checking every way they can meet (an edge strip against both colours
+Size classes go largest first across the whole set (each class in every part, then the next), as in one packing.
+Within a class, a part is packed after the parts it touches, checking every way they can meet (an edge strip against both colours
 of the strips that share its end corners), so any assembly is free of overlaps. Each part fills its own region to
 the mix's share by the stone volume actually inside it, stones spilling in from parts packed earlier included
 (counting by stone centres instead left the seams thin and the interiors full: 36-38 % against 43 %); a class
@@ -126,58 +127,66 @@ def clear(A, r, c, others):
     return Near(others).clear(A, r, c)
 
 
-def pack_region(seed, box, region, area, fixed):
-    """Stones with centres where region(xy) is true, `area` mm2 of plan, against `fixed` stones (world coords)."""
+def pack_region(seed, box, region, area, fixed, ci):
+    """Stones of size class `ci` with centres where region(xy) is true (`area` mm2 of plan), against `fixed` stones
+    (world coords: neighbouring parts and this part's larger classes). Classes go largest first across the whole
+    set, as in one packing: packing a part to the end before its neighbour left the later part's large stones no
+    room near the shared border, so they crowded into its middle."""
     rnd = random.Random(seed)
     space = Space(*box, region)
     for o in fixed:
         space.mark(o.v, o.n, o.faces, o.cls)
-    target = [mix.V_AGG * c[3] * area * DEPTH for c in CLASSES]
-    got = [space.class_volume(ci) for ci in range(len(CLASSES))]   # what neighbouring parts already put here
+    target = mix.V_AGG * CLASSES[ci][3] * area * DEPTH
+    got = space.class_volume(ci)              # what neighbouring parts already put here
     out = []
     near_fixed, near_out = Near(fixed), Near([])
-    for ci in range(len(CLASSES)):
-        failed, cand, since = 0, None, 99
-        while got[ci] < target[ci] and failed < sp.GIVE_UP:
-            lo, hi = CLASSES[ci][0], CLASSES[ci][1]
-            if since > 40:
-                cand, since = space.room(0.35 * lo, region), 0
-            if len(cand) == 0:
+    lo, hi = CLASSES[ci][0], CLASSES[ci][1]
+    failed, cand, since = 0, None, 99
+    while got < target and failed < sp.GIVE_UP:
+        if since > 40:
+            cand, since = space.room(0.35 * lo, region), 0
+        if len(cand) == 0:
+            break
+        verts = None
+        while verts is None:
+            verts = sp.xu_stone(rnd, hi)
+        st = sp.Stone(sp.sieve_scale(verts, lo * (hi / lo) ** rnd.random()), ci)
+        if st.r > R:          # a stone reaching past the strips could cross a part it was not checked against
+            continue
+        if got + 0.5 * st.vol > target:      # less than half a stone left: stopping here is unbiased
+            break
+        done = False
+        for _ in range(sp.TRIES):
+            rot = sp.random_rotation(rnd)
+            vz = st.v0 @ rot.T
+            zlo, zhi = -DEPTH - vz[:, 2].min(), -vz[:, 2].max()
+            if zlo > zhi:
                 break
-            verts = None
-            while verts is None:
-                verts = sp.xu_stone(rnd, hi)
-            st = sp.Stone(sp.sieve_scale(verts, lo * (hi / lo) ** rnd.random()), ci)
-            if st.r > R:          # a stone reaching past the strips could cross a part it was not checked against
+            i, j, k = cand[rnd.randrange(len(cand))]
+            pos = np.array([box[0] + (i + rnd.random()) * VOXEL, box[1] + (j + rnd.random()) * VOXEL,
+                            min(max(-(k + 0.5) * VOXEL, zlo), zhi)])
+            if not region(pos[None, :2])[0]:
                 continue
-            if got[ci] + 0.5 * st.vol > target[ci]:   # less than half a stone left: stopping here is unbiased
+            A = sp.placed(st, rot, pos)
+            if near_fixed.clear(A, st.r, pos) and near_out.clear(A, st.r, pos):
+                p = Placed(st, rot, pos)
+                out.append(p); near_out.add(p)
+                got += space.mark(p.v, p.n, p.faces, ci); since += 1; done = True
                 break
-            done = False
-            for _ in range(sp.TRIES):
-                rot = sp.random_rotation(rnd)
-                vz = st.v0 @ rot.T
-                zlo, zhi = -DEPTH - vz[:, 2].min(), -vz[:, 2].max()
-                if zlo > zhi:
-                    break
-                i, j, k = cand[rnd.randrange(len(cand))]
-                pos = np.array([box[0] + (i + rnd.random()) * VOXEL, box[1] + (j + rnd.random()) * VOXEL,
-                                min(max(-(k + 0.5) * VOXEL, zlo), zhi)])
-                if not region(pos[None, :2])[0]:
-                    continue
-                A = sp.placed(st, rot, pos)
-                if near_fixed.clear(A, st.r, pos) and near_out.clear(A, st.r, pos):
-                    p = Placed(st, rot, pos)
-                    out.append(p); near_out.add(p)
-                    got[ci] += space.mark(p.v, p.n, p.faces, ci); since += 1; done = True
-                    break
-            failed = 0 if done else failed + 1
-            since += 0 if done else 5
-    # the roller: stones of this part near the surface turn onto a face and move up, where they fit
+        failed = 0 if done else failed + 1
+        since += 0 if done else 5
+    return out
+
+
+def press(own, fixed):
+    """The roller, after every class is in: this part's stones near the surface turn onto a face and move up, where
+    they fit among `fixed` (neighbouring parts, already pressed) and the part's own stones."""
+    out = list(own)
+    near_fixed, near_out = Near(fixed), Near(out)
     for i in sorted(range(len(out)), key=lambda i: -out[i].v[:, 2].max()):
         p = out[i]
         if -p.v[:, 2].max() > p.r:
             continue
-        # recover the stone's rotation-free shape: vertices relative to centre
         local = p.v - p.c
         st = sp.Stone.__new__(sp.Stone)
         st.v0, st.faces, st.r = local, p.faces, p.r
@@ -200,31 +209,55 @@ def pack_region(seed, box, region, area, fixed):
 
 
 # ---------------------------------------------------------------- the parts of a corner-tile set
+# Each part: its region, its plan box (region plus the reach of its neighbours), and the neighbouring stones it is
+# checked against, given the set so far (P: corner patches by colour; H, V: strips by end colours; T: interiors).
 
-def corner_patch(seed):
-    region = lambda xy: (np.abs(xy[:, 0]) <= R) & (np.abs(xy[:, 1]) <= R)
-    return pack_region(seed, (-2 * R, -2 * R, 2 * R, 2 * R), region, (2 * R) ** 2, [])
-
-
-def h_strip(args):
-    """Edge along x from corner (0, 0) of colour a to (TILE, 0) of colour b; centres R < x < TILE - R, |y| <= R."""
-    seed, a, b, P = args
-    fixed = [o for o in P[a]] + [o.moved(np.array([TILE, 0, 0])) for o in P[b]]
-    region = lambda xy: (xy[:, 0] > R) & (xy[:, 0] < TILE - R) & (np.abs(xy[:, 1]) <= R)
-    return pack_region(seed, (-R, -2 * R, TILE + R, 2 * R), region, (TILE - 2 * R) * 2 * R, fixed)
+PATCH_REGION = lambda xy: (np.abs(xy[:, 0]) <= R) & (np.abs(xy[:, 1]) <= R)
+H_REGION = lambda xy: (xy[:, 0] > R) & (xy[:, 0] < TILE - R) & (np.abs(xy[:, 1]) <= R)
+V_REGION = lambda xy: (xy[:, 1] > R) & (xy[:, 1] < TILE - R) & (np.abs(xy[:, 0]) <= R)
+T_REGION = lambda xy: (xy[:, 0] > R) & (xy[:, 0] < TILE - R) & (xy[:, 1] > R) & (xy[:, 1] < TILE - R)
 
 
-def v_strip(args):
-    """Edge along y from corner (0, 0) of colour a to (0, TILE) of colour b, against the corner patches and every
-    horizontal strip that can end at either corner (both colours on the far side, west and east)."""
-    seed, a, b, P, H = args
-    fixed = [o for o in P[a]] + [o.moved(np.array([0, TILE, 0])) for o in P[b]]
+def patch_nb(col, P, H, V, T):
+    """Around a corner of colour `col`: the strips leaving it (east, north) and arriving (from west, south), both
+    colours at their far ends, and every interior that has this corner (four positions)."""
+    f = []
+    for other in (0, 1):
+        f += H[(col, other)] + [o.moved(np.array([-TILE, 0, 0.0])) for o in H[(other, col)]]
+        f += V[(col, other)] + [o.moved(np.array([0, -TILE, 0.0])) for o in V[(other, col)]]
+    for code, st in T.items():
+        for k, (dx, dy) in enumerate(((0, 0), (-TILE, 0), (-TILE, -TILE), (0, -TILE))):   # this corner as bl, br, tr, tl
+            if code[k] == col:
+                f += [o.moved(np.array([dx, dy, 0.0])) for o in st]
+    return f
+
+
+def h_nb(a, b, P, H, V, T):
+    f = list(P[a]) + [o.moved(np.array([TILE, 0, 0.0])) for o in P[b]]
+    for cx, col in ((0.0, a), (TILE, b)):                       # vertical strips through its end corners
+        for other in (0, 1):
+            f += [o.moved(np.array([cx, 0, 0.0])) for o in V[(col, other)]]
+            f += [o.moved(np.array([cx, -TILE, 0.0])) for o in V[(other, col)]]
+    for code, st in T.items():                                  # interiors above (its bottom edge) and below (top)
+        if (code[0], code[1]) == (a, b):
+            f += st
+        if (code[3], code[2]) == (a, b):
+            f += [o.moved(np.array([0, -TILE, 0.0])) for o in st]
+    return f
+
+
+def v_nb(a, b, P, H, V, T):
+    f = list(P[a]) + [o.moved(np.array([0, TILE, 0.0])) for o in P[b]]
     for cy, col in ((0.0, a), (TILE, b)):
         for other in (0, 1):
-            fixed += [o.moved(np.array([0, cy, 0])) for o in H[(col, other)]]                 # strip going east
-            fixed += [o.moved(np.array([-TILE, cy, 0])) for o in H[(other, col)]]             # strip coming from west
-    region = lambda xy: (xy[:, 1] > R) & (xy[:, 1] < TILE - R) & (np.abs(xy[:, 0]) <= R)
-    return pack_region(seed, (-2 * R, -R, 2 * R, TILE + R), region, (TILE - 2 * R) * 2 * R, fixed)
+            f += [o.moved(np.array([0, cy, 0.0])) for o in H[(col, other)]]
+            f += [o.moved(np.array([-TILE, cy, 0.0])) for o in H[(other, col)]]
+    for code, st in T.items():                                  # interiors to the east (left edge) and west (right)
+        if (code[0], code[3]) == (a, b):
+            f += st
+        if (code[1], code[2]) == (a, b):
+            f += [o.moved(np.array([-TILE, 0, 0.0])) for o in st]
+    return f
 
 
 def tile_fixed(code, P, H, V):
@@ -238,10 +271,16 @@ def tile_fixed(code, P, H, V):
     return f
 
 
-def interior(args):
-    seed, code, fixed = args
-    region = lambda xy: (xy[:, 0] > R) & (xy[:, 0] < TILE - R) & (xy[:, 1] > R) & (xy[:, 1] < TILE - R)
-    return code, pack_region(seed, (-R, -R, TILE + R, TILE + R), region, (TILE - 2 * R) ** 2, fixed)
+def job(args):
+    """One part, one size class (or the roller when ci is None)."""
+    kind, key, ci, seed, own, nb = args
+    box = {"P": (-2 * R, -2 * R, 2 * R, 2 * R), "H": (-R, -2 * R, TILE + R, 2 * R),
+           "V": (-2 * R, -R, 2 * R, TILE + R), "T": (-R, -R, TILE + R, TILE + R)}[kind]
+    region = {"P": PATCH_REGION, "H": H_REGION, "V": V_REGION, "T": T_REGION}[kind]
+    area = {"P": (2 * R) ** 2, "H": (TILE - 2 * R) * 2 * R, "V": (TILE - 2 * R) * 2 * R, "T": (TILE - 2 * R) ** 2}[kind]
+    if ci is None:
+        return kind, key, press(own, nb)
+    return kind, key, own + pack_region(seed, box, region, area, nb + own, ci)
 
 
 # ---------------------------------------------------------------- assembly and checks
@@ -308,21 +347,25 @@ if __name__ == "__main__":
     print("Tile %.0f mm; 19 mm stones' reach: median %.1f, max %.1f mm; seams R = %.1f mm (%.1f %% of those stones,"
           " the most elongated, are redrawn)" % (TILE, reach[len(reach) // 2], reach[-1], R, 100 * np.mean(np.array(reach) > R)))
     t0 = time.time()
+    keys = [(a, b) for a in (0, 1) for b in (0, 1)]
+    codes = [(a, b, c, d) for a in (0, 1) for b in (0, 1) for c in (0, 1) for d in (0, 1)]
+    P = {0: [], 1: []}; H = {k: [] for k in keys}; V = {k: [] for k in keys}; tiles = {c: [] for c in codes}
+    stores = {"P": P, "H": H, "V": V, "T": tiles}
     with Pool(4) as pool:
-        P = dict(enumerate(pool.map(corner_patch, [101, 202])))
-        print("  2 corner patches: %d stones (%.0f s)" % (sum(len(p) for p in P.values()), time.time() - t0))
-        pickle.dump(P, open(os.path.join(out, "stage_P.pkl"), "wb"))
-        keys = [(a, b) for a in (0, 1) for b in (0, 1)]
-        H = dict(zip(keys, pool.map(h_strip, [(300 + i, a, b, P) for i, (a, b) in enumerate(keys)])))
-        print("  4 horizontal strips: %d stones (%.0f s)" % (sum(len(h) for h in H.values()), time.time() - t0))
-        pickle.dump(H, open(os.path.join(out, "stage_H.pkl"), "wb"))
-        V = dict(zip(keys, pool.map(v_strip, [(400 + i, a, b, P, H) for i, (a, b) in enumerate(keys)])))
-        print("  4 vertical strips: %d stones (%.0f s)" % (sum(len(v) for v in V.values()), time.time() - t0))
-        pickle.dump(V, open(os.path.join(out, "stage_V.pkl"), "wb"))
-        codes = [(a, b, c, d) for a in (0, 1) for b in (0, 1) for c in (0, 1) for d in (0, 1)]
-        res = pool.map(interior, [(500 + i, code, tile_fixed(code, P, H, V)) for i, code in enumerate(codes)])
-    tiles = dict(res)
-    print("  16 interiors: %d stones (%.0f s)" % (sum(len(t) for t in tiles.values()), time.time() - t0))
+        for ci in list(range(len(CLASSES))) + [None]:          # largest class first everywhere; then the roller
+            stages = [("P", list(P), lambda k: patch_nb(k, P, H, V, tiles)),
+                      ("H", keys, lambda k: h_nb(*k, P, H, V, tiles)),
+                      ("V", keys, lambda k: v_nb(*k, P, H, V, tiles)),
+                      ("T", codes, lambda k: tile_fixed(k, P, H, V))]
+            for si, (kind, ks, nb) in enumerate(stages):
+                args = [(kind, k, ci, 1000 * (ci if ci is not None else 9) + 100 * si + i, stores[kind][k], nb(k))
+                        for i, k in enumerate(ks)]
+                for kind_, k, st in pool.map(job, args):
+                    stores[kind_][k] = st
+            print("  %s: %d stones so far (%.0f s)" % ("class %.2f-%.2f mm" % CLASSES[ci][:2] if ci is not None else "roller",
+                  sum(len(x) for st in stores.values() for x in st.values()), time.time() - t0))
+    print("  2 corner patches %d, 8 strips %d, 16 interiors %d stones" % (sum(len(x) for x in P.values()),
+          sum(len(x) for x in H.values()) + sum(len(x) for x in V.values()), sum(len(x) for x in tiles.values())))
     with open(os.path.join(out, "corner_tiles.pkl"), "wb") as f:
         pickle.dump({"tile": TILE, "depth": DEPTH, "R": R, "P": P, "H": H, "V": V, "tiles": tiles}, f)
 
