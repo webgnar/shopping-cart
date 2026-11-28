@@ -511,6 +511,19 @@ stone tops carry the tyres they shield the mastic between them.
 voids are higher at mid-depth than near the surface (search summaries; papers not yet read). Consistent with the
 face-down roller and with fewer stones in the top 4 mm (27 %); quantitative orientation data still Wanted.
 
+**Corner-tile road** (`docs/asphalt_checks/corner_tiles.py`; Lagae 2007): two corner colours at random on the road's
+100 mm lattice; 16 tiles; 2 corner patches, 8 edge strips and 16 interiors, each packed once and checked against
+every part it can meet, so any colouring assembles without overlaps. Seams are 22 mm half-wide: a stone reaching
+further is redrawn (4.5 % of the 16-19 mm class, 0.5 % of the 12.5-16 mm, the most elongated). Two lessons on the
+way: (1) a part must count the stone volume actually inside its region, neighbours' spill included, not its own
+stones by centre (else 39.9 % overall); (2) size classes must go largest first across the whole set, not part by
+part (else 36-37 % within 25 mm of a seam and 40-43 % mid-tile). Result, random 4 x 4 road (400 x 400 mm, 55,200
+stones in the set, 17 min on 4 cores): **no point in two stones (of 400,000); 38.5 % stone (mix 38.1 %), 37.5-39.2 %
+per tile; mid-tile 38.1 %**. Left: about 40 % within 15 mm of a seam line and a narrow dip to 34-35 % where strips
+meet interiors (22 mm off the seam), every 100 mm; about 0.002 of albedo, below what the plan can show. A long
+section crosses the seams without a visible join. Next refinement if needed: interleave strips and interiors in
+two rounds within each class.
+
 **Stone shape against measurement** (FHWA AIMS2, HIF-11-030, filed): AIMS sphericity cbrt(d_s d_i / d_l^2) of 3,000
 Xu stones: mean 0.70 (10-90 %: 0.60-0.80); 6.8 % beyond 3:1. Measured: crushed gravel 0.68-0.70 and 0.6-3.8 %;
 granite 0.60-0.68 and 5.2-9.7 %. Cell 18 is 90 % gravel (61 % of its coarse part crushed): the sphericity matches,

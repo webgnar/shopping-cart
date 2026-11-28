@@ -164,7 +164,7 @@ flowchart LR
 | Mastic level at the surface; stone orientation under compaction | Gap (searched; Airey & Collop orientation paper refused by its repository) | Makes MPD a check instead of a calibration (step 6b) |
 | TRR 2676 (2022) full text | Paywalled (abstract read) | Abrasion procedure and numbers (step 6b) |
 | RVE size of asphalt (Romero & Masad 2001; Kim et al. 2009) | Paywalled (summaries read: 50-60 mm for dense-graded; Materials 2024 mortar RVE read online) | Tile size; our 50 vs 100 mm check agrees (step 6b) |
-| Wang / corner tiles (Lagae 2007 thesis, filed; Cohen et al. 2003, host blocked) | In hand | Tiling the road from a few packed tiles without repeats (step 6b) |
+| Wang / corner tiles (Lagae 2007 thesis, filed; Cohen et al. 2003, host blocked) | Read, used | Corner-tile road: 16 tiles, no overlaps, 38.5 % stone, seams not visible (`docs/asphalt_checks/corner_tiles.py`, step 6b) |
 | Surface wear rate under traffic | Studded tyres in hand (Alaska 2019, WSU 2018, filed); ordinary tyres Gap | Wear depth against time and traffic, for the exposure (step 6b, then T4; studded wear is winter climate in Vermont) |
 
 Steps (one commit each, each with its own check):
