@@ -277,26 +277,26 @@ flowchart LR
 | Mn/DOT 97-06, Table 5.1 | Read (that table) | Candidate unaged warm modulus of the build-up's own mix (AC-20 Marshall), for the hub |
 | Traffic: c620 Table 5 ESALs | Read | Design totals only, no design life; yearly figure for the default road is zack's call |
 | LTPP traffic (FHWA-RD-03-094; TRF tables) | Summaries only (FHWA PDF erroring, InfoPave blocked) | Spectra from WIM; ESALs kept for QA. For the V thread |
-| Layered elastic equations: Wang, Roesler & Guo 2011 (open access, IDEALS); Burmister 1945 (J. Appl. Phys. 16); Huang, Pavement Analysis and Design, ch. 2 | **Wanted, blocks the strain solver** (DTIC, trb.org, IDEALS blocked here). Not enough: the 1993 AASHTO SN method (no strains); Burmister's two-layer deflection chart (kept as a check) | Strain under the wheel |
+| Pan, Alkasawneh & Chen 2007, FHWA/OH-2007/12, ch. 7 (`pan_2007_fhwa-oh-2007-12_multilayer_elastic.pdf`, filed this thread from ROSAP) | Read (ch. 1.2, 7) | Multilayer elastic solution: transformed ODEs, propagation, circular load, back-transform, superposition; Boussinesq (Table 1.1); a 3-layer example beside Everstress. Propagator elements derived (not printed). Not enough on their own: the 1993 AASHTO SN method (no strains); Burmister's two-layer deflection chart (kept as a check) |
+| Wang, Roesler & Guo 2011 (IDEALS); Huang ch. 2 | Optional (to check the derived propagator against print) | Layered elastic |
 | NCHRP 1-37A Part 2 ch. 2 and Appendices UU, GG-1, II-1 | Wanted (trb.org blocked) | Level 3 E* equation, pulse time from speed, the calibrations |
 | AASHTO MEPDG MOP 2015 or 2020 | Wanted (paywalled) | Settles the 2015 constants |
 | LTPP DIM (fatigue cells under 0.3 m; rutting) | Read | Checks |
 | Where along the path cracking starts; cell size; fatigue severity; rut shoulders | Gap | See Model 3, "Not in it" |
 
-**For zack to file in `References/Asphalt/`** (blocked from this session): the layered elastic equations, best
-Wang, Roesler & Guo 2011, open access (www.ideals.illinois.edu/items/18926, the PDF under "Files"), as
-`wang_roesler_guo_2011_multilayer_axisymmetric.pdf`; failing that Burmister 1945 (J. Appl. Phys. 16, or DTIC
-AD0614693) or Huang ch. 2. Later: 1-37A Part 2 ch. 2 and Appendix UU; the 2015 or 2020 MEPDG Manual of Practice.
-(1-37A Part 3 ch. 3: filed Nov 28.)
+**For zack to file in `References/Asphalt/`, none blocking** (blocked from this session): Wang, Roesler & Guo
+2011 (www.ideals.illinois.edu/items/18926) or Huang ch. 2, to check the derived propagator; 1-37A Part 2 ch. 2
+and Appendix UU; the 2015 or 2020 MEPDG Manual of Practice. (1-37A Part 3 ch. 3 and the layered elastic
+solution, Pan et al. 2007: filed Nov 28.)
 
 For the hub to carry into T1's rows: Mr = 2555 CBR^0.64 is restated as the 1-37A level 2 correlation in NRC
 RR-216 (appendix); T1's 3 GPa warm modulus is replaced by the shared mix modulus once agreed.
 
-Decisions for zack and the hub (Model 3, "How the sources disagree"):
-1. Constant set: 2008 MOP (proposed) or 2015 global; never mixed.
-2. ESALs as passes of the standard axle until the LTPP section's spectra arrive; the default road's ESALs per year.
-3. The mix modulus: owner thread, and the unaged warm curve (Mn/DOT 97-06 AC-20 proposed; it could serve T3 too).
-4. Placement of the cracked area along the wheel path (band, or wait for a sourced variability).
+Decisions (zack, Nov 28; Model 3, "Decisions"):
+1. Constants: 2008 MOP. 2. ESALs as passes of the standard axle (ESALs per year for the default road still to
+set). 3. Mix: Mn/DOT 97-06 AC-20 Marshall; **for the hub:** which thread codes the shared mix modulus, and whether
+T3 moves to the same mix. 4. Fatigue cracking placed weakest point first, as in T3; the along-road spread it needs
+is Wanted (measured within-section thickness or air-void variability), not invented.
 
 New quantities Model 3 needs (proposed; to agree in the hub before any code, then added to the shared table):
 
@@ -314,7 +314,7 @@ New quantities Model 3 needs (proposed; to agree in the hub before any code, the
 
 Steps (one commit each; stop for zack's review where marked):
 - [x] Sources read and filed; Model 3 written up (ASPHALT_SCIENCE.md) **-> zack's review**
-- [ ] Layered elastic equations filed (zack), read, written into Model 3
+- [x] Layered elastic equations found (Pan et al. 2007), read, written into Model 3; decisions 1-4 recorded
 - [ ] Whole chain checked in Python (`docs/asphalt_checks/loads_chain.py`): transfer functions, Boussinesq and a
   published layered case, unbound rutting constants, mix modulus with AMAC, wander, c620 Table 5 against the MOP
   limits, 2008 against 2015 constants **-> zack's review, before any code**
@@ -472,4 +472,5 @@ codes it. T4 adds traffic, wander and rut depth to the shared quantities table o
 | Nov 27 2026 | T2 | Step 6 reopened: photo and scaling out, plan flat at the albedo | this commit |
 | Nov 27 2026 | T3 | Sources read and filed; Model 2 (thermal cracking) written up for review | this commit |
 | Nov 27 2026 | T4 | Sources read and filed; Model 3 (fatigue and rutting) written up for review | 4bf704e |
-| Nov 28 2026 | T4 | NCHRP 1-37A Part 3 ch. 3 filed and read; Model 3 revised | this commit |
+| Nov 28 2026 | T4 | NCHRP 1-37A Part 3 ch. 3 filed and read; Model 3 revised | 96dff6d |
+| Nov 28 2026 | T4 | Layered elastic source (Pan 2007) filed; zack's decisions recorded | this commit |

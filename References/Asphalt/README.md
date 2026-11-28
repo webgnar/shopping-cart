@@ -143,6 +143,11 @@ in this folder with the file names below.
   Reconstructed Flexible Pavements" (2004). Ch. 3.3: speed and load pulse (Table 3.3.1), wander (eqs.
   3.3.1-3.3.2, fig. 3.3.8), sublayering (fig. 3.3.9), JULEA analysis locations (fig. 3.3.12), rutting eqs.
   3.3.5-3.3.23 incl. strain hardening, fatigue eqs. 3.3.26-3.3.31.
+- `pan_2007_fhwa-oh-2007-12_multilayer_elastic.pdf`: Pan, Alkasawneh & Chen, "An Exploratory Study on
+  Functionally Graded Materials with Applications to Multilayered Pavement Design", FHWA/OH-2007/12, Ohio DOT
+  (2007), https://rosap.ntl.bts.gov/view/dot/37840. Ch. 7: the multilayer elastic solution (transformed ODEs eqs.
+  7.12-7.14, propagator, circular load eq. 7.18, back-transform eqs. 7.22-7.23, superposition eq. 7.24); ch. 1:
+  Boussinesq (Table 1.1); ch. 6: a three-layer example beside Everstress 5.0. Notes: Model 3.
 - MassDOT 24-067 (filed under thermal cracking) ch. 4.1 and 6.1: the 2015 global rutting and fatigue constants.
 - Wanted (blocked or paywalled): Wang, Roesler & Guo 2011, J. Transp. Eng. 137(4), open access at
   www.ideals.illinois.edu/items/18926 (file as `wang_roesler_guo_2011_multilayer_axisymmetric.pdf`); Burmister 1945, J. Applied Physics 16, 89-94, 126-127, 296-302, or his DTIC

@@ -715,6 +715,16 @@ those units inside each equation and are converted at the edges (the sim stays S
 | LTPP Distress Identification Manual (FHWA-HRT-13-092) | ACP 1, 9; fig. 136 | Fatigue definition and severities, rutting, wheel path positions |
 | FHWA-RD-03-094 (LTPP traffic, phase 2) and the LTPP release notes | search summaries only (FHWA page erroring, InfoPave blocked) | What LTPP records for traffic: axle load spectra from WIM, ESALs only for comparison and QA (below) |
 
+### Decisions (zack, Nov 28)
+
+1. Constants: the 2008 MOP (1-40D) set; the 2015 set only as a swap once the newer MOP is filed.
+2. Traffic: one ESAL = one pass of the 80 kN dual-tire standard axle, until the LTPP section's spectra arrive.
+   The default road's ESALs per year: still to set.
+3. Mix: the Mn/DOT 97-06 AC-20 50-blow Marshall mix (cell 18's mix design) is the unaged mix for the mix modulus,
+   Table 5.1 at the warm end. Which thread codes the shared mix-modulus file, and whether T3 moves to the same mix
+   (97-06 Tables 5.14-5.15 have its low-temperature creep and strength), is for the hub.
+4. Placement of fatigue cracking: weakest point first, as T3 does (see "Not in it").
+
 ### What it predicts
 
 For each wheel path, year by year: the bottom-up fatigue damage at the bottom of the asphalt, the area of
@@ -771,7 +781,7 @@ the subgrade, which add up to the rut. Across the lane, wander spreads both into
    the outer wheel path, so the tail cut off is 0.1 %, derived). For fatigue this is exact under Miner's rule (damage is linear in passes). For rutting, which is
    not linear in N, the expectation of the rut profile is an approximation (as ICT-20-010 applies it); the Python
    check compares the five-point average with it at the peak.
-5. **The structural response: layered elastic theory, primary text Wanted.** The MEPDG computes strains with
+5. **The structural response: layered elastic theory, from Pan et al. 2007 (filed Nov 28).** The MEPDG computes strains with
    JULEA, a Burmister multilayer linear elastic solution: homogeneous isotropic linear elastic layers, weightless
    and infinite in plan, the last a half-space, uniform circular loads, full continuity at the interfaces,
    wheels combined by superposition (MDSHA vol. 2 p. 25, citing Huang). The equations themselves (Burmister 1945;
@@ -786,8 +796,26 @@ the subgrade, which add up to the rut. Across the lane, wander spreads both into
    1993 AASHTO page (Pavement Interactive) is the empirical structural-number method MEPDG replaced, and computes
    no strains; Burmister's two-layer surface deflection, Delta = 1.5 p a F2 / E2, reads F2 off a chart and gives
    only the surface deflection of two layers, not strains at depth in three. It is kept as a check for the
-   solver (the two-layer case must reproduce Burmister's chart). **Until they are filed, the strain solver has no sourced equations
-   and cannot be coded.** This replaces T1's Westergaard radius, a slab-on-springs stand-in.
+   solver (the two-layer case must reproduce Burmister's chart).
+   **Found Nov 28, on ROSAP (reachable from here): Pan, Alkasawneh & Chen 2007, "An Exploratory Study on
+   Functionally Graded Materials with Applications to Multilayered Pavement Design", FHWA/OH-2007/12, Ohio DOT
+   (`pan_2007_fhwa-oh-2007-12_multilayer_elastic.pdf`), ch. 7.** It gives the multilayer solution in a form we can
+   code: equilibrium and isotropic constitutive law (eqs. 7.1-7.3, c11 = E(1-nu)/((1+nu)(1-2nu)),
+   c12 = E nu/((1+nu)(1-2nu)), c44 = E/(2(1+nu))); the Hankel-type expansion (Bessel J0, J1; eqs. 7.5-7.11); the
+   transformed equations, which for each layer are four first-order linear ODEs in z for
+   E = [U_L, lambda U_M, T_L/lambda, T_M] (eqs. 7.12-7.14); propagation layer to layer, bounded half-space, the
+   circular-load boundary condition T_L(lambda, 0) = -q R sqrt(2 pi) J1(lambda R) / lambda (eqs. 7.16-7.21); the
+   back-transform to displacements and stresses (eqs. 7.22-7.23); several wheels by superposition (eq. 7.24); and
+   the overflow fix (factor out the growing exponentials). Ch. 1 gives Boussinesq's point-load equations (Table
+   1.1, after Ullidtz). **What it doesn't print** are the elements of the layer propagator matrix (it cites Pan
+   1989). Proposed (derived): each layer's propagator is the solution of its constant-coefficient system 7.12-7.13
+   over the layer's thickness (the matrix exponential, written in closed form with e^(+-lambda h) and the factor
+   fix); full bond at interfaces is the continuity of E that the propagation assumes, as in JULEA (MDSHA). Checks:
+   one layer against Boussinesq integrated over the circle; two layers against Burmister's chart; three layers
+   against the report's worked example beside Everstress 5.0 (18 in at 350 ksi, 6 in at 30 ksi, subgrade 4.8 ksi,
+   125 psi on 4.072 in circles; its figs. 6.4-6.9, read off plots). Its normalisation (the 1/sqrt(2 pi) in S and
+   the factors in eqs. 7.22-7.23) is to be confirmed by the Boussinesq check, since the text extraction is
+   unclear there. This replaces T1's Westergaard radius, a slab-on-springs stand-in.
 
 ### Equations of the proposal (2008 MOP numbering unless stated)
 
@@ -877,7 +905,7 @@ MEPDG_AXLE_LOAD_DIST_FACTOR) kept "mainly for comparison and quality assurance".
 
 1. Transfer function arithmetic: CH, C1\*, C2\* for 3 in; FC 50 % at DI 1 (2008); both readings of MassDOT's 2015
    eq. 24.
-2. Layered elastic solver (once its equations are filed): the one-layer case against Boussinesq's closed form
+2. Layered elastic solver (Pan et al. 2007, propagator derived): the one-layer case against Boussinesq's closed form
    for a circular load; the two-layer surface deflection against Burmister's F2 chart (Delta = 1.5 p a F2 / E2,
    flexible load); a published multilayer example (Wang et al. 2011 or Huang, whichever is filed).
 3. Unbound rutting: eps0/epsr from the reconstructed form, its two terms equal (above); Wc for CBR 9.
@@ -893,21 +921,24 @@ MEPDG_AXLE_LOAD_DIST_FACTOR) kept "mainly for comparison and quality assurance".
 
 ### Not in it, and gaps
 
-- **Layered elastic equations: Wanted, blocking the strain solver.** Any one of: Wang, Roesler & Guo 2011,
-  "Innovative Algorithm to Solve Axisymmetric Displacement and Stress Fields in Multilayered Pavement Systems",
-  J. Transportation Engineering 137(4), open access at www.ideals.illinois.edu/items/18926 (the n-layer
-  Hankel-transform solution, the best fit); Burmister 1945, J. Applied Physics 16, 89-94, 126-127, 296-302;
-  Huang, *Pavement Analysis and Design* (2004), ch. 2.
+- **Layered elastic equations: found (Pan et al. 2007), no longer blocking.** The propagator's elements are
+  derived, not printed; Wang, Roesler & Guo 2011 (www.ideals.illinois.edu/items/18926) or Huang ch. 2 would let
+  us check them against print, if zack can get either. Not needed to proceed.
 - **NCHRP 1-37A Part 3 ch. 3: filed (zack, Nov 28) and read.** Still Wanted from 1-37A (onlinepubs.trb.org
   blocked): Part 2 ch. 2 (the level 3 E* predictive equation), Appendix UU (pulse time from speed), Appendices
   GG-1 and II-1 (the rutting and fatigue calibrations). How the software applies wander to rutting is not in
   ch. 3 and may not be published anywhere.
 - **AASHTO MEPDG Manual of Practice, 2015 or 2020 edition: Wanted** (paywalled): settles the 2015 constants and
   the FD x 100 question.
-- **Where along the wheel path the cracking appears: Gap.** MEPDG gives an amount for the lane; the road in the
-  sim is uniform, so nothing places the first patches. MEPDG's scatter (eq. 5-7) is section to section, not within
-  one. Options for zack: (a) leave placement out and draw the amount as a band of the right area centred on the
-  wheel path, (b) take a measured along-road variability (thickness, modulus) once one is sourced.
+- **Where along the wheel path the cracking appears: weakest point first (zack, Nov 28), its spread a Gap.**
+  The same rule as T3: the road is split into cells along each wheel path, each with its own fatigue life, and
+  the lane's area FC (eq. 5-6) is filled weakest cells first. In T3 each segment's strength comes from a measured
+  scatter (Mn/DOT 2007-43 Table 6.14). Here the spread has to be of something that changes Nf along the road:
+  as-built asphalt thickness (Nf goes as eps_t^-3.95 and eps_t rises steeply as h falls), air voids (through C) or
+  modulus. Nothing in hand measures that within a section: MEPDG's scatter (eq. 5-7) is section to section;
+  Mn/DOT 97-06 reports cell averages and test repeatability, not variation along a cell. Wanted: a measured
+  within-section variability of layer thickness or air voids (LTPP cores and GPR give it; to be searched). Until
+  then the spread is not drawn: no invented scatter.
 - **Crocodile cell size: Gap.** LTPP ACP 1: pieces usually under 0.3 m. The present 0.7 x 1.0 Westergaard radius
   rule is derived, not sourced, and goes with Westergaard.
 - **LTPP fatigue severity (L/M/H): Gap.** MEPDG predicts area only.
