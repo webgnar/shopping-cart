@@ -179,7 +179,7 @@ Steps (one commit each, each with its own check):
 - [ ] 6b. Surface composition: **written up for review (ASPHALT_SCIENCE.md, Model 1b, with a second pass: wear not oxidation drives the albedo, Jolt packing of low-poly stones, macrotexture from the stones checked against MPD) and checked in Python (`docs/asphalt_checks/surface_composition.py`); waiting for zack's review before code.** Mix: MnROAD cell 18 wear course (Mn/DOT 97-06). Original note: binder (0.05) and exposed aggregate (its measured albedo, Pomerantz Table 1: 0.10-0.28) drawn as stones; exposed fraction from the surface ageing up to the chip-seal ceiling (0.67 +- 0.11 of the aggregate's albedo); stone sizes from the gradation, area fraction from the volume fraction (Delesse). The mean albedo then comes out of the picture and becomes a check. Gradation limits in hand: FHWA-RD-98-087 (12.5 mm control points, restricted zone, VMA 14 %, air voids 4 %); an actual curve wanted: LTPP AG04 for the section (InfoPave), or MnROAD cell 18's job-mix formula (AC-20 = PG 64-22, the build-up's strength source; MnDOT library host blocked from this session). Aggregate albedo: Pomerantz Table 1 for now (option A, zack). Gaps: binder lightening with oxidation; aggregate weathering (rock oxidises too: iron staining, feldspar to clay); aggregate shape. The section must draw the same stones: one 3D stone field that the plan (z = 0) and the section (the cut) both slice, so scrubbing the cut moves through it
 - [ ] 7. Roadmap and science register updated
 
-### T3 Thermal cracking: Current (research; Model 2 written up, waiting for zack's review)
+### T3 Thermal cracking: Current (research; Model 2 checked in Python, waiting for zack's review)
 
 What it does: in cold weather the aged, stiffer layer shrinks, the base holds it back and it cracks across the
 road where the restrained stress reaches the mix's strength, at a spacing set by the slip length. Places the
@@ -211,8 +211,10 @@ flowchart LR
 | MassDOT 24-067 (Von Quintus et al. 2024) | Read (ch. 5.1); filed | Current TC equations; 2018 calibration kt = 3e-7 MAAT^4.0317 |
 | NCHRP 973 ch. 6 (AMAC) | Read | Binder log abs(G*) change to the mix's modulus master curve shift (eq. 51). **Gives modulus and fatigue, not strength** (corrected) |
 | FHWA-HRT-16-084 (2019) | Read (ch. 1); filed | Mechanisms; widths grow over time (no rate) |
-| NCHRP 1-37A Appendix HH (TCMODEL calibration, level 3 correlations); Part 3 ch. 3 | Wanted: trb.org blocked from this session | Primary text of TCMODEL; for zack to file |
-| AASHTO MEPDG Manual of Practice (2020) | Wanted (paywalled) | Current equations from the primary text |
+| NCHRP 1-37A Appendix HH (2003), field calibration of TCMODEL (`nchrp_1-37a_2003_appendix_hh_...`, zack) | Read (main text, Annex A ch. 2 and 4, Annex B, Annex C conclusions) | TCMODEL in full: alpha (eq. 2.1, passes TSRST), stress, Paris law with sublayers, lognormal crack sites, calibration; MnROAD AC-20 cores (Table A-1) |
+| NCHRP 1-37A Part 3 ch. 3; aashtowarepavementme.org documents | Wanted (trb.org and aashtowarepavementme.org refused by this session's network) | Background |
+| AASHTO MEPDG Manual of Practice, 2008 interim edition (`AASHTO08.pdf`, zack) | Read (5.2.4) | TCMODEL equations from the primary text; kt by input level |
+| NRC Canada RR-216 (Ali 2005); Maryland SHA vol. 2 (Schwartz & Carvalho 2007) (zack) | Read (TC sections) | TC amount is ft per 500 ft, at most 200 of 400; TCMODEL does not age the mix |
 | Hiltunen & Roque 1994; Jones et al. 1968 (AAPT) | Wanted (paywalled) | Originals of TCMODEL and of alpha's volumetric estimate |
 | Thermal contraction coefficient of the mix | **Sourced** (was Gap): measured, Mn/DOT 2007-43 Tables 6.19, 6.22 | Thermal stress |
 | Crack width growth over the years | Gap (Alaska AK-RD-86-26 host refused; LTPP surveys in InfoPave, blocked) | LTPP severity (L/M/H by width) |
@@ -231,9 +233,22 @@ New quantities Model 2 needs (proposed; to agree in the hub before any code, the
 
 Steps (one commit each; stop for zack's review where marked):
 - [x] Sources read and filed; Model 2 written up (ASPHALT_SCIENCE.md) **-> zack's review**
-- [ ] Whole chain checked in Python (`docs/asphalt_checks/thermal_cracking_chain.py`): TSRST fracture of the
-  reference mix (-25.9 C at 2.92 MPa), Li's Table 4, halving to 1.5 Xc, ageing and climate trends, TCMODEL amount
-  beside ours **-> zack's review, before any code**
+- [x] Decisions (zack): daily climate = Burlington GHCN-Daily 1991-2020 (`docs/asphalt_checks/data/`); strength =
+  TSRST 2.92 MPa
+- [x] Whole chain checked in Python (`docs/asphalt_checks/thermal_cracking_chain.py`; results in Model 2). Passes:
+  master curve, Soules recursion, Li's Table 4, halving (1.35 Xc), the ageing / colder / thicker trends, MnROAD's
+  cracks in winter 1995-96. **Fails: TSRST with the measured alpha (-20.7 against -25.9 C); AMAC over-hardens at
+  low temperature against aged MnROAD cores.** Also: all cracks in one winter, half the field's scatter, few
+  full-depth cracks.
+- [x] Appendix HH read (Nov 28): alpha from its eq. 2.1 passes TSRST (-25.4 against -25.9 C); TCMODEL's crack sites
+  and Paris law give the progression; TCMODEL has no ageing. **Revised proposal in Model 2 -> zack's review**
+  (sites from the frictional model, growth from TCMODEL; alpha from eq. 2.1; MnROAD AC-20 core properties;
+  ageing: a, b or c)
+- [x] Ageing from T2 (zack). Second run (`--revised`): AMAC c fitted at low temperature to MnROAD 19 cores = 0.54
+  (one fitted number); TSRST -25.2 C; fracture temperature warms with age plausibly; cracks start winter after
+  winter (Burlington 2008-09, 2014-15). TCMODEL's Paris term is negligible: growth is its strength jump, and with
+  the IDT strength no Burlington crack goes through; MnROAD 1995-96 now missed. **Proposal: one strength (TSRST)
+  for starting and deepening -> zack's review**
 - [ ] 1. Daily climate input and the new layer inputs (shared table rows agreed in the hub first)
 - [ ] 2. Relaxation modulus with the AMAC shift, by depth and year (own file)
 - [ ] 3. Restrained thermal stress through the winter, by depth (own file)
@@ -400,4 +415,7 @@ codes it. T4 adds traffic, wander and rut depth to the shared quantities table o
 | Nov 27 2026 | T2 | Step 5: section draws the stiffness gradient | ef9dad2, e4303ad |
 | Nov 27 2026 | T2 | Step 6: plan grey from albedo | 13dba8d |
 | Nov 27 2026 | T2 | Step 6 reopened: photo and scaling out, plan flat at the albedo | this commit |
-| Nov 27 2026 | T3 | Sources read and filed; Model 2 (thermal cracking) written up for review | this commit |
+| Nov 27 2026 | T3 | Sources read and filed; Model 2 (thermal cracking) written up for review | 67ba5ea |
+| Nov 27 2026 | T3 | Decisions recorded; chain checked in Python (two inputs fail; options in Model 2) | d482562 |
+| Nov 28 2026 | T3 | Appendix HH filed and read; alpha resolved; revised proposal | b232e15 |
+| Nov 28 2026 | T3 | Ageing from T2 (c fitted at low T); second Python run | this commit |
