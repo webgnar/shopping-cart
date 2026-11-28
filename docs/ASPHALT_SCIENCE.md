@@ -518,7 +518,7 @@ as a possible factor, without numbers.
 
 ## Model 2: thermal cracking (proposal for review; T3)
 
-**Status: written up; checked in Python (`docs/asphalt_checks/thermal_cracking_chain.py`, results below: two inputs fail their data, options listed); no code.**
+**Status: written up; checked in Python (`docs/asphalt_checks/thermal_cracking_chain.py`, results below; Appendix HH read Nov 28: revised proposal below); no code.**
 
 **Decisions (zack, Nov 27):** (1) daily temperatures: the sim is not about one place, so take a representative
 cold climate and keep it: the NOAA GHCN-Daily record of the default climate's own station, Burlington VT
@@ -670,7 +670,9 @@ build-up's binder, aged about 12 years) give alpha and aged creep and strength f
 | 2 | Relaxation: the Soules / Prony route (the one code would use) against an exact solve from the compliance | Prony fit within 0.1 %; both give the same TSRST stress to 0.1 C | Passes (implementation) |
 | 3 | **TSRST, 10 C/h from +5 C, with the measured two-slope alpha** | **Fracture at -20.7 C (measured -25.9 C); slope 0.39 MPa/C (measured 0.21)**. R 0.5-4 C changes it by under 0.5 C | **Fails by 5 C** |
 | 3b | The same with one constant alpha | 18.6 x 10^-6/C (Li's Jones value): -25.4 C | Passes, but that alpha isn't this mix's measurement |
-| 4 | Jones eq. 3 with cell 18's wear-course volumetrics | The binder term alone is 17.6 x 10^-6; Li's 18.6 would need B_agg 1.2 x 10^-6 linear (too low for rock) | Li's inputs can't be reconstructed |
+| 4 | Jones eq. 3 as Appendix HH applies it (eq. 2.1: B_AC 3.45 x 10^-4, aggregate "about two orders of magnitude less"), cell 18's wear-course VMA 15.3 % | 18.57 x 10^-6 /C (Li Table 1: 18.62) | **Passes: Li's value reconstructed** |
+| 4b | TSRST with that alpha | -25.4 C (measured -25.9 C); slope 0.33 MPa/C (measured 0.21) | **Passes** on the fracture temperature; the slope is still steeper |
+| 4c | MnROAD AC-20 cores at three ages, same binder and job mix (Mn/DOT 97-06) | Creep stiffness at -12 C, 60 s: cells 16 / 17 (Appendix HH Table A-1, cores for the 2001-03 calibration) 5.7 / 7.3 GPa; cell 19 (about 12 years, Mn/DOT 2007-43) 13.95 GPa; cell 18 resilient modulus at -18 C (about 3 years, Li) 16.76 GPa | Different labs and tests: no clean low-temperature ageing rate can be read off |
 | 5 | Li and Marasteanu Table 4 | Xc 6.68 / 5.94 / 7.04 m (theirs 6.7 / 5.9 / 7.0) | Passes |
 | 6 | Halving with strength scatter (CV 6.5 %), stress well over strength | Mean 1.35 Xc, CV 0.21, range 0.9-2.3 Xc | Near Li's 1.5 Xc; **scatter half the field's** (cell 18: CV 0.47) |
 | 7 | **AMAC with T2's ageing, against aged cores** (MnROAD 19, about 12 years: 13.95 / 9.89 GPa at -12 C, 60 / 500 s) | The cores match a Delta log abs(G\*) of 0.25-0.4; T2 gives 0.7-2.0 in the top 4 cm at 12 years, which AMAC turns into 20-26 GPa | **Over-hardens** (different mix and climate, so a loose check, but by a wide margin) |
@@ -683,34 +685,69 @@ build-up's binder, aged about 12 years) give alpha and aged creep and strength f
 | 14 | **MnROAD cell 18 timing** (200 mm, Minneapolis from 1994, our reference mix) | First cracks in **winter 1995-96**, as in the field; spacing 11.6 m (field 4.8 m); none full depth (6 cm of 20) | Timing passes; spacing 2.4x wide (Li's own finding); depth fails |
 | - | TCMODEL's amount beside ours | Not run: crack growth needs the definitions of Delta K, E_HMA and the sublayer rule from Appendix HH (still Wanted) | Deferred |
 
-**What the run says:**
-1. The mechanics chain is sound: the fitted master curve, the Soules recursion, Li's spacing and the halving
-   agree with their sources, and the cross-topic trends come out the right way (ageing, colder, thicker).
-2. **Two inputs fail their data.**
-   - **Contraction coefficient:** the measured alpha_l (33 x 10^-6) with the measured creep compliance gives
-     twice the measured TSRST stress rate. Either the dilatometric alpha overstates the effective contraction
-     in a restrained specimen, or the IDT creep stiffness overstates the stiffness in TSRST. The data in hand
-     can't tell which. A constant 18.6 x 10^-6 passes but isn't this mix's measurement.
-   - **AMAC carried to low temperature:** a shift of c x Delta log abs(G\*)(64 C) up to 5 decades pushes the
-     aged surface to its glassy limit, so it stops relaxing. Aged MnROAD cores say the real hardening at -12 C
-     is a third of that or less. NCHRP 973 fitted AMAC at 4-40 C and warned about the cold end (p. 82, 105).
-     This is the source of checks 8, 9 (the 17-21 MPa far-field stresses) and 11.
-3. **The halving rule saturates in one event:** once the stress is well over the strength, every segment
-   splits down to Xc-2Xc that night, and nothing changes afterwards. This matches MnROAD's "most cracks in one
-   winter", but not the gradual increase LTPP sections show, and the spread is half the field's.
-4. **Depth:** cracks stop where the stress drops below the strength (warmer, less aged material below). They
-   rarely reach full depth; MnROAD's did.
+**What the run says (first pass, before Appendix HH):** the mechanics chain is sound (master curve, Soules
+recursion, Li's spacing and halving agree with their sources; the ageing, colder and thicker trends come out the
+right way). Two inputs failed their data: the dilatometric alpha (TSRST 5 C off) and AMAC carried to low
+temperature (over-hardening against aged cores). The halving rule saturates in one winter, with half the field's
+spread, and cracks rarely reach full depth.
 
-**Options for zack (no code until chosen):**
-- **Contraction:** (a) keep the measured alpha and accept a TSRST miss of 5 C; (b) take the alpha that
-  reproduces TSRST (about 18 x 10^-6) as a calibration of alpha x E against the restrained test, labelled as
-  one fitted number; (c) look for a mix with both measurements consistent.
-- **Ageing at low temperature:** (a) keep AMAC but bound it by the aged-core data, i.e. a smaller c at low
-  temperature, one fitted number against MnROAD 19 (a different mix); (b) look for a source that relates binder
-  ageing to the mix's low-temperature creep directly (e.g. a BBR / IDT study on aged cores). Wanted.
-- **Progression and spread:** a sourced reason for cracks to keep coming after the first winter is needed:
-  strength loss with age (a Gap), thermal fatigue (the Paris law TCMODEL uses, Appendix HH), or more
-  along-road variability than specimen scatter (no source).
+### Appendix HH (NCHRP 1-37A, Dec. 2003; filed Nov 28): what it settles
+
+Read: main text (HH.1-34), Annex A ch. 2 (the model), 4 (recalibration), Annex B (2003 recalibration), Annex C
+conclusions. The 2008 Manual's equations are the same.
+1. **Alpha (eq. 2.1).** TCMODEL computes the mix's coefficient with Jones's volumetric relation, B_AC 3.45 x 10^-4
+   for every binder, the aggregate "about two orders of magnitude less", and states that it gave "reasonably
+   accurate predictions of thermal stresses and fracture temperatures measured in the TSRST" for four SHRP mixes
+   (Lytton et al. 1993). That is exactly our checks 4 and 4b: it reconstructs Li's 18.6 x 10^-6 and puts the
+   reference mix's TSRST fracture within 0.5 C. **The dilatometric alpha is not the quantity TCMODEL was
+   calibrated with.** Proposed: alpha from eq. 2.1 (VMA from the mix design; for the build-up's mix, cell 18's
+   wear course, 15.3 %: 18.6 x 10^-6 /C). No fitted number.
+2. **Shift factors:** piecewise linear in ln aT between the test temperatures, extrapolated linearly (Annex A
+   2.5.2.4), not the quadratic I borrowed from AMAC. To change in the next run.
+3. **Strength:** TCMODEL uses the IDT strength at -10 C, 12.5 mm/min (0.5 in/min), as the undamaged strength at
+   all temperatures, for the crack growth. The 2.92 MPa TSRST strength (your choice) stays for the initiation
+   criterion; the two play different roles.
+4. **Stress through the depth:** the same 1D Soules recursion at nodes every 2 in (we use 1 cm), from site
+   weather records of daily minimum and maximum air temperature (the same input we now use). Actual historic
+   temperatures gave better predictions than averaged climate files (Table A-4: mean error -9 against 16 ft per
+   500 ft at level 1): your daily-record decision is the one the model's authors recommend.
+5. **The crack amount model is about positions after all.** Annex A 2.5.5.3: potential crack sites sit at a
+   uniform spacing S, each a small surface flaw; their depths spread lognormally along the road (material
+   variability) around the computed mean depth C0, sigma 0.769 (in log10); a site counts as a crack once its depth
+   passes the layer. The ceiling of 400 ft per 500 ft is one site per 15 ft (4.6 m), chosen because "below a certain
+   crack spacing, insufficient friction exists to develop the stresses required to advance another crack": Li's
+   argument. Our frictional spacing for the default build-up, 1.35 Xc = 4.7 m, lands on the same 15 ft.
+6. **Progression comes from the Paris law and that spread:** each site's crack grows by Delta C = A Delta K^n per
+   daily cooling cycle, at most one of four sublayers a day (0.5 in, then 1/6, 2/6, 3/6 of the rest), jumping to the
+   sublayer bottom when the stress exceeds the strength; K = sigma_tip (0.45 + 1.99 C0^0.56); n = 0.8 (1 + 1/m);
+   A = 10^(beta2 (4.389 - 2.52 log(k sigma_m n))), k = 10,000, beta2 = 5.0 (level 1, Annex B). Cracks appear winter
+   after winter as more sites break through: the gradual increase the frictional halving lacked.
+7. **Calibration history** (Annex A 4.3, Annex B): k 10,000, beta1 353.5, sigma 0.769, R2 0.88 on 35 sections
+   (2001); then beta1 fixed at 400 and beta2 5.0 / 1.5 / 3.0 by level (2003). MnROAD AC-20 cells 16 and 17 were
+   among the calibration sections (observed >= 200 ft per 500 ft; level 1 predicted 200 and 134).
+8. **Ageing: TCMODEL has none.** It was calibrated on field-aged cores taken when the cracking was surveyed
+   (Annex B: "greater than 10 years in service in some cases"); NRC RR-216 notes field ageing was to be added
+   later. Its level 3 properties come from regressions on Va, VFA, Pen77 and the RTFO viscosity intercept
+   (eqs. 8-10), not from ageing.
+9. **Where it works:** Annex C's level 3 sensitivity runs predicted cracking only where MAAT < 53 F (Barrow,
+   Fargo, Billings; Chicago almost none); thicker layers crack less, stiffer binders more.
+
+**Revised proposal (for zack; no code until agreed):**
+- **Crack sites from the frictional model, crack growth from TCMODEL.** Li and Marasteanu's halving places the
+  sites (segment middles, spacing Xc to 2 Xc), as now. Each site carries its own lognormal depth factor
+  (sigma 0.769, TCMODEL's spread) and grows by TCMODEL's Paris law through the winters; it shows in plan once its
+  depth passes the layer, and in section at its depth before that. This keeps every TCMODEL equation and its
+  calibration, and turns its "amount" into positions. Over a section, the fraction of sites through equals
+  TCMODEL's N(log(C0/h)/sigma), so its amount is reproduced exactly, and its 15 ft ceiling comes from our Xc.
+- **Alpha from Appendix HH eq. 2.1** (passes TSRST; no fit).
+- **Mix properties:** the build-up's own family, MnROAD AC-20 cells 16 / 17 (Appendix HH Table A-1, creep at -20,
+  -10, 0 C to 1000 s; strength 2.23 / 2.44 MPa), field-aged cores as TCMODEL uses; the PG 64-22 lab mix stays for
+  the TSRST check.
+- **Ageing: decision needed.** (a) TCMODEL's practice: no ageing link; properties of aged cores; T2's ageing then
+  feeds only the section's gradient and the albedo, and the roadmap check "an aged binder cracks sooner" is
+  dropped; (b) keep an AMAC-type link with c fitted at low temperature, but the cores in hand (check 4c) come from
+  different labs and can't fix c; (c) look for a source on aged cores' low-temperature creep tested in one lab
+  at several ages (Wanted).
 
 ### Not in it, and gaps
 
@@ -733,8 +770,7 @@ build-up's binder, aged about 12 years) give alpha and aged creep and strength f
 - **Semi-rigid bases** (Chen's subject: cement- or lime-treated base cracking and reflecting): out of scope.
 
 **Wanted (blocked from this session; zack to file in References/Asphalt if he can get them):**
-`nchrp_1-37a_2004_appendix_hh_thermal_cracking.pdf` (onlinepubs.trb.org/onlinepubs/archive/mepdg/2appendices_HH.pdf:
-TCMODEL's calibration and the level 3 creep and strength correlations), NCHRP 1-37A Part 3 ch. 3 (same site);
+NCHRP 1-37A Part 3 ch. 3 (Appendix HH is now filed: `nchrp_1-37a_2003_appendix_hh_thermal_cracking.pdf`);
 the 2020 edition of the Manual of Practice (zack filed the 2008 interim edition, `AASHTO08.pdf`, which carries the
 equations; it is marked "duplication is a violation of applicable law"); Hiltunen and Roque 1994 and Jones et al. 1968 (AAPT,
 paywalled); Alaska DOT AK-RD-86-26 (crack widths; host refused).

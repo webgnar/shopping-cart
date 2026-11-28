@@ -124,9 +124,13 @@ in this folder with the file names below.
   "Implementation of the NCHRP 1-37A Design Guide, Vol. 2: Evaluation of Mechanistic-Empirical Design Procedure",
   Maryland SHA SP0077B41 (2007). TC model eqs. 29-31 (C_f in ft/500 ft, beta 400; kt by level).
 - `2003-Overview-of-NCHRP-1-37A.pdf` (filed by zack): Sharpe, NCHRP 1-37A project overview slides (2003). Background.
-- Wanted (blocked or paywalled): NCHRP 1-37A Appendix HH, "Field Calibration of the Thermal Cracking Model" (2004),
-  onlinepubs.trb.org/onlinepubs/archive/mepdg/2appendices_HH.pdf, file as
-  `nchrp_1-37a_2004_appendix_hh_thermal_cracking.pdf`; NCHRP 1-37A Part 3 ch. 3; the 2020 Manual of Practice; Hiltunen & Roque 1994 and Jones, Darter & Littlefield 1968 (AAPT); Alaska DOT AK-RD-86-26 (crack widths).
+- `nchrp_1-37a_2003_appendix_hh_thermal_cracking.pdf` (filed by zack): ARA-ERES / ASU, NCHRP 1-37A final document,
+  Appendix HH, "Field Calibration of the Thermal Cracking Model" (Dec 2003). TCMODEL in full (Annex A ch. 2: alpha eq.
+  2.1, Soules stress, CRACKTIP K, Paris law with four sublayers, lognormal crack-depth sites, 15 ft minimum spacing);
+  calibration (Annex A ch. 4, Annex B: k 10,000, beta1 400, sigma 0.769, beta2 5 / 1.5 / 3 by level); creep and strength
+  of the 42 calibration mixes incl. MnROAD cells 16, 17, 26, 27, 30 (Table A-1); level 3 regressions (eqs. 8-10);
+  sensitivity by climate (Annex C).
+- Wanted (blocked or paywalled): NCHRP 1-37A Part 3 ch. 3; aashtowarepavementme.org documents (host refused); the 2020 Manual of Practice; Hiltunen & Roque 1994 and Jones, Darter & Littlefield 1968 (AAPT); Alaska DOT AK-RD-86-26 (crack widths).
 
 ## Crack spacing in pavements
 - `chen_2022_transverse_crack_spacing_semi_rigid_base.pdf`: Chen, Li, Zhao et al., "Investigation of transverse

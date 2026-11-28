@@ -210,7 +210,8 @@ flowchart LR
 | MassDOT 24-067 (Von Quintus et al. 2024) | Read (ch. 5.1); filed | Current TC equations; 2018 calibration kt = 3e-7 MAAT^4.0317 |
 | NCHRP 973 ch. 6 (AMAC) | Read | Binder log abs(G*) change to the mix's modulus master curve shift (eq. 51). **Gives modulus and fatigue, not strength** (corrected) |
 | FHWA-HRT-16-084 (2019) | Read (ch. 1); filed | Mechanisms; widths grow over time (no rate) |
-| NCHRP 1-37A Appendix HH (TCMODEL calibration, level 3 correlations); Part 3 ch. 3 | Wanted: trb.org blocked from this session | Primary text of TCMODEL; for zack to file |
+| NCHRP 1-37A Appendix HH (2003), field calibration of TCMODEL (`nchrp_1-37a_2003_appendix_hh_...`, zack) | Read (main text, Annex A ch. 2 and 4, Annex B, Annex C conclusions) | TCMODEL in full: alpha (eq. 2.1, passes TSRST), stress, Paris law with sublayers, lognormal crack sites, calibration; MnROAD AC-20 cores (Table A-1) |
+| NCHRP 1-37A Part 3 ch. 3; aashtowarepavementme.org documents | Wanted (trb.org and aashtowarepavementme.org refused by this session's network) | Background |
 | AASHTO MEPDG Manual of Practice, 2008 interim edition (`AASHTO08.pdf`, zack) | Read (5.2.4) | TCMODEL equations from the primary text; kt by input level |
 | NRC Canada RR-216 (Ali 2005); Maryland SHA vol. 2 (Schwartz & Carvalho 2007) (zack) | Read (TC sections) | TC amount is ft per 500 ft, at most 200 of 400; TCMODEL does not age the mix |
 | Hiltunen & Roque 1994; Jones et al. 1968 (AAPT) | Wanted (paywalled) | Originals of TCMODEL and of alpha's volumetric estimate |
@@ -237,7 +238,11 @@ Steps (one commit each; stop for zack's review where marked):
   master curve, Soules recursion, Li's Table 4, halving (1.35 Xc), the ageing / colder / thicker trends, MnROAD's
   cracks in winter 1995-96. **Fails: TSRST with the measured alpha (-20.7 against -25.9 C); AMAC over-hardens at
   low temperature against aged MnROAD cores.** Also: all cracks in one winter, half the field's scatter, few
-  full-depth cracks. TCMODEL amount deferred (needs Appendix HH) **-> zack's review: choose the options in Model 2**
+  full-depth cracks.
+- [x] Appendix HH read (Nov 28): alpha from its eq. 2.1 passes TSRST (-25.4 against -25.9 C); TCMODEL's crack sites
+  and Paris law give the progression; TCMODEL has no ageing. **Revised proposal in Model 2 -> zack's review**
+  (sites from the frictional model, growth from TCMODEL; alpha from eq. 2.1; MnROAD AC-20 core properties;
+  ageing: a, b or c)
 - [ ] 1. Daily climate input and the new layer inputs (shared table rows agreed in the hub first)
 - [ ] 2. Relaxation modulus with the AMAC shift, by depth and year (own file)
 - [ ] 3. Restrained thermal stress through the winter, by depth (own file)
@@ -405,4 +410,5 @@ codes it. T4 adds traffic, wander and rut depth to the shared quantities table o
 | Nov 27 2026 | T2 | Step 6: plan grey from albedo | 13dba8d |
 | Nov 27 2026 | T2 | Step 6 reopened: photo and scaling out, plan flat at the albedo | this commit |
 | Nov 27 2026 | T3 | Sources read and filed; Model 2 (thermal cracking) written up for review | 67ba5ea |
-| Nov 27 2026 | T3 | Decisions recorded; chain checked in Python (two inputs fail; options in Model 2) | this commit |
+| Nov 27 2026 | T3 | Decisions recorded; chain checked in Python (two inputs fail; options in Model 2) | d482562 |
+| Nov 28 2026 | T3 | Appendix HH filed and read; alpha resolved; revised proposal | this commit |

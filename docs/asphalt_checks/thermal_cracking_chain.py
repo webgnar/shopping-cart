@@ -1,12 +1,13 @@
 """Model 2 (thermal cracking) checked against its sources, before any code. See docs/ASPHALT_SCIENCE.md, Model 2.
 
-    python3 thermal_cracking_chain.py            (from docs/asphalt_checks/; numpy only)
+    python3 thermal_cracking_chain.py [--quick]  (from docs/asphalt_checks/; numpy only; --quick stops after 5)
 
 Sources (References/Asphalt):
   Mn/DOT 2007-43 (Marasteanu et al.): reference mix 64-22:U1:4:GR (12.5 mm, PG 64-22, granite, 6.0 % AC, 4 % air):
     Table 6.5 creep stiffness, Table 6.17 TSRST at 10 C/h, Table 6.19 dilatometry; Table 6.14 strength scatter;
     ch. 2 eqs. 24-32 (TCMODEL stress: master curve, relaxation, hereditary integral, Soules recursion).
   NCHRP 973 ch. 6: AMAC eq. 51 (c = 1.71) and eq. 37 (second-order log aT).
+  NCHRP 1-37A Appendix HH (2003): eq. 2.1 (alpha), Table A-1 (MnROAD cells 16, 17 creep compliance).
   Li & Marasteanu 2005: eq. 4 slip length, Table 4 inputs; Chen 2022 eqs. 14-15 (halving).
   FHWA-RD-97-103 eqs. 7, 8 and NCHRP 973's ageing (via binder_ageing_chain.py): T2's models.
   NOAA GHCN-Daily TMAX/TMIN 1991-2020 (data/): Burlington VT (default site), Minneapolis MN (next to MnROAD).
@@ -326,8 +327,34 @@ def main():
     print("\n3. Jones (Li eq. 3) for cell 18's wear course (VMA 15.3 %, V_agg 84.7 %, Mn/DOT 97-06), B_AC 3.45e-4:")
     b_ag = (1.862e-5 * 300 - 15.3 * 3.45e-4) / 84.7
     print(f"   binder term alone {15.3*3.45e-4/300*1e6:.1f}e-6; Li's 18.62e-6 would need B_agg = {b_ag*1e6:.1f}e-6 "
-          f"volumetric ({b_ag/3*1e6:.1f}e-6 linear): too low for rock. Li's VMA or B_agg were other values (not given).")
+          f"volumetric, about 1 % of B_AC: what Appendix HH says of aggregates (next lines).")
     print(f"   measured mixes (Mn/DOT Table 6.19): alpha_l 29-41e-6 above Tg, alpha_g 6-16e-6 below; Chen Table 2: 15-22e-6")
+
+    print("   Appendix HH eq. 2.1 (TCMODEL's own alpha): B_agg 'about two orders of magnitude less' than B_AC (3.45e-4):")
+    for vma in (15.3,):
+        a_hh = (vma * 3.45e-4 + (100 - vma) * 3.45e-6) / 300
+        print(f"   VMA {vma}: alpha = {a_hh*1e6:.2f}e-6 (Li Table 1: 18.62e-6, reconstructed)")
+        ALPHA_CONST = a_hh; tf, sl, _, _ = tsrst(); ALPHA_CONST = None
+        print(f"   TSRST with it: fracture {tf:+.1f} C, slope {sl:.2f} MPa/C (measured -25.9 C, 0.21)")
+
+    print("\n3b. MnROAD AC-20 mixes at three ages (cells 15-19 share the binder and the job mix, Mn/DOT 97-06):")
+    cells = {   # Appendix HH Table A-1, creep compliance 1/GPa at 1,2,5,10,20,50,100 s; field-aged cores (age not given)
+        16: {-20: [0.049, 0.053, 0.057, 0.062, 0.067, 0.075, 0.083], -10: [0.112, 0.125, 0.138, 0.152, 0.170, 0.207, 0.240],
+             0: [0.109, 0.133, 0.168, 0.206, 0.249, 0.330, 0.438]},
+        17: {-20: [0.035, 0.039, 0.044, 0.050, 0.054, 0.060, 0.065], -10: [0.056, 0.077, 0.091, 0.105, 0.120, 0.159, 0.199],
+             0: [0.086, 0.103, 0.133, 0.166, 0.208, 0.288, 0.367]}}
+    tt = np.log10([1, 2, 5, 10, 20, 50, 100])
+    for c, d in cells.items():
+        def Dat(T, t):
+            lt = math.log10(t)
+            l20 = np.interp(lt, tt, np.log10(d[-20])); l10 = np.interp(lt, tt, np.log10(d[-10]))
+            return 10 ** (l10 + (T + 10) / -10 * (l20 - l10))
+        print(f"   cell {c} (Appendix HH, cores for the 2001-03 calibration): creep stiffness at -12 C, 60 s "
+              f"{1/Dat(-12, 60):.1f} GPa; at -18 C, 60 s {1/Dat(-18, 60):.1f} GPa")
+    print("   cell 19 (Mn/DOT 2007-43 Table 6.13, cores about 12 years old): -12 C, 60 s 13.95 GPa")
+    print("   cell 18 (Li Table 1, Stroup-Gardiner 1997, resilient modulus 1 Hz, about 3 years): -18 C 16.76 GPa")
+    print("   reference lab mix 64-22:U1:4:GR, short-term aged (Table 6.5): -12 C, 60 s 10.24 GPa")
+    print("   -> different labs and tests; no clean ageing rate at low temperature can be read from these")
 
     print("\n4. Li & Marasteanu Table 4: Xc = sigma_t / (C/h + rho g tan phi)")
     for cell, s, C, tp, sg, xc in ((18, 2270e3, 62.1e3, 1.299, 2289, 6.7), (21, 2400e3, 77.2e3, 0.787, 2303, 5.9),
@@ -362,6 +389,8 @@ def main():
               f"CV {L.std()/L.mean():.2f}, range {L.min()/xc:.2f}-{L.max()/xc:.2f} Xc")
     print("   Li Table 2, cell 18 driving lane: 15.8 +- 7.35 ft: CV 0.47")
 
+    if "--quick" in sys.argv:
+        return
     print("\n6. Ageing (T2 chain, Burlington normals from the daily record) -> AMAC shift -> TSRST fracture temperature")
     bur = daily(os.path.join(HERE, "data", "ghcnd_USW00014742_burlington_vt_1991-2020.csv"))
     msp = daily(os.path.join(HERE, "data", "ghcnd_USW00014922_minneapolis_mn_1991-2020.csv"))
