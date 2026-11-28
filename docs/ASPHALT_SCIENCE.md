@@ -511,6 +511,18 @@ stone tops carry the tyres they shield the mastic between them.
 voids are higher at mid-depth than near the surface (search summaries; papers not yet read). Consistent with the
 face-down roller and with fewer stones in the top 4 mm (27 %); quantitative orientation data still Wanted.
 
+**Stone shape against measurement** (FHWA AIMS2, HIF-11-030, filed): AIMS sphericity cbrt(d_s d_i / d_l^2) of 3,000
+Xu stones: mean 0.70 (10-90 %: 0.60-0.80); 6.8 % beyond 3:1. Measured: crushed gravel 0.68-0.70 and 0.6-3.8 %;
+granite 0.60-0.68 and 5.2-9.7 %. Cell 18 is 90 % gravel (61 % of its coarse part crushed): the sphericity matches,
+the share beyond 3:1 is a little high; a check to tighten (e.g. a lower S_max for the gravel), not a calibration.
+
+**Where the bake runs (decided with zack, Nov 28):** offline, in Python (numpy), writing the packed tiles as a
+resource the game loads; not in GDScript, which would be far slower for 16 tiles of thousands of stones each. It
+only runs when the mix changes, like the section bakes. What could haunt us later, and the answer: (1) a Python
+dependency to rebake (the repo already has Python tools; numpy only); (2) a second implementation if the game ever
+needs to pack at run time (then port the core to a GDExtension; the format stays); (3) the file format, kept simple
+and documented (per stone: tile, class, vertex list), so either side can change.
+
 **Rock weathering and dirt: still Gaps.** No measurement for asphalt aggregate found. The nearest are concrete
 studies (Levinson and Akbari, LBNL: simulated weathering, soiling and abrasion changed concrete albedo by about
 -0.06, -0.05 and -0.19), which are not our material and are not used. NCAT names winter maintenance (sand, salt)

@@ -79,6 +79,32 @@ in this folder with the file names below.
   counts per size group n_i = 6 phi g_i G / (pi D_i^3 rho) (eq. 4); packing largest first, a smaller stone tried
   where one doesn't fit; fines under 2.36 mm treated as mastic.
 
+- `fhwa_2011_hif-11-030_aims2_aggregate_shape.pdf`: Gates, Masad, Pyle, Bushee (Texas A&M), "Aggregate Imaging
+  Measurement System 2 (AIMS2): Final Report", FHWA-HIF-11-030 (Jan 2011). Interlaboratory averages (Tables 3.4-3.6):
+  crushed gravel sphericity 0.68-0.70 (4.75-25 mm), flat or elongated beyond 3:1 0.6-3.8 %, gradient angularity
+  1,900-2,800; granite sphericity 0.60-0.68, 3:1 5.2-9.7 %, angularity 2,900-3,200. Sphericity per AIMS is
+  cbrt(d_s d_i / d_l^2) (Masad; AASHTO TP 81; the formula is not printed in this report).
+
+## Road tiling (surface composition, T2 step 6b)
+- `lagae_2007_tile_based_methods_thesis.pdf`: Ares Lagae, "Tile-Based Methods in Computer Graphics", PhD thesis,
+  KU Leuven (2007), promotor Philip Dutré. Wang tiles and corner tiles, stochastic tilings, texture synthesis and
+  Poisson disk distributions over tiles; covers Cohen et al. 2003 ("Wang Tiles for Image and Texture Generation",
+  SIGGRAPH; host still blocked from this session).
+- Not filed (PDF behind a browser check): "Determining the Size of Representative Volume Elements for a
+  Two-Dimensional Random Aggregate Numerical Model of Asphalt Mortar without Damage", Materials 17, 3387 (2024),
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC11277837/. Mortar RVEs of 3-6 mm, growing with the largest particle.
+  The dense-graded mix RVE (about 50-60 mm) is in Romero & Masad, J. Materials in Civil Engineering 13(1) 77-84
+  (2001) and Kim et al. 2009 (TRR 2127), both paywalled.
+
+## Surface wear
+- `akdot_2019_4000-175_studded_tire_pavement_impacts.pdf`: Abaza, "Survey and Economic Analysis of Pavement Impacts
+  from Studded Tire Use in Alaska", FHWA-AK-RD-4000(175) (May 2019). Asphalt wear 0.0116 in (0.29 mm) per 100,000
+  studded vehicles on freeways, 0.0062 / 0.0045 in on arterials / collectors; rutting from heavy loads 0.0049 in
+  per 100,000 trucks (deformation, T4); cites 0.0295 in per 100,000 studded passes for asphalt (Malik 2000).
+- `bahadori_2018_asphalt_studded_tire_wear.pdf`: Bahadori, Zhang, Li, Muhunthan, "Development of Asphalt Materials
+  to Mitigate Studded Tire Wear of Pavements" (WSU, Aug 2018). Lab and field studded wear of asphalt mixes.
+- Still wanted: surface wear under ordinary (non-studded) tyres; none found.
+
 ## Crack patterns in shrinking layers
 - `bohn_2005_hierarchical_crack_pattern_II.pdf`: Bohn, Platkiewicz, Andreotti, Adda-Bedia, Couder, "Hierarchical
   crack pattern as formed by successive domain divisions. II. From disordered to deterministic behavior", Phys. Rev. E
