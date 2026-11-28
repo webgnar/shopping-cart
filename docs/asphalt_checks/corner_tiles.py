@@ -10,8 +10,10 @@ shared between tiles by where their centre lies, and each shared part is packed 
   - an edge strip per (end colour, end colour) and direction: centres within R of the edge, between the patches;
   - each tile's interior: the rest.
 A part is packed after the parts it touches, checking every way they can meet (an edge strip against both colours
-of the strips that share its end corners), so any assembly is free of overlaps. The parts tile the plane, so
-each holds its share of the mix's stone volume.
+of the strips that share its end corners), so any assembly is free of overlaps. Each part fills its own region to
+the mix's share by the stone volume actually inside it, stones spilling in from parts packed earlier included
+(counting by stone centres instead left the seams thin and the interiors full: 36-38 % against 43 %); a class
+stops when less than half a stone is left (no systematic overshoot).
 
 Checks on a random 4 x 4 assembly: no point inside two stones; stone volume per tile and overall against the
 mix's 38.1 %; Delesse on long cuts that cross the seams.
@@ -37,14 +39,27 @@ R = R_SEAM
 # ---------------------------------------------------------------- packing a region against fixed stones
 
 class Space:
-    """Voxel map of free space over a rectangle (non-periodic); outside the rectangle counts as free."""
-    def __init__(self, x0, y0, x1, y1):
+    """Voxel map over a rectangle (non-periodic; outside counts as free): which size class fills each voxel (-1 free).
+    It also measures each class's volume inside the part's own region, stones from neighbouring parts included."""
+    def __init__(self, x0, y0, x1, y1, region):
         self.x0, self.y0 = x0, y0
         self.nx, self.ny = int(math.ceil((x1 - x0) / VOXEL)), int(math.ceil((y1 - y0) / VOXEL))
         self.nz = int(round(DEPTH / VOXEL))
-        self.free = np.ones((self.nx, self.ny, self.nz), dtype=bool)
+        self.owner = np.full((self.nx, self.ny, self.nz), -1, dtype=np.int8)
+        cx = self.x0 + (np.arange(self.nx) + 0.5) * VOXEL
+        cy = self.y0 + (np.arange(self.ny) + 0.5) * VOXEL
+        X, Y = np.meshgrid(cx, cy, indexing="ij")
+        self.inreg = region(np.stack([X.ravel(), Y.ravel()], axis=1)).reshape(self.nx, self.ny)
+        self.vox = VOXEL ** 3
 
-    def mark(self, v, nrm, faces):
+    @property
+    def free(self):
+        return self.owner < 0
+
+    def class_volume(self, cls):
+        return np.count_nonzero((self.owner == cls) & self.inreg[:, :, None]) * self.vox
+
+    def mark(self, v, nrm, faces, cls):
         lo, hi = v.min(axis=0), v.max(axis=0)
         ix = np.arange(max(0, int((lo[0] - self.x0) / VOXEL)), min(self.nx, int((hi[0] - self.x0) / VOXEL) + 1))
         iy = np.arange(max(0, int((lo[1] - self.y0) / VOXEL)), min(self.ny, int((hi[1] - self.y0) / VOXEL) + 1))
@@ -57,7 +72,10 @@ class Space:
         for (a, b, c), n in zip(faces, nrm):
             ok &= (P - v[a]) @ n <= 0
         I, J, K = np.meshgrid(ix, iy, iz, indexing="ij")
-        self.free[I.ravel()[ok], J.ravel()[ok], K.ravel()[ok]] = False
+        I, J, K = I.ravel()[ok], J.ravel()[ok], K.ravel()[ok]
+        new = self.owner[I, J, K] < 0
+        self.owner[I[new], J[new], K[new]] = cls
+        return np.count_nonzero(self.inreg[I[new], J[new]]) * self.vox
 
     def room(self, clearance, region):
         m = self.free.copy()
@@ -111,11 +129,11 @@ def clear(A, r, c, others):
 def pack_region(seed, box, region, area, fixed):
     """Stones with centres where region(xy) is true, `area` mm2 of plan, against `fixed` stones (world coords)."""
     rnd = random.Random(seed)
-    space = Space(*box)
+    space = Space(*box, region)
     for o in fixed:
-        space.mark(o.v, o.n, o.faces)
+        space.mark(o.v, o.n, o.faces, o.cls)
     target = [mix.V_AGG * c[3] * area * DEPTH for c in CLASSES]
-    got = [0.0] * len(CLASSES)
+    got = [space.class_volume(ci) for ci in range(len(CLASSES))]   # what neighbouring parts already put here
     out = []
     near_fixed, near_out = Near(fixed), Near([])
     for ci in range(len(CLASSES)):
@@ -132,6 +150,8 @@ def pack_region(seed, box, region, area, fixed):
             st = sp.Stone(sp.sieve_scale(verts, lo * (hi / lo) ** rnd.random()), ci)
             if st.r > R:          # a stone reaching past the strips could cross a part it was not checked against
                 continue
+            if got[ci] + 0.5 * st.vol > target[ci]:   # less than half a stone left: stopping here is unbiased
+                break
             done = False
             for _ in range(sp.TRIES):
                 rot = sp.random_rotation(rnd)
@@ -147,8 +167,8 @@ def pack_region(seed, box, region, area, fixed):
                 A = sp.placed(st, rot, pos)
                 if near_fixed.clear(A, st.r, pos) and near_out.clear(A, st.r, pos):
                     p = Placed(st, rot, pos)
-                    out.append(p); near_out.add(p); space.mark(p.v, p.n, p.faces)
-                    got[ci] += st.vol; since += 1; done = True
+                    out.append(p); near_out.add(p)
+                    got[ci] += space.mark(p.v, p.n, p.faces, ci); since += 1; done = True
                     break
             failed = 0 if done else failed + 1
             since += 0 if done else 5
