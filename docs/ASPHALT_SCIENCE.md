@@ -866,7 +866,7 @@ the subgrade, which add up to the rut. Across the lane, wander spreads both into
 | Input | Value proposed (source) | Arrives from |
 |---|---|---|
 | Asphalt thickness H, sublayer depths; Poisson's ratios | build-up (c620 Table 3B: 3.0 in); 0.35 asphalt (build-up, unsourced; NRC RR-216 gives 0.15-0.5 for asphalt) | T1, built |
-| Subgrade Mr | 2555 CBR^0.64 psi (now also found restated as the 1-37A level 2 correlation in NRC RR-216); CBR 9: 104 MPa | T1, built |
+| Subgrade Mr | 2555 CBR^0.64 psi (now also found restated as the 1-37A level 2 correlation in NRC RR-216); CBR 9: 10,430 psi, 72 MPa (corrected Nov 28: the first draft said 104) | T1, built |
 | **Base Mr** | A-1-a 40,000 psi (276 MPa) for a flexible base (MOP Table 11-10, LTPP medians); MnROAD Class 6 as A-1-a is an assumption until its gradation is classified (Mn/ROAD aggregate profile, in hand) | **New input on the base layer** |
 | **Soil class** of base and subgrade (granular or fine, for ks1) | granular base; subgrade class unknown for c620's "good, CBR 9" (assumption needed) | **New input** |
 | **Groundwater table depth** (for Wc) | none in hand (gap; c620 doesn't give one) | **New input** |
