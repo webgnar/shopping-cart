@@ -305,7 +305,7 @@ KF = dict(y2008=dict(kf1=0.007566, kf2=-3.9492, kf3=-1.281, k1r=-3.35412, kN=0.4
 
 class Road:
     def __init__(self, H_in, base_in, cbr, esal_yr, years=20, mixp=None, AP=None, GWT_ft=10.0,
-                 subgrade='fine', base_mr_psi=40000.0, nu=0.35, sample_years=(1, 3, 6, 10, 15, 20)):
+                 subgrade='fine', base_mr_psi=40000.0, nu=0.35, sample_years=(1, 5, 10, 20)):
         self.H, self.base, self.cbr, self.esal, self.years = H_in, base_in, cbr, esal_yr, years
         self.mixp, self.AP, self.GWT, self.sub, self.nu = mixp, AP, GWT_ft, subgrade, nu
         self.Ebase = base_mr_psi*PSI; self.Esub = 2555*cbr**0.64*PSI                     # MOP Table 11-10; 1-37A L2
@@ -365,7 +365,7 @@ def run_road(road, xs, consts='y2008', verbose=False, cache=None):
     tires = [-0.1525, 0.1525]                                  # duals 12 in apart (MOP p. 82); other wheel set ignored
     r = np.abs(np.subtract.outer(np.array(tires), xs)).ravel()
     if cache is None or 'ker' not in cache:
-        lam, wt = lam_grid(30/(0.05*0.0877), 2.0)
+        lam, wt = lam_grid(30/(0.05*0.0877), 3.0)
         ker = Kernel(lam, wt, r)
         if cache is not None: cache['ker'] = ker
     ker = cache['ker'] if cache else ker
@@ -430,9 +430,16 @@ def run_road(road, xs, consts='y2008', verbose=False, cache=None):
         rd_b = ep_b[0]*road.base
         # subgrade: sublayers to 8 ft, then the half-space below 8 ft (1-37A eqs. 3.3.18-3.3.23, no bedrock)
         rd_sg = sum(ep_sg[2 + i]*road.hsg for i in range(len(road.sg_mid)))
-        kk = np.maximum(np.log(np.maximum(ep_sg[0], 1e-15)/np.maximum(ep_sg[1], 1e-15))/6.0, 1e-6)
-        rd_sg = rd_sg + np.minimum(ep_sg[-1]/kk, 1e3)
-        hist[yr] = dict(g=g.copy(), ac=rd_ac, b=rd_b, sg=rd_sg)
+        # 1-37A eq. 3.3.20 takes k from the top of the subgrade and 6 in down and floors it at 1e-6; away from the
+        # wheels the strain grows with depth there, k hits the floor and, with no bedrock, eq. 3.3.23 is unbounded
+        # (here up to metres). Derived replacement: k from the two deepest computed points (89.6 and 96 in, where the
+        # strain falls everywhere); 1-37A's k kept for comparison (printed).
+        k137 = np.log(np.maximum(ep_sg[0], 1e-15)/np.maximum(ep_sg[1], 1e-15))/6.0
+        kk = np.log(np.maximum(ep_sg[-2], 1e-15)/np.maximum(ep_sg[-1], 1e-15))/(road.zsg[-1] - road.zsg[-2])
+        kk = np.maximum(kk, 1e-3)
+        deep = ep_sg[-1]/kk
+        rd_sg = rd_sg + deep
+        hist[yr] = dict(g=g.copy(), ac=rd_ac, b=rd_b, sg=rd_sg, deep=deep, k137=k137)
     return hist
 
 def wander(profile, xs, sd=0.254):
@@ -467,7 +474,7 @@ def main():
             la = 1.71*f(yr); row.append(f"{yr} yr: dlogG {f(yr):.2f}, log aA {la:.2f}, E {mix_E(p, 25, 0.1, la)/1e6:5.0f}")
         print(f"   z {z:4.2f} cm: " + "; ".join(row))
     print()
-    xs = np.arange(-0.9, 0.9001, 0.02) + 0.003               # across the wheel path, centred on the duals
+    xs = np.arange(-0.9, 0.9001, 0.03) + 0.003               # across the wheel path, centred on the duals
     cache = {}
     print("4. Default road: c620 Table 3B (3.0 in on 4.0 in, CBR 9), Burlington, 500 ESAL/yr (assumption), 2008 constants")
     road = Road(3.0, 4.0, 9, 500, mixp=p, AP=AP)
@@ -480,7 +487,7 @@ def main():
         d = h[yr]; DI = wander(d['g'], xs).max(); DI0 = d['g'].max()
         tot = wander(d['ac'] + d['b'] + d['sg'], xs)
         i = tot.argmax()
-        print(f"   year {yr:2d}: DI {DI:.3g} (no wander {DI0:.3g}), FC {FC_2008(DI, 3.0):5.1f} % lane; rut "
+        print(f"   year {yr:2d}: DI {DI:.3g} (no wander {DI0:.3g}), FC {FC_2008(DI, 3.0):5.1f} % lane; deep subgrade term {wander(d['deep'],xs)[tot.argmax()]*25.4:.2f} mm (1-37A k {d['k137'][len(xs)//2]:.3f}/in under the duals, {d['k137'].min():.3f} at worst); rut "
               f"{tot.max()*25.4:5.1f} mm = asphalt {wander(d['ac'],xs)[i]*25.4:4.1f} + base {wander(d['b'],xs)[i]*25.4:4.1f} "
               f"+ subgrade {wander(d['sg'],xs)[i]*25.4:4.1f}")
     d = h[20]
@@ -490,23 +497,32 @@ def main():
     prof = wander(d['ac'] + d['b'] + d['sg'], xs)*25.4
     print("   rut profile across the wheel path (mm), every 0.1 m from -0.9: " + " ".join(f"{v:.1f}" for v in prof[::5]))
     print()
-    print("6. Trends and c620 Table 5 rows (20 years, Burlington; Fair CBR 6-9 taken as 9)")
-    for H, B, E_ in ((3.0, 4.0, 500), (3.0, 4.0, 5000), (4.0, 4.0, 5000), (3.0, 8.0, 5000)):
-        rd = Road(H, B, 9, E_, mixp=p, AP=AP); hh = run_road(rd, xs, cache={}) if H != 3.0 else run_road(rd, xs, cache=cache)
-        d = hh[20]; DI = wander(d['g'], xs).max()
-        print(f"   {H} in on {B} in, {E_:>6} ESAL/yr: FC {FC_2008(DI, H):5.1f} %, rut {wander(d['ac']+d['b']+d['sg'], xs).max()*25.4:5.1f} mm")
-    for H, B, tot in ((2.5, 8.5, 10000), (3.5, 11.0, 50000), (4.0, 12.0, 100000), (4.5, 13.0, 250000), (5.5, 9.5, 500000), (6.0, 15.5, 1000000)):
-        rd = Road(H, B, 9, tot/20, mixp=p, AP=AP); hh = run_road(rd, xs, cache={})
-        d = hh[20]; DI = wander(d['g'], xs).max()
-        print(f"   Table 5 {H}/{B} in at {tot:>7} ESAL: FC {FC_2008(DI, H):5.1f} % (MOP limit 35 % for 'others'), rut "
-              f"{wander(d['ac']+d['b']+d['sg'], xs).max()*25.4:5.1f} mm (limit 16.5 mm)")
-    print()
-    print("7. 2015 constants on the default road (MassDOT; betaf1 for under 5 in)")
-    h15 = run_road(road, xs, consts='y2015', cache=cache)
-    for yr in (10, 20):
-        DI = wander(h15[yr]['g'], xs).max()
-        print(f"   year {yr}: DI {DI:.3g}, FC {FC_2015(DI, 3.0):.1f} % (fraction) / {FC_2015(DI, 3.0, True):.1f} % (x100 twice); "
-              f"rut {wander(h15[yr]['ac']+h15[yr]['b']+h15[yr]['sg'], xs).max()*25.4:.1f} mm")
+    print("6. Trends and c620 Table 5 rows (20 years, Burlington; Fair CBR 6-9 taken as 9); 7. 2015 constants")
+    specs = [("trend", 3.0, 4.0, 5000, 'y2008'), ("trend", 4.0, 4.0, 5000, 'y2008'), ("trend", 3.0, 8.0, 5000, 'y2008')]
+    specs += [("t5", H, B, tot/20, 'y2008') for H, B, tot in ((2.5, 8.5, 10000), (3.5, 11.0, 50000), (4.0, 12.0, 100000),
+                                                               (4.5, 13.0, 250000), (5.5, 9.5, 500000), (6.0, 15.5, 1000000))]
+    specs += [("y2015", 3.0, 4.0, 500, 'y2015')]
+    from multiprocessing import Pool
+    with Pool(4) as pool:
+        outs = pool.map(_run_spec, [(sp, p, AP, xs) for sp in specs])
+    for (kind, H, B, E_, c), (FC, FCx, rut, parts) in zip(specs, outs):
+        if kind == "trend":
+            print(f"   {H} in on {B} in, {E_:>6.0f} ESAL/yr: FC {FC:5.1f} %, rut {rut:5.1f} mm ({parts})")
+        elif kind == "t5":
+            print(f"   Table 5 {H}/{B} in at {E_*20:>7.0f} ESAL: FC {FC:5.1f} % (MOP limit 35 % for 'others'), rut {rut:5.1f} mm "
+                  f"(limit 16.5 mm) ({parts})")
+        else:
+            print(f"   2015 constants, default road, year 20: FC {FC:.1f} % (fraction) / {FCx:.1f} % (x100 twice); rut {rut:.1f} mm ({parts})")
+
+def _run_spec(args):
+    (kind, H, B, E_, consts), p, AP, xs = args
+    rd = Road(H, B, 9, E_, mixp=p, AP=AP)
+    d = run_road(rd, xs, consts=consts, cache={})[20]
+    DI = wander(d['g'], xs).max(); tot = wander(d['ac'] + d['b'] + d['sg'], xs); i = tot.argmax()
+    parts = f"asphalt {wander(d['ac'], xs)[i]*25.4:.1f}, base {wander(d['b'], xs)[i]*25.4:.1f}, subgrade {wander(d['sg'], xs)[i]*25.4:.1f}"
+    if consts == 'y2015':
+        return FC_2015(DI, H), FC_2015(DI, H, True), tot.max()*25.4, parts
+    return FC_2008(DI, H), None, tot.max()*25.4, parts
 
 if __name__ == "__main__":
     main()
