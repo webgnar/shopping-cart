@@ -1,6 +1,7 @@
 """Model 2 (thermal cracking) checked against its sources, before any code. See docs/ASPHALT_SCIENCE.md, Model 2.
 
-    python3 thermal_cracking_chain.py [--quick]  (from docs/asphalt_checks/; numpy only; --quick stops after 5)
+    python3 thermal_cracking_chain.py [--quick | --revised]  (numpy only; --quick stops after 5;
+                                       --revised runs the chain revised after Appendix HH)
 
 Sources (References/Asphalt):
   Mn/DOT 2007-43 (Marasteanu et al.): reference mix 64-22:U1:4:GR (12.5 mm, PG 64-22, granite, 6.0 % AC, 4 % air):
@@ -61,9 +62,19 @@ def fit_master():
 MC = fit_master()
 
 
+AT_MODE = "quadratic"          # first pass: NCHRP 973 eq. 37 form; "tcmodel": Appendix HH 2.5.2.4
+
+
 def log_aT(T):
     x = T - TREF
-    return MC["a1"] * x + MC["a2"] * x * x
+    if AT_MODE == "quadratic":
+        return MC["a1"] * x + MC["a2"] * x * x
+    # TCMODEL: ln aT piecewise linear between the test temperatures, extrapolated linearly from the end segments
+    la0 = MC["a1"] * 12 + MC["a2"] * 144; la24 = MC["a1"] * -12 + MC["a2"] * 144
+    T = np.asarray(T, float)
+    lo = la24 + (T + 24.0) * (0.0 - la24) / 12.0          # segment -24 .. -12 (and below)
+    hi = (T + 12.0) * (la0 - 0.0) / 12.0                  # segment -12 .. 0 (and above)
+    return np.where(T < -12.0, lo, hi)
 
 
 def D(xi):
@@ -454,5 +465,166 @@ def main():
           f"Xc here {SIGMA_T/tau:.2f} m")
 
 
+# ---------------------------------------------------------------- revised chain (after Appendix HH, Nov 28)
+ALPHA_HH = (15.3 * 3.45e-4 + 84.7 * 3.45e-6) / 300       # Appendix HH eq. 2.1, cell 18 wear course: 18.57e-6
+SIGMA_LOG = 0.769                                          # Appendix HH: sd of log10 crack depth along the road
+K_CAL, BETA2 = 10000.0, 5.0                                # Appendix HH Annex B, level 1
+SIGMA_M = 0.8 * 5.98e6                                     # IDT -12 C, 12.5 mm/min (Table 6.6) x 0.8 (Mn/DOT ch. 9)
+PSI = 6894.76
+
+
+def fit_c_low(dG_m):
+    """One fitted number: AMAC's c at low temperature, so that the reference mix aged by T2 (Minneapolis normals,
+    12 years, mean of 0-5 cm) has MnROAD cell 19 cores' creep stiffness (Mn/DOT Table 6.13). ASSUMPTION: a
+    different mix and lab stand in for the same mix aged."""
+    dl = float(np.mean([dG_m(12, z) for z in range(0, 6)]))
+    meas = {(-12.0, 60.0): 13.95, (-12.0, 500.0): 9.89, (-24.0, 60.0): 20.47, (-24.0, 500.0): 19.08}
+    best = None
+    for c in np.linspace(0.0, 2.0, 401):
+        r = sum((math.log(1e-9 / D(t / 10 ** (log_aT(T) + c * dl))) - math.log(v)) ** 2 for (T, t), v in meas.items())
+        if best is None or r < best[0]:
+            best = (r, c)
+    return best[1], dl, meas
+
+
+def tcm_A_n():
+    n = 0.8 * (1 + 1 / MC["m"])
+    # The Manual (5-11c) and HH eq. 5 print beta2 in A's exponent (log A = -69 here: larger beta2, less cracking).
+    # Annex B says beta2 is "the multiplier placed on the delta-K term" and its Table 1 shows larger beta2, more
+    # cracking. We follow Annex B: A without beta2, Delta K multiplied by beta2.
+    logA = 4.389 - 2.52 * math.log10(K_CAL * SIGMA_M / PSI * n)
+    return logA, n
+
+
+def sublayers(h_in):
+    """Appendix HH fig. 2.17: 0.5 in, then 1/6, 2/6, 3/6 of (D - 0.5); returns the sublayer bottoms (in)."""
+    r = h_in - 0.5
+    return [0.5, 0.5 + r / 6, 0.5 + r / 2, h_in]
+
+
+def run_road2(days, lat, h_m, C, tanphi, rho, dlogG, c_low, ageing=True, line_m=1000.0, alpha=None):
+    """Sites from the frictional model (initiation at the TSRST strength, halving), growth from TCMODEL (Paris law,
+    sublayers, jump when the stress at the tip exceeds the IDT strength), lognormal depth factor per site."""
+    global ALPHA_CONST
+    ALPHA_CONST = alpha if alpha is not None else ALPHA_HH
+    depths_cm = np.arange(0.0, h_m * 100 + 1e-9, 1.0)
+    if depths_cm[-1] < h_m * 100 - 0.01:
+        depths_cm = np.append(depths_cm, h_m * 100)
+    T = hourly_temps(days, lat, depths_cm * 10)
+    e = eps_th(T)
+    ALPHA_CONST = None
+    tau = C / h_m + rho * 9.81 * tanphi
+    so = Soules(len(depths_cm))
+    h_in = h_m / 0.0254; subs = sublayers(h_in)
+    logA, n = tcm_A_n(); A = 10 ** logA
+    segs = [[0.0, line_m, SIGMA_T * (1 + CV * rng.standard_normal())]]
+    sites = {}                      # pos -> dict(c0 in, z lognormal, born)
+    first_year = int(days[0][0][:4]); yearly = []
+    dmax = None; dmin = None; peak = 0.0
+    for k in range(1, len(T)):
+        day = k // 24; date = days[day][0]; yr = int(date[:4]); mo = int(date[5:7])
+        age = yr - first_year + (1 if mo >= 7 else 0)
+        la = np.array([c_low * dlogG(min(age, 30), z) for z in depths_cm]) if ageing else np.zeros(len(depths_cm))
+        tm = 0.5 * (T[k] + T[k - 1])
+        sig = so.step(-(e[k] - e[k - 1]), 3600.0 / 10 ** (log_aT(tm) + la))
+        dmax = sig.copy() if dmax is None else np.maximum(dmax, sig)
+        dmin = sig.copy() if dmin is None else np.minimum(dmin, sig)
+        peak = max(peak, sig[0])
+        s0 = sig[0]
+        if s0 >= 0.8 * SIGMA_T:
+            changed = True
+            while changed:
+                changed = False
+                for sg in list(segs):
+                    a, b, st = sg; L = b - a
+                    if min(s0, tau * L / 2) < st:
+                        continue
+                    xs = s0 / tau
+                    pos = a + L / 2 if L <= 2 * xs else rng.uniform(a + xs, b - xs)
+                    segs.remove(sg)
+                    segs += [[a, pos, SIGMA_T * (1 + CV * rng.standard_normal())],
+                             [pos, b, SIGMA_T * (1 + CV * rng.standard_normal())]]
+                    sites[pos] = dict(c0=0.01, z=rng.standard_normal())
+                    changed = True
+        if k % 24 == 23:                                # one cooling cycle per day (Appendix HH 2.5.5.2)
+            for st in sites.values():
+                c0 = st["c0"]
+                if c0 >= h_in:
+                    continue
+                zc = c0 * 2.54
+                smax = float(np.interp(zc, depths_cm, dmax)); smin = max(float(np.interp(zc, depths_cm, dmin)), 0.0)
+                Kf = lambda s: (s / PSI) * (0.45 + 1.99 * (c0 / 12.0) ** 0.56)     # psi, C0 in ft (Manual 5-11d)
+                dK = BETA2 * max(Kf(smax) - Kf(smin), 0.0)
+                bottom = next(b for b in subs if b > c0 + 1e-9)
+                dc = A * dK ** n * 12.0                                        # ft -> in
+                st["c0"] = bottom if (smax > SIGMA_M or c0 + dc >= bottom) else c0 + dc
+            dmax = None; dmin = None
+        if date[5:] == "06-30" and k % 24 == 23:
+            vis = [p for p, st in sites.items() if st["c0"] * 10 ** (SIGMA_LOG * st["z"]) >= h_in]
+            c0m = float(np.mean([st["c0"] for st in sites.values()])) if sites else 0.0
+            yearly.append((yr - 1, peak / 1e6, len(sites), len(vis), c0m * 2.54))
+            peak = 0.0
+    return yearly, tau, logA, n
+
+
+def revised():
+    global AT_MODE
+    AT_MODE = "tcmodel"
+    print("\n=== Revised chain (Appendix HH, Nov 28): TCMODEL shift factors, alpha eq. 2.1, AMAC c fitted at low T ===")
+    tf, sl, _, _ = tsrst(); print(f"R0. TSRST, measured alpha, TCMODEL shifts: {tf:+.1f} C")
+    global ALPHA_CONST
+    ALPHA_CONST = ALPHA_HH; tf, sl, _, _ = tsrst(); ALPHA_CONST = None
+    print(f"    TSRST, alpha {ALPHA_HH*1e6:.2f}e-6 (eq. 2.1): {tf:+.1f} C, slope {sl:.2f} MPa/C (measured -25.9 C, 0.21)")
+    bur = daily(os.path.join(HERE, "data", "ghcnd_USW00014742_burlington_vt_1991-2020.csv"))
+    msp = daily(os.path.join(HERE, "data", "ghcnd_USW00014922_minneapolis_mn_1991-2020.csv"))
+    btx, btn = monthly_means(bur); mtx, mtn = monthly_means(msp)
+    dG_b, _, _ = ageing_by_year(btx, btn, 44.4683, 30)
+    dG_m, _, _ = ageing_by_year(mtx, mtn, 44.8831, 30)
+    c_low, dl, meas = fit_c_low(dG_m)
+    print(f"R1. AMAC c at low temperature fitted to MnROAD 19 cores: c = {c_low:.3f} (NCHRP 973 Level 2: 1.71); "
+          f"T2 Delta log|G*| (Minneapolis, 12 yr, 0-5 cm mean) {dl:.2f}")
+    for (T, t), v in meas.items():
+        print(f"    {T:+.0f} C {t:.0f} s: core {v:.2f} GPa, fitted {1e-9/D(t/10**(log_aT(T)+c_low*dl)):.2f}, "
+              f"unaged {1e-9/D(t/10**log_aT(T)):.2f}")
+    print("R2. TSRST fracture temperature with age (Burlington, alpha eq. 2.1, c fitted):")
+    ALPHA_CONST = ALPHA_HH
+    for yr in (0, 1, 5, 10, 20, 30):
+        row = []
+        for z in (0, 2, 4, 7.6):
+            tf, _, _, _ = tsrst(log_aA=c_low * dG_b(yr, z))
+            row.append(f"z {z:3.1f}: {tf:+.1f}" if tf else f"z {z:3.1f}: none")
+        print(f"    year {yr:2d}: " + "; ".join(row))
+    ALPHA_CONST = None
+    logA, n = tcm_A_n()
+    print(f"R3. TCMODEL fracture parameters: m {MC['m']:.3f} -> n {n:.2f}; sigma_m {SIGMA_M/1e6:.2f} MPa "
+          f"({SIGMA_M/PSI:.0f} psi); log10 A = {logA:.1f} (k 10,000; beta2 5 on Delta K, Annex B)")
+    for s_psi in (200, 400, 600):
+        for c_in in (0.5, 1.5):
+            dk = BETA2 * s_psi * (0.45 + 1.99 * (c_in / 12) ** 0.56)
+            print(f"    a day at {s_psi} psi ({s_psi*PSI/1e6:.1f} MPa) on a {c_in} in crack: Delta C = {10**logA*dk**n*12:.2e} in")
+    print("R4. The road (1 km, default build-up unless stated): sites, cracks through (lognormal sd 0.769), mean depth")
+    runs = [("Burlington, aged", bur, 44.4683, 0.0762, dG_b, True), ("Burlington, no ageing", bur, 44.4683, 0.0762, dG_b, False),
+            ("Minneapolis, aged", msp, 44.8831, 0.0762, dG_m, True), ("Burlington, aged, h 152 mm", bur, 44.4683, 0.152, dG_b, True)]
+    for name, days, lat, h, dG, ag in runs:
+        yearly, tau, _, _ = run_road2(days, lat, h, 62.1e3, 1.299, 2289, dG, c_low, ageing=ag)
+        print(f"   {name} (Xc {SIGMA_T/tau:.2f} m):")
+        last = None
+        for (y, pk, ns, nv, cm) in yearly:
+            if (ns, nv) != last or y == yearly[-1][0]:
+                print(f"     winter {y}-{(y+1)%100:02d}: peak {pk:.2f} MPa, sites {ns}, through {nv} "
+                      f"({nv*152.4/1000*12:.0f} ft per 500 ft), mean depth {cm:.1f} cm")
+            last = (ns, nv)
+    sub = [d for d in msp if "1994-07-01" <= d[0] <= "2003-06-30"]
+    yearly, tau, _, _ = run_road2(sub, 44.8831, 0.200, 62.1e3, 1.299, 2289, dG_m, c_low)
+    print(f"   MnROAD cell 18 structure (200 mm), Minneapolis 1994-2003 (Xc {SIGMA_T/tau:.2f} m):")
+    for (y, pk, ns, nv, cm) in yearly:
+        print(f"     winter {y}-{(y+1)%100:02d}: peak {pk:.2f} MPa, sites {ns}, through {nv}, mean depth {cm:.1f} cm")
+    print("     field: most cracks in winter 1995-96; spacing 4.8 m by 2003; MN 19 observed 547 ft per 500 ft by 2006")
+
+
 if __name__ == "__main__":
-    main()
+    if "--revised" in sys.argv:
+        MC_ = MC
+        revised()
+    else:
+        main()
