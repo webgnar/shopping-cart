@@ -83,11 +83,29 @@ class Placed:
         return q
 
 
+class Near:
+    """Centres and reaches of a list of stones as arrays, so a candidate tests only the stones within reach."""
+    def __init__(self, stones):
+        self.s = list(stones)
+        self.C = np.array([o.c for o in self.s]) if self.s else np.zeros((0, 3))
+        self.R = np.array([o.r for o in self.s]) if self.s else np.zeros(0)
+
+    def add(self, o):
+        self.s.append(o)
+        self.C = np.vstack([self.C, o.c]); self.R = np.append(self.R, o.r)
+
+    def clear(self, A, r, c, skip=-1):
+        if not len(self.s):
+            return True
+        near = np.nonzero(np.linalg.norm(self.C - c, axis=1) < self.R + r)[0]
+        for i in near:
+            if i != skip and sp.overlap(A, (self.s[i].v, self.s[i].n, self.s[i].e)):
+                return False
+        return True
+
+
 def clear(A, r, c, others):
-    for o in others:
-        if np.linalg.norm(o.c - c) < o.r + r and sp.overlap(A, (o.v, o.n, o.e)):
-            return False
-    return True
+    return Near(others).clear(A, r, c)
 
 
 def pack_region(seed, box, region, area, fixed):
@@ -99,6 +117,7 @@ def pack_region(seed, box, region, area, fixed):
     target = [mix.V_AGG * c[3] * area * DEPTH for c in CLASSES]
     got = [0.0] * len(CLASSES)
     out = []
+    near_fixed, near_out = Near(fixed), Near([])
     for ci in range(len(CLASSES)):
         failed, cand, since = 0, None, 99
         while got[ci] < target[ci] and failed < sp.GIVE_UP:
@@ -126,9 +145,9 @@ def pack_region(seed, box, region, area, fixed):
                 if not region(pos[None, :2])[0]:
                     continue
                 A = sp.placed(st, rot, pos)
-                if clear(A, st.r, pos, fixed) and clear(A, st.r, pos, out):
+                if near_fixed.clear(A, st.r, pos) and near_out.clear(A, st.r, pos):
                     p = Placed(st, rot, pos)
-                    out.append(p); space.mark(p.v, p.n, p.faces)
+                    out.append(p); near_out.add(p); space.mark(p.v, p.n, p.faces)
                     got[ci] += st.vol; since += 1; done = True
                     break
             failed = 0 if done else failed + 1
@@ -151,11 +170,11 @@ def pack_region(seed, box, region, area, fixed):
             if -DEPTH - v[:, 2].min() > new[2]:
                 continue
             A = (v + new, st.n0 @ rot.T, st.e0 @ rot.T)
-            others = fixed + out[:i] + out[i + 1:]
-            if clear(A, p.r, new, others):
+            if near_fixed.clear(A, p.r, new) and near_out.clear(A, p.r, new, skip=i):
                 q = Placed.__new__(Placed)
                 q.v, q.n, q.e, q.faces, q.c, q.r, q.cls, q.vol = A[0], A[1], A[2], p.faces, new, p.r, p.cls, p.vol
                 out[i] = q
+                near_out.s[i] = q; near_out.C[i] = q.c
                 break
     return out
 
@@ -272,11 +291,14 @@ if __name__ == "__main__":
     with Pool(4) as pool:
         P = dict(enumerate(pool.map(corner_patch, [101, 202])))
         print("  2 corner patches: %d stones (%.0f s)" % (sum(len(p) for p in P.values()), time.time() - t0))
+        pickle.dump(P, open(os.path.join(out, "stage_P.pkl"), "wb"))
         keys = [(a, b) for a in (0, 1) for b in (0, 1)]
         H = dict(zip(keys, pool.map(h_strip, [(300 + i, a, b, P) for i, (a, b) in enumerate(keys)])))
         print("  4 horizontal strips: %d stones (%.0f s)" % (sum(len(h) for h in H.values()), time.time() - t0))
+        pickle.dump(H, open(os.path.join(out, "stage_H.pkl"), "wb"))
         V = dict(zip(keys, pool.map(v_strip, [(400 + i, a, b, P, H) for i, (a, b) in enumerate(keys)])))
         print("  4 vertical strips: %d stones (%.0f s)" % (sum(len(v) for v in V.values()), time.time() - t0))
+        pickle.dump(V, open(os.path.join(out, "stage_V.pkl"), "wb"))
         codes = [(a, b, c, d) for a in (0, 1) for b in (0, 1) for c in (0, 1) for d in (0, 1)]
         res = pool.map(interior, [(500 + i, code, tile_fixed(code, P, H, V)) for i, code in enumerate(codes)])
     tiles = dict(res)
