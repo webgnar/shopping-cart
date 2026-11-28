@@ -29,7 +29,9 @@ TILE = 100.0
 DEPTH = sp.DEPTH
 VOXEL = sp.VOXEL
 CLASSES = mix.size_classes()
-R = 13.5            # mm, set from the stones below (largest circumradius); also the strip half-width
+R_SEAM = 22.0       # mm: corner patch half-size and strip half-width. A stone reaching further is redrawn: 4.5 % of
+                    # the 16-19 mm class (1 % of the aggregate) and 0.5 % of the 12.5-16 mm class, the most elongated
+R = R_SEAM
 
 
 # ---------------------------------------------------------------- packing a region against fixed stones
@@ -109,6 +111,8 @@ def pack_region(seed, box, region, area, fixed):
             while verts is None:
                 verts = sp.xu_stone(rnd, hi)
             st = sp.Stone(sp.sieve_scale(verts, lo * (hi / lo) ** rnd.random()), ci)
+            if st.r > R:          # a stone reaching past the strips could cross a part it was not checked against
+                continue
             done = False
             for _ in range(sp.TRIES):
                 rot = sp.random_rotation(rnd)
@@ -259,10 +263,11 @@ if __name__ == "__main__":
         TILE = float(sys.argv[2])
     os.makedirs(out, exist_ok=True)
     rnd = random.Random(3)
-    big = max(sp.Stone(sp.sieve_scale(v, CLASSES[0][1]), 0).r for v in
-              [v for v in (sp.xu_stone(rnd, CLASSES[0][1]) for _ in range(400)) if v is not None])
-    R = math.ceil(big * 2) / 2
-    print("Tile %.0f mm, largest stone reach %.1f mm: corner patches and strip half-width R = %.1f mm" % (TILE, big, R))
+    reach = sorted(sp.Stone(sp.sieve_scale(v, CLASSES[0][1]), 0).r for v in
+                   [v for v in (sp.xu_stone(rnd, CLASSES[0][1]) for _ in range(2000)) if v is not None])
+    R = R_SEAM
+    print("Tile %.0f mm; 19 mm stones' reach: median %.1f, max %.1f mm; seams R = %.1f mm (%.1f %% of those stones,"
+          " the most elongated, are redrawn)" % (TILE, reach[len(reach) // 2], reach[-1], R, 100 * np.mean(np.array(reach) > R)))
     t0 = time.time()
     with Pool(4) as pool:
         P = dict(enumerate(pool.map(corner_patch, [101, 202])))

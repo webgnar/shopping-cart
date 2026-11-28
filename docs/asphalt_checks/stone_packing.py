@@ -34,6 +34,7 @@ TILE = 100.0          # mm, x and y (periodic)
 DEPTH = 38.0          # mm: cell 18's wear course (4th lift)
 TRIES = 60            # random positions per stone before a smaller one is tried
 S_MAX = 5.0           # Xu eq. 2
+FE_MAX = 5.0          # longest / shortest dimension (Superpave flat-and-elongated limit; AIMS2: few beyond 3:1)
 MAX_FACES = 10        # Xu 2.1
 A_MAX_FRACTION = 0.5  # Xu's Amax "depends on the graded aggregate size" (not given): faces above 0.5 (D/2)^2 extend
 VOXEL = 0.5           # mm: free-space grid that proposes positions (speed only: the exact test decides)
@@ -105,6 +106,11 @@ def xu_stone(rnd, d):
     edges = {tuple(sorted((fc[a], fc[(a + 1) % 3]))) for fc in hull(p) for a in range(3)}
     lens = [np.linalg.norm(p[i] - p[j]) for i, j in edges]
     if max(lens) / min(lens) > S_MAX:                       # eq. 2: too sharp
+        return None
+    _, _, vt = np.linalg.svd(p - p.mean(axis=0))
+    ext = p @ vt.T
+    dims = np.sort(ext.max(axis=0) - ext.min(axis=0))
+    if dims[2] > FE_MAX * dims[0]:                          # Superpave: flat and elongated beyond 5:1
         return None
     return p - p.mean(axis=0)
 
