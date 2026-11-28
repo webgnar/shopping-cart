@@ -138,11 +138,16 @@ in this folder with the file names below.
   Framework for Autonomous and Connected Trucks", Illinois Center for Transportation ICT-20-010 (2018),
   https://rosap.ntl.bts.gov/view/dot/60755. NCHRP 2004's five-point wander average for fatigue (fig. 3); damage
   profile across the lane under wander as an expectation (figs. 25-28).
+- `nchrp_1-37a_2004_part3_ch3_flexible_design.pdf` (filed by zack, Nov 28): NCHRP 1-37A, "Guide for
+  Mechanistic-Empirical Design of New and Rehabilitated Pavement Structures", Part 3 ch. 3, "Design of New and
+  Reconstructed Flexible Pavements" (2004). Ch. 3.3: speed and load pulse (Table 3.3.1), wander (eqs.
+  3.3.1-3.3.2, fig. 3.3.8), sublayering (fig. 3.3.9), JULEA analysis locations (fig. 3.3.12), rutting eqs.
+  3.3.5-3.3.23 incl. strain hardening, fatigue eqs. 3.3.26-3.3.31.
 - MassDOT 24-067 (filed under thermal cracking) ch. 4.1 and 6.1: the 2015 global rutting and fatigue constants.
-- Wanted (blocked or paywalled): Burmister 1945, J. Applied Physics 16, 89-94, 126-127, 296-302, or his DTIC
+- Wanted (blocked or paywalled): Wang, Roesler & Guo 2011, J. Transp. Eng. 137(4), open access at
+  www.ideals.illinois.edu/items/18926 (file as `wang_roesler_guo_2011_multilayer_axisymmetric.pdf`); Burmister 1945, J. Applied Physics 16, 89-94, 126-127, 296-302, or his DTIC
   reports AD0614693 / AD0646986 (file as `burmister_1945_layered_systems.pdf`); Huang, "Pavement Analysis and
-  Design" (2004) ch. 2; NCHRP 1-37A Part 3 ch. 3, onlinepubs.trb.org/onlinepubs/archive/mepdg/Part3_Chapter3_FlexibleDesign.pdf
-  (file as `nchrp_1-37a_2004_part3_ch3_flexible_design.pdf`); AASHTO MEPDG Manual of Practice 2015 or 2020;
+  Design" (2004) ch. 2; NCHRP 1-37A Part 2 ch. 2 and Appendix UU; AASHTO MEPDG Manual of Practice 2015 or 2020;
   FHWA-RD-03-094 (LTPP traffic, phase 2), www.fhwa.dot.gov/pavement/ltpp/03094/03094.pdf (FHWA server erroring).
 
 ## Crack spacing in pavements

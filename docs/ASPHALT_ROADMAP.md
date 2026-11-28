@@ -267,6 +267,7 @@ flowchart LR
 
 | Source | Status | Used for |
 |---|---|---|
+| NCHRP 1-37A Part 3 ch. 3, flexible design (2004) (`nchrp_1-37a_2004_part3_ch3_flexible_design.pdf`, filed by zack Nov 28) | Read (ch. 3.3) | Primary text of the original models: confirms the unbound rutting model in full, strain hardening, sublayering (a 4 in base is one layer), the wander method for fatigue, analysis locations, load pulse from speed; 2004 constants. No layered elastic equations |
 | AASHTO MEPDG Manual of Practice, interim ed. 2008 (`AASHTO08.pdf`, filed by zack) | Read (ch. 3-5, 8, 9.1, 11.5) | Rutting eqs. 5-1 to 5-3, fatigue eqs. 5-4 to 5-7 (1-40D constants), JULEA, quintiles, tires, wander 10 in, design limits, level 3 unbound Mr |
 | MassDOT 24-067 (2024), ch. 4.1, 6.1 | Read | The 2015 global constants as Pavement ME runs them; a x 100 inconsistency in its eqs. 23-24 |
 | Schwartz & Carvalho 2007, Maryland SHA, NCHRP 1-37A implementation vol. 2 (filed by zack) | Read (ch. 3.2) | Sublayering, evaluation points, Burmister assumptions, unbound rutting in full (eqs. 36-41), 1-37A fatigue constants |
@@ -276,17 +277,17 @@ flowchart LR
 | Mn/DOT 97-06, Table 5.1 | Read (that table) | Candidate unaged warm modulus of the build-up's own mix (AC-20 Marshall), for the hub |
 | Traffic: c620 Table 5 ESALs | Read | Design totals only, no design life; yearly figure for the default road is zack's call |
 | LTPP traffic (FHWA-RD-03-094; TRF tables) | Summaries only (FHWA PDF erroring, InfoPave blocked) | Spectra from WIM; ESALs kept for QA. For the V thread |
-| Layered elastic equations: Burmister 1945 (J. Appl. Phys. 16); Huang, Pavement Analysis and Design, ch. 2; JULEA documentation | **Wanted, blocks the strain solver** (DTIC and trb.org blocked) | Strain under the wheel |
-| NCHRP 1-37A Part 3 ch. 3 and Part 2 ch. 2-4 | Wanted (trb.org blocked) | Rutting under wander, strain hardening, loading time from speed |
+| Layered elastic equations: Wang, Roesler & Guo 2011 (open access, IDEALS); Burmister 1945 (J. Appl. Phys. 16); Huang, Pavement Analysis and Design, ch. 2 | **Wanted, blocks the strain solver** (DTIC, trb.org, IDEALS blocked here). Not enough: the 1993 AASHTO SN method (no strains); Burmister's two-layer deflection chart (kept as a check) | Strain under the wheel |
+| NCHRP 1-37A Part 2 ch. 2 and Appendices UU, GG-1, II-1 | Wanted (trb.org blocked) | Level 3 E* equation, pulse time from speed, the calibrations |
 | AASHTO MEPDG MOP 2015 or 2020 | Wanted (paywalled) | Settles the 2015 constants |
 | LTPP DIM (fatigue cells under 0.3 m; rutting) | Read | Checks |
 | Where along the path cracking starts; cell size; fatigue severity; rut shoulders | Gap | See Model 3, "Not in it" |
 
-**For zack to file in `References/Asphalt/`** (blocked from this session): any one of Burmister 1945 (the three
-J. Appl. Phys. 16 papers, or his DTIC reports AD0614693 / AD0646986), Huang's *Pavement Analysis and Design* ch. 2,
-or the JULEA documentation, as `burmister_1945_layered_systems.pdf` / `huang_2004_ch2_layered_systems.pdf`;
-NCHRP 1-37A Part 3 ch. 3 (onlinepubs.trb.org/onlinepubs/archive/mepdg/Part3_Chapter3_FlexibleDesign.pdf) as
-`nchrp_1-37a_2004_part3_ch3_flexible_design.pdf`; the 2015 or 2020 MEPDG Manual of Practice.
+**For zack to file in `References/Asphalt/`** (blocked from this session): the layered elastic equations, best
+Wang, Roesler & Guo 2011, open access (www.ideals.illinois.edu/items/18926, the PDF under "Files"), as
+`wang_roesler_guo_2011_multilayer_axisymmetric.pdf`; failing that Burmister 1945 (J. Appl. Phys. 16, or DTIC
+AD0614693) or Huang ch. 2. Later: 1-37A Part 2 ch. 2 and Appendix UU; the 2015 or 2020 MEPDG Manual of Practice.
+(1-37A Part 3 ch. 3: filed Nov 28.)
 
 For the hub to carry into T1's rows: Mr = 2555 CBR^0.64 is restated as the 1-37A level 2 correlation in NRC
 RR-216 (appendix); T1's 3 GPa warm modulus is replaced by the shared mix modulus once agreed.
@@ -470,4 +471,5 @@ codes it. T4 adds traffic, wander and rut depth to the shared quantities table o
 | Nov 27 2026 | T2 | Step 6: plan grey from albedo | 13dba8d |
 | Nov 27 2026 | T2 | Step 6 reopened: photo and scaling out, plan flat at the albedo | this commit |
 | Nov 27 2026 | T3 | Sources read and filed; Model 2 (thermal cracking) written up for review | this commit |
-| Nov 27 2026 | T4 | Sources read and filed; Model 3 (fatigue and rutting) written up for review | this commit |
+| Nov 27 2026 | T4 | Sources read and filed; Model 3 (fatigue and rutting) written up for review | 4bf704e |
+| Nov 28 2026 | T4 | NCHRP 1-37A Part 3 ch. 3 filed and read; Model 3 revised | this commit |

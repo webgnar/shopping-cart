@@ -693,7 +693,8 @@ paywalled); Alaska DOT AK-RD-86-26 (crack widths; host refused).
 
 ## Model 3: loads, bottom-up fatigue cracking and rutting (proposal for review; T4)
 
-**Status: written up from the sources below; not yet checked in Python; no code.** Every number quoted is from
+**Status: written up from the sources below; revised Nov 28 after NCHRP 1-37A Part 3 ch. 3 was filed; not yet
+checked in Python; no code.** Every number quoted is from
 the source named next to it. "Derived" marks our own algebra on a sourced equation; "assumption" marks a choice
 with no source; gaps are listed at the end. Units: the MEPDG equations are in inches, psi and F, so they keep
 those units inside each equation and are converted at the edges (the sim stays SI).
@@ -703,6 +704,7 @@ those units inside each equation and are converted at the edges (the sim stays S
 | Source (References/Asphalt) | Read for | What T4 takes |
 |---|---|---|
 | AASHTO, *Mechanistic-Empirical Pavement Design Guide: A Manual of Practice*, interim edition, July 2008 (`AASHTO08.pdf`, filed by zack) | ch. 3-5, 8, 9.1, 11.5 | **Primary text.** Rutting, eqs. 5-1 to 5-3; bottom-up fatigue, eqs. 5-4 to 5-7, all with the NCHRP 1-40D recalibration constants; JULEA as the response model (p. 28, 34); temperature quintiles (fig. 5-1); dual tires 12 in apart, 120 psi, wander 10 in (p. 82-83); design limits (Table 8-1); level 3 unbound moduli (Table 11-10) |
+| NCHRP 1-37A (2004), *Guide for Mechanistic-Empirical Design*, Part 3 ch. 3, "Design of New and Reconstructed Flexible Pavements" (`nchrp_1-37a_2004_part3_ch3_flexible_design.pdf`, filed by zack Nov 28) | ch. 3.3 for loads | **Primary text of the original models.** Speed and load pulse (Table 3.3.1); wander, eqs. 3.3.1-3.3.2, fig. 3.3.8; sublayering (fig. 3.3.9); JULEA, analysis locations and depths (fig. 3.3.12); HMA rutting eqs. 3.3.5-3.3.8; unbound rutting eqs. 3.3.9-3.3.12 in full; the half-space subgrade, eqs. 3.3.18-3.3.23; strain hardening (fig. 3.3.19); fatigue eqs. 3.3.26-3.3.31 with the 2004 constants. No layered elastic equations: it names JULEA only |
 | Von Quintus et al. 2024, MassDOT 24-067 (`massdot_2024_...`, filed for T3) | ch. 4.1, 6.1 | The same equations with the **2015 global constants** as Pavement ME runs them (screenshots, figs. 1, 2, 36, 37); hourly instead of quintiles; wander as a "traffic path" index |
 | Schwartz & Carvalho 2007, *Implementation of the NCHRP 1-37A Design Guide*, vol. 2, Maryland SHA SP0077B41 (`MDSHAEvaluation...Volume2.pdf`, filed by zack) | ch. 3.2.4-3.2.5 | How the guide uses layered elastic theory (Burmister's assumptions, JULEA); sublayering rules; evaluation depths and the plan grid of evaluation points (fig. 4, from NCHRP 2004); the 1-37A fatigue constants (k1 0.00432) and the unbound rutting model in full (eqs. 36-41), which the MOP gives only in part |
 | Ali 2005, *Evaluation of the MEPDG (NCHRP 1-37A)*, NRC Canada RR-216 (`20377776.pdf`, filed by zack) | ch. 3.4, App. | Wander "assumed normally distributed and the standard deviation is used as a measure for it" (p. 15); default 10 in; Mr = 2555 CBR^0.64 as the 1-37A level 2 correlation (appendix table) |
@@ -721,33 +723,37 @@ the subgrade, which add up to the rut. Across the lane, wander spreads both into
 
 ### How the sources disagree, and the choice proposed
 
-1. **Two sets of constants, never to be mixed.** The 2008 MOP gives the NCHRP 1-40D recalibration; Pavement ME
-   now runs the 2015 global set (MassDOT 24-067 figs. 1, 2, 36, 37):
+1. **Three sets of constants, never to be mixed.** NCHRP 1-37A (2004) gives the first national calibration; the
+   2008 MOP gives the NCHRP 1-40D recalibration; Pavement ME now runs the 2015 global set (MassDOT 24-067 figs. 1,
+   2, 36, 37):
 
-   | Model | 2008 MOP (1-40D) | 2015 global (MassDOT) |
-   |---|---|---|
-   | Asphalt rutting | k1r -3.35412, N exponent 0.4791, T exponent 1.5606, beta all 1 | k1r -2.45, k3r 0.22 (N), k2r 3.01 (T); beta1r 0.40, beta3r 1.36 (N), beta2r 0.52 (T) |
-   | Unbound rutting ks1 | 1.673 granular, 1.35 fine | 0.965 granular and coarse soils, 0.675 fine, 0.635 sandy |
-   | Fatigue Nf | kf1 0.007566, kf2 -3.9492, kf3 -1.281 | kf1 3.75, kf2 2.87, kf3 1.46 on 1/eps and 1/E; betaf1 0.02054 (under 5 in), betaf2 1.38, betaf3 0.88 |
-   | Area transfer | C1 1.0, C2 1.0, C4 6,000 | C1 1.31, C2 2.1585 (under 5 in), C3 6,000 |
+   | Model | 2004, 1-37A | 2008 MOP (1-40D) | 2015 global (MassDOT) |
+   |---|---|---|---|
+   | Asphalt rutting | 10^-3.4488 T^1.5606 N^0.479244 (eq. 3.3.7; lab 10^-3.15552 T^1.734 N^0.39937 times beta 0.509, 0.9, 1.2) | k1r -3.35412, N exponent 0.4791, T exponent 1.5606, beta all 1 | k1r -2.45, k3r 0.22 (N), k2r 3.01 (T); beta1r 0.40, beta3r 1.36 (N), beta2r 0.52 (T) |
+   | Unbound rutting ks1 | betaGB 1.673, betaSG 1.35 (eqs. 3.3.11-12) | 1.673 granular, 1.35 fine | 0.965 granular and coarse soils, 0.675 fine, 0.635 sandy |
+   | Fatigue Nf | 0.00432 k1' C (1/eps)^3.9492 (1/E)^1.281 (eq. 3.3.29; Asphalt Institute 3.291 and 0.854 times beta 1.2 and 1.5), k1' = the MOP's CH | kf1 0.007566, kf2 -3.9492, kf3 -1.281 | kf1 3.75, kf2 2.87, kf3 1.46 on 1/eps and 1/E; betaf1 0.02054 (under 5 in), betaf2 1.38, betaf3 0.88 |
+   | Area transfer | C1 1.0, C2 1.0, 6,000 (eq. 3.3.31a; N 461, se 6.2 %) | C1 1.0, C2 1.0, C4 6,000 | C1 1.31, C2 2.1585 (under 5 in), C3 6,000 |
 
-   (The two documents label k2r and k3r the other way round; the exponent of N is about 0.3-0.48 and of T about
+   From 2004 to 2008 only the two leading constants moved (fatigue 0.00432 to 0.007566, rutting 10^-3.4488 to
+   10^-3.35412); the forms are the same. (The 2008 and 2015 documents label k2r and k3r the other way round; the exponent of N is about 0.3-0.48 and of T about
    1.56 in both.) For 3 in of asphalt the 2008 set puts 50 % cracking at damage 1.0; the 2015 set at damage
    0.164 if its damage is a fraction (derived). **A misprint or a unit trap in the 2015 restatement:** MassDOT
    eq. 23 defines FD already in percent (x 100) and eq. 24 then takes log(FD x 100); the MOP's eq. 5-6a takes
    log(DI x 100) with DI a fraction. One of MassDOT's two 100s is extra; only the 2015 or 2020 MOP can say which.
-   **Proposed: the 2008 MOP set for the first code, because it is the primary text in hand and complete; the
-   2015 set as a swap of constants once the newer MOP is filed. zack's call.**
-2. **The unbound rutting model is given in pieces.** The MOP gives eq. 5-2a and the inputs of beta, rho and C0
-   (eqs. 5-2b-d) but not eps0/epsr. MDSHA vol. 2 (eqs. 37a-38, quoting NCHRP 2004) gives it with an older
-   constant set (10^7, a1 = 1.094 x 10^-18 Er^3.52, a9 = 0.0316 Er^0.5) and prints "log(eps0/epsr) =". Proposed
-   (reconstructed): MDSHA's form with the MOP's constants,
-   eps0/epsr = (e^(rho^beta) a1 Mr^b1 + e^((rho/10^9)^beta) a9 Mr^b9) / 2, a1 = 0.15, a9 = 20, b1 = b9 = 0.
-   Checked by arithmetic: with rho from eq. 5-2c the two terms come out exactly equal (22.3 at Wc 7 %, 23.8 at
-   10 %, 31.9 at 18 %), which is how rho was built, so the form fits the constants; read as a log the ratio
-   would be 10^23, so MDSHA's "log" is a misprint. Two more misprints, by arithmetic: the MOP's eq. 5-2d prints
+   **Proposed: the 2008 MOP set for the first code, because it is the latest primary text in hand and complete
+   (1-37A now confirms its forms); the 2015 set as a swap of constants once the newer MOP is filed. zack's call.**
+2. **The unbound rutting model: settled by 1-37A.** The MOP gives eq. 5-2a and the inputs of beta, rho and C0
+   (eqs. 5-2b-d) but not eps0/epsr; MDSHA vol. 2 (eqs. 37a-38) quotes an earlier draft (10^7,
+   a1 = 1.094 x 10^-18 Er^3.52, a9 = 0.0316 Er^0.5). **1-37A eqs. 3.3.10a-e give the final model in full:**
+   eps0/epsr = (e^(rho^beta) a1 Er^b1 + e^((rho/10^9)^beta) a9 Er^b9) / 2, a1 = 0.15, b1 = 0, a9 = 20, b9 = 0, with
+   10^9 in rho: exactly the reconstruction the first draft proposed from the MOP's constants. Checked by
+   arithmetic: with rho from eq. 3.3.10d the two terms come out exactly equal (22.3 at Wc 7 %, 23.8 at 10 %, 31.9
+   at 18 %), which is how rho was built. **1-37A itself prints "log(eps0/epsr) ="**; read as a log the ratio
+   would be 10^23 and every base would rut by kilometres, so it is a misprint in the primary (MDSHA copied it);
+   we read the ratio. Two more misprints, by arithmetic: the MOP's eq. 5-2d prints
    "C0 = ln(a1 Mr^b1 / a9 Mr^b9) = 0.0075", which is ln(0.0075) = -4.89; MDSHA's eq. 41 divides by k where its own
-   eq. 40 has alpha.
+   eq. 40 has alpha (1-37A eqs. 3.3.18-3.3.23 use k throughout). **A unit trap in 1-37A:** eq. 3.3.20 gives
+   k = ln(eps_p,0 / eps_p,6) / 6 per inch, but eq. 3.3.23 labels h_bedrock in feet; we keep inches throughout.
 3. **MEPDG uses axle load spectra, not ESALs** (MOP p. 17). Our traffic input is ESALs (c620 Table 5) until the
    LTPP section is in. Proposed: one ESAL = one pass of the standard axle that defines it, an 80 kN single axle
    on dual tires (the LTPP traffic report's definition), each tire 20 kN at 120 psi (827 kPa; MOP p. 83), contact
@@ -755,8 +761,11 @@ the subgrade, which add up to the rut. Across the lane, wander spreads both into
    damage from a real mix of trucks is not ESAL-equivalent in MEPDG (the ESAL is AASHO's fourth-power
    equivalence); with an LTPP section the spectra replace it.
 4. **Wander.** Normal, zero mean, standard deviation 10 in (254 mm), used for all of the calibration (MOP p. 83;
-   Ali p. 15; ICT-20-010 p. 3). For fatigue NCHRP 2004 averages the damage at five offsets of 20 % each (ICT-20-010
-   fig. 3); for rutting the method is not published (ICT-20-010 p. 4 quoting NCHRP). Proposed (derived): compute
+   Ali p. 15; ICT-20-010 p. 3). For fatigue 1-37A (pp. 3.3.21-3.3.24, eqs. 3.3.1-3.3.2, fig. 3.3.8) shifts the
+   no-wander damage profile to the five quintile offsets z = -1.28155, -0.5244, 0, 0.5244, 1.28155 sigma, 20 % of
+   traffic each, and averages (the software uses 11 points for the profile, interpolating); this works "because
+   Miner's Law is linear with traffic". For rutting "the Guide software modifies the actual pavement response for
+   the effects of wander", without saying how (p. 3.3.24): still unpublished. Proposed (derived): compute
    the damage, and the resilient strains for rutting, on a lateral grid for a load at one position, then take the
    expectation over the wander (ICT-20-010 fig. 27, without ICT-20-010's truncation: the nearer lane edge is 0.76 m, 3 sigma, from
    the outer wheel path, so the tail cut off is 0.1 %, derived). For fatigue this is exact under Miner's rule (damage is linear in passes). For rutting, which is
@@ -767,14 +776,27 @@ the subgrade, which add up to the rut. Across the lane, wander spreads both into
    and infinite in plan, the last a half-space, uniform circular loads, full continuity at the interfaces,
    wheels combined by superposition (MDSHA vol. 2 p. 25, citing Huang). The equations themselves (Burmister 1945;
    Huang, *Pavement Analysis and Design*, ch. 2) are not in References, and the hosts that serve Burmister's
-   reports (DTIC, trb.org) are blocked here. **Until they are filed, the strain solver has no sourced equations
+   reports (DTIC, trb.org) are blocked here. 1-37A Part 3 ch. 3 confirms JULEA, superposition of single-wheel
+   axisymmetric solutions, the analysis grid (fig. 3.3.12: X1 = 0 at the centre of the duals, X2 = (S/2 - a)/2,
+   X3 = S/2 - a, X4 = S/2, X5 = S/2 + a, then +4, +8, +16, +24, +32 in) and depths (fatigue at the surface, 0.5 in
+   and the bottom of each bound layer; rutting at each sublayer's middle, the top of the subgrade and 6 in into
+   it), and that vertical strain comes from the stresses by eps_rz = (sigma_z - mu sigma_x - mu sigma_y) / E*
+   (eq. 3.3.14); for sublayer middles shallower than 0.2 a the strain is interpolated linearly from the surface
+   (p. 3.3.63). It gives no layered elastic equations either. Two things offered on Nov 28 don't stand in: the
+   1993 AASHTO page (Pavement Interactive) is the empirical structural-number method MEPDG replaced, and computes
+   no strains; Burmister's two-layer surface deflection, Delta = 1.5 p a F2 / E2, reads F2 off a chart and gives
+   only the surface deflection of two layers, not strains at depth in three. It is kept as a check for the
+   solver (the two-layer case must reproduce Burmister's chart). **Until they are filed, the strain solver has no sourced equations
    and cannot be coded.** This replaces T1's Westergaard radius, a slab-on-springs stand-in.
 
 ### Equations of the proposal (2008 MOP numbering unless stated)
 
-1. **Sublayers and points** (MDSHA vol. 2 p. 25, from NCHRP 2004). Asphalt: two 0.5 in sublayers, then 1 in
-   sublayers to 4 in, the rest one sublayer (3 in: 0.5, 0.5, 1, 1). Base: rule given only for bases over 6 in
-   (gap for the 4 in default; proposed: two equal sublayers, assumption). Subgrade: per eqs. 40-41 below.
+1. **Sublayers and points** (1-37A fig. 3.3.9 and pp. 3.3.28-3.3.31; MDSHA p. 25 agrees). Asphalt: 0.5, 0.5,
+   then 1 in sublayers to 4 in, 4 in to 8 in, the rest (3 in: 0.5, 0.5, 1, 1). (1-37A's text on ageing says the top
+   layer is split into "0.5 in and the remainder"; that is the ageing split, the figure is the response split.)
+   Base: unbound bases are sublayered only over 6 in (first sublayer 2 in, then at least 4 in), **so the 4 in
+   default base is one layer** (was a gap). Subgrade: sublayers of at least 12 in down to 8 ft below the surface;
+   below that a half-space by eqs. 3.3.18-3.3.23 (item 7).
    Fatigue at the bottom of the asphalt; rutting at the middle of each sublayer, at the top of the subgrade and
    6 in below it. In plan, the strains are taken across the lane through the dual set (the guide's line Y1,
    MDSHA fig. 4, extended across the lane for the profile).
@@ -795,15 +817,19 @@ the subgrade, which add up to the rut. Across the lane, wander spreads both into
    0.0001))) (eq. 5-7, as Ali's appendix prints it; the MOP's typesetting of it is garbled).
 6. **Asphalt rutting** (eqs. 5-1a-d): Delta_p = beta1r kz eps_r 10^k1r n^(k2r beta2r) T^(k3r beta3r) h, T in F;
    kz = (C1 + C2 D) 0.328196^D, C1 = -0.1039 H^2 + 2.4868 H - 17.342, C2 = 0.0172 H^2 - 1.7331 H + 27.428, D the
-   depth in in. Summed over sublayers. Months are joined by strain hardening (named, MOP p. 36; proposed reading:
-   for each new month find the number of passes that gives the plastic strain already reached under that
-   month's conditions, then add the month's passes; derived, steps in NCHRP 1-37A Part 3 ch. 3, Wanted).
+   depth in in. Summed over sublayers. Months are joined by strain hardening (1-37A pp. 3.3.59-3.3.61, fig. 3.3.19): for
+   each new sub-season, solve the model for the equivalent number of passes N_eq that gives the plastic strain
+   already reached, under the new sub-season's temperature and resilient strain, then add its passes (sourced;
+   was our reading, now the text).
 7. **Base and subgrade rutting** (eq. 5-2a with item 2 of the choices): Delta_p = betas1 ks1 eps_v h (eps0/epsr)
    e^(-(rho/n)^beta), log beta = -0.61119 - 0.017638 Wc (5-2b), rho = 10^9 (C0 / (1 - (10^9)^beta))^(1/beta) (5-2c),
    C0 = ln(0.0075). Water content from the groundwater table (MDSHA eq. 39, 1-37A):
    Wc = 51.712 CBR^(-0.3586 GWT^0.1192), GWT in ft, with Mr/2555 to the power 1/0.64 written as CBR (derived).
-   Subgrade, a half-space: eps_p(z) = eps_p0 e^(-alpha z), alpha from the plastic strains at its top and 6 in
-   down, integrated to bedrock (MDSHA eqs. 40-41; no bedrock: eps_p0 / alpha, derived).
+   Subgrade below 8 ft, a half-space (1-37A eqs. 3.3.18-3.3.23, after Ayres; R2 over 97 %): eps_p(z) =
+   eps_p0 e^(-k z), k = ln(eps_p,z=0 / eps_p,z=6) / 6, floored at 10^-6 when the strain grows with depth,
+   integrated to bedrock: delta = eps_p0 (1 - e^(-k h_bedrock)) / k (no bedrock: eps_p0 / k, derived). Calibration
+   statistics: base R2 0.677, se 0.023 in; subgrade R2 0.136, se 0.045 in (1-37A pp. 3.3.52-53): the subgrade
+   model is weak.
 8. **Across the lane** (choice 4): every profile above is a load-at-one-position profile g(x); the drawn one is
    E[g(x - s)], s ~ N(0, 254 mm), centred on the LTPP wheel paths.
 
@@ -818,7 +844,10 @@ the subgrade, which add up to the rut. Across the lane, wander spreads both into
 | **Groundwater table depth** (for Wc) | none in hand (gap; c620 doesn't give one) | **New input** |
 | Pavement temperature T(z, hour) | `PavementTemperature` | T2, built |
 | Binder log abs(G\*)(z, year) | `BinderAgeing.log_g()` | T2, built |
-| **Mix modulus E(z, T, loading time, year)** | **Not derived here.** The aged modulus is Model 2's AMAC step (NCHRP 973 eq. 51, c = 1.71) applied to an unaged mix master curve; T4 needs the curve at 0-50 C, where Model 2's (creep of the 64-22 granite lab mix at -24 to 0 C) does not reach. Candidate for the hub: Mn/DOT 97-06 Table 5.1, AC-20 50-blow Marshall mix (cell 18's mix design, the build-up's own), resilient modulus at 0.1 s load: 12.1-15.1 GPa at -18 C, 6.6-7.7 at 1 C, 2.2-2.6 at 25 C, 0.70-0.80 at 40 C. Caveats: indirect tension resilient modulus, not the |E\*| in compression the MEPDG calibration used (97-06 Tables 5.7-5.8 hold axial complex moduli at 0.1 and 1 Hz to compare); loading time from speed is in 1-37A (Wanted), 0.1 s proposed. The same report has the mix's low-temperature creep and strength (Tables 5.14-5.15), so T3 could move to it and **both threads use one mix** | **Shared quantity, one owner, agreed in the hub before either codes.** Replaces T1's unsourced 3 GPa |
+| **Mix modulus E(z, T, loading time, year)** | **Not derived here.** The aged modulus is Model 2's AMAC step (NCHRP 973 eq. 51, c = 1.71) applied to an unaged mix master curve; T4 needs the curve at 0-50 C, where Model 2's (creep of the 64-22 granite lab mix at -24 to 0 C) does not reach. Candidate for the hub: Mn/DOT 97-06 Table 5.1, AC-20 50-blow Marshall mix (cell 18's mix design, the build-up's own), resilient modulus at 0.1 s load: 12.1-15.1 GPa at -18 C, 6.6-7.7 at 1 C, 2.2-2.6 at 25 C, 0.70-0.80 at 40 C. Caveats: indirect tension resilient modulus, not the |E\*| in compression the MEPDG calibration used (97-06 Tables 5.7-5.8 hold axial complex moduli at 0.1 and 1 Hz to compare); loading time: 1-37A gives the pulse time from speed and depth (fig. 3.3.7, Barksdale; details in Appendix UU,
+   Wanted) and frequencies at mid-depth (Table 3.3.1: thin wearing course 1-3 in, 35-70 Hz at 45 mph, 10-25 Hz at
+   15 mph, 0.5-1.0 Hz at 0.5 mph); 97-06's 0.1 s pulse is about the urban-street case, proposed for the default
+   road, an assumption until the speed is an input. The same report has the mix's low-temperature creep and strength (Tables 5.14-5.15), so T3 could move to it and **both threads use one mix** | **Shared quantity, one owner, agreed in the hub before either codes.** Replaces T1's unsourced 3 GPa |
 | Mix volumetrics Va, Vbe | cell 18 wear course: Va 3.2 %, VMA 15.3 % (Mn/DOT 97-06 Table 3.5), so Vbe = VMA - Va = 12.1 % (identity), M = 0.488, C = 3.08 | **New inputs on the asphalt layer** |
 | **Traffic: ESALs per year** | c620 Table 5 gives design totals, not yearly, and no design life: lightest row "up to 10,000 ESALs" (2.5 in on 8.5 in, CBR 6-9); the default build-up (3.0 on 4.0, Table 3B, under 50 spaces) has no ESAL figure. Yearly number for the default road: zack's call | **New input** |
 | **Lateral wander sigma** | 254 mm (MOP p. 83; 203 mm for lanes under 10 ft, 305 mm over 12 ft) | **New input** (constant for now) |
@@ -839,7 +868,9 @@ MEPDG_AXLE_LOAD_DIST_FACTOR) kept "mainly for comparison and quality assurance".
   top of the subgrade by the subgrade's share, each interface following its own wander profile; inside the
   asphalt, each sublayer's thickness change from eq. 6. Fatigue cracks drawn through the full asphalt depth where
   the plan shows alligator cracking.
-- **Distress map and survey:** ACP 1 fatigue area (m2) in the wheel paths; ACP 9 rut depth, measured as T0 does;
+- **Distress map and survey:** ACP 1 fatigue area (m2) in the wheel paths, all severities together: "the
+  measured cracking used in the calibration is the total summation of the high, medium and low severity
+  cracking" (1-37A p. 3.3.68); ACP 9 rut depth, measured as T0 does;
   ACP 1 severity not until a source exists (gap).
 
 ### Checks (the Python run, next step)
@@ -847,7 +878,8 @@ MEPDG_AXLE_LOAD_DIST_FACTOR) kept "mainly for comparison and quality assurance".
 1. Transfer function arithmetic: CH, C1\*, C2\* for 3 in; FC 50 % at DI 1 (2008); both readings of MassDOT's 2015
    eq. 24.
 2. Layered elastic solver (once its equations are filed): the one-layer case against Boussinesq's closed form
-   for a circular load; a published multilayer example (Huang's, when filed).
+   for a circular load; the two-layer surface deflection against Burmister's F2 chart (Delta = 1.5 p a F2 / E2,
+   flexible load); a published multilayer example (Wang et al. 2011 or Huang, whichever is filed).
 3. Unbound rutting: eps0/epsr from the reconstructed form, its two terms equal (above); Wc for CBR 9.
 4. Mix modulus (with the hub's choice): the fitted master curve through 97-06 Table 5.1, and AMAC's shift with
    T2's log abs(G\*) at 1, 5, 10, 20 years, Burlington.
@@ -861,12 +893,15 @@ MEPDG_AXLE_LOAD_DIST_FACTOR) kept "mainly for comparison and quality assurance".
 
 ### Not in it, and gaps
 
-- **Layered elastic equations: Wanted, blocking the strain solver.** Burmister 1945, J. Applied Physics 16,
-  89-94, 126-127, 296-302; or Huang, *Pavement Analysis and Design* (2004), ch. 2 and its KENLAYER appendix; or
-  the JULEA documentation in NCHRP 1-37A.
-- **NCHRP 1-37A Part 3 ch. 3 (flexible design) and Part 2 ch. 2-4 (inputs, loading time from speed): Wanted**
-  (onlinepubs.trb.org blocked): the wander discretisation for rutting, strain hardening steps, eps0/epsr in the
-  original.
+- **Layered elastic equations: Wanted, blocking the strain solver.** Any one of: Wang, Roesler & Guo 2011,
+  "Innovative Algorithm to Solve Axisymmetric Displacement and Stress Fields in Multilayered Pavement Systems",
+  J. Transportation Engineering 137(4), open access at www.ideals.illinois.edu/items/18926 (the n-layer
+  Hankel-transform solution, the best fit); Burmister 1945, J. Applied Physics 16, 89-94, 126-127, 296-302;
+  Huang, *Pavement Analysis and Design* (2004), ch. 2.
+- **NCHRP 1-37A Part 3 ch. 3: filed (zack, Nov 28) and read.** Still Wanted from 1-37A (onlinepubs.trb.org
+  blocked): Part 2 ch. 2 (the level 3 E* predictive equation), Appendix UU (pulse time from speed), Appendices
+  GG-1 and II-1 (the rutting and fatigue calibrations). How the software applies wander to rutting is not in
+  ch. 3 and may not be published anywhere.
 - **AASHTO MEPDG Manual of Practice, 2015 or 2020 edition: Wanted** (paywalled): settles the 2015 constants and
   the FD x 100 question.
 - **Where along the wheel path the cracking appears: Gap.** MEPDG gives an amount for the lane; the road in the
