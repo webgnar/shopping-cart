@@ -187,6 +187,10 @@ in this folder with the file names below.
   (2007), https://rosap.ntl.bts.gov/view/dot/37840. Ch. 7: the multilayer elastic solution (transformed ODEs eqs.
   7.12-7.14, propagator, circular load eq. 7.18, back-transform eqs. 7.22-7.23, superposition eq. 7.24); ch. 1:
   Boussinesq (Table 1.1); ch. 6: a three-layer example beside Everstress 5.0. Notes: Model 3.
+- `fhwa_2002_rd-03-041_ltpp_layer_thickness.pdf`: "Evaluation and Analysis of LTPP Pavement Layer Thickness Data",
+  FHWA-RD-03-041 (2002), https://rosap.ntl.bts.gov/view/dot/5542. Table 25: within-section layer thickness COV from
+  cores (asphalt surface 9.76 %, SD 5.44 mm); Table 26: from SPS elevations (dense-graded base 8.78 %); ch. 5:
+  normality. For weakest-point placement of fatigue cracking (Model 3).
 - MassDOT 24-067 (filed under thermal cracking) ch. 4.1 and 6.1: the 2015 global rutting and fatigue constants.
 - Wanted (blocked or paywalled): Wang, Roesler & Guo 2011, J. Transp. Eng. 137(4), open access at
   www.ideals.illinois.edu/items/18926 (file as `wang_roesler_guo_2011_multilayer_axisymmetric.pdf`); Burmister 1945, J. Applied Physics 16, 89-94, 126-127, 296-302, or his DTIC

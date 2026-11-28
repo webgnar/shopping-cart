@@ -834,8 +834,8 @@ paywalled); Alaska DOT AK-RD-86-26 (crack widths; host refused).
 
 ## Model 3: loads, bottom-up fatigue cracking and rutting (proposal for review; T4)
 
-**Status: written up from the sources below; revised Nov 28 after NCHRP 1-37A Part 3 ch. 3 was filed; not yet
-checked in Python; no code.** Every number quoted is from
+**Status: written up from the sources below; revised Nov 28 after NCHRP 1-37A Part 3 ch. 3 was filed; checked in
+Python Nov 28 (results at the end of this model); waiting for zack's review; no code.** Every number quoted is from
 the source named next to it. "Derived" marks our own algebra on a sourced equation; "assumption" marks a choice
 with no source; gaps are listed at the end. Units: the MEPDG equations are in inches, psi and F, so they keep
 those units inside each equation and are converted at the edges (the sim stays SI).
@@ -1060,6 +1060,77 @@ MEPDG_AXLE_LOAD_DIST_FACTOR) kept "mainly for comparison and quality assurance".
 7. The 2008 and 2015 constant sets side by side for the default road, to show what the choice changes (asphalt
    rutting: eps_p/(eps_r kz) is about 250 with 2008 and 68 with 2015 at 10^6 passes and 70 F, derived).
 
+### Python check (Nov 28): `docs/asphalt_checks/loads_chain.py`, output in `loads_chain_output.txt`
+
+**Waiting for zack's review before any code.** Default road: c620 Table 3B (3.0 in asphalt on 4.0 in base, CBR 9),
+Burlington normals, PG 64-22 aged by T2's chain, 2008 constants, **500 ESAL/yr for 20 years (assumption: c620's
+lightest row, 10,000 ESALs, over an assumed 20-year life)**, base A-1-a 276 MPa, subgrade 72 MPa fine-grained, GWT
+10 ft and Poisson's ratio 0.35 throughout (assumptions), load pulse 0.1 s.
+
+1. **Layered elastic solver: passes.** One layer against Boussinesq (Pan Table 1.1 integrated over the circle):
+   stresses and strains at five points and the centre deflection agree to 0.01 %. Three layers against Pan's ODOT
+   example (Everstress 5.0, values read off Pan figs. 6.5-6.7): deflection 0.1072 in (read 0.107), sigma_xx -141.5 /
+   +42.9 psi at the surface / bottom of the asphalt (read -145 / +45), vertical strain in the base and subgrade
+   -221, -225, -248 microstrain (read -210, -210, -235), **but only if Pan's "circle with a diameter of 4.072 in" is the
+   radius** (with the diameter everything is 4x low; a 1,628 lb tire would be implausibly light for the class 14-15
+   truck described): a misprint, by arithmetic. One point disagrees: vertical strain at the bottom of the asphalt,
+   -134 against -80 read off fig. 6.6; ours is consistent with our own sigma_xx there through Hooke's law, which
+   matches Everstress, so the plot reading or Everstress's interface side is in doubt. Burmister's two-layer chart:
+   not run (no chart values in hand; Pan fig. 3.15 doesn't state the interface depth).
+2. **Transfer functions:** CH 582.8, C1\* 6.334, C2\* -3.167 for 3 in; FC 0.18 / 4.0 / 50 % at DI 0.01 / 0.1 / 1.
+   2015 set: 50 % at DI 0.164 if damage is a fraction; with MassDOT's two 100s it saturates (100 % at DI 0.01),
+   which is absurd, so **the fraction reading is right** and MassDOT's eq. 23 x 100 is the misprint (by
+   arithmetic). eps0/epsr: the two terms equal (22.3 / 23.8 / 31.9 at Wc 7 / 10 / 18 %). Wc: subgrade 18.3 %, base
+   6.8 % at GWT 10 ft.
+3. **Mix modulus.** The free six-parameter sigmoid through 97-06 Table 5.1 degenerates (the asymptotes run off):
+   -18 to 40 C at 0.1 and 1.0 s don't fix the curve's ends. Bounded (assumption: lower end at least 1 MPa, upper at
+   most 25 GPa) it fits to 0.049 log units: 13.5 / 8.0 / 2.3 / 0.72 GPa at -18 / 1 / 25 / 40 C, 0.1 s (measured
+   13.5 / 7.1 / 2.4 / 0.74; 1 C is 12 % high); other bounds move the most-aged value by -0.3 to +4.5 %. AMAC with
+   T2's ageing raises E at 25 C at the surface from 2.3 GPa to 2.9 / 5.1 / 7.7 / 11.3 GPa at 1 / 5 / 10 / 20 years
+   (log aA up to 4.6), at 7 cm to 4.4 GPa at 20 years. **A shift of 4.6 decades is far outside the one decade of
+   loading time the 97-06 data span**; AMAC was also fitted at 4-40 C only. The Hirsch maximum (AASHTO TP 133, as
+   NCHRP 973 uses it) would pin the upper end: Wanted.
+4. **Default road, 20 years: no fatigue cracking; a 4.6 mm rut.** Peak damage (with wander) 1.9 x 10^-4, FC 0.0 %.
+   Rut 2.2 / 3.4 / 4.0 / 4.4 / 4.6 mm at 1 / 5 / 10 / 15 / 20 years: asphalt 0.6, base 0.7, subgrade 3.3 mm (of
+   which 0.34 mm is the subgrade below 8 ft). Tensile strain at the bottom of the asphalt 250-450 microstrain, but
+   at 3 in the thickness factor CH = 583 makes the allowable passes about 2 x 10^7 per pass at 450 microstrain, against
+   10,000 passes in 20 years. **To crack 1 / 10 / 25 % of the lane this road would need about 92,000 / 530,000 /
+   1,170,000 ESAL a year** (derived: DI is linear in traffic). Rut profile across the wheel path (mm, every 0.1 m):
+   0.5 1.0 1.6 2.3 3.2 4.0 4.5 4.6 4.1 3.3 2.5 1.7 1.1 0.6, a single trough about 1.2 m wide over the dual set; no
+   humps (MEPDG has none).
+5. **Wander: passes.** The five-point average (NCHRP) and the full expectation agree at the peak: DI 1.90 against
+   1.92 x 10^-4, rut 4.6 against 4.6 mm.
+6. **Trends: pass for rutting; fatigue can't be tested** (all FC under 0.2 %). At 5,000 ESAL/yr: 3.0 on 4.0 in, 8.0
+   mm; 4.0 on 4.0 in, 7.0 mm; 3.0 on 8.0 in, 7.3 mm; and 500 against 5,000 ESAL/yr, 4.6 against 8.0 mm. **c620 Table 5
+   rows at their own traffic** (CBR 9, 20 years): ruts 4.4 / 5.6 / 6.3 / 7.5 / 8.5 / 9.7 mm from 2.5/8.5 in at 10,000
+   ESALs to 6.0/15.5 in at 1,000,000, all under the MOP's 0.65 in (16.5 mm) for low-speed roads; FC 0.0-0.1 % (limit
+   35 %). The c620 designs are safe by MEPDG's measure, as a design table should be.
+7. **2015 constants:** default road rut 2.6 mm at 20 years (against 4.6), FC 0.0 % either way.
+8. **Found in 1-37A's deep subgrade term** (eqs. 3.3.18-3.3.23): away from the wheels the plastic strain grows from
+   the top of the subgrade to 6 in down, k comes out negative (down to -2.5 per inch), the floor of 10^-6 applies and,
+   with no bedrock, the term is unbounded: the first run gave a 3.7 m rut. Replaced (derived) by k from the two
+   deepest computed points (89.6 and 96 in), where the strain falls everywhere: 0.34 mm. A bedrock depth input would
+   be the alternative.
+
+**What this means for the picture:** with MEPDG's 2008 calibration the default lot, and every c620 build-up at its
+design traffic, ruts a few millimetres and shows no alligator cracking in 20 years. Crocodile cells appear only with
+traffic hundreds of times heavier than the lot is designed for, or with a weaker structure than c620's. That is
+MEPDG's verdict, not a bug found so far, but it should be checked against the LTPP section (V) before it decides
+what the game shows. Points for zack:
+- the default traffic (500 ESAL/yr is ours, not c620's);
+- whether 97-06's resilient modulus (indirect tension) stands for MEPDG's |E\*| (compression), the AMAC
+  extrapolation, and the Hirsch maximum;
+- the deep-subgrade replacement.
+
+**Weakest point first: the spread is now sourced.** FHWA-RD-03-041 (2002), "Evaluation and Analysis of LTPP Pavement
+Layer Thickness Data" (`fhwa_2002_rd-03-041_ltpp_layer_thickness.pdf`, filed this thread from ROSAP), Table 25:
+within-section asphalt surface thickness from cores, mean COV 9.76 % (SD 5.44 mm, 506 GPS layers; SPS 10.21 %);
+Table 26: dense-graded aggregate base 8.78 % (elevation data); thickness normally distributed for most sections
+(84 % of SPS layers, ch. 5). Proposed: each cell along a wheel path draws its asphalt and base thickness from these
+normals; each cell's damage comes from its own thickness; the lane's area FC (at the mean thickness) is filled
+weakest cells first. **Still a gap: the length over which thickness stays correlated** (the report gives 1-9 cores per
+section, no correlation length), which sets the cell length. On the default road it doesn't matter yet: FC is zero.
+
 ### Not in it, and gaps
 
 - **Layered elastic equations: found (Pan et al. 2007), no longer blocking.** The propagator's elements are
@@ -1071,15 +1142,8 @@ MEPDG_AXLE_LOAD_DIST_FACTOR) kept "mainly for comparison and quality assurance".
   ch. 3 and may not be published anywhere.
 - **AASHTO MEPDG Manual of Practice, 2015 or 2020 edition: Wanted** (paywalled): settles the 2015 constants and
   the FD x 100 question.
-- **Where along the wheel path the cracking appears: weakest point first (zack, Nov 28), its spread a Gap.**
-  The same rule as T3: the road is split into cells along each wheel path, each with its own fatigue life, and
-  the lane's area FC (eq. 5-6) is filled weakest cells first. In T3 each segment's strength comes from a measured
-  scatter (Mn/DOT 2007-43 Table 6.14). Here the spread has to be of something that changes Nf along the road:
-  as-built asphalt thickness (Nf goes as eps_t^-3.95 and eps_t rises steeply as h falls), air voids (through C) or
-  modulus. Nothing in hand measures that within a section: MEPDG's scatter (eq. 5-7) is section to section;
-  Mn/DOT 97-06 reports cell averages and test repeatability, not variation along a cell. Wanted: a measured
-  within-section variability of layer thickness or air voids (LTPP cores and GPR give it; to be searched). Until
-  then the spread is not drawn: no invented scatter.
+- **Where along the wheel path the cracking appears: weakest point first (zack, Nov 28).** Spread sourced
+  (FHWA-RD-03-041, see the Python check); the correlation length along the road is a gap.
 - **Crocodile cell size: Gap.** LTPP ACP 1: pieces usually under 0.3 m. The present 0.7 x 1.0 Westergaard radius
   rule is derived, not sourced, and goes with Westergaard.
 - **LTPP fatigue severity (L/M/H): Gap.** MEPDG predicts area only.

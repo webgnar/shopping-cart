@@ -257,7 +257,7 @@ Steps (one commit each; stop for zack's review where marked):
 - [ ] 6. Checks between topics (thicker layer, aged binder, colder climate)
 - [ ] 7. Roadmap and science register updated
 
-### T4 Loads: fatigue cracking and rutting: Current (research; Model 3 written up, waiting for zack's review)
+### T4 Loads: fatigue cracking and rutting: Current (Model 3 checked in Python, waiting for zack's review)
 
 What it does: repeated axle loads bend the layer; damage adds up (Miner's rule) until the wheel paths crack into
 crocodile cells; the layers also deform permanently (ruts). Rutting sits here, not in T5, because the same
@@ -298,6 +298,7 @@ flowchart LR
 | NCHRP 1-37A Part 2 ch. 2 and Appendices UU, GG-1, II-1 | Wanted (trb.org blocked) | Level 3 E* equation, pulse time from speed, the calibrations |
 | AASHTO MEPDG MOP 2015 or 2020 | Wanted (paywalled) | Settles the 2015 constants |
 | LTPP DIM (fatigue cells under 0.3 m; rutting) | Read | Checks |
+| FHWA-RD-03-041 (2002), LTPP layer thickness data (filed this thread from ROSAP) | Read (Tables 25-26, ch. 5) | Within-section thickness spread for weakest-point placement: asphalt COV 9.8 %, base 8.8 %, normal |
 | Where along the path cracking starts; cell size; fatigue severity; rut shoulders | Gap | See Model 3, "Not in it" |
 
 **For zack to file in `References/Asphalt/`, none blocking** (blocked from this session): Wang, Roesler & Guo
@@ -331,9 +332,10 @@ New quantities Model 3 needs (proposed; to agree in the hub before any code, the
 Steps (one commit each; stop for zack's review where marked):
 - [x] Sources read and filed; Model 3 written up (ASPHALT_SCIENCE.md) **-> zack's review**
 - [x] Layered elastic equations found (Pan et al. 2007), read, written into Model 3; decisions 1-4 recorded
-- [ ] Whole chain checked in Python (`docs/asphalt_checks/loads_chain.py`): transfer functions, Boussinesq and a
-  published layered case, unbound rutting constants, mix modulus with AMAC, wander, c620 Table 5 against the MOP
-  limits, 2008 against 2015 constants **-> zack's review, before any code**
+- [x] Whole chain checked in Python (`docs/asphalt_checks/loads_chain.py`, output `loads_chain_output.txt`): solver
+  matches Boussinesq and Pan's Everstress example; wander methods agree; rutting trends right; **the default road
+  and every c620 Table 5 build-up at its design traffic rut 4-10 mm and don't alligator-crack in 20 years** (10 %
+  needs about 530,000 ESAL/yr on the default road); findings in Model 3 **-> zack's review, before any code**
 - [ ] 1. New inputs (shared table rows agreed in the hub first): traffic, wander, base Mr, soil class, GWT, Va, Vbe
 - [ ] 2. Layered elastic solver (own file), against the Python
 - [ ] 3. Fatigue damage and alligator area per wheel path, year by year (own file)
@@ -493,3 +495,4 @@ codes it. T4 adds traffic, wander and rut depth to the shared quantities table o
 | Nov 27 2026 | T4 | Sources read and filed; Model 3 (fatigue and rutting) written up for review | 4bf704e |
 | Nov 28 2026 | T4 | NCHRP 1-37A Part 3 ch. 3 filed and read; Model 3 revised | 96dff6d |
 | Nov 28 2026 | T4 | Layered elastic source (Pan 2007) filed; zack's decisions recorded | 6874292 |
+| Nov 28 2026 | T4 | Chain checked in Python; LTPP thickness spread filed | this commit |

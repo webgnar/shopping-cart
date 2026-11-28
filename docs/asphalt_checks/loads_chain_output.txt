@@ -1,0 +1,70 @@
+1a. One layer (half-space) against Boussinesq (Pan Table 1.1, point load, integrated over the circle)
+   r 0.00 z 0.05 m: sigma_z   -726.5 kPa (Boussinesq   -726.5), eps_z  -5863.6 ue ( -5863.9)
+   r 0.00 z 0.10 m: sigma_z   -475.5 kPa (Boussinesq   -475.6), eps_z  -4480.4 ue ( -4480.5)
+   r 0.00 z 0.30 m: sigma_z    -95.7 kPa (Boussinesq    -95.7), eps_z   -978.2 ue (  -978.2)
+   r 0.10 z 0.10 m: sigma_z   -208.5 kPa (Boussinesq   -208.5), eps_z  -1729.3 ue ( -1729.3)
+   r 0.20 z 0.15 m: sigma_z    -39.4 kPa (Boussinesq    -39.4), eps_z   -228.4 ue (  -228.4)
+   centre deflection 1.273 mm against 2(1-nu^2)qa/E = 1.273 mm
+   worst stress/strain difference 0.00 %
+
+1b. Three layers: Pan's ODOT example (Table 6.1-6.2) against Everstress 5.0 read off Pan figs. 6.5-6.7
+   z  0.000 in: sigma_xx  -141.5 psi (read  -145), eps_zz   -52.5 ue (read   -30), uz 0.1072 in (read 0.107)
+   z 17.999 in: sigma_xx    42.9 psi (read    45), eps_zz  -133.6 ue (read   -80)
+   z 18.200 in: sigma_xx     1.4 psi (read     0), eps_zz  -221.4 ue (read  -210)
+   z 21.000 in: sigma_xx     2.3 psi (read     0), eps_zz  -224.7 ue (read  -210)
+   z 24.000 in: sigma_xx     3.5 psi (read    -3), eps_zz  -248.1 ue (read  -235)
+
+2. Transfer functions (3 in asphalt) and unbound constants
+   CH 582.8, C2* -3.1670, C1* 6.3340
+   DI      FC 2008  FC 2015 (fraction)  FC 2015 (MassDOT's x100 twice)
+   0.001      0.01     0.00               18.82
+   0.01       0.18     0.02               99.54
+   0.1        4.04    18.82              100.00
+   0.164      7.68    50.18              100.00
+   1.0       50.00    99.54              100.00
+   Wc  7 %: beta 0.1842, rho 6244, eps0/epsr 22.32 (terms 22.32, 22.32)
+   Wc 10 %: beta 0.1631, rho 2.091e+04, eps0/epsr 23.77 (terms 23.77, 23.77)
+   Wc 18 %: beta 0.1178, rho 1.536e+06, eps0/epsr 31.87 (terms 31.87, 31.87)
+   Wc: subgrade CBR 9 (Mr 10426 psi) at GWT 10 ft 18.3 %; base 40,000 psi 6.8 %
+
+3. Mix modulus: sigmoid fit to Mn/DOT 97-06 Table 5.1 (AC-20, 50 blow), 0.1 s and 1.0 s, -18 to 40 C
+   delta 6.000, alpha 4.375, beta -0.912, gamma 0.292, a1 -0.1294, a2 -0.000022; rms residual 0.049 log units; limits 1 to 23721 MPa
+   other bounds change E(25 C, log aA 4.6) by -0.3 to +4.5 %
+    -18 C: E(0.1 s)   13454 MPa (measured mean   13526)
+      1 C: E(0.1 s)    7970 MPa (measured mean    7110)
+     10 C: E(0.1 s)    5477 MPa (measured mean     nan)
+     25 C: E(0.1 s)    2321 MPa (measured mean    2416)
+     40 C: E(0.1 s)     724 MPa (measured mean     740)
+     50 C: E(0.1 s)     291 MPa (measured mean     nan)
+   AMAC with T2's ageing (Burlington, PG 64-22), E at 25 C, 0.1 s:
+   z 0.00 cm: 1 yr: dlogG 0.24, log aA 0.41, E  2863; 5 yr: dlogG 1.03, log aA 1.77, E  5143; 10 yr: dlogG 1.75, log aA 2.99, E  7747; 20 yr: dlogG 2.66, log aA 4.56, E 11334
+   z 1.27 cm: 1 yr: dlogG 0.13, log aA 0.23, E  2611; 5 yr: dlogG 0.57, log aA 0.98, E  3720; 10 yr: dlogG 0.97, log aA 1.66, E  4929; 20 yr: dlogG 1.47, log aA 2.52, E  6700
+   z 3.80 cm: 1 yr: dlogG 0.09, log aA 0.15, E  2511; 5 yr: dlogG 0.38, log aA 0.65, E  3204; 10 yr: dlogG 0.64, log aA 1.10, E  3926; 20 yr: dlogG 0.98, log aA 1.68, E  4967
+   z 7.00 cm: 1 yr: dlogG 0.07, log aA 0.12, E  2476; 5 yr: dlogG 0.31, log aA 0.53, E  3030; 10 yr: dlogG 0.53, log aA 0.90, E  3596; 20 yr: dlogG 0.80, log aA 1.37, E  4402
+
+4. Default road: c620 Table 3B (3.0 in on 4.0 in, CBR 9), Burlington, 500 ESAL/yr (assumption), 2008 constants
+   asphalt sublayers [0.5, 0.5, 1.0, 1.0] in; Wc base 6.8 %, subgrade 18.3 % (GWT 10 ft, assumption); subgrade Mr 72 MPa, fine-grained (assumption)
+   July median, year 10, sublayer E (MPa): 4411, 3471, 3110, 2983
+   year  1: DI 1.04e-05 (no wander 2.08e-05), FC   0.0 % lane; deep subgrade term 0.16 mm (1-37A k 0.071/in under the duals, -2.448 at worst); rut   2.2 mm = asphalt  0.2 + base  0.4 + subgrade  1.6
+   year  5: DI 5.13e-05 (no wander 0.000101), FC   0.0 % lane; deep subgrade term 0.25 mm (1-37A k 0.071/in under the duals, -2.493 at worst); rut   3.4 mm = asphalt  0.4 + base  0.6 + subgrade  2.5
+   year 10: DI 0.0001 (no wander 0.000196), FC   0.0 % lane; deep subgrade term 0.29 mm (1-37A k 0.071/in under the duals, -2.497 at worst); rut   4.0 mm = asphalt  0.5 + base  0.6 + subgrade  2.9
+   year 15: DI 0.000147 (no wander 0.000286), FC   0.0 % lane; deep subgrade term 0.32 mm (1-37A k 0.070/in under the duals, -0.421 at worst); rut   4.4 mm = asphalt  0.6 + base  0.7 + subgrade  3.1
+   year 20: DI 0.000192 (no wander 0.00037), FC   0.0 % lane; deep subgrade term 0.34 mm (1-37A k 0.070/in under the duals, -0.417 at worst); rut   4.6 mm = asphalt  0.6 + base  0.7 + subgrade  3.3
+5. Wander, year 20, at the peak: fatigue DI full expectation 0.000192, five-point 0.00019; rut (expectation of the profile) 4.6 mm, five-point 4.6 mm
+   rut profile across the wheel path (mm), every 0.1 m from -0.9: 0.5 1.0 1.6 2.3 3.2 4.0 4.5 4.6 4.1 3.3 2.5 1.7 1.1 0.6
+
+6. Trends and c620 Table 5 rows (20 years, Burlington; Fair CBR 6-9 taken as 9); 7. 2015 constants
+   3.0 in on 4.0 in,   5000 ESAL/yr: FC   0.0 %, rut   8.0 mm (asphalt 1.9, base 1.0, subgrade 5.1)
+   4.0 in on 4.0 in,   5000 ESAL/yr: FC   0.0 %, rut   7.0 mm (asphalt 1.8, base 0.8, subgrade 4.5)
+   3.0 in on 8.0 in,   5000 ESAL/yr: FC   0.0 %, rut   7.3 mm (asphalt 1.8, base 1.5, subgrade 4.0)
+   Table 5 2.5/8.5 in at   10000 ESAL: FC   0.0 % (MOP limit 35 % for 'others'), rut   4.4 mm (limit 16.5 mm) (asphalt 0.6, base 1.2, subgrade 2.6)
+   Table 5 3.5/11.0 in at   50000 ESAL: FC   0.0 % (MOP limit 35 % for 'others'), rut   5.6 mm (limit 16.5 mm) (asphalt 1.3, base 1.4, subgrade 2.9)
+   Table 5 4.0/12.0 in at  100000 ESAL: FC   0.0 % (MOP limit 35 % for 'others'), rut   6.3 mm (limit 16.5 mm) (asphalt 1.8, base 1.5, subgrade 2.9)
+   Table 5 4.5/13.0 in at  250000 ESAL: FC   0.0 % (MOP limit 35 % for 'others'), rut   7.5 mm (limit 16.5 mm) (asphalt 2.8, base 1.6, subgrade 3.1)
+   Table 5 5.5/9.5 in at  500000 ESAL: FC   0.1 % (MOP limit 35 % for 'others'), rut   8.5 mm (limit 16.5 mm) (asphalt 3.7, base 1.1, subgrade 3.7)
+   Table 5 6.0/15.5 in at 1000000 ESAL: FC   0.1 % (MOP limit 35 % for 'others'), rut   9.7 mm (limit 16.5 mm) (asphalt 5.2, base 1.4, subgrade 3.1)
+   2015 constants, default road, year 20: FC 0.0 % (fraction) / 0.0 % (x100 twice); rut 2.6 mm (asphalt 0.5, base 0.4, subgrade 1.6)
+
+real	16m7.072s
+user	42m18.284s
+sys	2m47.177s
