@@ -518,7 +518,7 @@ as a possible factor, without numbers.
 
 ## Model 2: thermal cracking (proposal for review; T3)
 
-**Status: written up; checked in Python (`docs/asphalt_checks/thermal_cracking_chain.py`, results below; Appendix HH read Nov 28: revised proposal below); no code.**
+**Status: written up; checked in Python (`docs/asphalt_checks/thermal_cracking_chain.py`, results below; Appendix HH read and second run done Nov 28: proposal at the end of the runs); no code.**
 
 **Decisions (zack, Nov 27):** (1) daily temperatures: the sim is not about one place, so take a representative
 cold climate and keep it: the NOAA GHCN-Daily record of the default climate's own station, Burlington VT
@@ -748,6 +748,51 @@ conclusions. The 2008 Manual's equations are the same.
   dropped; (b) keep an AMAC-type link with c fitted at low temperature, but the cores in hand (check 4c) come from
   different labs and can't fix c; (c) look for a source on aged cores' low-temperature creep tested in one lab
   at several ages (Wanted).
+
+### Second Python run (Nov 28; `thermal_cracking_chain.py --revised`): T2 kept as the source of ageing
+
+**Decision (zack, Nov 28):** ageing comes from T2. The search for a same-mix, several-ages low-temperature data
+set found nothing reachable (MnDOT 2012-23, Phase II of the pooled fund study, is on hosts this session can't
+reach), so the fallback: AMAC from T2's log abs(G\*) with **one fitted number**, its c at low temperature. The
+base mix must be short-term aged, so the PG 64-22 lab mix stays the base; MnROAD cells 16 / 17 (aged cores) are
+for comparison only.
+
+Changes from the first run: TCMODEL's shift factors (piecewise linear in ln aT, Annex A 2.5.2.4); alpha from
+Appendix HH eq. 2.1 (18.57 x 10^-6 /C); AMAC's c fitted at low temperature; crack sites from the frictional model,
+grown by TCMODEL (Paris law, four sublayers, a jump to the sublayer bottom when the stress at the tip exceeds
+the IDT strength, 0.8 x 5.98 MPa = 4.78 MPa as Mn/DOT ch. 9 ran it; lognormal depth factor sd 0.769 per site;
+"through" when the site's depth passes the layer).
+
+| # | Check | Result | Verdict |
+|---|---|---|---|
+| R0 | TSRST with TCMODEL's shift factors | measured alpha -20.4 C; eq. 2.1 alpha **-25.2 C** (measured -25.9 C), slope 0.32 (0.21) | Passes on temperature |
+| R1 | **AMAC c fitted at low temperature** to MnROAD 19 cores (T2 with Minneapolis normals, 12 years, mean of 0-5 cm: Delta log abs(G\*) 1.04) | **c = 0.54** (Level 2 value: 1.71). Fitted against core, GPa: -12 C 60 s 15.5 / 13.95; 500 s 8.7 / 9.9; -24 C 25.2 / 20.5; 22.1 / 19.1 | Fits within 10-25 %. The one fitted number, against a different mix and lab |
+| R2 | TSRST fracture temperature with age (Burlington) | surface -25.2 / -24.4 / -21.8 / -19.3 / -16.2 / -14.4 C at 0 / 1 / 5 / 10 / 20 / 30 years; 2 cm -25.2 / -23.6 / -22.5 / -21.0 C (0 / 5 / 10 / 20) | Now plausible (first run: above 0 C) |
+| R3 | TCMODEL's crack growth | log10 A = -13.8, n 2.43: a cold day moves a crack 10^-6 to 10^-4 in. **The Paris term does nothing; only the jump on stress > strength moves cracks** | See below |
+| R4a | Burlington, 30 winters, default build-up | Sites in 2008-09 (158 per km) and 2014-15 (215, spacing 4.7 m), as the surface ages; peak stress 3.3-3.6 MPa; **none through** (never above 4.78 MPa) | Progression: yes. Cracks: none visible |
+| R4b | No ageing | No sites | Ageing drives it (passes) |
+| R4c | Minneapolis | Sites 1995-96, 2003-04, 2008-09 (39 / 86 / 207 per km); 33 through in 2018-19 (peak 5.37 MPa), 60 ft per 500 ft | Colder: more (passes) |
+| R4d | Thicker (152 mm) | 106 sites, none through | Wider spacing (passes) |
+| R4e | MnROAD cell 18 structure, Minneapolis 1994-2003 | Peak 2.39 MPa in 1995-96: **no cracks** | **Fails** the timing the first run passed |
+
+**What it says:**
+1. **The ageing link from T2 now behaves:** one fitted c (0.54) makes the stresses plausible (3-5 MPa, not
+   17-21) and the cracking come winter after winter as the surface ages: the progression the first run lacked.
+2. **TCMODEL's growth, as printed, is a strength rule.** With its constants the Paris term is negligible (the
+   units in the printed equations are also ambiguous, and the beta2 placement contradicts Annex B; only the
+   TCMODEL program would settle them). So the two strengths now conflict: sites start at the TSRST strength
+   (2.92 MPa: in the test the bar breaks right through at that stress), but they can only deepen at the IDT
+   strength (4.78 MPa), which Burlington's stresses never reach.
+3. **MnROAD's 1995-96 cracking is missed:** a fresh, short-term-aged reference mix under T2's pavement
+   temperature (Minneapolis -35.6 C air gives a -26.5 C surface; MnROAD itself saw -39 C) doesn't reach 2.92 MPa.
+   The first run hit it only because its ageing was too strong.
+
+**Proposal (for zack):** one strength, the TSRST 2.92 MPa (your choice), for both starting and deepening a
+crack: TCMODEL's sublayer rule then deepens a crack one sublayer per day whenever the stress at its tip passes
+2.92 MPa, and the lognormal spread (sd 0.769) decides which sites show through first. The Paris term (negligible)
+and the IDT strength drop out. Then re-run, and check MnROAD's timing again with that alone. If it still misses
+1995-96, the gap is in the cold surface temperature (LTPP eq. 7 damps a -36 C air minimum to -27 C at the
+surface), which is T2's model, not T3's.
 
 ### Not in it, and gaps
 

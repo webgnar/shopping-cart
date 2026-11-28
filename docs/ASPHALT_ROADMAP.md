@@ -243,6 +243,11 @@ Steps (one commit each; stop for zack's review where marked):
   and Paris law give the progression; TCMODEL has no ageing. **Revised proposal in Model 2 -> zack's review**
   (sites from the frictional model, growth from TCMODEL; alpha from eq. 2.1; MnROAD AC-20 core properties;
   ageing: a, b or c)
+- [x] Ageing from T2 (zack). Second run (`--revised`): AMAC c fitted at low temperature to MnROAD 19 cores = 0.54
+  (one fitted number); TSRST -25.2 C; fracture temperature warms with age plausibly; cracks start winter after
+  winter (Burlington 2008-09, 2014-15). TCMODEL's Paris term is negligible: growth is its strength jump, and with
+  the IDT strength no Burlington crack goes through; MnROAD 1995-96 now missed. **Proposal: one strength (TSRST)
+  for starting and deepening -> zack's review**
 - [ ] 1. Daily climate input and the new layer inputs (shared table rows agreed in the hub first)
 - [ ] 2. Relaxation modulus with the AMAC shift, by depth and year (own file)
 - [ ] 3. Restrained thermal stress through the winter, by depth (own file)
@@ -411,4 +416,5 @@ codes it. T4 adds traffic, wander and rut depth to the shared quantities table o
 | Nov 27 2026 | T2 | Step 6 reopened: photo and scaling out, plan flat at the albedo | this commit |
 | Nov 27 2026 | T3 | Sources read and filed; Model 2 (thermal cracking) written up for review | 67ba5ea |
 | Nov 27 2026 | T3 | Decisions recorded; chain checked in Python (two inputs fail; options in Model 2) | d482562 |
-| Nov 28 2026 | T3 | Appendix HH filed and read; alpha resolved; revised proposal | this commit |
+| Nov 28 2026 | T3 | Appendix HH filed and read; alpha resolved; revised proposal | b232e15 |
+| Nov 28 2026 | T3 | Ageing from T2 (c fitted at low T); second Python run | this commit |
